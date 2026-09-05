@@ -1,0 +1,297 @@
+---
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_sections: false
+    keep_tex: false
+    includes:
+      in_header: preamble_pedoman_awal.tex
+geometry: "left=2.6cm,right=2.4cm,top=3.0cm,bottom=2.4cm"
+fontsize: 11pt
+---
+
+```{r tanggal, include=FALSE}
+# Tanggal buku mengikuti tanggal pembangunan ulang, bukan angka yang ditulis manual,
+# sehingga edisi cetak selalu menunjukkan kapan isinya terakhir diperbarui.
+bulan_id <- c("Januari", "Februari", "Maret", "April", "Mei", "Juni",
+              "Juli", "Agustus", "September", "Oktober", "November", "Desember")
+tgl_id <- function(d = Sys.Date()) {
+  paste(as.integer(format(d, "%d")), bulan_id[as.integer(format(d, "%m"))], format(d, "%Y"))
+}
+tahun_id <- function(d = Sys.Date()) format(d, "%Y")
+```
+
+```{=latex}
+\thispagestyle{empty}
+\begin{tikzpicture}[remember picture, overlay]
+  \fill[bpsnavy] (current page.south west) rectangle (current page.north east);
+  \node[anchor=south] at ($(current page.south)+(0,3.05cm)$)
+    {\includegraphics[width=\paperwidth]{img/gedung_bg.png}};
+  \fill[bpsbiru] (current page.north west) -- ++(0,-6.5cm) --
+    ($(current page.north east)+(0,-3.6cm)$) -- (current page.north east) -- cycle;
+  \fill[bpsbirumuda, opacity=0.26] (current page.north west) -- ++(0,-8.0cm) --
+    ($(current page.north east)+(0,-5.2cm)$) -- (current page.north east) -- cycle;
+  \fill[bpsoranye] (current page.south west) -- ++(0,3.1cm) --
+    ($(current page.south east)+(0,2.0cm)$) -- (current page.south east) -- cycle;
+  \fill[bpshijau, opacity=0.9] (current page.south west) -- ++(0,1.7cm) --
+    ($(current page.south east)+(0,1.0cm)$) -- (current page.south east) -- cycle;
+  \node[anchor=north west] at ($(current page.north west)+(2.0cm,-1.35cm)$)
+    {\includegraphics[width=1.9cm]{img/logo_stis.png}};
+  \node[anchor=north west, text=white, align=left]
+    at ($(current page.north west)+(4.35cm,-1.75cm)$)
+    {{\fontsize{17}{20}\selectfont \textbf{POLITEKNIK STATISTIKA}}\\[1pt]
+     {\fontsize{17}{20}\selectfont \textbf{STIS}}};
+  \node[anchor=west, text=white, align=left]
+    at ($(current page.west)+(2.2cm,2.6cm)$)
+    {{\fontsize{15}{18}\selectfont \textbf{BUKU PEDOMAN}}};
+  \node[anchor=west, text=white, align=left]
+    at ($(current page.west)+(2.2cm,0.9cm)$)
+    {{\fontsize{28}{32}\selectfont \textbf{MENYUSUN MODUL}}\\[4pt]
+     {\fontsize{28}{32}\selectfont \textbf{PRAKTIKUM}}};
+  \node[anchor=west, text=bpsoranye, align=left]
+    at ($(current page.west)+(2.25cm,-1.5cm)$)
+    {{\fontsize{13}{16}\selectfont \textbf{dengan paket R \texttt{modulstis}}}};
+  \node[anchor=west, text=white, align=left]
+    at ($(current page.west)+(2.25cm,-2.5cm)$)
+    {{\fontsize{11}{14}\selectfont Panduan R Markdown, Quarto, LaTeX, dan Otomatisasi}};
+  \node[anchor=west, text=bpsbirumuda, align=left]
+    at ($(current page.west)+(2.25cm,-3.3cm)$)
+    {{\fontsize{10.5}{13}\selectfont 11 Bab $\cdot$ 5 Lampiran $\cdot$ untuk paket versi 0.3.8}};
+  \node[anchor=west, text=bpsbirumuda, align=left]
+    at ($(current page.west)+(2.25cm,-4.0cm)$)
+    {{\fontsize{9.5}{12}\selectfont Diperbarui `r tgl_id()`}};
+  \node[anchor=south west, text=white, align=left]
+    at ($(current page.south west)+(2.4cm,3.35cm)$)
+    {{\fontsize{10}{12}\selectfont Penyusun}\\[3pt]
+     {\fontsize{12}{15}\selectfont \textbf{Achmad Syahrul Choir}}};
+\end{tikzpicture}
+\newpage
+
+\thispagestyle{empty}
+\vspace*{\fill}
+\begin{center}
+\setlength{\fboxrule}{1.2pt}\setlength{\fboxsep}{16pt}
+\fcolorbox{bpsnavy}{white}{%
+\begin{minipage}{0.82\textwidth}
+\centering
+{\fontsize{13}{16}\selectfont \color{bpsnavy}\textbf{PERNYATAAN HAK CIPTA}}
+
+\vspace{0.7em}
+{\color{bpsoranye}\rule{3.2cm}{1.2pt}}
+
+\vspace{1.0em}
+{\fontsize{11}{15}\selectfont
+\textbf{Buku Pedoman Menyusun Modul Praktikum dengan Paket R \texttt{modulstis}}\par}
+
+\vspace{0.4em}
+{\fontsize{10.5}{15}\selectfont
+Hak Cipta \textcopyright{} `r tahun_id()` \textbf{Achmad Syahrul Choir dan Politeknik Statistika STIS}\par}
+
+\vspace{0.9em}
+{\fontsize{10}{15}\selectfont
+Hak cipta dilindungi undang-undang. Dilarang memperbanyak, menyalin, menggandakan, atau
+memindahkan sebagian maupun seluruh isi buku ini dalam bentuk dan dengan cara apa pun tanpa
+izin tertulis dari penyusun dan Politeknik Statistika STIS.\par}
+
+\vspace{0.9em}
+{\fontsize{10}{15}\selectfont
+Paket \texttt{modulstis} dilisensikan di bawah \textbf{MIT License}. Seluruh contoh kode
+dalam buku ini boleh dipakai dan disesuaikan secara bebas.\par}
+
+\vspace{1.0em}
+{\fontsize{9.5}{13}\selectfont \color{abuteks}
+Program Studi D-IV Komputasi Statistik\\
+Politeknik Statistika STIS $\cdot$ Jakarta\par}
+\end{minipage}}
+\end{center}
+\vspace*{\fill}
+\newpage
+```
+
+# Kata Pengantar {-}
+
+Buku ini lahir dari pengalaman menyusun dua mata kuliah praktikum: **Analisis Peubah Ganda**
+dengan dua puluh enam modul, dan **Pemrograman Statistika** dengan empat belas modul.
+Seluruhnya empat puluh modul, masing-masing beserta kunci jawabannya --- delapan puluh
+dokumen yang harus seragam, sinkron, dan terpelihara.
+
+Pekerjaan itu tidak mungkin dikerjakan dengan cara menyalin naskah. Dari kebutuhan itulah
+paket `modulstis` dikembangkan, dan dari pengalaman memakainyalah buku ini disusun.
+
+**Apa yang membedakan buku ini.** Hampir setiap kotak *Kesalahan Umum* di dalamnya berasal
+dari kekeliruan yang benar-benar terjadi selama penyusunan --- bukan kekeliruan yang
+dibayangkan. Kunci `n` pada YAML yang diam-diam terbaca sebagai boolean sehingga data selalu
+seratus baris. Penomor halaman yang direset lingkungan `titlepage` tanpa pesan galat apa pun.
+Versi paket lama yang terpasang di sistem diam-diam menimpa sumber yang sedang disunting.
+Ketiganya memakan waktu untuk ditemukan, dan ketiganya kini tercatat agar pembaca tidak
+perlu mengulanginya.
+
+**Buku ini ditulis memakai `modulstis` sendiri.** Setiap kotak berwarna, setiap penomoran
+contoh, dan tata letak halaman yang Anda lihat dihasilkan oleh paket yang sedang dijelaskan.
+Dengan begitu buku ini sekaligus menjadi bukti kemampuannya --- dan bila ada yang tidak
+berfungsi, akan segera ketahuan.
+
+**Cara membaca.** Bila Anda ingin segera mencoba, kerjakan Bab 2 lalu langsung ke Bab 3;
+tiga puluh menit sudah cukup untuk menghasilkan modul pertama. Bab 1 boleh dibaca belakangan.
+Bagi yang mencari perintah tertentu, Lampiran A dan B disusun sebagai rujukan cepat yang
+dapat dibuka tanpa membaca babnya.
+
+Buku ini tentu masih dapat disempurnakan. Kritik dan saran, khususnya dari rekan yang
+memakainya untuk menyusun mata kuliah sendiri, sangat diharapkan.
+
+\vspace{6mm}
+\begin{flushright}
+\begin{minipage}{7cm}
+Jakarta, `r tgl_id()`\\[10mm]
+\textbf{Achmad Syahrul Choir}\\
+Penyusun
+\end{minipage}
+\end{flushright}
+
+\newpage
+
+# Daftar Isi {-}
+
+\vspace{-4mm}
+
+**Bagian I — Memulai**
+
+| Bab | Judul | Hlm |
+|:--:|-------|:--:|
+| 1 | Mengapa `modulstis` | 1 |
+| 2 | Menyiapkan Lingkungan | 4 |
+| 3 | Modul Pertama dalam 15 Menit | 10 |
+
+**Bagian II — Menyusun Isi**
+
+| Bab | Judul | Hlm |
+|:--:|-------|:--:|
+| 4 | Anatomi Spesifikasi YAML | 14 |
+| 5 | Sebelas Bagian Modul | 20 |
+| 6 | Contoh, Kode, dan Latihan | 25 |
+
+**Bagian III — Sintaks**
+
+| Bab | Judul | Hlm |
+|:--:|-------|:--:|
+| 7 | Sintaks LaTeX yang Dipakai Modul | 31 |
+| 8 | Sintaks R Markdown dan Knitr | 39 |
+
+**Bagian IV — Menyesuaikan dan Menerbitkan**
+
+| Bab | Judul | Hlm |
+|:--:|-------|:--:|
+| 9 | Menyesuaikan Tampilan | 44 |
+| 10 | Menyusun Buku Gabungan | 48 |
+| 11 | Alur Kerja Sehari-hari | 52 |
+
+**Lampiran**
+
+| | Judul | Hlm |
+|:--:|-------|:--:|
+| A | Rujukan Cepat Spesifikasi YAML | 55 |
+| B | Kartu Referensi LaTeX | 59 |
+| C | Rujukan API | 61 |
+| D | Pemecahan Masalah | 63 |
+| E | Studi Kasus: Mata Kuliah Baru | 66 |
+
+**Bagian Akhir**
+
+| | Judul | Hlm |
+|:--:|-------|:--:|
+| | Glosarium | 71 |
+| | Indeks Perintah | 73 |
+| | Daftar Pustaka | 75 |
+
+\newpage
+
+# Cara Membaca Buku Ini {-}
+
+## Tiga Jalur Pembacaan {-}
+
+\begin{kotakinfo}[Pilih jalur sesuai kebutuhan]
+\begin{tabular}{@{}p{4.0cm}p{4.2cm}p{6.0cm}@{}}
+\textbf{Kebutuhan} & \textbf{Jalur} & \textbf{Perkiraan waktu}\\
+Ingin segera mencoba & Bab 2 $\rightarrow$ Bab 3 & 30 menit\\[3pt]
+Ingin menyusun mata kuliah & Bab 1--6, lalu Lampiran E & satu hari\\[3pt]
+Mencari perintah tertentu & Lampiran A dan B & seketika\\
+\end{tabular}
+\end{kotakinfo}
+
+## Simbol dan Kotak {-}
+
+Buku ini memakai kotak berwarna dengan peran berbeda. Mengenalinya membantu membaca secara
+efisien --- kotak yang sama juga dipakai di dalam modul praktikum yang akan Anda susun.
+
+\begin{kotakperhatian}
+Peringatan yang wajib diperhatikan sebelum melanjutkan.
+\end{kotakperhatian}
+
+\begin{kotaksalah}
+Kesalahan yang lazim terjadi beserta cara menghindarinya. Sebagian besar berasal dari
+kekeliruan nyata selama penyusunan modul.
+\end{kotaksalah}
+
+\begin{kotaktips}
+Praktik baik yang mempermudah pekerjaan atau menjaga mutu hasil.
+\end{kotaktips}
+
+\begin{kotakcatatan}
+Catatan pelengkap yang perlu diingat.
+\end{kotakcatatan}
+
+\begin{kotakinfo}[Kotak info]
+Tabel acuan dan rujukan cepat.
+\end{kotakinfo}
+
+\begin{kotaklangkah}[Langkah]
+Instruksi bertahap yang dikerjakan berurutan.
+\end{kotaklangkah}
+
+\begin{kotakvariasi}
+Alternatif atau perkakas lain untuk tujuan serupa.
+\end{kotakvariasi}
+
+## Kesepakatan Penulisan {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{4.6cm}p{9.8cm}@{}}
+\texttt{teks monospasi} & nama fungsi, berkas, kunci YAML, atau perintah\\[3pt]
+\emph{teks miring} & istilah asing atau penekanan\\[3pt]
+Blok berlatar biru & kode R yang dapat dijalankan\\[3pt]
+Blok berlatar putih & potongan YAML atau LaTeX\\[3pt]
+Blok berlatar hijau & keluaran hasil menjalankan kode\\
+\end{tabular}
+\end{kotakinfo}
+
+\begin{kotakperhatian}[Tentang ilustrasi antarmuka]
+Gambar antarmuka RStudio dalam buku ini adalah \textbf{ilustrasi tata letak}, bukan tangkapan
+layar sesungguhnya. Ilustrasi dipilih agar bagian yang dibahas dapat diberi penanda bernomor
+dengan jelas. Isi yang ditampilkan diambil dari proyek nyata sehingga tetap mewakili keadaan
+yang akan Anda jumpai.
+\end{kotakperhatian}
+
+## Prasyarat Pembaca {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{4.6cm}p{9.8cm}@{}}
+\textbf{Diandaikan sudah bisa} & menjalankan R; menulis R Markdown sederhana\\[3pt]
+\textbf{Tidak diandaikan} & menguasai LaTeX --- justru diajarkan pada Bab 7\\[3pt]
+\textbf{Tidak diperlukan} & pengalaman mengembangkan paket R\\
+\end{tabular}
+\end{kotakinfo}
+
+## Berkas Pendamping {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{5.2cm}p{9.2cm}@{}}
+\texttt{modulstis\_0.3.8.tar.gz} & paket siap pasang\\[3pt]
+\texttt{inst/specs\_ps/} & 14 spesifikasi Pemrograman Statistika (D-IV Statistika)\\[3pt]
+\texttt{inst/specs\_d3/} & 14 spesifikasi Pemrograman Statistika (D-III Statistika)\\[3pt]
+\texttt{Sumber\_PS.zip}, \texttt{Sumber\_PS\_D3.zip} & seluruh sumber kedua mata kuliah tersebut\\
+\end{tabular}
+\end{kotakinfo}
+
+Kedua puluh delapan spesifikasi tersebut dapat dipakai sebagai titik awal maupun sebagai contoh
+penulisan yang sudah teruji. Keduanya sekaligus menjadi contoh penerapan **kedua backend**:
+spesifikasi D-IV dirender lewat bookdown dan D-III lewat Quarto (Bagian 2.10).

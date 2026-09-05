@@ -1,0 +1,56 @@
+---
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_sections: true
+    includes:
+      in_header: preamble.tex
+geometry: "left=2.6cm,right=2.4cm,top=3.0cm,bottom=2.4cm"
+fontsize: 11pt
+---
+
+```{r bootstrap, include=FALSE}
+# UBAH dua nilai ini:
+nomor_modul <- 1
+topik_modul <- "Judul Modul Anda"
+
+if (requireNamespace("modulstis", quietly = TRUE)) {
+  th <- modulstis::theme_factory("bps")
+  writeLines(th$preamble(nomor_modul, topik_modul, variant = "kunci"), "preamble.tex")
+} else stop("Package 'modulstis' belum terpasang.")
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, comment = "")
+knitr::knit_hooks$set(output = function(x, options) {
+  paste0("\\begin{routbox}\n\\begin{verbatim}\n", x,
+         "\\end{verbatim}\n\\end{routbox}\n")
+})
+```
+
+```{r cover, echo=FALSE, results='asis'}
+th <- modulstis::theme_factory("bps")
+cat(th$cover(nomor_modul, toupper(topik_modul),
+  "Kunci Jawaban Latihan \\& Penugasan",
+  "Pegangan dosen dan asisten praktikum.", badge = "KUNCI JAWABAN"))
+```
+
+\tableofcontents
+\thispagestyle{fancy}
+\newpage
+
+# Kunci Jawaban Latihan
+
+\begin{kotakkunci}
+\textbf{Jawaban Latihan 1.} Tuliskan solusi di sini.
+\end{kotakkunci}
+
+# Kunci Jawaban Penugasan
+
+\begin{kotakkunci}
+\textbf{Jawaban Tugas 1.} Tuliskan solusi di sini.
+\end{kotakkunci}
+
+# Catatan Penskoran untuk Pengajar
+
+\begin{kotakinfo}
+Tuliskan panduan penskoran dan toleransi di sini.
+\end{kotakinfo}

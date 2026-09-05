@@ -1,0 +1,722 @@
+number: 11
+title: "Pendugaan Parameter dan Uji Hipotesis Rata-rata"
+short_code: "inferensia_rata"
+topic: "Inferensia Rata-rata"
+pertemuan: 11
+sub_cpmk: >
+  Sub-CPMK 11: Mahasiswa mampu melakukan pendugaan parameter (titik dan selang) serta uji
+  hipotesis rata-rata satu sampel, dua sampel independen, dan sampel berpasangan menggunakan R.
+packages: [dplyr]
+contoh_title: "Contoh Praktikum dengan R"
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  ta: "2025/2026"
+  semester: "3 (Ganjil)"
+  prodi: "D-IV Statistika"
+  penyusun:
+    - "Achmad Syahrul Choir"
+    - "Rudi Salam"
+    - "Christiana Anggraeni Putri"
+
+datasets:
+  - name: data_pelatihan
+    role: contoh
+    recipe:
+      kind: tabular
+      "n": 60
+      seed: 2025
+      columns:
+        peserta: {type: integer, min: 1001, max: 1060}
+        kelompok: {type: category, levels: [Kontrol, Perlakuan], probs: [0.5, 0.5]}
+        wilayah: {type: category, levels: [Perkotaan, Perdesaan], probs: [0.5, 0.5]}
+        nilai_pre: {type: numeric, min: 45, max: 85, digits: 1}
+        nilai_post: {type: numeric, min: 50, max: 95, digits: 1}
+        jam_belajar: {type: numeric, min: 2, max: 20, digits: 1}
+
+body:
+  deskripsi:
+    - >
+      Modul ini membuka rangkaian empat modul inferensia. Sampai Modul 10 kita hanya
+      \emph{menggambarkan} data yang ada di tangan. Mulai modul ini kita menarik kesimpulan tentang
+      \textbf{populasi} berdasarkan \textbf{contoh} - inilah inti statistika inferensia, dan inilah
+      pekerjaan sehari-hari penyelenggara statistik resmi yang tidak mungkin mencacah seluruh penduduk
+      setiap saat.
+    - >
+      Dua persoalan pokok dibahas. \textbf{Pendugaan} menjawab "berapa nilai parameternya", baik berupa
+      satu angka (pendugaan titik) maupun rentang beserta tingkat keyakinannya (pendugaan selang).
+      \textbf{Uji hipotesis} menjawab "apakah cukup bukti untuk menyatakan sesuatu", misalnya apakah
+      rata-rata suatu populasi berbeda dari nilai tertentu, atau apakah dua kelompok benar-benar berbeda.
+    - >
+      Materi dibahas dari dasar hingga lanjut: pendugaan titik untuk rata-rata dan ragam; pendugaan
+      selang untuk satu populasi, dua populasi, dan data berpasangan; kerangka lengkap uji hipotesis
+      beserta jenis galatnya; uji t satu sampel, dua sampel independen, dan berpasangan; pemeriksaan
+      asumsi; uji satu arah; ukuran pengaruh; serta pembacaan keluaran R secara menyeluruh.
+    - "\\begin{kotakperhatian}[Tentang data]\nBerkas data pada modul ini adalah \\textbf{data simulasi} (\\texttt{set.seed(2025)}), \\textbf{bukan data nyata} dan \\textbf{bukan data resmi} instansi mana pun. Data menggambarkan nilai ujian sebelum dan sesudah pelatihan pada dua kelompok fiktif.\n\\end{kotakperhatian}"
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:"
+    - "1. **Menghitung** pendugaan titik untuk rata-rata dan ragam, serta galat baku rata-rata."
+    - "2. **Menyusun** dan **menafsirkan** pendugaan selang untuk satu populasi, dua populasi independen, dan data berpasangan."
+    - "3. **Menjelaskan** kerangka uji hipotesis: hipotesis nol dan tandingan, taraf nyata, statistik uji, nilai-p, dan keputusan."
+    - "4. **Melakukan** uji t satu sampel, dua sampel independen, dan sampel berpasangan dengan `t.test`."
+    - "5. **Memeriksa** asumsi kenormalan dan kesamaan ragam sebelum menyimpulkan."
+    - "6. **Membedakan** uji satu arah dari dua arah dan memilih yang sesuai dengan pertanyaan penelitian."
+    - "7. **Menafsirkan** hasil secara benar, termasuk membedakan **kebermaknaan statistik** dari **kebermaknaan praktis**."
+  alat:
+    - "Perangkat dan bahan yang diperlukan:"
+    - "- **R** (RStudio); modul ini fokus pada R sesuai RPS."
+    - "- Paket: `dplyr` (untuk ringkasan per kelompok); pengujian memakai fungsi bawaan R."
+    - "- Berkas data: `data/data_pelatihan.csv`."
+  instruksi:
+    - "Ikuti tahapan berikut:"
+    - "**Sebelum praktikum:** siapkan direktori kerja; letakkan `data_pelatihan.csv` di subfolder `data/`."
+    - "**Selama praktikum:** kerjakan Contoh berurutan; untuk setiap pengujian, **tuliskan lebih dahulu hipotesis nol dan tandingannya** sebelum menjalankan kode; setelah keluaran muncul, tuliskan keputusan dan kesimpulannya dengan kalimat sendiri sebelum membaca interpretasi yang disediakan."
+    - "**Pembagian kerja:** Contoh dan Latihan dikerjakan selama sesi praktikum di kelas; **Penugasan dikerjakan sebagai tugas terstruktur di luar sesi**.\n\n**Pengumpulan:** susun laporan R Markdown, render ke PDF/HTML, dan kumpulkan via Google Classroom sesuai tenggat yang ditetapkan dosen."
+  teori:
+    - "### Kaitan dengan Materi Sebelumnya"
+    - >
+      Modul ini memakai langsung bekal Modul 7. Sebaran normal, sebaran \emph{t}, dan keluarga fungsi
+      \texttt{d}, \texttt{p}, \texttt{q}, \texttt{r} yang dikenalkan di sana kini dipakai untuk
+      menghitung nilai kritis dan nilai-p. Angka 1,96 yang dahulu sekadar contoh kini menjadi nilai
+      kritis pendugaan selang 95 persen. Keterampilan eksplorasi grafis juga dipakai untuk memeriksa
+      asumsi kenormalan.
+    - >
+      Selain itu, \texttt{dplyr} dari Modul 5 dipakai untuk menyusun ringkasan per kelompok sebelum
+      pengujian. Modul ini sendiri menjadi fondasi bagi Modul 12 sampai 14, karena kerangka berpikir uji
+      hipotesis yang dibangun di sini berlaku sama untuk uji proporsi, uji ragam, ANOVA, dan regresi.
+    - "### Pendugaan Titik dan Galat Baku"
+    - >
+      \textbf{Pendugaan titik} adalah satu angka yang dipakai menduga parameter populasi: rata-rata
+      contoh menduga rata-rata populasi, dan ragam contoh menduga ragam populasi. Karena berasal dari
+      contoh, nilainya berubah-ubah dari satu contoh ke contoh lain. Keragaman itulah yang diukur oleh
+      \textbf{galat baku}.
+    - "\\begin{kotakrumus}\n\\textbf{Rumus pokok.}\\\\[3pt]\nGalat baku rata-rata:\\quad $SE = \\dfrac{s}{\\sqrt{n}}$\\\\[5pt]\nSelang kepercayaan satu populasi:\\quad $\\bar{x} \\pm t_{\\alpha/2,\\,n-1} \\cdot \\dfrac{s}{\\sqrt{n}}$\\\\[5pt]\nStatistik uji t satu contoh:\\quad $t = \\dfrac{\\bar{x} - \\mu_0}{s/\\sqrt{n}}$\\\\[5pt]\nUkuran pengaruh:\\quad $d = \\dfrac{\\bar{x}_1 - \\bar{x}_2}{s_{gabungan}}$\n\\end{kotakrumus}"
+    - >
+      Perhatikan bahwa galat baku mengecil seiring membesarnya ukuran contoh, mengikuti akar n. Inilah
+      alasan matematis mengapa contoh yang lebih besar menghasilkan pendugaan yang lebih teliti - dan
+      juga mengapa menggandakan ketelitian menuntut ukuran contoh empat kali lipat.
+    - "### Pendugaan Selang"
+    - >
+      \textbf{Pendugaan selang} menyatakan rentang nilai yang masuk akal bagi parameter beserta tingkat
+      keyakinannya. Selang 95 persen berarti: bila penarikan contoh diulang berkali-kali dan selang
+      dihitung dengan cara yang sama setiap kali, sekitar 95 persen di antaranya akan memuat parameter
+      yang sebenarnya.
+    - "\\begin{kotaksalah}[Salah menafsirkan selang kepercayaan]\nSelang kepercayaan 95 persen \\textbf{bukan} berarti ada peluang 95 persen parameter berada di dalam selang tertentu yang sudah dihitung. Parameter populasi bernilai tetap, bukan peubah acak; yang berubah-ubah adalah selangnya. Tingkat keyakinan melekat pada \\emph{prosedurnya}, bukan pada satu selang tertentu. Ini kekeliruan penafsiran yang sangat sering dijumpai, termasuk dalam laporan resmi.\n\\end{kotaksalah}"
+    - "### Kerangka Uji Hipotesis"
+    - >
+      Setiap pengujian mengikuti lima langkah yang sama. \textbf{Pertama}, rumuskan hipotesis nol yang
+      menyatakan tidak ada perbedaan, dan hipotesis tandingan yang menyatakan sebaliknya.
+      \textbf{Kedua}, tetapkan taraf nyata, lazimnya 0,05. \textbf{Ketiga}, hitung statistik uji dari
+      data. \textbf{Keempat}, tentukan nilai-p atau bandingkan dengan nilai kritis. \textbf{Kelima},
+      ambil keputusan dan nyatakan kesimpulannya dalam konteks masalah.
+    - "\\begin{kotakinfo}[Dua jenis galat]\n\\begin{tabular}{@{}lll@{}}\n & \\textbf{$H_0$ benar} & \\textbf{$H_0$ salah}\\\\\nTolak $H_0$ & Galat Jenis I ($\\alpha$) & Keputusan benar\\\\\nTidak tolak $H_0$ & Keputusan benar & Galat Jenis II ($\\beta$)\\\\\n\\end{tabular}\\\\[4pt]\nKuasa uji $= 1 - \\beta$, yaitu peluang menolak $H_0$ ketika memang seharusnya ditolak.\n\\end{kotakinfo}"
+    - >
+      \textbf{Memaknai nilai-p.} Nilai-p adalah peluang memperoleh data seekstrem yang teramati atau
+      lebih ekstrem, \emph{dengan anggapan hipotesis nol benar}. Nilai-p yang kecil berarti data yang
+      teramati sulit dijelaskan bila hipotesis nol benar, sehingga hipotesis nol diragukan.
+    - "\\begin{kotaksalah}[Salah memaknai nilai-p]\nNilai-p \\textbf{bukan} peluang hipotesis nol benar, dan \\textbf{bukan} pula peluang hasilnya kebetulan. Selain itu, gagal menolak hipotesis nol \\textbf{tidak membuktikan} hipotesis nol benar - ia hanya berarti bukti yang ada belum cukup. Karena itu tuliskan kesimpulan sebagai ``belum cukup bukti'', bukan ``terbukti tidak ada perbedaan''.\n\\end{kotaksalah}"
+    - "### Tiga Bentuk Uji t"
+    - "\\begin{kotakinfo}[Memilih bentuk uji t]\n\\begin{tabular}{@{}lll@{}}\n\\textbf{Keadaan data} & \\textbf{Bentuk uji} & \\textbf{Perintah R}\\\\\nSatu kelompok vs nilai acuan & satu contoh & \\texttt{t.test(x, mu = )}\\\\\nDua kelompok berbeda subjek & dua contoh bebas & \\texttt{t.test(x \\textasciitilde{} g, data = )}\\\\\nSubjek sama diukur dua kali & berpasangan & \\texttt{t.test(x, y, paired = TRUE)}\\\\\n\\end{tabular}\n\\end{kotakinfo}"
+    - >
+      \textbf{Asumsi.} Ketiga bentuk mengandaikan data menyebar mendekati normal, terutama pada contoh
+      berukuran kecil. Untuk dua contoh bebas, terdapat pilihan mengandaikan ragam kedua populasi sama
+      atau tidak. Secara bawaan R memakai uji Welch yang \emph{tidak} mengandaikan ragam sama, dan ini
+      justru pilihan yang lebih aman.
+    - "\\begin{kotaksalah}[Salah memilih bentuk uji]\nMenggunakan uji dua contoh bebas pada data berpasangan adalah kekeliruan yang serius: ia mengabaikan keterkaitan antar-pengukuran sehingga kehilangan ketelitian dan sering gagal mendeteksi perbedaan yang sebenarnya ada. Tanyakan selalu: apakah kedua kelompok angka berasal dari \\textbf{subjek yang sama}? Bila ya, gunakan uji berpasangan.\n\\end{kotaksalah}"
+    - "\\begin{kotaktips}\nKebermaknaan statistik tidak sama dengan kebermaknaan praktis. Pada contoh yang sangat besar, perbedaan sekecil apa pun dapat menghasilkan nilai-p yang kecil. Karena itu selalu laporkan pula \\textbf{besar perbedaannya}, \\textbf{selang kepercayaannya}, dan bila perlu \\textbf{ukuran pengaruhnya}, lalu nilai apakah perbedaan itu berarti dalam konteks masalahnya.\n\\end{kotaktips}"
+  contoh:
+    - contoh: "Pendugaan titik dan galat baku"
+      kode_r: "pel <- read.csv(\"data/data_pelatihan.csv\")\nx <- pel$nilai_post\nn <- length(x)\nc(n = n,\n  rata = mean(x),\n  ragam = var(x),\n  sd = sd(x),\n  se = sd(x) / sqrt(n)) |> round(3)"
+      judul_r: "mean, var, sd, dan galat baku"
+      eval: true
+      penjelasan: >
+        Data dibaca lalu kolom nilai sesudah pelatihan disimpan ke peubah x agar tidak ditulis berulang.
+        Banyaknya amatan dihitung dengan length. Kelima besaran digabung menjadi satu vektor bernama
+        dengan fungsi c sehingga tercetak rapi berdampingan. Galat baku dihitung sesuai rumusnya, yaitu
+        simpangan baku dibagi akar banyaknya amatan. Hasilnya dialirkan ke round untuk pembulatan.
+      interpretasi: >
+        Rata-rata contoh adalah pendugaan titik bagi rata-rata populasi, dan ragam contoh menduga ragam
+        populasi. Perhatikan bahwa galat baku jauh lebih kecil daripada simpangan baku: simpangan baku
+        mengukur keragaman antar-amatan, sedangkan galat baku mengukur keragaman rata-rata contoh
+        antar-penarikan contoh. Galat baku inilah yang menentukan lebar selang kepercayaan.
+    - contoh: "Pengaruh ukuran contoh terhadap galat baku"
+      kode_r: "set.seed(2025)\nsim <- sapply(c(10, 30, 60, 120, 240), function(n) {\n  s <- sd(pel$nilai_post)\n  s / sqrt(n)\n})\nnames(sim) <- c(\"n=10\", \"n=30\", \"n=60\", \"n=120\", \"n=240\")\nround(sim, 3)\n# menggandakan ketelitian menuntut n empat kali lipat\nround(sim[\"n=30\"] / sim[\"n=120\"], 2)"
+      judul_r: "galat baku menurut n"
+      eval: true
+      penjelasan: >
+        Fungsi sapply menerapkan fungsi anonim ke beberapa nilai ukuran contoh sekaligus - penerapan
+        keterampilan Modul 3. Di dalamnya simpangan baku data dipakai tetap, sedangkan pembaginya
+        berubah mengikuti akar n. Nama tiap unsur diberikan dengan names agar keluarannya mudah dibaca.
+        Baris terakhir membandingkan galat baku pada n sama dengan 30 terhadap n sama dengan 120.
+      interpretasi: >
+        Galat baku mengecil seiring membesarnya ukuran contoh, tetapi tidak sebanding lurus. Perbandingan
+        terakhir bernilai sekitar dua: melipatempatkan ukuran contoh hanya menggandakan ketelitiannya.
+        Inilah dasar pertimbangan biaya dalam perencanaan survei - menambah contoh selalu meningkatkan
+        ketelitian, tetapi dengan hasil yang makin menurun.
+    - contoh: "Pendugaan selang untuk satu populasi"
+      kode_r: "uji1 <- t.test(pel$nilai_post, conf.level = 0.95)\nuji1$conf.int\n# perhitungan manual sebagai pemeriksaan\nm <- mean(x); s <- sd(x); n <- length(x)\nt_kritis <- qt(0.975, df = n - 1)\nc(bawah = m - t_kritis * s / sqrt(n),\n  atas  = m + t_kritis * s / sqrt(n)) |> round(3)"
+      judul_r: "selang kepercayaan dan pemeriksaan manual"
+      eval: true
+      penjelasan: >
+        Fungsi t.test dipanggil dengan satu vektor dan menghasilkan objek berisi banyak komponen;
+        komponen conf.int memuat batas bawah dan atas selang. Bagian kedua menghitungnya secara manual:
+        nilai kritis diambil dengan qt pada peluang 0,975 dengan derajat bebas n dikurangi satu - inilah
+        penerapan langsung fungsi kuantil dari Modul 7. Batas selang dihitung sesuai rumus, lalu
+        dibandingkan dengan hasil t.test.
+      interpretasi: >
+        Kedua cara menghasilkan angka yang sama, membuktikan bahwa t.test sekadar mengotomatiskan rumus
+        yang sudah kita kenal. Selang ini menyatakan rentang nilai rata-rata populasi yang masuk akal
+        berdasarkan data. Ingat penafsirannya: tingkat keyakinan melekat pada prosedurnya, bukan pada
+        satu selang tertentu yang sudah dihitung.
+    - contoh: "Pengaruh tingkat keyakinan terhadap lebar selang"
+      kode_r: "for (k in c(0.90, 0.95, 0.99)) {\n  ci <- t.test(pel$nilai_post, conf.level = k)$conf.int\n  cat(sprintf(\"%.0f persen: [%.2f ; %.2f]  lebar = %.2f\\n\",\n              k * 100, ci[1], ci[2], diff(ci)))\n}"
+      judul_r: "tiga tingkat keyakinan"
+      eval: true
+      penjelasan: >
+        Perulangan menelusuri tiga tingkat keyakinan. Pada tiap putaran, t.test dipanggil dengan
+        conf.level yang berbeda lalu komponen conf.int langsung diambil dengan tanda dolar. Fungsi
+        sprintf memformat keluaran agar sejajar, dan diff menghitung lebar selang sebagai selisih kedua
+        batasnya.
+      interpretasi: >
+        Makin tinggi tingkat keyakinan, makin lebar selangnya. Ini pertukaran yang tak terhindarkan:
+        keyakinan yang lebih besar menuntut rentang yang lebih longgar, sehingga pendugaannya menjadi
+        kurang tajam. Tingkat 95 persen lazim dipakai karena dipandang menyeimbangkan keduanya, tetapi
+        pilihan ini adalah konvensi, bukan ketentuan matematis.
+    - contoh: "Memeriksa asumsi kenormalan"
+      kode_r: "par(mfrow = c(1, 2))\nhist(x, breaks = 10, col = \"#0B6FB4\", border = \"white\",\n     main = \"Histogram nilai_post\", xlab = \"nilai\")\nqqnorm(x, pch = 19, col = \"#0B6FB4\", main = \"Q-Q Normal\"); qqline(x, col = \"#F58220\", lwd = 2)\npar(mfrow = c(1, 1))\nshapiro.test(x)"
+      judul_r: "histogram, Q-Q plot, dan Shapiro-Wilk"
+      eval: true
+      penjelasan: >
+        Daerah gambar dibagi dua secara berdampingan. Histogram menampilkan bentuk sebaran, sedangkan
+        qqnorm menggambar kuantil data terhadap kuantil normal dan qqline menambahkan garis acuannya.
+        Fungsi shapiro.test melakukan uji formal kenormalan; hipotesis nolnya menyatakan data berasal
+        dari populasi normal, sehingga nilai-p yang besar justru mendukung asumsi kenormalan.
+      interpretasi: >
+        Pemeriksaan asumsi sebaiknya memadukan gambar dan uji formal. Bila titik pada diagram
+        kuantil-kuantil mengikuti garis lurus dan nilai-p uji Shapiro-Wilk lebih besar dari taraf nyata,
+        asumsi kenormalan dapat diterima. Perlu diingat bahwa pada contoh besar uji formal menjadi sangat
+        peka sehingga menolak kenormalan untuk penyimpangan yang sepele; karena itu gambarnya tetap
+        penting.
+    - contoh: "Perhitungan manual uji t satu sampel"
+      kode_r: "x  <- pel$nilai_post\nmu0 <- 70\nn  <- length(x)\nxbar <- mean(x)\ns    <- sd(x)\ndb   <- n - 1\n\n# Langkah 1: galat baku\nse <- s / sqrt(n)\n# Langkah 2: statistik uji\nt_hitung <- (xbar - mu0) / se\n# Langkah 3: nilai kritis (dua arah, alpha = 0,05) -> fungsi q dari Modul 7\nt_kritis <- qt(1 - 0.05/2, df = db)\n# Langkah 4: nilai-p (dua arah) -> fungsi p dari Modul 7\np_value <- 2 * pt(-abs(t_hitung), df = db)\n\nround(c(n = n, xbar = xbar, s = s, se = se, db = db,\n        t_hitung = t_hitung, t_kritis = t_kritis, p_value = p_value), 5)"
+      judul_r: "empat langkah perhitungan manual"
+      eval: true
+      penjelasan: >
+        Seluruh besaran dihitung dari nol tanpa memanggil t.test. Langkah pertama menghitung galat baku
+        sesuai rumusnya. Langkah kedua menghitung statistik uji, yaitu selisih rata-rata contoh terhadap
+        nilai acuan dibagi galat baku. Langkah ketiga memakai qt dari Modul 7 untuk memperoleh nilai
+        kritis; peluangnya ditulis satu dikurangi alpha dibagi dua karena pengujian dua arah. Langkah
+        keempat memakai pt untuk menghitung luas di ekor; tanda negatif pada nilai mutlak memastikan
+        yang diambil ekor kiri, lalu dikali dua karena kedua ekor diperhitungkan.
+      interpretasi: >
+        Inilah seluruh isi uji t satu sampel. Fungsi t.test sesungguhnya hanya mengotomatiskan keempat
+        langkah ini. Perhatikan peran kedua fungsi sebaran dari Modul 7: qt mengubah peluang menjadi
+        nilai kritis, dan pt mengubah nilai statistik menjadi peluang - keduanya berkebalikan.
+        Bandingkan angka t hitung dan nilai-p di sini dengan keluaran t.test pada contoh sebelumnya;
+        keduanya harus sama persis.
+    - contoh: "Membandingkan hasil manual dengan t.test"
+      kode_r: "otomatis <- t.test(x, mu = mu0)\nbanding <- rbind(\n  manual   = c(t = t_hitung, db = db, p = p_value),\n  t.test   = c(t = unname(otomatis$statistic),\n               db = unname(otomatis$parameter),\n               p = otomatis$p.value))\nround(banding, 6)\n# selisihnya praktis nol\nall.equal(t_hitung, unname(otomatis$statistic))\nall.equal(p_value, otomatis$p.value)"
+      judul_r: "membuktikan kesamaan hasil"
+      eval: true
+      penjelasan: >
+        Hasil t.test disimpan lebih dahulu. Fungsi rbind menyusun dua baris menjadi matriks agar
+        perbandingannya mudah dibaca; unname membuang nama bawaan komponen hasil uji supaya penataannya
+        rapi. Dua baris terakhir memakai all.equal yang membandingkan dua bilangan dengan toleransi
+        ketelitian mesin, bukan tanda sama dengan ganda yang menuntut kesamaan mutlak.
+      interpretasi: >
+        Kedua pendekatan menghasilkan angka yang identik, dan all.equal mengembalikan nilai benar. Ini
+        menegaskan bahwa fungsi bawaan bukanlah kotak hitam: ia mengerjakan rumus yang sama dengan yang
+        baru saja kita tulis sendiri. Memahami hal ini penting agar Anda dapat menelusuri kekeliruan
+        ketika keluaran fungsi terasa janggal, dan dapat menyesuaikan perhitungan bila menghadapi
+        keadaan yang tidak tersedia fungsinya.
+    - contoh: "Nilai kritis dan daerah penolakan"
+      kode_r: "alpha <- 0.05\ndb <- length(x) - 1\nt_kritis <- qt(1 - alpha/2, df = db)\ncat(\"Nilai kritis dua arah: +/-\", round(t_kritis, 4), \"\\n\")\ncat(\"Nilai kritis satu arah:\", round(qt(1 - alpha, df = db), 4), \"\\n\")\n\ncurve(dt(x, df = db), from = -4, to = 4, lwd = 2, col = \"#123A6B\",\n      ylab = \"kepekatan\", xlab = \"nilai t\",\n      main = paste0(\"Sebaran t (db = \", db, \") dan daerah penolakan\"))\n# arsir kedua ekor sebagai daerah penolakan\nxk <- seq(t_kritis, 4, length.out = 200)\npolygon(c(t_kritis, xk, 4), c(0, dt(xk, db), 0), col = \"#F5822060\", border = NA)\nxk2 <- seq(-4, -t_kritis, length.out = 200)\npolygon(c(-4, xk2, -t_kritis), c(0, dt(xk2, db), 0), col = \"#F5822060\", border = NA)\nabline(v = c(-t_kritis, t_kritis), col = \"#F58220\", lty = 2, lwd = 2)\nabline(v = t_hitung, col = \"#00A651\", lwd = 2)\nlegend(\"topright\", c(\"nilai kritis\", \"t hitung\"),\n       col = c(\"#F58220\", \"#00A651\"), lty = c(2, 1), lwd = 2, bty = \"n\")"
+      judul_r: "qt dan daerah penolakan"
+      eval: true
+      penjelasan: >
+        Nilai kritis dua arah dan satu arah dihitung dengan qt lalu dicetak sebagai pembanding. Kurva
+        sebaran t digambar dengan curve memakai derajat bebas data. Kedua ekor diarsir dengan polygon:
+        rangkaian titik disusun mulai dari batas di sumbu nol, menyusuri kurva, lalu turun kembali -
+        teknik yang sama dengan arsiran kurva normal pada Modul 7. Dua garis putus-putus menandai batas
+        kritis, dan satu garis pejal menandai posisi statistik uji.
+      interpretasi: >
+        Gambar ini menerjemahkan keputusan uji menjadi bentuk yang kasatmata. Bila garis hijau jatuh di
+        dalam daerah berarsir, statistik uji berada di daerah penolakan sehingga hipotesis nol ditolak;
+        bila di luar, hipotesis nol tidak ditolak. Perhatikan bahwa nilai kritis satu arah lebih kecil
+        daripada dua arah, karena seluruh taraf nyata dipusatkan di satu ekor saja - inilah sebabnya uji
+        satu arah lebih mudah menolak hipotesis nol dan karenanya arahnya harus ditetapkan sebelum
+        melihat data.
+    - contoh: "Menghitung nilai-p sebagai luas di bawah kurva"
+      kode_r: "# nilai-p DUA ARAH: dua kali luas ekor di luar |t hitung|\np_dua  <- 2 * pt(-abs(t_hitung), df = db)\n# nilai-p SATU ARAH kanan: luas ekor kanan saja\np_kanan <- 1 - pt(t_hitung, df = db)\n# nilai-p SATU ARAH kiri\np_kiri  <- pt(t_hitung, df = db)\nround(c(dua_arah = p_dua, satu_kanan = p_kanan, satu_kiri = p_kiri), 5)\n# pemeriksaan: ketiga peluang harus konsisten\nround(p_kanan + p_kiri, 6)          # = 1\nround(p_dua / 2, 6); round(min(p_kanan, p_kiri), 6)   # sama\n\ncurve(dt(x, df = db), from = -4, to = 4, lwd = 2, col = \"#123A6B\",\n      ylab = \"kepekatan\", xlab = \"nilai t\", main = \"Nilai-p sebagai luas ekor\")\nxa <- seq(abs(t_hitung), 4, length.out = 200)\npolygon(c(abs(t_hitung), xa, 4), c(0, dt(xa, db), 0), col = \"#0B6FB460\", border = NA)\nxb <- seq(-4, -abs(t_hitung), length.out = 200)\npolygon(c(-4, xb, -abs(t_hitung)), c(0, dt(xb, db), 0), col = \"#0B6FB460\", border = NA)\nabline(v = c(-abs(t_hitung), abs(t_hitung)), col = \"#0B6FB4\", lwd = 2)"
+      judul_r: "pt untuk nilai-p satu dan dua arah"
+      eval: true
+      penjelasan: >
+        Tiga bentuk nilai-p dihitung dengan fungsi pt. Nilai-p dua arah mengambil luas ekor kiri di
+        bawah negatif nilai mutlak statistik lalu dikali dua, memanfaatkan kesetangkupan sebaran t.
+        Nilai-p satu arah kanan adalah satu dikurangi peluang kumulatif, sedangkan yang kiri adalah
+        peluang kumulatifnya sendiri. Tiga baris pemeriksaan menegaskan hubungan di antara ketiganya.
+        Bagian penggambaran mengarsir kedua ekor di luar posisi statistik uji.
+      interpretasi: >
+        Daerah berarsir pada gambar itulah nilai-p secara harfiah: peluang memperoleh statistik uji
+        seekstrem yang teramati atau lebih ekstrem bila hipotesis nol benar. Makin kecil luasnya, makin
+        janggal data yang teramati bila hipotesis nol dianggap benar. Pemeriksaan di baris tengah
+        menunjukkan bahwa nilai-p dua arah tepat dua kali nilai-p satu arah pada sisi yang sesuai - ini
+        menjelaskan secara matematis mengapa uji satu arah menghasilkan nilai-p separuhnya.
+    - contoh: "Dua cara mengambil keputusan"
+      kode_r: "cat(\"=== Pendekatan nilai kritis ===\\n\")\ncat(\"|t hitung| =\", round(abs(t_hitung), 4),\n    \" vs t kritis =\", round(t_kritis, 4), \"\\n\")\ncat(\"Keputusan :\",\n    ifelse(abs(t_hitung) > t_kritis, \"tolak H0\", \"tidak tolak H0\"), \"\\n\\n\")\n\ncat(\"=== Pendekatan nilai-p ===\\n\")\ncat(\"nilai-p =\", round(p_dua, 5), \" vs alpha =\", alpha, \"\\n\")\ncat(\"Keputusan :\",\n    ifelse(p_dua < alpha, \"tolak H0\", \"tidak tolak H0\"), \"\\n\")"
+      judul_r: "nilai kritis vs nilai-p"
+      eval: true
+      penjelasan: >
+        Dua pendekatan pengambilan keputusan disandingkan. Pendekatan pertama membandingkan nilai mutlak
+        statistik uji terhadap nilai kritis. Pendekatan kedua membandingkan nilai-p terhadap taraf nyata.
+        Keduanya memakai ifelse untuk mengubah hasil perbandingan menjadi kalimat keputusan, dan cat
+        menyusun tampilannya dalam dua bagian bertanda judul.
+      interpretasi: >
+        Kedua pendekatan selalu menghasilkan keputusan yang sama, karena keduanya sesungguhnya
+        membandingkan hal yang sama dari arah berlawanan: yang satu di sumbu nilai t, yang lain di sumbu
+        peluang. Pendekatan nilai kritis lebih mudah digambarkan, sedangkan pendekatan nilai-p lebih
+        informatif karena menyatakan seberapa kuat buktinya, bukan sekadar melewati batas atau tidak.
+        Publikasi modern umumnya melaporkan nilai-p disertai selang kepercayaan.
+    - contoh: "Ringkasan dua kelompok sebelum pengujian"
+      kode_r: "suppressPackageStartupMessages(library(dplyr))\npel |>\n  group_by(kelompok) |>\n  summarise(n = n(),\n            rata = round(mean(nilai_post), 2),\n            sd = round(sd(nilai_post), 2),\n            se = round(sd(nilai_post) / sqrt(n()), 3),\n            .groups = \"drop\")\nboxplot(nilai_post ~ kelompok, data = pel,\n        col = c(\"#0B6FB4\", \"#F58220\"), ylab = \"Nilai sesudah\")"
+      judul_r: "deskripsi mendahului inferensia"
+      eval: true
+      penjelasan: >
+        Data dikelompokkan menurut kelompok perlakuan lalu diringkas dengan dplyr, mencakup banyaknya
+        amatan, rata-rata, simpangan baku, dan galat baku tiap kelompok. Setelah itu diagram kotak-garis
+        digambar dengan bentuk rumus agar kedua kelompok tampil berdampingan.
+      interpretasi: >
+        Langkah ini wajib dilakukan sebelum pengujian. Tabel memberi besaran perbedaannya, sedangkan
+        gambar memperlihatkan tumpang tindih sebaran kedua kelompok. Bila kotak keduanya sangat tumpang
+        tindih, kita sudah dapat menduga bahwa pengujian tidak akan menemukan perbedaan bermakna -
+        pengujian kemudian berfungsi memastikan dugaan itu secara formal.
+    - contoh: "Perhitungan manual uji t dua sampel"
+      kode_r: "a <- pel$nilai_post[pel$kelompok == \"Kontrol\"]\nb <- pel$nilai_post[pel$kelompok == \"Perlakuan\"]\nna <- length(a); nb <- length(b)\n\n# --- versi Student: ragam dianggap SAMA (ragam gabungan) ---\ns2_gab <- ((na - 1) * var(a) + (nb - 1) * var(b)) / (na + nb - 2)\nse_stu <- sqrt(s2_gab * (1/na + 1/nb))\nt_stu  <- (mean(a) - mean(b)) / se_stu\ndb_stu <- na + nb - 2\np_stu  <- 2 * pt(-abs(t_stu), df = db_stu)\n\n# --- versi Welch: ragam TIDAK dianggap sama ---\nse_wel <- sqrt(var(a)/na + var(b)/nb)\nt_wel  <- (mean(a) - mean(b)) / se_wel\ndb_wel <- (var(a)/na + var(b)/nb)^2 /\n          ((var(a)/na)^2/(na-1) + (var(b)/nb)^2/(nb-1))\np_wel  <- 2 * pt(-abs(t_wel), df = db_wel)\n\nround(rbind(Student = c(t = t_stu, db = db_stu, p = p_stu),\n            Welch   = c(t = t_wel, db = db_wel, p = p_wel)), 5)"
+      judul_r: "ragam gabungan dan derajat bebas Welch"
+      eval: true
+      penjelasan: >
+        Kedua kelompok dipisahkan lebih dahulu dengan penyaringan. Versi Student menghitung ragam
+        gabungan sebagai rata-rata tertimbang kedua ragam dengan bobot derajat bebasnya, lalu galat baku
+        selisih diperoleh dari ragam gabungan dikali jumlah kebalikan kedua ukuran contoh; derajat
+        bebasnya bilangan bulat. Versi Welch tidak menggabungkan ragam melainkan menjumlahkan ragam
+        masing-masing yang sudah dibagi ukuran contohnya, dan derajat bebasnya dihitung dengan rumus
+        Welch-Satterthwaite yang menghasilkan bilangan pecahan. Nilai-p kedua versi dihitung dengan pt.
+      interpretasi: >
+        Perhatikan bahwa derajat bebas Welch berupa bilangan pecahan dan lebih kecil daripada derajat
+        bebas Student - inilah harga yang dibayar karena tidak mengandaikan ragam sama. Ketika ragam
+        kedua kelompok mirip, kedua versi menghasilkan angka yang berdekatan sehingga pilihannya tidak
+        banyak berpengaruh. Rumus derajat bebas Welch inilah yang menjelaskan mengapa keluaran t.test
+        bawaan menampilkan derajat bebas yang tidak bulat.
+    - contoh: "Memeriksa perhitungan manual dua sampel"
+      kode_r: "banding <- rbind(\n  manual_Student = c(t = t_stu, db = db_stu, p = p_stu),\n  Rfungsi_Student = {u <- t.test(a, b, var.equal = TRUE)\n                     c(unname(u$statistic), unname(u$parameter), u$p.value)},\n  manual_Welch   = c(t = t_wel, db = db_wel, p = p_wel),\n  Rfungsi_Welch  = {u <- t.test(a, b)\n                    c(unname(u$statistic), unname(u$parameter), u$p.value)})\nround(banding, 6)"
+      judul_r: "manual vs t.test untuk kedua versi"
+      eval: true
+      penjelasan: >
+        Fungsi rbind menyusun empat baris menjadi satu matriks pembanding. Dua di antaranya memakai blok
+        kode di dalam kurung kurawal yang menjalankan t.test lalu langsung mengambil ketiga komponennya;
+        blok semacam ini mengembalikan nilai baris terakhirnya. Fungsi unname dipakai agar nama bawaan
+        komponen tidak mengacaukan penataan kolom.
+      interpretasi: >
+        Baris manual dan baris fungsi R berpasangan persis untuk kedua versi. Ini membuktikan bahwa
+        rumus ragam gabungan maupun rumus derajat bebas Welch yang kita tulis sudah benar. Kemampuan
+        memeriksa silang seperti ini sangat berguna ketika Anda harus menerapkan uji pada keadaan khusus
+        yang belum tersedia fungsinya, misalnya pada data ringkasan yang hanya diketahui rata-rata,
+        simpangan baku, dan ukuran contohnya.
+    - contoh: "Perhitungan manual uji t berpasangan"
+      kode_r: "d <- pel$nilai_post - pel$nilai_pre      # selisih tiap pasangan\nnd <- length(d)\ndbar <- mean(d); sd_d <- sd(d)\nse_d <- sd_d / sqrt(nd)\nt_pair <- dbar / se_d                    # diuji terhadap nol\ndb_pair <- nd - 1\np_pair <- 2 * pt(-abs(t_pair), df = db_pair)\nkritis <- qt(0.975, df = db_pair)\nselang <- c(dbar - kritis * se_d, dbar + kritis * se_d)\n\nround(c(n = nd, rata_selisih = dbar, sd_selisih = sd_d, se = se_d,\n        t = t_pair, db = db_pair, p = p_pair,\n        ci_bawah = selang[1], ci_atas = selang[2]), 5)"
+      judul_r: "uji berpasangan sebagai uji satu contoh"
+      eval: true
+      penjelasan: >
+        Selisih tiap pasangan dihitung lebih dahulu, dan sejak titik ini persoalannya berubah menjadi
+        uji satu contoh terhadap nilai nol. Rata-rata dan simpangan baku selisih dihitung seperti biasa,
+        lalu galat bakunya. Statistik uji adalah rata-rata selisih dibagi galat bakunya, tanpa pengurang
+        karena nilai acuannya nol. Nilai-p dihitung dengan pt dan selang kepercayaan disusun memakai
+        nilai kritis dari qt.
+      interpretasi: >
+        Inilah kunci memahami uji berpasangan: ia bukan uji yang benar-benar baru, melainkan uji satu
+        contoh yang diterapkan pada selisih. Karena keragaman antar-subjek sudah tersingkir saat
+        pengurangan, galat bakunya menjadi lebih kecil sehingga statistik uji membesar - inilah alasan
+        matematis mengapa uji berpasangan lebih peka. Bandingkan seluruh angka di sini dengan keluaran
+        t.test berpasangan pada contoh sebelumnya.
+    - contoh: "Menyusun fungsi uji t sendiri"
+      kode_r: "uji_t_manual <- function(x, mu0 = 0, alpha = 0.05,\n                         arah = c(\"dua\", \"kanan\", \"kiri\")) {\n  arah <- match.arg(arah)\n  n <- length(x); db <- n - 1\n  se <- sd(x) / sqrt(n)\n  t  <- (mean(x) - mu0) / se\n  p <- switch(arah,\n              dua   = 2 * pt(-abs(t), db),\n              kanan = 1 - pt(t, db),\n              kiri  = pt(t, db))\n  kritis <- switch(arah,\n                   dua   = qt(1 - alpha/2, db),\n                   kanan = qt(1 - alpha, db),\n                   kiri  = qt(alpha, db))\n  list(t = t, db = db, p = p, kritis = kritis,\n       keputusan = ifelse(p < alpha, \"tolak H0\", \"tidak tolak H0\"))\n}\n\nhasil <- uji_t_manual(pel$nilai_post, mu0 = 70)\nstr(hasil)\n# bandingkan dengan fungsi bawaan\nround(c(manual = hasil$t, bawaan = unname(t.test(pel$nilai_post, mu = 70)$statistic)), 6)"
+      judul_r: "fungsi sendiri memakai qt dan pt"
+      eval: true
+      penjelasan: >
+        Fungsi dibuat dengan argumen bernilai bawaan sehingga dapat dipanggil secara ringkas. Argumen
+        arah diberi vektor pilihan lalu match.arg memastikan hanya salah satu yang dipakai sekaligus
+        mengizinkan penulisan singkat. Fungsi switch memilih rumus nilai-p dan nilai kritis sesuai arah
+        pengujian - penerapan langsung keterampilan Modul 3. Hasilnya dikembalikan sebagai list berisi
+        lima komponen, dan keputusan dibentuk dengan ifelse.
+      interpretasi: >
+        Fungsi ini merangkum seluruh gagasan modul: rumus statistik uji, pemakaian pt untuk nilai-p, qt
+        untuk nilai kritis, dan aturan keputusan. Menuliskannya sendiri memastikan tidak ada bagian yang
+        sekadar dihafal. Perbandingan di baris terakhir menegaskan hasilnya sama dengan fungsi bawaan.
+        Fungsi semacam ini juga menjadi kerangka yang mudah diperluas, misalnya ditambah perhitungan
+        selang kepercayaan atau ukuran pengaruh.
+    - contoh: "Pendugaan selang untuk selisih dan ukuran pengaruh"
+      kode_r: "# selang bagi selisih dua kelompok bebas\nt.test(nilai_post ~ kelompok, data = pel)$conf.int\n# ukuran pengaruh Cohen d (dihitung sendiri)\ncohen_d <- function(a, b) {\n  na <- length(a); nb <- length(b)\n  s_gab <- sqrt(((na - 1) * var(a) + (nb - 1) * var(b)) / (na + nb - 2))\n  (mean(a) - mean(b)) / s_gab\n}\nk <- pel$nilai_post[pel$kelompok == \"Kontrol\"]\np <- pel$nilai_post[pel$kelompok == \"Perlakuan\"]\nround(cohen_d(p, k), 3)"
+      judul_r: "selang selisih dan Cohen d"
+      eval: true
+      penjelasan: >
+        Komponen conf.int diambil langsung dari hasil uji untuk memperoleh selang bagi selisih rata-rata.
+        Selanjutnya fungsi ukuran pengaruh dibuat sendiri: simpangan baku gabungan dihitung sebagai akar
+        dari rata-rata tertimbang kedua ragam, lalu selisih rata-rata dibagi dengannya. Kedua kelompok
+        diambil dengan penyaringan berdasarkan nilai kolom kelompok.
+      interpretasi: >
+        Ukuran pengaruh menyatakan besar perbedaan dalam satuan simpangan baku sehingga tidak bergantung
+        pada satuan asli maupun ukuran contoh. Sebagai patokan kasar, nilai sekitar 0,2 dipandang kecil,
+        0,5 sedang, dan 0,8 besar. Melaporkan ukuran pengaruh bersama nilai-p mencegah kekeliruan yang
+        lazim, yaitu menyimpulkan perbedaan itu penting hanya karena nilai-p kecil.
+  latihan:
+    - "Kerjakan bertahap. **Dasar** melengkapi kode; **Menengah** menulis sendiri dan membetulkan kode; **Lanjut** menyusun laporan inferensia. Gunakan `data/data_pelatihan.csv`. Untuk setiap pengujian, **tuliskan hipotesisnya lebih dahulu**."
+    - "#### Tingkat Dasar (melengkapi kode)"
+    - "\\latihan{Pendugaan titik dan galat baku}"
+    - "```{r eval=FALSE}\npel <- read.csv(\"data/data_pelatihan.csv\")\nx <- pel$jam_belajar\nmean(x)\n____(x)                      # simpangan baku\nsd(x) / ____(length(x))      # galat baku\n```"
+    - "\\latihan{Selang kepercayaan}"
+    - "```{r eval=FALSE}\nt.test(pel$nilai_pre, conf.level = ____)$conf.int   # tingkat 99 persen\n```"
+    - "\\latihan{Memilih bentuk uji}"
+    - "```{r eval=FALSE}\n# (a) menguji apakah rata-rata nilai_pre berbeda dari 65\nt.test(pel$nilai_pre, ____ = 65)\n# (b) membandingkan nilai_post antara dua kelompok\nt.test(nilai_post ~ ____, data = pel)\n# (c) membandingkan nilai_pre dan nilai_post pada peserta yang sama\nt.test(pel$nilai_post, pel$nilai_pre, ____ = TRUE)\n```"
+    - "#### Tingkat Menengah (menulis sendiri)"
+    - "\\latihan{Pendugaan dan pemeriksaan asumsi}"
+    - "Untuk peubah `jam_belajar`: hitung pendugaan titik (rata-rata dan ragam) beserta galat bakunya, susun selang kepercayaan 95 persen, lalu periksa asumsi kenormalan dengan histogram, diagram kuantil-kuantil, dan uji Shapiro-Wilk. Tuliskan kesimpulan Anda mengenai kelayakan asumsinya."
+    - "\\latihan{Uji dua kelompok lengkap}"
+    - "Uji apakah rata-rata `jam_belajar` berbeda antara `Perkotaan` dan `Perdesaan`. Kerjakan lengkap: tuliskan hipotesis, sajikan ringkasan deskriptif dan diagram kotak-garis, periksa kesamaan ragam dengan `bartlett.test`, jalankan `t.test`, laporkan selang kepercayaan bagi selisih, hitung ukuran pengaruh, lalu tuliskan keputusan dan kesimpulan dalam kalimat."
+    - "\\latihan{Membetulkan kode yang salah}"
+    - "Kode berikut memuat beberapa kesalahan (bentuk uji keliru untuk data berpasangan, argumen nilai acuan salah nama, arah rumus terbalik, dan penafsiran nilai-p yang keliru). Temukan dan perbaiki, lalu jelaskan tiap kesalahannya."
+    - "```{r eval=FALSE}\npel <- read.csv(\"data/data_pelatihan.csv\")\n\n# (a) nilai_pre dan nilai_post berasal dari peserta yang SAMA\nt.test(pel$nilai_post, pel$nilai_pre)\n\n# (b) ingin menguji apakah rata-rata nilai_post berbeda dari 70\nt.test(pel$nilai_post, mean = 70)\n\n# (c) arah rumus terbalik\nt.test(kelompok ~ nilai_post, data = pel)\n\n# (d) penafsiran yang keliru\nu <- t.test(pel$nilai_post, mu = 70)\nif (u$p.value > 0.05) {\n  cat(\"Terbukti rata-rata sama dengan 70\\n\")   # keliru!\n}\n```"
+    - "**Keluaran yang benar.** Setelah diperbaiki, kode menghasilkan keluaran berikut. Gunakan ini untuk memverifikasi perbaikan Anda.\n\n```\n# (a) uji berpasangan\n\tPaired t-test\nt = 3.1541, df = 59, p-value = 0.002533\n\n# (b) argumen yang benar adalah mu\n\tOne Sample t-test\nt = 0.8914, df = 59, p-value = 0.3763\n\n# (c) rumus yang benar: numerik ~ pengelompok\n\tWelch Two Sample t-test\nt = -0.4533, df = 57.230, p-value = 0.6521\n\n# (d) kalimat yang benar\nBelum cukup bukti untuk menyatakan rata-rata berbeda dari 70\n```\n\nCatatan: angka pada (a) sampai (c) mungkin sedikit berbeda bila data dibangkitkan ulang; yang penting **bentuk uji** yang muncul pada baris judul keluaran sudah benar, yaitu berturut-turut *Paired*, *One Sample*, dan *Welch Two Sample*."
+    - "#### Tingkat Lanjut (kasus kecil)"
+    - "\\latihan{Laporan inferensia lengkap}"
+    - "Susun satu laporan lengkap yang menjawab: **apakah pelatihan meningkatkan nilai peserta?** Kerjakan dengan urutan baku: (a) tuliskan hipotesis beserta arah pengujian yang sesuai dan **jelaskan alasan pemilihan arahnya**; (b) sajikan deskripsi dan gambar; (c) periksa asumsi; (d) pilih bentuk uji yang tepat **beserta alasannya**; (e) laporkan statistik uji, nilai-p, selang kepercayaan, dan ukuran pengaruh; (f) tuliskan keputusan dan kesimpulan dalam kalimat yang benar secara statistik, disertai catatan bahwa data merupakan simulasi."
+  penugasan:
+    - "\\begin{kotaktugas}\nSebagai calon analis \\emph{official statistics}, susun laporan inferensia atas data pelatihan tiruan dari \\texttt{data\\_pelatihan.csv} (\\emph{data simulasi}), mencakup pendugaan selang dan tiga bentuk uji rata-rata.\n\\end{kotaktugas}"
+    - "**Konteks.** Sebuah unit menyelenggarakan pelatihan bagi 60 peserta yang terbagi menjadi kelompok kontrol dan kelompok perlakuan. Setiap peserta diukur nilainya sebelum dan sesudah pelatihan, beserta lama jam belajarnya. Anda diminta menilai keefektifan pelatihan tersebut."
+    - "\\tugas{Pendugaan}"
+    - "1. Hitung pendugaan titik (rata-rata dan ragam) beserta galat baku untuk `nilai_pre`, `nilai_post`, dan `jam_belajar`. Sajikan sebagai satu tabel."
+    - "2. Susun selang kepercayaan 90, 95, dan 99 persen bagi rata-rata `nilai_post`. Jelaskan pola lebar selangnya dan mengapa demikian."
+    - "\\tugas{Pemeriksaan asumsi}"
+    - "3. Periksa asumsi kenormalan `nilai_post` pada masing-masing kelompok dengan gambar dan uji formal. Periksa pula kesamaan ragam antar-kelompok. Tuliskan kesimpulan mengenai kelayakan asumsi beserta akibatnya bagi pemilihan uji."
+    - "\\tugas{Tiga bentuk uji}"
+    - "4. **Uji satu sampel:** apakah rata-rata `nilai_post` berbeda dari 70? Tuliskan hipotesis, jalankan uji, dan simpulkan."
+    - "5. **Uji dua sampel bebas:** apakah rata-rata `nilai_post` berbeda antara kelompok Kontrol dan Perlakuan? Laporkan pula selang kepercayaan bagi selisih dan ukuran pengaruhnya."
+    - "6. **Uji berpasangan:** apakah terdapat perubahan nilai antara sebelum dan sesudah pelatihan? Jelaskan **mengapa** bentuk berpasangan yang dipakai, dan tunjukkan apa yang terjadi bila keliru memakai uji dua sampel bebas."
+    - "\\tugas{Laporan}"
+    - "7. Susun laporan R Markdown berisi kode, keluaran, dan interpretasi. Tutup dengan **ringkasan (maksimal 300 kata)** yang menjawab: apakah pelatihan tampak efektif berdasarkan bukti yang ada, seberapa besar pengaruhnya, keterbatasan apa yang perlu diingat, dan **mengapa kesimpulan tidak boleh dinyatakan sebagai pembuktian**. Tegaskan bahwa data merupakan simulasi sehingga tidak menggambarkan keadaan sebenarnya."
+  tambahan:
+    - >
+      Seluruh perhitungan pada bagian Contoh sengaja dikerjakan manual langkah demi langkah agar
+      rumusnya benar-benar dipahami. Bagian ini menyajikan penyelesaian yang sama menggunakan
+      fungsi bawaan R, yang dalam praktik sehari-hari jauh lebih ringkas. Kerjakan bagian ini
+      setelah Anda menyelesaikan Penugasan, lalu bandingkan angkanya dengan hasil manual Anda.
+    - "\\begin{kotakcatatan}\nGunakan fungsi bawaan setelah Anda memahami perhitungan manualnya. Fungsi memang mempercepat pekerjaan, tetapi hanya bermanfaat penuh bila Anda mengetahui apa yang dihitungnya - itulah yang memungkinkan Anda menelusuri kekeliruan ketika keluarannya terasa janggal.\n\\end{kotakcatatan}"
+
+    - contoh: "Uji t satu sampel"
+      kode_r: "# H0: mu = 70   lawan   H1: mu != 70\nuji <- t.test(pel$nilai_post, mu = 70)\nuji"
+      judul_r: "t.test satu contoh"
+      eval: true
+      penjelasan: >
+        Hipotesis dituliskan sebagai komentar lebih dahulu, kebiasaan yang dianjurkan agar pengujian
+        tidak kehilangan arah. Fungsi t.test menerima vektor data dan argumen mu berupa nilai acuan yang
+        diuji. Hasilnya disimpan ke peubah lalu dicetak utuh, sehingga seluruh komponen keluaran dapat
+        dibaca sekaligus.
+      interpretasi: >
+        Keluaran memuat lima bagian penting: statistik t, derajat bebas, nilai-p, selang kepercayaan bagi
+        rata-rata, dan rata-rata contoh. Keputusan diambil dengan membandingkan nilai-p terhadap taraf
+        nyata 0,05. Perhatikan pula bahwa selang kepercayaan dan pengujian saling bersesuaian: bila nilai
+        acuan berada di luar selang, hipotesis nol akan ditolak, dan sebaliknya.
+    - contoh: "Membaca komponen keluaran t.test"
+      kode_r: "str(uji, max.level = 1)\ncat(\"\\nStatistik t :\", round(uji$statistic, 4), \"\\n\")\ncat(\"Derajat bebas:\", round(uji$parameter, 2), \"\\n\")\ncat(\"Nilai-p      :\", round(uji$p.value, 4), \"\\n\")\ncat(\"Selang 95%   : [\", round(uji$conf.int[1], 3), \";\",\n    round(uji$conf.int[2], 3), \"]\\n\")\ncat(\"Keputusan    :\", ifelse(uji$p.value < 0.05, \"tolak H0\", \"tidak tolak H0\"), \"\\n\")"
+      judul_r: "mengambil komponen hasil uji"
+      eval: true
+      penjelasan: >
+        Fungsi str dengan argumen max.level menampilkan daftar komponen objek hasil uji tanpa merinci
+        isinya. Tiap komponen kemudian diambil dengan tanda dolar dan dicetak terpisah memakai cat.
+        Baris terakhir memakai ifelse untuk mengubah nilai-p menjadi keputusan secara otomatis - berguna
+        ketika pengujian harus dilakukan berulang kali dalam laporan.
+      interpretasi: >
+        Hasil uji di R adalah objek list biasa sehingga komponennya dapat diambil dan dipakai lebih
+        lanjut, misalnya untuk menyusun tabel ringkasan beberapa pengujian sekaligus. Kemampuan ini
+        membuat laporan menjadi reproducible: angka pada narasi diambil langsung dari objek hasil, bukan
+        disalin dengan tangan sehingga tidak mungkin keliru ketika datanya diperbarui.
+    - contoh: "Uji satu arah dibandingkan dua arah"
+      kode_r: "dua_arah  <- t.test(pel$nilai_post, mu = 70, alternative = \"two.sided\")\nsatu_arah <- t.test(pel$nilai_post, mu = 70, alternative = \"greater\")\nc(dua_arah = dua_arah$p.value, satu_arah = satu_arah$p.value) |> round(4)\nsatu_arah$conf.int"
+      judul_r: "argumen alternative"
+      eval: true
+      penjelasan: >
+        Argumen alternative menetapkan bentuk hipotesis tandingan. Nilai two.sided menguji perbedaan ke
+        dua arah dan merupakan bawaan. Nilai greater menguji apakah rata-rata lebih besar dari nilai
+        acuan, sedangkan less menguji arah sebaliknya. Kedua nilai-p digabung menjadi satu vektor bernama
+        agar mudah dibandingkan, lalu selang kepercayaan uji satu arah ditampilkan.
+      interpretasi: >
+        Nilai-p uji satu arah adalah separuh nilai-p uji dua arah ketika arah datanya sesuai dugaan.
+        Perhatikan pula selang kepercayaan uji satu arah yang hanya terbatas di satu sisi. Arah pengujian
+        wajib ditetapkan dari pertanyaan penelitian sebelum melihat data; menentukannya setelah melihat
+        hasil demi memperoleh nilai-p yang lebih kecil adalah praktik yang tidak jujur secara ilmiah.
+    - contoh: "Uji t dua sampel independen"
+      kode_r: "# H0: mu_kontrol = mu_perlakuan   lawan   H1: berbeda\nuji2 <- t.test(nilai_post ~ kelompok, data = pel)   # bawaan: Welch\nuji2"
+      judul_r: "t.test dua contoh bebas (Welch)"
+      eval: true
+      penjelasan: >
+        Bentuk rumus dipakai di sini, dibaca sebagai nilai sesudah menurut kelompok, disertai argumen
+        data yang menyebut sumber datanya. Karena argumen var.equal tidak disebutkan, R memakai bawaannya
+        yaitu uji Welch yang tidak mengandaikan ragam kedua populasi sama. Derajat bebasnya karena itu
+        berupa bilangan pecahan, bukan bilangan bulat.
+      interpretasi: >
+        Keluaran memuat rata-rata kedua kelompok, statistik t, derajat bebas Welch, nilai-p, dan selang
+        kepercayaan bagi selisih rata-rata. Selang selisih inilah yang paling informatif: bila memuat
+        angka nol, berarti selisih nol termasuk nilai yang masuk akal sehingga hipotesis nol tidak
+        ditolak. Perhatikan bahwa keputusan dari nilai-p dan dari selang selalu bersesuaian.
+    - contoh: "Memeriksa kesamaan ragam dan uji Student"
+      kode_r: "# uji kesamaan ragam (bartlett)\nbartlett.test(nilai_post ~ kelompok, data = pel)\n# bila ragam dianggap sama, pakai uji Student\nt.test(nilai_post ~ kelompok, data = pel, var.equal = TRUE)"
+      judul_r: "bartlett.test dan var.equal"
+      eval: true
+      penjelasan: >
+        Fungsi bartlett.test menguji kesamaan ragam antar-kelompok dengan bentuk rumus yang sama; hipotesis
+        nolnya menyatakan ragam kedua populasi sama. Bila asumsi itu dapat diterima, uji t dijalankan
+        ulang dengan argumen var.equal bernilai TRUE sehingga R memakai uji Student dengan ragam gabungan
+        dan derajat bebas berupa bilangan bulat.
+      interpretasi: >
+        Bandingkan derajat bebas dan nilai-p kedua versi. Bila ragam kedua kelompok memang mirip,
+        hasilnya hampir sama sehingga pilihan versi tidak banyak berpengaruh. Karena itu uji Welch aman
+        dipakai sebagai bawaan: ia tetap sahih ketika ragam sama, dan lebih terlindungi ketika ragam
+        berbeda. Uji ragam akan dibahas lebih tuntas pada Modul 12.
+    - contoh: "Uji t sampel berpasangan"
+      kode_r: "# subjek SAMA diukur dua kali: sebelum dan sesudah pelatihan\n# H0: rata-rata selisih = 0\nuji3 <- t.test(pel$nilai_post, pel$nilai_pre, paired = TRUE)\nuji3\nselisih <- pel$nilai_post - pel$nilai_pre\nc(rata_selisih = mean(selisih), sd_selisih = sd(selisih)) |> round(3)"
+      judul_r: "t.test paired"
+      eval: true
+      penjelasan: >
+        Argumen paired bernilai TRUE memberi tahu R bahwa kedua vektor berasal dari subjek yang sama dan
+        harus dipasangkan menurut urutannya. Secara teknis R menghitung selisih tiap pasangan lalu
+        mengujinya sebagai uji satu contoh terhadap nol. Dua baris terakhir menghitung selisih itu secara
+        eksplisit beserta ringkasannya, sebagai pemeriksaan.
+      interpretasi: >
+        Perhatikan bahwa rata-rata selisih yang dihitung manual sama dengan nilai yang muncul pada
+        keluaran uji, dan derajat bebasnya adalah banyaknya pasangan dikurangi satu. Uji berpasangan
+        memanfaatkan keterkaitan antar-pengukuran sehingga keragaman antar-subjek tersingkir; inilah yang
+        membuatnya lebih peka mendeteksi perubahan daripada uji dua contoh bebas.
+    - contoh: "Akibat salah memilih bentuk uji"
+      kode_r: "benar <- t.test(pel$nilai_post, pel$nilai_pre, paired = TRUE)\nkeliru <- t.test(pel$nilai_post, pel$nilai_pre, paired = FALSE)\nc(berpasangan = benar$p.value, dianggap_bebas = keliru$p.value) |> round(4)\nc(t_berpasangan = benar$statistic, t_bebas = keliru$statistic) |> round(3)"
+      judul_r: "berpasangan vs dianggap bebas"
+      eval: true
+      penjelasan: >
+        Data yang sama diuji dua kali dengan hanya satu argumen yang berbeda. Versi pertama memperlakukan
+        data sebagai berpasangan, sedangkan versi kedua keliru memperlakukannya sebagai dua kelompok
+        bebas. Kedua nilai-p dan kedua statistik t digabung menjadi vektor bernama agar perbedaannya
+        langsung terbaca.
+      interpretasi: >
+        Kedua pendekatan menghasilkan angka yang berbeda meski datanya persis sama. Perlakuan sebagai
+        contoh bebas mengabaikan keterkaitan antar-pengukuran sehingga keragaman antar-subjek ikut masuk
+        ke penyebut, statistik ujinya mengecil, dan nilai-p membesar. Akibatnya perubahan yang sebenarnya
+        ada bisa gagal terdeteksi. Selalu tanyakan apakah kedua kelompok angka berasal dari subjek yang
+        sama sebelum memilih bentuk uji.
+    - contoh: "Menyusun tabel ringkasan beberapa pengujian"
+      kode_r: "peubah <- c(\"nilai_pre\", \"nilai_post\", \"jam_belajar\")\nhasil <- t(sapply(peubah, function(v) {\n  u <- t.test(pel[[v]] ~ pel$kelompok)\n  c(rata_Kontrol = unname(u$estimate[1]),\n    rata_Perlakuan = unname(u$estimate[2]),\n    selisih = unname(diff(rev(u$estimate))),\n    t = unname(u$statistic),\n    p = u$p.value)\n}))\nround(hasil, 4)"
+      judul_r: "sapply atas beberapa peubah"
+      eval: true
+      penjelasan: >
+        Nama ketiga peubah disimpan sebagai vektor teks. Fungsi sapply menerapkan fungsi anonim ke tiap
+        nama; di dalamnya kolom diambil dengan kurung siku ganda karena namanya berupa teks, lalu diuji
+        terhadap kelompok. Komponen yang diperlukan diambil dan digabung menjadi vektor bernama; unname
+        membuang nama bawaan agar keluarannya rapi. Fungsi t di luar sapply mentranspos hasil sehingga
+        tiap peubah menjadi satu baris.
+      interpretasi: >
+        Tabel semacam ini lazim dijumpai pada laporan penelitian: beberapa peubah diuji sekaligus dengan
+        cara yang sama, lalu hasilnya disajikan berdampingan. Perlu diwaspadai bahwa pengujian berganda
+        meningkatkan peluang menemukan hasil bermakna secara kebetulan; bila banyak peubah diuji
+        sekaligus, pertimbangkan penyesuaian taraf nyata, misalnya dengan metode Bonferroni.
+    - contoh: "Studi kasus: laporan inferensia lengkap"
+      kode_r: "cat(\"=== 1. Deskripsi ===\\n\")\npel |> group_by(kelompok) |>\n  summarise(n = n(), rata = round(mean(nilai_post), 2),\n            sd = round(sd(nilai_post), 2), .groups = \"drop\") |> print()\n\ncat(\"\\n=== 2. Pemeriksaan asumsi ===\\n\")\ncat(\"Shapiro Kontrol   p =\", round(shapiro.test(k)$p.value, 4), \"\\n\")\ncat(\"Shapiro Perlakuan p =\", round(shapiro.test(p)$p.value, 4), \"\\n\")\ncat(\"Bartlett          p =\",\n    round(bartlett.test(nilai_post ~ kelompok, data = pel)$p.value, 4), \"\\n\")\n\ncat(\"\\n=== 3. Pengujian ===\\n\")\nu <- t.test(nilai_post ~ kelompok, data = pel)\ncat(sprintf(\"t = %.3f, db = %.2f, p = %.4f\\n\", u$statistic, u$parameter, u$p.value))\ncat(sprintf(\"Selang 95 persen bagi selisih: [%.3f ; %.3f]\\n\",\n            u$conf.int[1], u$conf.int[2]))\ncat(sprintf(\"Ukuran pengaruh (Cohen d): %.3f\\n\", cohen_d(p, k)))\n\ncat(\"\\n=== 4. Keputusan ===\\n\")\ncat(ifelse(u$p.value < 0.05,\n           \"Tolak H0: terdapat cukup bukti adanya perbedaan rata-rata.\",\n           \"Tidak tolak H0: belum cukup bukti adanya perbedaan rata-rata.\"), \"\\n\")"
+      judul_r: "alur lengkap empat langkah"
+      eval: true
+      penjelasan: >
+        Alurnya disusun dalam empat bagian bertanda judul memakai cat. Bagian pertama menyajikan deskripsi
+        per kelompok dengan dplyr; fungsi print diperlukan karena keluaran di dalam blok tidak tercetak
+        otomatis. Bagian kedua memeriksa asumsi kenormalan tiap kelompok dan kesamaan ragam. Bagian
+        ketiga menjalankan pengujian dan menampilkan statistik, selang selisih, serta ukuran pengaruh
+        memakai sprintf agar formatnya rapi. Bagian keempat mengubah nilai-p menjadi kalimat keputusan
+        dengan ifelse.
+      interpretasi: >
+        Inilah kerangka laporan inferensia yang seharusnya: deskripsi lebih dahulu, lalu pemeriksaan
+        asumsi, baru pengujian, dan ditutup keputusan yang dinyatakan dalam kalimat. Perhatikan bahwa
+        yang dilaporkan bukan hanya nilai-p, melainkan juga besar selisih beserta selangnya dan ukuran
+        pengaruhnya. Perhatikan pula susunan kalimat keputusannya: tidak menolak hipotesis nol dinyatakan
+        sebagai belum cukup bukti, bukan sebagai terbukti tidak ada perbedaan.
+  ringkasan:
+    - "\\begin{kotaktujuan}\n\\textbf{Daftar periksa penguasaan:}\n\\begin{itemize}\n\\item[$\\square$] Saya dapat menghitung pendugaan titik dan galat baku, serta menjelaskan kaitannya dengan ukuran contoh.\n\\item[$\\square$] Saya dapat menyusun selang kepercayaan dan menafsirkannya dengan benar.\n\\item[$\\square$] Saya memahami kelima langkah uji hipotesis dan kedua jenis galat.\n\\item[$\\square$] Saya dapat memilih bentuk uji t yang tepat sesuai keadaan data.\n\\item[$\\square$] Saya dapat memeriksa asumsi kenormalan dan kesamaan ragam.\n\\item[$\\square$] Saya dapat membedakan uji satu arah dan dua arah serta memilih dengan alasan.\n\\item[$\\square$] Saya melaporkan ukuran pengaruh, bukan hanya nilai-p.\n\\item[$\\square$] Saya menuliskan kesimpulan sebagai ``belum cukup bukti'', bukan ``terbukti tidak berbeda''.\n\\end{itemize}\n\\end{kotaktujuan}"
+    - "**Kartu Referensi Cepat.** Perintah inferensia rata-rata:"
+    - "\\begin{kotakrumus}\n\\begin{tabular}{@{}ll@{}}\n\\textbf{Keperluan} & \\textbf{Perintah R}\\\\\nPendugaan titik & \\texttt{mean(x)}, \\texttt{var(x)}, \\texttt{sd(x)}\\\\\nGalat baku & \\texttt{sd(x)/sqrt(length(x))}\\\\\nSelang kepercayaan & \\texttt{t.test(x, conf.level = 0.95)\\$conf.int}\\\\\nNilai kritis t & \\texttt{qt(0.975, df)}\\\\\nUji satu contoh & \\texttt{t.test(x, mu = nilai)}\\\\\nUji dua contoh bebas & \\texttt{t.test(y \\textasciitilde{} g, data = df)}\\\\\nRagam dianggap sama & \\texttt{..., var.equal = TRUE}\\\\\nUji berpasangan & \\texttt{t.test(x, y, paired = TRUE)}\\\\\nArah pengujian & \\texttt{alternative = \"greater\"/\"less\"}\\\\\nUji kenormalan & \\texttt{shapiro.test(x)}\\\\\nUji kesamaan ragam & \\texttt{bartlett.test(y \\textasciitilde{} g, data = df)}\\\\\nDiagram kuantil & \\texttt{qqnorm(x)}, \\texttt{qqline(x)}\\\\\nKomponen hasil & \\texttt{\\$statistic}, \\texttt{\\$p.value}, \\texttt{\\$conf.int}\\\\\n\\end{tabular}\n\\end{kotakrumus}"
+    - "Modul ini membuka rangkaian inferensia dengan dua gagasan pokok: menduga parameter beserta ketidakpastiannya, dan menguji pernyataan dengan bukti data. Prinsip penting yang perlu dibawa terus: periksa asumsi sebelum menyimpulkan, pilih bentuk uji sesuai keadaan data, laporkan besar perbedaan dan selangnya - bukan hanya nilai-p, dan susun kesimpulan dengan kalimat yang jujur secara statistik. Modul 12 memperluas kerangka yang sama ke uji proporsi, uji kesesuaian sebaran, dan uji ragam."
+  referensi:
+    - "Walpole, R. E., Myers, R. H., Myers, S. L., & Ye, K. (2016). *Probability and Statistics for Engineers and Scientists*, 9th ed. Pearson. (Pendugaan dan uji hipotesis.)"
+    - "Pramana, S., dkk. (2016). *Dasar-dasar Statistik menggunakan R*. In-Media. (Pengujian hipotesis dengan R.)"
+    - "Verzani, J. (2014). *Using R for Introductory Statistics*, 2nd ed. Chapman and Hall/CRC. (Penerapan t.test dan pemeriksaan asumsi.)"
+    - "Wasserstein, R. L., & Lazar, N. A. (2016). *The ASA Statement on p-Values: Context, Process, and Purpose*. The American Statistician, 70(2), 129-133. (Penafsiran nilai-p yang benar.)"
+
+exercises:
+  - id: "L11.1"
+    points: 15
+    solution: "Tingkat Dasar: sd, sqrt, conf.level 0.99, argumen mu/rumus/paired."
+    judul_r: "Solusi Tingkat Dasar (R)"
+    solusi_r: |
+      pel <- read.csv("data/data_pelatihan.csv")
+      x <- pel$jam_belajar
+      mean(x)
+      sd(x)                          # simpangan baku
+      sd(x) / sqrt(length(x))        # galat baku
+
+      t.test(pel$nilai_pre, conf.level = 0.99)$conf.int   # 99 persen
+
+      t.test(pel$nilai_pre, mu = 65)                 # (a) nilai acuan
+      t.test(nilai_post ~ kelompok, data = pel)      # (b) dua kelompok
+      t.test(pel$nilai_post, pel$nilai_pre, paired = TRUE)  # (c) berpasangan
+    interpretasi: >
+      Galat baku dihitung sebagai simpangan baku dibagi akar banyaknya amatan. Argumen conf.level
+      mengatur tingkat keyakinan selang. Ketiga bentuk uji dibedakan oleh argumennya: mu untuk nilai
+      acuan pada uji satu contoh, bentuk rumus dengan peubah pengelompok untuk dua contoh bebas, dan
+      paired bernilai TRUE untuk data berpasangan.
+  - id: "L11.2"
+    points: 25
+    solution: "Tingkat Menengah dan Lanjut: pendugaan + asumsi, uji dua kelompok lengkap, dan laporan inferensia."
+    judul_r: "Solusi Menengah dan Lanjut (R)"
+    solusi_r: |
+      suppressPackageStartupMessages(library(dplyr))
+      pel <- read.csv("data/data_pelatihan.csv")
+
+      # ---- Pendugaan dan pemeriksaan asumsi ----
+      x <- pel$jam_belajar; n <- length(x)
+      c(rata = mean(x), ragam = var(x), se = sd(x)/sqrt(n)) |> round(3)
+      t.test(x)$conf.int
+      par(mfrow = c(1, 2))
+      hist(x, breaks = 10, col = "#0B6FB4", border = "white",
+           main = "jam_belajar", xlab = "jam")
+      qqnorm(x, pch = 19, col = "#0B6FB4"); qqline(x, col = "#F58220", lwd = 2)
+      par(mfrow = c(1, 1))
+      shapiro.test(x)
+
+      # ---- Uji dua kelompok lengkap ----
+      # H0: rata-rata jam_belajar Perkotaan = Perdesaan ; H1: berbeda
+      pel |> group_by(wilayah) |>
+        summarise(n = n(), rata = round(mean(jam_belajar), 2),
+                  sd = round(sd(jam_belajar), 2), .groups = "drop")
+      boxplot(jam_belajar ~ wilayah, data = pel,
+              col = c("#0B6FB4", "#F58220"), ylab = "Jam belajar")
+      bartlett.test(jam_belajar ~ wilayah, data = pel)
+      u <- t.test(jam_belajar ~ wilayah, data = pel)
+      u
+      u$conf.int
+
+      cohen_d <- function(a, b) {
+        na <- length(a); nb <- length(b)
+        s <- sqrt(((na-1)*var(a) + (nb-1)*var(b)) / (na+nb-2))
+        (mean(a) - mean(b)) / s
+      }
+      a <- pel$jam_belajar[pel$wilayah == "Perkotaan"]
+      b <- pel$jam_belajar[pel$wilayah == "Perdesaan"]
+      round(cohen_d(a, b), 3)
+
+      # ---- Laporan: apakah pelatihan meningkatkan nilai? ----
+      # Arah 'greater' dipilih karena pertanyaannya searah: apakah MENINGKAT.
+      up <- t.test(pel$nilai_post, pel$nilai_pre,
+                   paired = TRUE, alternative = "greater")
+      up
+      cat(ifelse(up$p.value < 0.05,
+                 "Tolak H0: cukup bukti nilai meningkat sesudah pelatihan.",
+                 "Tidak tolak H0: belum cukup bukti nilai meningkat."), "\n")
+    interpretasi: >
+      Pada bagian pertama, pemeriksaan asumsi memadukan gambar dan uji formal sehingga kesimpulannya
+      lebih tepercaya. Pada bagian kedua, urutan kerjanya baku: deskripsi, gambar, pemeriksaan ragam,
+      pengujian, selang selisih, lalu ukuran pengaruh. Pada bagian terakhir dipilih bentuk berpasangan
+      karena kedua pengukuran berasal dari peserta yang sama, dan arah greater dipilih karena
+      pertanyaannya menanyakan peningkatan, bukan sekadar perbedaan; arah ini ditetapkan sebelum melihat
+      data.
+  - id: "L11.D"
+    points: 10
+    solution: "Membetulkan kode: paired untuk data berpasangan, argumen mu, arah rumus, dan penafsiran nilai-p."
+    judul_r: "Solusi Membetulkan Kode (R)"
+    solusi_r: |
+      pel <- read.csv("data/data_pelatihan.csv")
+
+      # (a) kedua pengukuran dari peserta yang SAMA -> uji berpasangan
+      t.test(pel$nilai_post, pel$nilai_pre, paired = TRUE)
+
+      # (b) nama argumen nilai acuan adalah mu, bukan mean
+      t.test(pel$nilai_post, mu = 70)
+
+      # (c) rumus: peubah NUMERIK di kiri, PENGELOMPOK di kanan
+      t.test(nilai_post ~ kelompok, data = pel)
+
+      # (d) gagal menolak H0 BUKAN berarti H0 terbukti benar
+      u <- t.test(pel$nilai_post, mu = 70)
+      if (u$p.value > 0.05) {
+        cat("Belum cukup bukti untuk menyatakan rata-rata berbeda dari 70\n")
+      }
+    interpretasi: >
+      Empat kesalahan diperbaiki. Pertama, nilai sebelum dan sesudah berasal dari peserta yang sama
+      sehingga wajib memakai uji berpasangan; memperlakukannya sebagai contoh bebas mengabaikan
+      keterkaitan dan menurunkan kepekaan uji. Kedua, argumen nilai acuan pada t.test bernama mu, bukan
+      mean. Ketiga, pada bentuk rumus peubah numerik ditulis di sebelah kiri tilde dan peubah pengelompok
+      di sebelah kanan. Keempat, gagal menolak hipotesis nol hanya berarti bukti belum cukup, bukan
+      bukti bahwa hipotesis nol benar; kalimatnya harus diperbaiki agar tidak menyesatkan pembaca.
+  - id: "T11.1"
+    points: 50
+    solution: "Penugasan: pendugaan, selang tiga tingkat, pemeriksaan asumsi, tiga bentuk uji, dan laporan."
+    judul_r: "Solusi Penugasan (R)"
+    solusi_r: |
+      suppressPackageStartupMessages(library(dplyr))
+      pel <- read.csv("data/data_pelatihan.csv")
+
+      # 1) tabel pendugaan titik dan galat baku
+      peubah <- c("nilai_pre", "nilai_post", "jam_belajar")
+      tab <- t(sapply(peubah, function(v) {
+        x <- pel[[v]]; n <- length(x)
+        c(n = n, rata = mean(x), ragam = var(x),
+          sd = sd(x), se = sd(x)/sqrt(n))
+      }))
+      print(round(tab, 3))
+
+      # 2) selang tiga tingkat keyakinan
+      for (k in c(0.90, 0.95, 0.99)) {
+        ci <- t.test(pel$nilai_post, conf.level = k)$conf.int
+        cat(sprintf("%.0f persen: [%.2f ; %.2f] lebar %.2f\n",
+                    k*100, ci[1], ci[2], diff(ci)))
+      }
+
+      # 3) pemeriksaan asumsi per kelompok
+      k <- pel$nilai_post[pel$kelompok == "Kontrol"]
+      p <- pel$nilai_post[pel$kelompok == "Perlakuan"]
+      shapiro.test(k); shapiro.test(p)
+      bartlett.test(nilai_post ~ kelompok, data = pel)
+
+      # 4) uji satu sampel
+      t.test(pel$nilai_post, mu = 70)
+
+      # 5) uji dua sampel bebas + selang + ukuran pengaruh
+      u <- t.test(nilai_post ~ kelompok, data = pel); u
+      u$conf.int
+      cohen_d <- function(a, b) {
+        na <- length(a); nb <- length(b)
+        s <- sqrt(((na-1)*var(a) + (nb-1)*var(b)) / (na+nb-2))
+        (mean(a) - mean(b)) / s }
+      round(cohen_d(p, k), 3)
+
+      # 6) uji berpasangan + perbandingan bila keliru
+      benar  <- t.test(pel$nilai_post, pel$nilai_pre, paired = TRUE)
+      keliru <- t.test(pel$nilai_post, pel$nilai_pre, paired = FALSE)
+      c(berpasangan = benar$p.value, dianggap_bebas = keliru$p.value) |> round(4)
+    interpretasi: >
+      Tabel pendugaan disusun sekaligus untuk ketiga peubah memakai sapply. Selang pada tiga tingkat
+      keyakinan memperlihatkan bahwa keyakinan yang lebih tinggi menuntut selang yang lebih lebar.
+      Pemeriksaan asumsi dilakukan terpisah untuk tiap kelompok sebelum pengujian dua contoh. Pada nomor
+      6, perbandingan kedua nilai-p menunjukkan akibat nyata dari salah memilih bentuk uji: perlakuan
+      sebagai contoh bebas membuat statistik uji mengecil dan nilai-p membesar karena keragaman
+      antar-subjek tidak tersingkir. Seluruh angka berasal dari data simulasi sehingga tidak boleh
+      ditafsirkan sebagai keefektifan pelatihan yang sebenarnya, dan kesimpulan harus dinyatakan sebagai
+      kecukupan bukti, bukan sebagai pembuktian.
+
+references:
+  - "Walpole, R. E., Myers, R. H., Myers, S. L., & Ye, K. (2016). Probability and Statistics for Engineers and Scientists, 9th ed. Pearson."
+  - "Pramana, S., dkk. (2016). Dasar-dasar Statistik menggunakan R. In-Media."
+  - "Verzani, J. (2014). Using R for Introductory Statistics, 2nd ed. Chapman and Hall/CRC."
+  - "Wasserstein, R. L., & Lazar, N. A. (2016). The ASA Statement on p-Values. The American Statistician, 70(2), 129-133."

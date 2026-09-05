@@ -1,0 +1,43 @@
+% Sampul buku bergaya BPS/STIS: logo, latar gedung, pita diagonal.
+% Penanda: @@JENIS@@ @@JUDUL1@@ @@JUDUL2@@ @@KODEMK@@ @@RINGKAS@@
+%          @@SEMESTER@@ @@PENYUSUN@@ @@AKSENPITA@@
+\thispagestyle{empty}
+\begin{tikzpicture}[remember picture, overlay]
+  \fill[bpsnavy] (current page.south west) rectangle (current page.north east);
+  \node[anchor=south] at ($(current page.south)+(0,3.05cm)$)
+    {\includegraphics[width=\paperwidth]{@@IMGDIR@@/gedung_bg.png}};
+  \fill[@@AKSENPITA@@] (current page.north west) -- ++(0,-6.5cm) --
+    ($(current page.north east)+(0,-3.6cm)$) -- (current page.north east) -- cycle;
+  \fill[bpsbirumuda, opacity=0.26] (current page.north west) -- ++(0,-8.0cm) --
+    ($(current page.north east)+(0,-5.2cm)$) -- (current page.north east) -- cycle;
+  \fill[bpsoranye] (current page.south west) -- ++(0,3.1cm) --
+    ($(current page.south east)+(0,2.0cm)$) -- (current page.south east) -- cycle;
+  \fill[bpshijau, opacity=0.9] (current page.south west) -- ++(0,1.7cm) --
+    ($(current page.south east)+(0,1.0cm)$) -- (current page.south east) -- cycle;
+  \node[anchor=north west] at ($(current page.north west)+(2.0cm,-1.35cm)$)
+    {\includegraphics[width=1.9cm]{@@IMGDIR@@/logo_stis.png}};
+  \node[anchor=north west, text=white, align=left]
+    at ($(current page.north west)+(4.35cm,-1.75cm)$)
+    {{\fontsize{17}{20}\selectfont \textbf{POLITEKNIK STATISTIKA}}\\[1pt]
+     {\fontsize{17}{20}\selectfont \textbf{STIS}}};
+  \node[anchor=west, text=white, align=left]
+    at ($(current page.west)+(2.2cm,2.4cm)$)
+    {{\fontsize{15}{18}\selectfont \textbf{@@JENIS@@}}};
+  \node[anchor=west, text=white, align=left]
+    at ($(current page.west)+(2.2cm,0.7cm)$)
+    {{\fontsize{30}{34}\selectfont \textbf{@@JUDUL1@@}}\\[4pt]
+     {\fontsize{30}{34}\selectfont \textbf{@@JUDUL2@@}}};
+  \node[anchor=west, text=bpsoranye, align=left]
+    at ($(current page.west)+(2.25cm,-1.7cm)$)
+    {{\fontsize{13}{16}\selectfont \textbf{Kode Mata Kuliah: @@KODEMK@@}}};
+  \node[anchor=west, text=white, align=left]
+    at ($(current page.west)+(2.25cm,-2.6cm)$)
+    {{\fontsize{11}{14}\selectfont @@RINGKAS@@}};
+  \node[anchor=west, text=bpsbirumuda, align=left]
+    at ($(current page.west)+(2.25cm,-3.4cm)$)
+    {{\fontsize{10.5}{13}\selectfont Semester @@SEMESTER@@}};
+  \node[anchor=south west, text=white, align=left]
+    at ($(current page.south west)+(2.4cm,3.35cm)$)
+    {{\fontsize{10}{12}\selectfont Penyusun}\\[3pt]@@PENYUSUN@@};
+\end{tikzpicture}
+\newpage

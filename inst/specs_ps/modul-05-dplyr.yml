@@ -1,0 +1,619 @@
+number: 5
+title: "Manipulasi Data dengan dplyr"
+short_code: "dplyr"
+topic: "Manipulasi Data (dplyr)"
+pertemuan: 4
+sub_cpmk: >
+  Sub-CPMK 4: Mahasiswa mampu memanipulasi data dengan package dplyr, mencakup select,
+  filter, arrange, mutate, summarise, group by, piping, dan join.
+packages: [dplyr, tidyr]
+contoh_title: "Contoh Praktikum dengan R"
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  ta: "2025/2026"
+  semester: "3 (Ganjil)"
+  prodi: "D-IV Statistika"
+  penyusun:
+    - "Achmad Syahrul Choir"
+    - "Rudi Salam"
+    - "Christiana Anggraeni Putri"
+
+datasets:
+  - name: data_desa
+    role: contoh
+    recipe:
+      kind: tabular
+      "n": 40
+      seed: 2025
+      columns:
+        provinsi: {type: category, levels: [Jawa Barat, Jawa Tengah, Sulawesi Selatan, Papua], probs: [0.3, 0.3, 0.25, 0.15]}
+        status: {type: category, levels: [Perkotaan, Perdesaan], probs: [0.4, 0.6]}
+        penduduk: {type: integer, min: 500, max: 15000}
+        rumah_tangga: {type: integer, min: 100, max: 4000}
+        luas_km2: {type: numeric, min: 1, max: 50, digits: 1}
+        akses_air: {type: numeric, min: 40, max: 100, digits: 1}
+        akses_listrik: {type: numeric, min: 50, max: 100, digits: 1}
+
+body:
+  deskripsi:
+    - >
+      Modul ini membahas manipulasi data dengan paket \texttt{dplyr}, salah satu perkakas paling
+      penting dalam analisis data menggunakan R. Dalam praktik nyata, sebagian besar waktu seorang
+      analis dihabiskan bukan untuk menghitung statistik, melainkan untuk menyiapkan data: memilih
+      peubah yang relevan, menyaring amatan, membuat peubah turunan, meringkas per kelompok, dan
+      menggabungkan beberapa sumber data.
+    - >
+      \texttt{dplyr} menyediakan sekumpulan kata kerja (\emph{verb}) yang konsisten dan mudah dibaca
+      untuk pekerjaan tersebut. Alih-alih menulis kode pengindeksan yang panjang seperti pada base R,
+      kita merangkai langkah-langkah manipulasi menjadi satu alur yang terbaca seperti kalimat. Inilah
+      gagasan \emph{grammar of data manipulation}.
+    - >
+      Materi dibahas menyeluruh dari dasar hingga lanjut: lima verba utama (select, filter, arrange,
+      mutate, summarise) beserta variasinya; fungsi bantu pemilihan kolom; pembuatan peubah bersyarat
+      dengan if\_else dan case\_when; agregasi dengan group\_by beserta jebakan yang menyertainya;
+      penanganan nilai hilang; penggabungan tabel (join) dengan berbagai jenisnya; serta perangkaian
+      seluruhnya dengan pipe. Setiap verba diberi contoh tersendiri disertai kesalahan umum, tips, dan
+      variasi penulisan.
+    - "\\begin{kotakperhatian}[Tentang data]\nBerkas data pada modul ini adalah \\textbf{data simulasi} (\\texttt{set.seed(2025)}), \\textbf{bukan data nyata} dan \\textbf{bukan data resmi} instansi mana pun. Nama provinsi dipakai sekadar sebagai label agar konteksnya terasa nyata.\n\\end{kotakperhatian}"
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:"
+    - "1. **Menjelaskan** gagasan *grammar of data manipulation* dan keunggulan `dplyr` dibanding pengindeksan base R."
+    - "2. **Menggunakan** lima verba utama: `select`, `filter`, `arrange`, `mutate`, dan `summarise` beserta variasinya."
+    - "3. **Membuat** peubah turunan bersyarat dengan `if_else` dan `case_when`."
+    - "4. **Melakukan** agregasi per kelompok dengan `group_by` dan menghindari jebakan pengelompokan yang tertinggal."
+    - "5. **Menangani** nilai hilang (`na.rm`, `drop_na`, `replace_na`, `coalesce`) dalam alur manipulasi."
+    - "6. **Menggabungkan** dua tabel dengan berbagai jenis `join` serta mengenali risiko penggandaan baris."
+    - "7. **Merangkai** seluruh langkah menjadi satu alur yang terbaca menggunakan *pipe*."
+  alat:
+    - "Perangkat dan bahan yang diperlukan:"
+    - "- **R** (RStudio); modul ini fokus pada R."
+    - "- Paket: `dplyr` dan `tidyr` (pasang sekali dengan `install.packages(c(\"dplyr\",\"tidyr\"))`)."
+    - "- Berkas data: `data/data_desa.csv`."
+  instruksi:
+    - "Ikuti tahapan berikut:"
+    - "**Sebelum praktikum:** siapkan direktori kerja; letakkan `data_desa.csv` di subfolder `data/`; pastikan `dplyr` dan `tidyr` sudah terpasang."
+    - "**Selama praktikum:** kerjakan Contoh berurutan; jalankan tiap potongan kode dan amati keluarannya; perhatikan bagaimana tiap verba mengubah bentuk data (jumlah baris/kolom); tulis interpretasi dengan kalimat sendiri."
+    - "**Pembagian kerja:** Contoh dan Latihan dikerjakan selama sesi praktikum di kelas; **Penugasan dikerjakan sebagai tugas terstruktur di luar sesi**.\n\n**Pengumpulan:** susun laporan R Markdown, render ke PDF/HTML, dan kumpulkan via Google Classroom sesuai tenggat yang ditetapkan dosen."
+  teori:
+    - "### Kaitan dengan Materi Sebelumnya"
+    - >
+      Pada Modul 2 kita mengenal data frame sebagai struktur data utama, dan pada Modul 3 kita belajar
+      mengendalikan alur pengolahan dengan kondisi, perulangan, keluarga apply, dan fungsi. Modul ini
+      menyatukan keduanya: \texttt{dplyr} menyediakan cara yang jauh lebih ringkas dan terbaca untuk
+      melakukan pekerjaan yang sebelumnya memerlukan pengindeksan berlapis dan \texttt{tapply}.
+    - >
+      Sebagai gambaran, meringkas rata-rata per kelompok yang di Modul 3 ditulis dengan
+      \texttt{tapply(x, grup, mean)}, di sini menjadi \texttt{group\_by(grup)} lalu
+      \texttt{summarise(rata = mean(x))} - lebih panjang sedikit, tetapi jauh lebih mudah dibaca,
+      diperluas, dan dirangkai dengan langkah lain. Penguasaan modul ini menjadi prasyarat langsung
+      untuk Modul 6 (pandas, padanannya di Python) dan seluruh modul analisis berikutnya yang selalu
+      diawali penyiapan data.
+    - "\\begin{kotakcatatan}\nBila Anda belum lancar mengakses kolom data frame dan menulis fungsi sederhana (Modul 2 dan 3), tinjau ulang sebentar - modul ini membangun langsung di atasnya.\n\\end{kotakcatatan}"
+    - "### Mengapa dplyr: Grammar of Data Manipulation"
+    - >
+      Gagasan utama \texttt{dplyr} adalah menyediakan sekumpulan \emph{kata kerja} yang masing-masing
+      mengerjakan satu tugas dengan jelas, lalu merangkainya menjadi kalimat. Setiap verba menerima
+      data frame sebagai argumen pertama dan mengembalikan data frame - sifat inilah yang membuatnya
+      dapat dirangkai tanpa batas.
+    - "\\begin{kotakinfo}[Lima verba utama]\n\\begin{tabular}{@{}ll@{}}\n\\textbf{Verba} & \\textbf{Tugas}\\\\\n\\texttt{select()} & memilih \\textbf{kolom}\\\\\n\\texttt{filter()} & menyaring \\textbf{baris}\\\\\n\\texttt{arrange()} & mengurutkan baris\\\\\n\\texttt{mutate()} & membuat/mengubah kolom\\\\\n\\texttt{summarise()} & meringkas menjadi satu baris\\\\\n\\end{tabular}\\\\[4pt]\nDitambah \\texttt{group\\_by()} yang membuat verba lain bekerja \\textbf{per kelompok}.\n\\end{kotakinfo}"
+    - >
+      \textbf{Pipe.} Operator pipa \texttt{|>} (bawaan R sejak versi 4.1) meneruskan hasil di kirinya
+      menjadi argumen pertama fungsi di kanannya. Dengan pipa, alur \texttt{summarise(group\_by(filter(data,
+      syarat), grup), rata = mean(x))} yang membingungkan karena dibaca dari dalam ke luar dapat ditulis
+      berurutan dari atas ke bawah sesuai urutan pengerjaannya.
+    - "\\begin{kotakvariasi}\nSelain \\texttt{|>} bawaan R, paket \\texttt{magrittr} (ikut terpasang bersama \\texttt{dplyr}) menyediakan pipa \\texttt{\\%>\\%} yang lebih dahulu populer dan masih sangat banyak dijumpai di buku serta kode lama. Keduanya berperilaku sama untuk penggunaan biasa. Modul ini memakai \\texttt{|>}; Anda bebas memakai \\texttt{\\%>\\%} asalkan konsisten.\n\\end{kotakvariasi}"
+    - "### Tibble"
+    - >
+      \texttt{dplyr} bekerja dengan \emph{tibble}, yaitu data frame versi modern. Perbedaan utamanya
+      pada tampilan: tibble hanya mencetak sepuluh baris pertama beserta tipe tiap kolom, sehingga tidak
+      membanjiri layar. Semua verba tetap dapat dipakai pada data frame biasa; hasilnya akan berupa data
+      frame juga. Fungsi \texttt{glimpse()} menampilkan struktur data secara ringkas dan sangat berguna
+      sebagai langkah pertama pemeriksaan data.
+    - "### Agregasi dengan group\\_by"
+    - >
+      \texttt{group\_by()} tidak mengubah isi data, melainkan menandai data sebagai terkelompok. Verba
+      berikutnya - terutama \texttt{summarise()} dan \texttt{mutate()} - kemudian bekerja terpisah untuk
+      tiap kelompok. Fungsi yang lazim dipakai di dalam \texttt{summarise()} antara lain \texttt{mean()},
+      \texttt{median()}, \texttt{sd()}, \texttt{sum()}, \texttt{min()}, \texttt{max()}, serta
+      \texttt{n()} (banyaknya baris) dan \texttt{n\_distinct()} (banyaknya nilai unik).
+    - "\\begin{kotaksalah}[Pengelompokan yang tertinggal]\nSetelah \\texttt{summarise()}, satu tingkat pengelompokan otomatis dilepas, tetapi tingkat lainnya \\textbf{tetap menempel}. Data yang masih terkelompok akan membuat perhitungan berikutnya (mis. proporsi terhadap total) salah karena dihitung per kelompok, bukan terhadap keseluruhan. Biasakan menutup dengan \\texttt{.groups = \"drop\"} pada \\texttt{summarise()} atau memanggil \\texttt{ungroup()} bila pengelompokan sudah tidak diperlukan.\n\\end{kotaksalah}"
+    - "### Penanganan Nilai Hilang"
+    - >
+      Data nyata hampir selalu memuat nilai hilang (\texttt{NA}). Dalam alur \texttt{dplyr}, penanganannya
+      dilakukan pada tempat yang sesuai: \texttt{filter(!is.na(kolom))} membuang baris yang kolom
+      tertentunya kosong; \texttt{tidyr::drop\_na()} membuang baris yang memuat NA; \texttt{tidyr::replace\_na()}
+      mengganti NA dengan nilai tertentu; dan \texttt{coalesce(a, b)} mengambil nilai pertama yang bukan NA.
+      Pada fungsi ringkasan, argumen \texttt{na.rm = TRUE} mengabaikan NA saat menghitung.
+    - "\\begin{kotaksalah}[NA pada filter]\nPerhatikan bahwa \\texttt{filter()} hanya mempertahankan baris yang syaratnya bernilai \\texttt{TRUE}. Baris yang syaratnya menghasilkan \\texttt{NA} (karena kolomnya kosong) akan \\textbf{ikut terbuang}, meskipun Anda tidak bermaksud membuangnya. Bila baris demikian perlu dipertahankan, tuliskan syaratnya secara eksplisit, misalnya \\texttt{filter(akses\\_air > 80 | is.na(akses\\_air))}.\n\\end{kotaksalah}"
+    - "### Penggabungan Tabel (Join)"
+    - >
+      Data resmi sering tersebar di beberapa tabel: data pokok di satu berkas, tabel referensi wilayah di
+      berkas lain. \texttt{join} menggabungkannya berdasarkan satu atau beberapa kolom kunci.
+    - "\\begin{kotakinfo}[Jenis join]\n\\begin{tabular}{@{}ll@{}}\n\\textbf{Fungsi} & \\textbf{Hasil}\\\\\n\\texttt{left\\_join(x, y)} & semua baris \\texttt{x}, ditambah kolom \\texttt{y} bila cocok\\\\\n\\texttt{inner\\_join(x, y)} & hanya baris yang cocok di keduanya\\\\\n\\texttt{full\\_join(x, y)} & semua baris dari keduanya\\\\\n\\texttt{anti\\_join(x, y)} & baris \\texttt{x} yang \\textbf{tidak} punya pasangan di \\texttt{y}\\\\\n\\texttt{semi\\_join(x, y)} & baris \\texttt{x} yang punya pasangan, tanpa menambah kolom\\\\\n\\end{tabular}\n\\end{kotakinfo}"
+    - "\\begin{kotaksalah}[Join menggandakan baris]\nBila kunci pada tabel kanan \\textbf{tidak unik}, satu baris tabel kiri akan berpasangan dengan beberapa baris sekaligus sehingga jumlah baris hasil membengkak tanpa disadari. Biasakan memeriksa keunikan kunci lebih dahulu, misalnya dengan \\texttt{n\\_distinct()}, dan membandingkan jumlah baris sebelum serta sesudah penggabungan.\n\\end{kotaksalah}"
+    - "\\begin{kotaktips}\nSusun alur secara bertahap: tulis satu verba, jalankan, periksa hasilnya, baru tambahkan verba berikutnya. Kebiasaan ini jauh lebih cepat menemukan kesalahan daripada menulis sepuluh langkah sekaligus lalu kebingungan mencari letak masalahnya.\n\\end{kotaktips}"
+    - "\\begin{kotakrumus}\n\\textbf{Kerangka alur dplyr:}\\\\\n\\texttt{data |>}\\\\\n\\quad \\texttt{filter(syarat) |>}\\\\\n\\quad \\texttt{mutate(baru = ...) |>}\\\\\n\\quad \\texttt{group\\_by(kelompok) |>}\\\\\n\\quad \\texttt{summarise(rata = mean(x), n = n(), .groups = \"drop\") |>}\\\\\n\\quad \\texttt{arrange(desc(rata))}\n\\end{kotakrumus}"
+  contoh:
+    - contoh: "Memuat paket dan memeriksa struktur data"
+      kode_r: "suppressPackageStartupMessages({library(dplyr); library(tidyr)})\ndesa <- read.csv(\"data/data_desa.csv\")\ndesa <- as_tibble(desa)     # ubah jadi tibble agar cetakannya ringkas\nglimpse(desa)               # struktur ringkas: kolom, tipe, cuplikan nilai"
+      judul_r: "as_tibble dan glimpse"
+      eval: true
+      penjelasan: >
+        Baris pertama memuat dua paket sekaligus; pembungkus suppressPackageStartupMessages
+        menyembunyikan pesan pembuka agar keluaran bersih. Baris kedua membaca berkas CSV menjadi
+        data frame biasa. Baris ketiga mengubahnya menjadi tibble sehingga pencetakannya ringkas.
+        Baris terakhir memanggil glimpse yang menampilkan struktur data secara memanjang ke bawah.
+      interpretasi: >
+        glimpse menampilkan jumlah baris dan kolom, nama serta tipe tiap kolom, dan cuplikan nilainya
+        secara ringkas dalam satu layar. Ini langkah pertama yang sebaiknya selalu dilakukan sebelum
+        memanipulasi data. Perhatikan tipe tiap kolom: provinsi dan status bertipe teks, sedangkan
+        sisanya numerik - kesesuaian tipe menentukan operasi apa yang dapat dilakukan.
+    - contoh: "select(): memilih kolom"
+      kode_r: "desa |> select(provinsi, penduduk, akses_air) |> head(3)\ndesa |> select(-luas_km2, -rumah_tangga) |> names()   # buang kolom tertentu\ndesa |> select(provinsi:penduduk) |> names()          # rentang kolom"
+      judul_r: "tiga cara memilih kolom"
+      eval: true
+      penjelasan: >
+        Ketiga baris memakai pola yang sama: data dialirkan dengan pipa ke select, lalu hasilnya
+        dialirkan lagi untuk ditampilkan. Baris pertama menyebut tiga nama kolom yang diinginkan
+        lalu head membatasi tampilan menjadi tiga baris. Baris kedua memakai tanda minus untuk
+        membuang dua kolom, dan names menampilkan nama kolom yang tersisa. Baris ketiga memakai
+        titik dua untuk menyebut rentang kolom dari provinsi sampai penduduk.
+      interpretasi: >
+        select memilih kolom dengan tiga cara: menyebut namanya, membuang dengan tanda minus, atau
+        menyebut rentang dengan titik dua. Perhatikan bahwa nama kolom ditulis tanpa tanda kutip -
+        inilah salah satu kemudahan dplyr. Hasilnya tetap berupa tabel, sehingga dapat langsung
+        dirangkai dengan verba berikutnya.
+    - contoh: "Fungsi bantu select dan penataan kolom"
+      kode_r: "desa |> select(starts_with(\"akses\")) |> names()   # awalan tertentu\ndesa |> select(where(is.numeric)) |> names()      # semua kolom numerik\ndesa |> rename(pop = penduduk) |> names()         # ganti nama kolom\ndesa |> relocate(penduduk, .before = provinsi) |> names()  # pindah posisi"
+      judul_r: "starts_with, where, rename, relocate"
+      eval: true
+      penjelasan: >
+        Empat baris memperagakan empat fungsi bantu yang berbeda. Baris pertama memakai starts_with
+        untuk memilih kolom yang namanya diawali kata akses. Baris kedua memakai where yang menerima
+        fungsi penguji, di sini is.numeric, sehingga terpilih seluruh kolom numerik. Baris ketiga
+        mengganti nama kolom dengan pola nama baru sama dengan nama lama. Baris keempat memindahkan
+        kolom penduduk ke posisi sebelum kolom provinsi; argumen .before menentukan tujuannya.
+      interpretasi: >
+        Fungsi bantu membuat pemilihan kolom jauh lebih ringkas: starts\_with memilih berdasarkan awalan
+        (tersedia pula ends\_with dan contains), sedangkan where(is.numeric) memilih berdasarkan tipe -
+        sangat berguna saat kolom berjumlah banyak. rename mengganti nama dengan pola nama\_baru =
+        nama\_lama, dan relocate memindahkan posisi kolom tanpa mengubah isinya.
+    - contoh: "filter(): menyaring baris"
+      kode_r: "desa |> filter(penduduk > 10000) |> nrow()                  # satu syarat\ndesa |> filter(penduduk > 10000, status == \"Perkotaan\") |> nrow()  # DAN\ndesa |> filter(provinsi == \"Papua\" | akses_air < 50) |> nrow()     # ATAU\ndesa |> filter(provinsi %in% c(\"Jawa Barat\", \"Jawa Tengah\")) |> nrow()"
+      judul_r: "syarat tunggal, majemuk, dan %in%"
+      eval: true
+      penjelasan: >
+        Empat pola penyaringan diperagakan, semuanya diakhiri nrow untuk menghitung banyaknya baris yang
+        lolos. Baris pertama memakai satu syarat perbandingan. Baris kedua menuliskan dua syarat yang
+        dipisah koma, yang oleh filter digabungkan dengan logika DAN. Baris ketiga memakai tanda garis
+        tegak untuk logika ATAU. Baris keempat memakai operator persen in persen yang memeriksa apakah
+        nilai termasuk dalam kumpulan yang disebutkan.
+      interpretasi: >
+        filter mempertahankan baris yang syaratnya benar. Beberapa syarat yang dipisah koma otomatis
+        digabung dengan DAN; gunakan tanda garis tegak untuk ATAU. Operator persen-in-persen memeriksa
+        keanggotaan dalam sekumpulan nilai - jauh lebih ringkas daripada menulis rangkaian ATAU yang
+        panjang. Perhatikan bahwa filter mengubah jumlah baris, bukan jumlah kolom.
+    - contoh: "filter dengan rentang dan nilai hilang"
+      kode_r: "desa |> filter(between(akses_listrik, 70, 90)) |> nrow()   # rentang\n# siapkan data dengan NA untuk demonstrasi\ndesa_na <- desa\ndesa_na$akses_air[c(2, 5, 9)] <- NA\nsum(is.na(desa_na$akses_air))                 # ada 3 NA\ndesa_na |> filter(akses_air > 80) |> nrow()   # baris NA ikut terbuang\ndesa_na |> filter(akses_air > 80 | is.na(akses_air)) |> nrow()  # NA dipertahankan"
+      judul_r: "between dan perilaku NA"
+      eval: true
+      penjelasan: >
+        Baris pertama memakai between yang menyaring nilai dalam rentang tertentu. Bagian berikutnya
+        menyiapkan bahan uji: salinan data dibuat lalu tiga nilai sengaja dikosongkan, dan banyaknya
+        nilai hilang dihitung dengan menjumlahkan hasil is.na. Dua baris terakhir membandingkan dua
+        penyaringan: yang pertama membuang baris kosong tanpa disengaja, sedangkan yang kedua sengaja
+        mempertahankannya dengan menambahkan syarat is.na lewat logika ATAU.
+      interpretasi: >
+        between menyaring rentang nilai secara ringkas. Bagian kedua menunjukkan jebakan penting: baris
+        yang kolomnya NA membuat syarat bernilai NA, bukan TRUE, sehingga ikut terbuang oleh filter.
+        Bandingkan kedua jumlah baris terakhir - selisihnya persis banyaknya NA. Bila baris demikian
+        perlu dipertahankan, syaratnya harus ditulis eksplisit dengan is.na.
+    - contoh: "arrange(): mengurutkan baris"
+      kode_r: "desa |> arrange(penduduk) |> select(provinsi, penduduk) |> head(3)        # naik\ndesa |> arrange(desc(penduduk)) |> select(provinsi, penduduk) |> head(3)  # turun\ndesa |> arrange(provinsi, desc(akses_air)) |> select(provinsi, akses_air) |> head(4)"
+      judul_r: "urut naik, turun, dan bertingkat"
+      eval: true
+      penjelasan: >
+        Ketiga baris memakai pola sama: data dialirkan ke arrange, lalu kolom yang ditampilkan dibatasi
+        dengan select dan barisnya dibatasi dengan head. Pengurutan bawaan adalah menaik. Fungsi desc
+        membalik menjadi menurun. Baris ketiga menyebut dua kolom sekaligus, sehingga kolom kedua menjadi
+        penentu urutan di dalam nilai kolom pertama yang sama.
+      interpretasi: >
+        arrange mengurutkan baris menurut satu atau beberapa kolom; desc membalik menjadi urutan turun.
+        Pengurutan bertingkat mengurutkan menurut kolom pertama, lalu memakai kolom kedua sebagai
+        penentu di dalam nilai yang sama - di sini desa diurutkan per provinsi, dan di dalam tiap
+        provinsi diurutkan dari akses air tertinggi.
+    - contoh: "mutate(): membuat peubah turunan"
+      kode_r: "desa |>\n  mutate(kepadatan = round(penduduk / luas_km2, 1),\n         anggota_rt = round(penduduk / rumah_tangga, 2)) |>\n  select(provinsi, penduduk, luas_km2, kepadatan, anggota_rt) |>\n  head(4)"
+      judul_r: "beberapa kolom baru sekaligus"
+      eval: true
+      penjelasan: >
+        Fungsi mutate menerima beberapa pasangan nama sama dengan rumus sekaligus, dipisah koma, sehingga
+        dua kolom turunan dibuat dalam satu panggilan. Perhitungannya memakai kolom yang sudah ada dan
+        dibungkus round agar hasilnya rapi. Setelah itu select membatasi kolom yang ditampilkan agar
+        perbandingan antara kolom asal dan kolom turunan mudah dilihat.
+      interpretasi: >
+        mutate menambahkan kolom baru hasil perhitungan dari kolom yang sudah ada, dan dapat membuat
+        beberapa kolom sekaligus dalam satu panggilan. Kepadatan penduduk dan rata-rata anggota rumah
+        tangga adalah contoh indikator turunan yang lazim dalam statistik resmi. Berbeda dari filter,
+        mutate menambah kolom tanpa mengubah jumlah baris.
+    - contoh: "mutate bersyarat: if_else dan case_when"
+      kode_r: "desa |>\n  mutate(\n    padat = if_else(penduduk / luas_km2 > 500, \"Padat\", \"Tidak padat\"),\n    kategori_air = case_when(\n      akses_air >= 90 ~ \"Sangat baik\",\n      akses_air >= 75 ~ \"Baik\",\n      akses_air >= 60 ~ \"Cukup\",\n      .default = \"Kurang\")) |>\n  count(kategori_air)"
+      judul_r: "if_else dan case_when"
+      eval: true
+      penjelasan: >
+        Fungsi mutate membuat dua kolom sekaligus. Kolom pertama memakai if_else yang menerima tiga
+        argumen: syarat, nilai bila benar, dan nilai bila salah. Kolom kedua memakai case_when yang
+        menerima beberapa pasangan syarat dan hasil, ditulis dengan tanda tilde; syarat diperiksa
+        berurutan dari atas dan yang pertama cocok dipakai, sedangkan argumen .default menangkap sisanya.
+        Baris terakhir menghitung frekuensi tiap kategori dengan count.
+      interpretasi: >
+        if\_else menangani dua kemungkinan, sedangkan case\_when menangani banyak kemungkinan bertingkat -
+        padanan if-else if-else pada Modul 3, tetapi bekerja tervektor untuk seluruh kolom sekaligus.
+        Syarat diperiksa berurutan dari atas, dan yang pertama cocok dipakai; .default menangkap sisanya.
+        count menghitung banyaknya baris tiap kategori sehingga hasil pengelompokan langsung terlihat.
+    - contoh: "summarise(): meringkas data"
+      kode_r: "desa |>\n  summarise(\n    n = n(),\n    total_penduduk = sum(penduduk),\n    rata_akses_air = round(mean(akses_air), 2),\n    sd_akses_air = round(sd(akses_air), 2),\n    maks_penduduk = max(penduduk))"
+      judul_r: "beberapa ringkasan sekaligus"
+      eval: true
+      penjelasan: >
+        Fungsi summarise menerima beberapa pasangan nama sama dengan perhitungan, dipisah koma, sehingga
+        seluruh ringkasan dihitung dalam satu panggilan dan namanya ditentukan sendiri. Fungsi n
+        menghitung banyaknya baris dan tidak memerlukan argumen. Perhatikan bahwa keluarannya hanya satu
+        baris, karena summarise memampatkan seluruh tabel.
+      interpretasi: >
+        summarise memampatkan seluruh tabel menjadi satu baris ringkasan, dan dapat menghitung beberapa
+        statistik sekaligus. Fungsi n() menghitung banyaknya baris. Perhatikan perubahan bentuk data:
+        dari 40 baris menjadi 1 baris - inilah ciri khas summarise yang membedakannya dari mutate.
+    - contoh: "group_by + summarise: ringkasan per kelompok"
+      kode_r: "desa |>\n  group_by(provinsi) |>\n  summarise(\n    n_desa = n(),\n    total_penduduk = sum(penduduk),\n    rata_akses_listrik = round(mean(akses_listrik), 1),\n    .groups = \"drop\") |>\n  arrange(desc(total_penduduk))"
+      judul_r: "agregasi per provinsi"
+      eval: true
+      penjelasan: >
+        Alurnya tiga langkah. Fungsi group_by menandai data sebagai terkelompok menurut provinsi tanpa
+        mengubah isinya. Fungsi summarise kemudian bekerja terpisah untuk tiap kelompok sehingga
+        menghasilkan satu baris per provinsi. Argumen .groups bernilai drop menutup pengelompokan agar
+        tidak terbawa ke langkah berikutnya. Terakhir arrange dengan desc mengurutkan hasilnya dari total
+        terbesar.
+      interpretasi: >
+        Inilah pola paling sering dipakai dalam analisis data resmi: kelompokkan, ringkas, lalu urutkan.
+        group\_by menandai data sebagai terkelompok menurut provinsi, summarise menghitung ringkasan
+        untuk tiap kelompok, dan arrange mengurutkan hasilnya. Argumen .groups sama dengan drop menutup
+        pengelompokan agar tidak terbawa ke langkah berikutnya. Bandingkan dengan tapply pada Modul 3 -
+        di sini beberapa ringkasan dapat dihitung sekaligus dengan nama kolom yang jelas.
+    - contoh: "Pengelompokan lebih dari satu peubah"
+      kode_r: "ringkas <- desa |>\n  group_by(provinsi, status) |>\n  summarise(n = n(), rata_air = round(mean(akses_air), 1), .groups = \"drop\")\nringkas |> head(6)\n# tanpa .groups = \"drop\", data masih terkelompok:\ndesa |> group_by(provinsi, status) |> summarise(n = n()) |> groups()"
+      judul_r: "dua peubah pengelompok dan sisa pengelompokan"
+      eval: true
+      penjelasan: >
+        Bagian pertama mengelompokkan menurut dua peubah sekaligus dengan menuliskannya sebagai vektor,
+        sehingga ringkasan dihitung untuk tiap kombinasi; hasilnya disimpan lalu ditampilkan sebagian.
+        Bagian kedua sengaja menghilangkan argumen .groups, lalu memanggil fungsi groups yang menampilkan
+        pengelompokan yang masih menempel pada hasil - bukti bahwa satu tingkat pengelompokan tetap
+        tertinggal.
+      interpretasi: >
+        Pengelompokan dapat memakai beberapa peubah sehingga ringkasan dihitung untuk tiap kombinasi
+        provinsi dan status. Baris terakhir memperlihatkan jebakan yang dibahas di teori: tanpa .groups
+        sama dengan drop, hasilnya masih terkelompok menurut provinsi sehingga perhitungan lanjutan bisa
+        keliru. Fungsi groups() menampilkan sisa pengelompokan yang masih menempel.
+    - contoh: "count(), distinct(), dan n_distinct()"
+      kode_r: "desa |> count(provinsi)                       # banyaknya baris per provinsi\ndesa |> count(provinsi, status) |> head(4)   # kombinasi dua peubah\ndesa |> distinct(provinsi)                   # nilai unik\ndesa |> summarise(banyak_provinsi = n_distinct(provinsi))"
+      judul_r: "menghitung dan nilai unik"
+      eval: true
+      penjelasan: >
+        Fungsi count adalah jalan pintas untuk mengelompokkan lalu menghitung banyaknya baris, dan dapat
+        menerima lebih dari satu peubah sehingga menghasilkan tabel silang. Fungsi distinct mengambil
+        nilai unik suatu kolom sebagai tabel. Baris terakhir memakai n_distinct di dalam summarise yang
+        hanya mengembalikan banyaknya nilai unik berupa satu angka.
+      interpretasi: >
+        count adalah jalan pintas untuk group\_by ditambah summarise dengan n(), sangat praktis untuk
+        membuat tabel frekuensi. distinct mengambil nilai unik suatu kolom, sedangkan n\_distinct
+        menghitung banyaknya nilai unik. Ketiganya sering dipakai pada tahap pemeriksaan data, misalnya
+        untuk memastikan kunci penggabungan benar-benar unik.
+    - contoh: "Merangkai alur lengkap dengan pipe"
+      kode_r: "desa |>\n  filter(penduduk > 2000) |>\n  mutate(kepadatan = penduduk / luas_km2) |>\n  group_by(provinsi) |>\n  summarise(n = n(),\n            rata_kepadatan = round(mean(kepadatan), 1),\n            .groups = \"drop\") |>\n  filter(n >= 3) |>\n  arrange(desc(rata_kepadatan))"
+      judul_r: "enam langkah dalam satu alur"
+      eval: true
+      penjelasan: >
+        Enam verba dirangkai dengan pipa dan dibaca berurutan dari atas ke bawah. Penyaringan pertama
+        membatasi baris data asli. Fungsi mutate menambah kolom kepadatan. Pengelompokan dan peringkasan
+        memampatkan data menjadi satu baris per provinsi. Penyaringan kedua bekerja pada hasil ringkasan,
+        bukan data asli - inilah sebabnya filter muncul dua kali dengan peran berbeda. Terakhir arrange
+        mengurutkan hasilnya.
+      interpretasi: >
+        Alur ini menyaring desa berpenduduk di atas 2000, menghitung kepadatan, meringkas per provinsi,
+        menyaring provinsi yang datanya memadai, lalu mengurutkan. Perhatikan bahwa filter muncul dua
+        kali dengan peran berbeda: sebelum agregasi menyaring baris data asli, sesudah agregasi menyaring
+        baris hasil ringkasan. Alur dibaca berurutan dari atas ke bawah persis seperti urutan
+        pengerjaannya - inilah keunggulan utama pipe.
+    - contoh: "across(): menerapkan fungsi ke banyak kolom"
+      kode_r: "desa |>\n  group_by(provinsi) |>\n  summarise(across(c(akses_air, akses_listrik), mean, .names = \"rata_{.col}\"),\n            .groups = \"drop\") |>\n  mutate(across(where(is.numeric), \\(x) round(x, 1)))"
+      judul_r: "across untuk banyak kolom"
+      eval: true
+      penjelasan: >
+        Fungsi across dipakai dua kali dengan cara berbeda. Di dalam summarise, across menerima daftar
+        kolom dan satu fungsi yang diterapkan ke semuanya; argumen .names mengatur pola penamaan hasil,
+        dengan .col mewakili nama kolom asal. Di dalam mutate, across dipadukan dengan where dan
+        is.numeric untuk memilih seluruh kolom numerik, lalu fungsi anonim gaya baru dipakai untuk
+        membulatkannya sekaligus.
+      interpretasi: >
+        across menerapkan fungsi yang sama ke beberapa kolom sekaligus tanpa menulis ulang kodenya -
+        padanan sapply pada Modul 3, kini di dalam alur dplyr. Argumen .names mengatur pola penamaan
+        kolom hasil. Pada mutate, across dipadukan dengan where(is.numeric) untuk membulatkan semua kolom
+        numerik sekaligus. Ini sangat menghemat penulisan saat kolom berjumlah banyak.
+    - contoh: "slice_max dan pengambilan teratas per kelompok"
+      kode_r: "desa |> slice_max(penduduk, n = 3) |> select(provinsi, penduduk)   # 3 terbesar\ndesa |>\n  group_by(provinsi) |>\n  slice_max(akses_air, n = 1) |>          # 1 terbaik per provinsi\n  ungroup() |>\n  select(provinsi, akses_air)"
+      judul_r: "slice_max dan per kelompok"
+      eval: true
+      penjelasan: >
+        Baris pertama mengambil tiga baris dengan nilai terbesar dari seluruh data. Bagian kedua
+        menambahkan group_by sebelum slice_max, sehingga pengambilan dilakukan terpisah untuk tiap
+        provinsi dan menghasilkan satu baris terbaik per provinsi. Fungsi ungroup dipanggil setelahnya
+        agar pengelompokan tidak terbawa, lalu select membatasi kolom yang ditampilkan.
+      interpretasi: >
+        slice\_max mengambil baris dengan nilai terbesar (tersedia pula slice\_min, slice\_head, dan
+        slice\_sample). Bila didahului group\_by, pengambilan dilakukan untuk tiap kelompok sehingga
+        diperoleh desa dengan akses air terbaik di masing-masing provinsi. Jangan lupa ungroup setelahnya
+        agar pengelompokan tidak terbawa ke langkah berikutnya.
+    - contoh: "Penanganan nilai hilang dalam alur"
+      kode_r: "desa_na <- desa\ndesa_na$akses_air[c(2, 5, 9)] <- NA\nmean(desa_na$akses_air)                      # NA karena ada nilai hilang\nmean(desa_na$akses_air, na.rm = TRUE)        # abaikan NA\ndesa_na |> drop_na(akses_air) |> nrow()      # buang baris ber-NA\ndesa_na |> mutate(air_isi = replace_na(akses_air, 0)) |> summarise(n_nol = sum(air_isi == 0))\ndesa_na |> mutate(air2 = coalesce(akses_air, akses_listrik)) |> summarise(sisa_na = sum(is.na(air2)))"
+      judul_r: "na.rm, drop_na, replace_na, coalesce"
+      eval: true
+      penjelasan: >
+        Bahan uji disiapkan dengan mengosongkan tiga nilai. Baris berikutnya membandingkan perhitungan
+        rata-rata tanpa dan dengan argumen na.rm. Fungsi drop_na membuang baris yang kolom tertentunya
+        kosong, lalu nrow menghitung sisanya. Fungsi replace_na mengganti nilai hilang dengan nol, dan
+        jumlah penggantiannya dihitung dengan membandingkan nilainya terhadap nol. Fungsi coalesce
+        mengambil nilai pertama yang bukan kosong dari dua kolom, sehingga sisa nilai hilangnya nol.
+      interpretasi: >
+        Empat cara menangani nilai hilang, masing-masing untuk keperluan berbeda: na.rm mengabaikan NA
+        saat menghitung ringkasan; drop\_na membuang barisnya; replace\_na menggantinya dengan nilai
+        tertentu; dan coalesce mengambil nilai pertama yang bukan NA dari beberapa kolom. Pemilihan cara
+        harus disadari betul karena masing-masing mengubah data secara berbeda dan dapat memengaruhi
+        kesimpulan.
+    - contoh: "left_join dengan tabel referensi"
+      kode_r: "# tabel referensi dibuat langsung (dalam praktik biasanya berkas terpisah)\nref_pulau <- tibble(\n  provinsi = c(\"Jawa Barat\", \"Jawa Tengah\", \"Sulawesi Selatan\", \"Papua\"),\n  pulau    = c(\"Jawa\", \"Jawa\", \"Sulawesi\", \"Papua\"),\n  zona     = c(\"Barat\", \"Barat\", \"Tengah\", \"Timur\"))\ndesa |>\n  left_join(ref_pulau, by = \"provinsi\") |>\n  count(pulau, zona)"
+      judul_r: "left_join"
+      eval: true
+      penjelasan: >
+        Tabel referensi dibuat langsung dengan tibble berisi tiga kolom sejajar; dalam praktik nyata
+        tabel semacam ini biasanya dibaca dari berkas terpisah. Fungsi left_join menggabungkan tabel
+        utama dengan tabel referensi berdasarkan kolom kunci yang disebut pada argumen by. Seluruh baris
+        tabel kiri dipertahankan. Baris terakhir menghitung banyaknya baris tiap kombinasi kolom baru
+        yang berhasil ditambahkan.
+      interpretasi: >
+        left\_join menambahkan kolom pulau dan zona dari tabel referensi ke tabel utama berdasarkan kolom
+        kunci provinsi. Semua baris tabel kiri dipertahankan; bila suatu provinsi tidak ada di tabel
+        referensi, kolom tambahannya akan berisi NA. Pola inilah yang dipakai untuk memperkaya data pokok
+        dengan atribut wilayah dari tabel master - pekerjaan yang sangat lazim pada data statistik resmi.
+    - contoh: "inner_join, anti_join, dan pemeriksaan jumlah baris"
+      kode_r: "ref_sebagian <- tibble(\n  provinsi = c(\"Jawa Barat\", \"Papua\"),\n  target_air = c(95, 80))\nnrow(desa)\ndesa |> inner_join(ref_sebagian, by = \"provinsi\") |> nrow()   # hanya yang cocok\ndesa |> anti_join(ref_sebagian, by = \"provinsi\") |> count(provinsi)  # yang tidak cocok\n# periksa keunikan kunci sebelum menggabung\nref_sebagian |> summarise(baris = n(), kunci_unik = n_distinct(provinsi))"
+      judul_r: "inner_join, anti_join, dan keunikan kunci"
+      eval: true
+      penjelasan: >
+        Tabel referensi sengaja dibuat tidak lengkap, hanya memuat dua provinsi. Baris kedua menampilkan
+        jumlah baris data asal sebagai pembanding. Penggabungan inner hanya mempertahankan baris yang
+        kuncinya cocok sehingga jumlahnya berkurang. Fungsi anti_join menampilkan kebalikannya, yaitu
+        baris yang tidak punya pasangan. Baris terakhir adalah pemeriksaan yang dianjurkan sebelum
+        menggabung: banyaknya baris tabel referensi harus sama dengan banyaknya kunci uniknya.
+      interpretasi: >
+        inner\_join hanya mempertahankan baris yang kuncinya cocok di kedua tabel, sehingga jumlah baris
+        berkurang. anti\_join justru menampilkan baris yang tidak punya pasangan - sangat berguna untuk
+        memeriksa kelengkapan tabel referensi. Baris terakhir menunjukkan kebiasaan baik sebelum
+        menggabung: pastikan banyaknya baris sama dengan banyaknya kunci unik, karena kunci yang tidak
+        unik akan menggandakan baris hasil.
+    - contoh: "Studi kasus: penyusunan indikator wilayah"
+      kode_r: "ref_pulau <- tibble(\n  provinsi = c(\"Jawa Barat\", \"Jawa Tengah\", \"Sulawesi Selatan\", \"Papua\"),\n  pulau    = c(\"Jawa\", \"Jawa\", \"Sulawesi\", \"Papua\"))\nlaporan <- desa |>\n  left_join(ref_pulau, by = \"provinsi\") |>\n  mutate(kepadatan = penduduk / luas_km2,\n         layak = if_else(akses_air >= 75 & akses_listrik >= 80, 1, 0)) |>\n  group_by(pulau, status) |>\n  summarise(n_desa = n(),\n            penduduk = sum(penduduk),\n            rata_kepadatan = round(mean(kepadatan), 1),\n            persen_layak = round(100 * mean(layak), 1),\n            .groups = \"drop\") |>\n  arrange(pulau, status)\nlaporan"
+      judul_r: "alur lengkap dari data mentah ke tabel laporan"
+      eval: true
+      penjelasan: >
+        Alurnya lima langkah dalam satu rangkaian pipa. Tabel referensi dibuat lebih dahulu, lalu
+        digabungkan dengan left_join. Fungsi mutate membuat dua kolom sekaligus: kepadatan sebagai hasil
+        bagi, dan penanda layak berupa angka nol atau satu dari gabungan dua syarat dengan if_else.
+        Pengelompokan dilakukan menurut dua peubah, lalu summarise menghitung lima ringkasan sekaligus;
+        persentase diperoleh dari rata-rata penanda dikali seratus. Terakhir arrange merapikan urutannya.
+      interpretasi: >
+        Studi kasus ini merangkai seluruh keterampilan modul menjadi satu alur nyata: menggabungkan tabel
+        referensi, membuat peubah turunan dan penanda biner kelayakan, meringkas per kombinasi pulau dan
+        status, lalu mengurutkan. Perhatikan cara menghitung persentase: rata-rata dari penanda bernilai
+        0 dan 1 sama dengan proporsinya, tinggal dikali seratus. Hasil akhirnya berupa tabel yang siap
+        disajikan - persis bentuk keluaran yang lazim dalam publikasi statistik resmi.
+  latihan:
+    - "Kerjakan bertahap. **Dasar** melengkapi kode; **Menengah** menulis sendiri dan membetulkan kode; **Lanjut** memecahkan kasus. Gunakan `data/data_desa.csv`."
+    - "#### Tingkat Dasar (melengkapi kode)"
+    - "\\latihan{Memilih dan menyaring}"
+    - "```{r eval=FALSE}\nlibrary(dplyr)\ndesa <- as_tibble(read.csv(\"data/data_desa.csv\"))\ndesa |> ____(provinsi, penduduk, akses_air) |> head()   # pilih tiga kolom\ndesa |> ____(penduduk > 8000) |> nrow()                 # saring baris\n```"
+    - "\\latihan{Mengurutkan dan membuat kolom}"
+    - "```{r eval=FALSE}\ndesa |> arrange(____(akses_listrik)) |> head(3)   # urut TURUN\ndesa |> ____(kepadatan = penduduk / luas_km2) |> head(3)  # kolom baru\n```"
+    - "\\latihan{Agregasi per kelompok}"
+    - "```{r eval=FALSE}\ndesa |>\n  ____(status) |>                       # kelompokkan menurut status\n  summarise(n = ____(), rata = mean(akses_air), .groups = \"drop\")\n```"
+    - "#### Tingkat Menengah (menulis sendiri)"
+    - "\\latihan{Alur bertahap}"
+    - "Susun satu alur `dplyr` yang: menyaring desa berstatus `Perdesaan`, membuat kolom `anggota_rt` (penduduk dibagi rumah tangga), meringkas rata-rata `anggota_rt` dan banyaknya desa per provinsi, lalu mengurutkan dari rata-rata terbesar. Jelaskan perubahan bentuk data pada tiap langkah."
+    - "\\latihan{Kategori bertingkat dan tabel frekuensi}"
+    - "Dengan `case_when`, buat kolom `kelas_listrik` bernilai \"Tinggi\" (akses listrik minimal 90), \"Sedang\" (75 sampai kurang dari 90), dan \"Rendah\" (selebihnya). Tampilkan tabel frekuensinya per provinsi menggunakan `count`."
+    - "\\latihan{Membetulkan kode yang salah}"
+    - "Kode berikut memuat beberapa kesalahan (verba tertukar, tanda kutip, pengelompokan tertinggal, dan salah nama fungsi). Temukan dan perbaiki, lalu jelaskan tiap kesalahannya."
+    - "```{r eval=FALSE}\ndesa |>\n  select(penduduk > 5000) |>            # verba salah untuk menyaring baris\n  mutate(kepadatan = penduduk / luas)   # nama kolom salah\n\ndesa |>\n  group_by(\"provinsi\") |>               # kunci pengelompokan diberi tanda kutip\n  summarise(rata = average(penduduk))    # nama fungsi salah\n\ndesa |>\n  group_by(provinsi, status) |>\n  summarise(n = n()) |>                  # pengelompokan masih tertinggal\n  mutate(proporsi = n / sum(n))          # akibatnya proporsi dihitung per provinsi\n```"
+    - "**Keluaran yang benar.** Setelah diperbaiki, ketiga bagian kode akan menghasilkan keluaran berikut. Gunakan ini untuk memverifikasi perbaikan Anda.\n\n```\n# bagian 1: banyaknya baris hasil\n[1] 28\n\n# bagian 2\n# A tibble: 4 x 2\n  provinsi          rata\n  <chr>            <dbl>\n1 Jawa Barat       6387.\n2 Jawa Tengah      9410.\n3 Papua            8916 \n4 Sulawesi Selatan 8703 \n\n# bagian 3 (proporsi terhadap TOTAL, menjumlah 1)\n# A tibble: 8 x 4\n  provinsi         status        n proporsi\n  <chr>            <chr>     <int>    <dbl>\n1 Jawa Barat       Perdesaan     5    0.125\n2 Jawa Barat       Perkotaan     5    0.125\n3 Jawa Tengah      Perdesaan     9    0.225\n4 Jawa Tengah      Perkotaan     5    0.125\n5 Papua            Perdesaan     3    0.075\n6 Papua            Perkotaan     4    0.1  \n7 Sulawesi Selatan Perdesaan     5    0.125\n8 Sulawesi Selatan Perkotaan     4    0.1  \n```"
+    - "#### Tingkat Lanjut (kasus kecil)"
+    - "\\latihan{Penggabungan dan pemeriksaan}"
+    - "Buat tabel referensi `tibble(provinsi = ..., target_air = ...)` untuk keempat provinsi dengan target masing-masing. Gabungkan dengan `left_join`, buat kolom `selisih` (akses air dikurangi target), lalu tampilkan banyaknya desa yang berada di bawah target per provinsi. Sebelum menggabung, periksa bahwa kunci pada tabel referensi unik dan bandingkan jumlah baris sebelum serta sesudah penggabungan."
+  penugasan:
+    - "\\begin{kotaktugas}\nSebagai calon pengolah data \\emph{official statistics}, susun tabel indikator wilayah dari \\texttt{data\\_desa.csv} (\\emph{data simulasi}) menggunakan alur \\texttt{dplyr} yang rapi dan terbaca.\n\\end{kotaktugas}"
+    - "**Konteks.** Sebuah unit statistik memiliki data 40 desa dari empat provinsi beserta jumlah penduduk, rumah tangga, luas wilayah, serta persentase akses air bersih dan listrik. Anda diminta menyusun tabel indikator ringkas beserta interpretasinya."
+    - "\\tugas{Pemeriksaan dan penyiapan data}"
+    - "1. Muat data, ubah menjadi tibble, dan tampilkan strukturnya dengan `glimpse`. Laporkan jumlah baris, jumlah kolom, dan tipe tiap kolom."
+    - "2. Buat kolom turunan: `kepadatan` (penduduk per km persegi) dan `anggota_rt` (penduduk per rumah tangga)."
+    - "\\tugas{Klasifikasi dan agregasi}"
+    - "3. Dengan `case_when`, buat kolom `kelas_air` bernilai \"Sangat baik\", \"Baik\", \"Cukup\", atau \"Kurang\" berdasarkan persentase akses air (tentukan sendiri batasnya dan jelaskan alasannya)."
+    - "4. Susun tabel ringkasan per **provinsi dan status**, memuat: banyaknya desa, total penduduk, rata-rata kepadatan, rata-rata akses air, dan rata-rata akses listrik. Gunakan `.groups = \"drop\"` dan jelaskan mengapa itu penting."
+    - "\\tugas{Penggabungan tabel}"
+    - "5. Buat tabel referensi berisi `provinsi`, `pulau`, dan `target_air`, lalu gabungkan dengan data utama. Periksa keunikan kunci dan bandingkan jumlah baris sebelum serta sesudah penggabungan."
+    - "6. Hitung banyaknya dan persentase desa yang **memenuhi target** akses air pada tiap pulau."
+    - "\\tugas{Laporan}"
+    - "7. Susun laporan R Markdown berisi kode, keluaran, dan interpretasi. Tutup dengan **ringkasan (maksimal 300 kata)** yang menjawab: provinsi mana yang paling tertinggal aksesnya, apakah terdapat perbedaan mencolok antara perkotaan dan perdesaan, dan keterbatasan apa yang perlu diingat mengingat data ini merupakan simulasi."
+  ringkasan:
+    - "\\begin{kotaktujuan}\n\\textbf{Daftar periksa penguasaan:}\n\\begin{itemize}\n\\item[$\\square$] Saya dapat memakai \\texttt{select}, \\texttt{filter}, \\texttt{arrange}, \\texttt{mutate}, dan \\texttt{summarise}.\n\\item[$\\square$] Saya dapat memakai fungsi bantu pemilihan kolom (\\texttt{starts\\_with}, \\texttt{where}) serta \\texttt{rename} dan \\texttt{relocate}.\n\\item[$\\square$] Saya dapat membuat peubah bersyarat dengan \\texttt{if\\_else} dan \\texttt{case\\_when}.\n\\item[$\\square$] Saya dapat meringkas per kelompok dengan \\texttt{group\\_by} dan menutup pengelompokan dengan benar.\n\\item[$\\square$] Saya dapat menangani nilai hilang di dalam alur manipulasi.\n\\item[$\\square$] Saya dapat menggabungkan tabel dan memeriksa risiko penggandaan baris.\n\\item[$\\square$] Saya dapat merangkai seluruh langkah menjadi satu alur pipe yang terbaca.\n\\end{itemize}\n\\end{kotaktujuan}"
+    - "**Kartu Referensi Cepat.** Rangkuman verba `dplyr`:"
+    - "\\begin{kotakrumus}\n\\begin{tabular}{@{}ll@{}}\n\\textbf{Tugas} & \\textbf{Perintah}\\\\\nPilih kolom & \\texttt{select(a, b)} / \\texttt{select(-a)}\\\\\nBantu pilih & \\texttt{starts\\_with()}, \\texttt{where()}\\\\\nSaring baris & \\texttt{filter(syarat)}\\\\\nKeanggotaan & \\texttt{x \\%in\\% c(...)}\\\\\nUrutkan & \\texttt{arrange(x)} / \\texttt{arrange(desc(x))}\\\\\nKolom baru & \\texttt{mutate(baru = ...)}\\\\\nBersyarat & \\texttt{if\\_else()}, \\texttt{case\\_when()}\\\\\nRingkas & \\texttt{summarise(rata = mean(x))}\\\\\nPer kelompok & \\texttt{group\\_by(g)} + \\texttt{.groups = \"drop\"}\\\\\nFrekuensi & \\texttt{count(g)}\\\\\nBanyak kolom & \\texttt{across()}\\\\\nAmbil teratas & \\texttt{slice\\_max(x, n = 3)}\\\\\nNilai hilang & \\texttt{na.rm}, \\texttt{drop\\_na()}, \\texttt{coalesce()}\\\\\nGabung tabel & \\texttt{left\\_join(x, y, by = \"k\")}\\\\\nRangkai & \\texttt{|>}\\\\\n\\end{tabular}\n\\end{kotakrumus}"
+    - "Modul ini memantapkan manipulasi data dengan `dplyr` secara menyeluruh, dari verba tunggal hingga alur lengkap yang menggabungkan beberapa tabel. Prinsip penting: kerjakan bertahap, periksa hasil tiap langkah, dan sadari perubahan bentuk data (jumlah baris dan kolom) yang ditimbulkan tiap verba. Pada Modul 6 konsep yang sama dipelajari di Python dengan `pandas`, sehingga Anda dapat membandingkan keduanya secara langsung."
+  referensi:
+    - "Wickham, H., Cetinkaya-Rundel, M., & Grolemund, G. (2023). *R for Data Science*, 2nd ed. O'Reilly Media. (Rujukan utama dplyr dan alur tidyverse; tersedia daring gratis.)"
+    - "Wickham, H., Francois, R., Henry, L., & Muller, K. (2023). *dplyr: A Grammar of Data Manipulation*. R package documentation. (Dokumentasi resmi tiap verba.)"
+    - "Pramana, S., dkk. (2016). *Dasar-dasar Statistik menggunakan R*. In-Media. (Pengolahan data dengan R dalam konteks statistik.)"
+    - "Zhang, N. (2020). *A Tour of Data Science: Learn R and Python in Parallel*. Chapman and Hall/CRC. (Perbandingan dplyr dan pandas.)"
+
+exercises:
+  - id: "L5.1"
+    points: 15
+    solution: "Tingkat Dasar: select, filter, arrange desc, mutate, group_by, n(). Isian: select, filter, desc, mutate, group_by, n."
+    judul_r: "Solusi Tingkat Dasar (R)"
+    solusi_r: |
+      library(dplyr)
+      desa <- as_tibble(read.csv("data/data_desa.csv"))
+      desa |> select(provinsi, penduduk, akses_air) |> head()
+      desa |> filter(penduduk > 8000) |> nrow()
+      desa |> arrange(desc(akses_listrik)) |> head(3)
+      desa |> mutate(kepadatan = penduduk / luas_km2) |> head(3)
+      desa |>
+        group_by(status) |>
+        summarise(n = n(), rata = mean(akses_air), .groups = "drop")
+    interpretasi: >
+      select memilih kolom, filter menyaring baris, desc membalik urutan menjadi turun, mutate menambah
+      kolom turunan, dan group\_by dipadu n() menghasilkan banyaknya baris per kelompok. Perhatikan
+      perbedaan perannya: select bekerja pada kolom, filter pada baris.
+  - id: "L5.2"
+    points: 25
+    solution: "Tingkat Menengah dan Lanjut: alur bertahap, case_when, serta join dengan pemeriksaan kunci."
+    judul_r: "Solusi Menengah dan Lanjut (R)"
+    solusi_r: |
+      library(dplyr)
+      desa <- as_tibble(read.csv("data/data_desa.csv"))
+
+      # Alur bertahap
+      desa |>
+        filter(status == "Perdesaan") |>
+        mutate(anggota_rt = penduduk / rumah_tangga) |>
+        group_by(provinsi) |>
+        summarise(n = n(), rata_anggota = round(mean(anggota_rt), 2), .groups = "drop") |>
+        arrange(desc(rata_anggota))
+
+      # Kategori bertingkat + tabel frekuensi
+      desa |>
+        mutate(kelas_listrik = case_when(
+          akses_listrik >= 90 ~ "Tinggi",
+          akses_listrik >= 75 ~ "Sedang",
+          .default = "Rendah")) |>
+        count(provinsi, kelas_listrik)
+
+      # Penggabungan dan pemeriksaan
+      ref <- tibble(
+        provinsi   = c("Jawa Barat", "Jawa Tengah", "Sulawesi Selatan", "Papua"),
+        target_air = c(90, 88, 80, 70))
+      ref |> summarise(baris = n(), kunci_unik = n_distinct(provinsi))  # harus sama
+      sebelum <- nrow(desa)
+      hasil <- desa |>
+        left_join(ref, by = "provinsi") |>
+        mutate(selisih = akses_air - target_air)
+      c(sebelum = sebelum, sesudah = nrow(hasil))                       # harus sama
+      hasil |> filter(selisih < 0) |> count(provinsi, name = "di_bawah_target")
+    interpretasi: >
+      Alur bertahap mengubah bentuk data berturut-turut: filter mengurangi baris, mutate menambah kolom,
+      group\_by dan summarise memampatkan menjadi satu baris per provinsi, arrange mengurutkan.
+      case\_when memberi kategori bertingkat yang diperiksa berurutan dari atas. Pada penggabungan, dua
+      pemeriksaan dilakukan: banyaknya baris tabel referensi harus sama dengan banyaknya kunci unik, dan
+      jumlah baris sebelum serta sesudah join harus sama - bila membengkak, berarti kunci tidak unik.
+  - id: "L5.D"
+    points: 10
+    solution: "Membetulkan kode: filter (bukan select) untuk baris, nama kolom luas_km2, kunci tanpa tanda kutip, mean (bukan average), dan .groups atau ungroup."
+    judul_r: "Solusi Membetulkan Kode (R)"
+    solusi_r: |
+      library(dplyr)
+      desa <- as_tibble(read.csv("data/data_desa.csv"))
+
+      # 1) select -> filter (menyaring baris), dan nama kolom yang benar
+      desa |>
+        filter(penduduk > 5000) |>
+        mutate(kepadatan = penduduk / luas_km2)
+
+      # 2) kunci pengelompokan tanpa tanda kutip, dan fungsi mean (bukan average)
+      desa |>
+        group_by(provinsi) |>
+        summarise(rata = mean(penduduk), .groups = "drop")
+
+      # 3) tutup pengelompokan agar proporsi dihitung terhadap keseluruhan
+      desa |>
+        group_by(provinsi, status) |>
+        summarise(n = n(), .groups = "drop") |>
+        mutate(proporsi = round(n / sum(n), 3))
+    interpretasi: >
+      Empat jenis kesalahan diperbaiki. Pertama, select dipakai untuk kolom sehingga penyaringan baris
+      harus memakai filter. Kedua, nama kolom ditulis keliru; nama yang benar adalah luas\_km2. Ketiga,
+      kunci pada group\_by ditulis sebagai nama kolom tanpa tanda kutip. Keempat, fungsi rata-rata di R
+      bernama mean, bukan average. Kesalahan terakhir paling halus: tanpa .groups sama dengan drop,
+      pengelompokan menurut provinsi masih menempel sehingga sum(n) dihitung per provinsi dan proporsinya
+      keliru - setelah diperbaiki, proporsi dihitung terhadap total seluruh baris.
+  - id: "T5.1"
+    points: 50
+    solution: "Penugasan: pemeriksaan data, peubah turunan, klasifikasi, agregasi dua peubah, join dengan pemeriksaan, dan laporan."
+    judul_r: "Solusi Penugasan (R)"
+    solusi_r: |
+      suppressPackageStartupMessages(library(dplyr))
+      desa <- as_tibble(read.csv("data/data_desa.csv"))
+      glimpse(desa)
+
+      # Peubah turunan dan klasifikasi
+      desa2 <- desa |>
+        mutate(kepadatan  = penduduk / luas_km2,
+               anggota_rt = penduduk / rumah_tangga,
+               kelas_air  = case_when(
+                 akses_air >= 90 ~ "Sangat baik",
+                 akses_air >= 75 ~ "Baik",
+                 akses_air >= 60 ~ "Cukup",
+                 .default = "Kurang"))
+
+      # Tabel ringkasan per provinsi dan status
+      desa2 |>
+        group_by(provinsi, status) |>
+        summarise(n_desa   = n(),
+                  penduduk = sum(penduduk),
+                  kepadatan = round(mean(kepadatan), 1),
+                  air      = round(mean(akses_air), 1),
+                  listrik  = round(mean(akses_listrik), 1),
+                  .groups  = "drop") |>
+        arrange(provinsi, status)
+
+      # Penggabungan dengan pemeriksaan
+      ref <- tibble(
+        provinsi   = c("Jawa Barat", "Jawa Tengah", "Sulawesi Selatan", "Papua"),
+        pulau      = c("Jawa", "Jawa", "Sulawesi", "Papua"),
+        target_air = c(90, 88, 80, 70))
+      ref |> summarise(baris = n(), kunci_unik = n_distinct(provinsi))
+      gab <- desa2 |> left_join(ref, by = "provinsi")
+      c(sebelum = nrow(desa2), sesudah = nrow(gab))
+
+      # Capaian target per pulau
+      gab |>
+        mutate(memenuhi = akses_air >= target_air) |>
+        group_by(pulau) |>
+        summarise(n_desa = n(),
+                  n_memenuhi = sum(memenuhi),
+                  persen = round(100 * mean(memenuhi), 1),
+                  .groups = "drop") |>
+        arrange(desc(persen))
+    interpretasi: >
+      Alur penugasan mengikuti urutan kerja nyata: periksa struktur, buat peubah turunan dan klasifikasi,
+      susun tabel ringkasan per kombinasi kelompok, gabungkan tabel referensi disertai pemeriksaan kunci
+      dan jumlah baris, lalu hitung capaian target. Persentase dihitung sebagai rata-rata penanda logika
+      dikali seratus, karena rata-rata nilai TRUE dan FALSE sama dengan proporsinya. Perlu diingat bahwa
+      seluruh angka berasal dari data simulasi sehingga tidak boleh ditafsirkan sebagai keadaan
+      sebenarnya, dan pengelompokan selalu ditutup dengan .groups sama dengan drop agar perhitungan
+      lanjutan tetap benar.
+
+references:
+  - "Wickham, H., Cetinkaya-Rundel, M., & Grolemund, G. (2023). R for Data Science, 2nd ed. O'Reilly Media."
+  - "Wickham, H., Francois, R., Henry, L., & Muller, K. (2023). dplyr: A Grammar of Data Manipulation. R package documentation."
+  - "Pramana, S., dkk. (2016). Dasar-dasar Statistik menggunakan R. In-Media."
+  - "Zhang, N. (2020). A Tour of Data Science: Learn R and Python in Parallel. Chapman and Hall/CRC."

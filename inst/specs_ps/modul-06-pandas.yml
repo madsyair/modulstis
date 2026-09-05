@@ -1,0 +1,631 @@
+number: 6
+title: "Manipulasi Data dengan pandas"
+short_code: "pandas"
+topic: "Manipulasi Data (pandas)"
+pertemuan: 6
+sub_cpmk: >
+  Sub-CPMK 6: Mahasiswa mampu memanipulasi data dengan pandas, mencakup seleksi data,
+  join, group by, dan agregasi.
+packages: [pandas, numpy]
+contoh_title: "Contoh Praktikum dengan Python"
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  ta: "2025/2026"
+  semester: "3 (Ganjil)"
+  prodi: "D-IV Statistika"
+  penyusun:
+    - "Achmad Syahrul Choir"
+    - "Rudi Salam"
+    - "Christiana Anggraeni Putri"
+
+datasets:
+  - name: data_desa
+    role: contoh
+    recipe:
+      kind: tabular
+      "n": 40
+      seed: 2025
+      columns:
+        provinsi: {type: category, levels: [Jawa Barat, Jawa Tengah, Sulawesi Selatan, Papua], probs: [0.3, 0.3, 0.25, 0.15]}
+        status: {type: category, levels: [Perkotaan, Perdesaan], probs: [0.4, 0.6]}
+        penduduk: {type: integer, min: 500, max: 15000}
+        rumah_tangga: {type: integer, min: 100, max: 4000}
+        luas_km2: {type: numeric, min: 1, max: 50, digits: 1}
+        akses_air: {type: numeric, min: 40, max: 100, digits: 1}
+        akses_listrik: {type: numeric, min: 50, max: 100, digits: 1}
+
+body:
+  deskripsi:
+    - >
+      Modul ini adalah pasangan Python dari Modul 5. Pekerjaan yang sama - memilih kolom, menyaring
+      baris, mengurutkan, membuat peubah turunan, meringkas per kelompok, dan menggabungkan tabel -
+      kini dikerjakan dengan pustaka \texttt{pandas}. Karena gagasannya sudah dikuasai dari
+      \texttt{dplyr}, fokus modul ini adalah memetakan tiap operasi ke sintaks \texttt{pandas} serta
+      mengenali kekhasannya.
+    - >
+      \texttt{pandas} adalah pustaka manipulasi data paling banyak dipakai di Python dan menjadi
+      fondasi hampir seluruh pekerjaan sains data di lingkungan Python. Menguasainya berdampingan
+      dengan \texttt{dplyr} membuat mahasiswa fleksibel: dapat memilih perkakas sesuai kebutuhan
+      pekerjaan dan mampu membaca kode rekan kerja yang memakai bahasa berbeda.
+    - >
+      Agar perbandingan terasa langsung, modul ini memakai \textbf{berkas data yang sama persis}
+      dengan Modul 5. Anda dapat menjalankan contoh di sini lalu membandingkan hasilnya dengan contoh
+      \texttt{dplyr} pada modul sebelumnya - angkanya akan sama, hanya sintaksnya yang berbeda.
+    - >
+      Materi dibahas menyeluruh dari dasar hingga lanjut: struktur Series, DataFrame, dan Index;
+      seleksi kolom dan baris termasuk perbedaan penting \texttt{loc} dan \texttt{iloc}; pengurutan;
+      pembuatan peubah bersyarat dengan \texttt{numpy.where} dan \texttt{numpy.select}; agregasi
+      dengan \texttt{groupby} beserta \emph{named aggregation} dan \texttt{transform}; penanganan
+      nilai hilang; penggabungan tabel dengan \texttt{merge}; tabel silang; serta perangkaian
+      seluruhnya dengan rantai metode.
+    - "\\begin{kotakperhatian}[Tentang data]\nBerkas data pada modul ini adalah \\textbf{data simulasi} (\\texttt{set.seed(2025)}), \\textbf{bukan data nyata} dan \\textbf{bukan data resmi} instansi mana pun. Berkas ini identik dengan yang dipakai pada Modul 5 agar hasil kedua pustaka dapat dibandingkan.\n\\end{kotakperhatian}"
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:"
+    - "1. **Menjelaskan** struktur `Series`, `DataFrame`, dan `Index` serta peran indeks dalam pandas."
+    - "2. **Melakukan seleksi data**: memilih kolom, menyaring baris, dan membedakan `loc` (label) dari `iloc` (posisi)."
+    - "3. **Mengurutkan** data dan **membuat peubah turunan**, termasuk yang bersyarat dengan `np.where` dan `np.select`."
+    - "4. **Melakukan agregasi** dengan `groupby`, `agg`, *named aggregation*, dan `transform`."
+    - "5. **Menangani nilai hilang** (`isna`, `dropna`, `fillna`, `combine_first`) dalam alur manipulasi."
+    - "6. **Menggabungkan tabel** dengan `merge` serta mengenali risiko penggandaan baris."
+    - "7. **Merangkai** seluruh langkah menjadi satu rantai metode yang terbaca dan memetakannya ke padanan `dplyr`."
+  alat:
+    - "Perangkat dan bahan yang diperlukan:"
+    - "- **Python** (Jupyter/Anaconda); modul ini fokus pada Python."
+    - "- Pustaka: `pandas` dan `numpy`."
+    - "- Berkas data: `data/data_desa.csv` (identik dengan Modul 5)."
+  instruksi:
+    - "Ikuti tahapan berikut:"
+    - "**Sebelum praktikum:** siapkan direktori kerja; letakkan `data_desa.csv` di subfolder `data/`; pastikan `pandas` dan `numpy` sudah terpasang."
+    - "**Selama praktikum:** kerjakan Contoh berurutan; setiap kali selesai, **bandingkan hasilnya dengan contoh padanannya di Modul 5** untuk memastikan pemahaman Anda konsisten; perhatikan perubahan bentuk data (jumlah baris dan kolom) pada tiap langkah."
+    - "**Pembagian kerja:** Contoh dan Latihan dikerjakan selama sesi praktikum di kelas; **Penugasan dikerjakan sebagai tugas terstruktur di luar sesi**.\n\n**Pengumpulan:** susun laporan Jupyter Notebook (atau R Markdown), render ke PDF/HTML, dan kumpulkan via Google Classroom sesuai tenggat yang ditetapkan dosen."
+  teori:
+    - "### Kaitan dengan Materi Sebelumnya"
+    - >
+      Modul ini berdiri di atas dua modul sekaligus. Dari Modul 4 kita membawa dasar pemrograman
+      Python: indentasi, fungsi, \emph{comprehension}, dan penanganan galat. Dari Modul 5 kita membawa
+      \emph{cara berpikir} manipulasi data: memilih, menyaring, mengurutkan, menurunkan peubah,
+      meringkas per kelompok, dan menggabungkan tabel.
+    - >
+      Karena kerangka berpikirnya sudah dikuasai, yang perlu dipelajari di sini hanyalah
+      \emph{penerjemahannya}. Karena itu tiap kelompok operasi dibuka dengan kotak "Padanan dari R"
+      yang memetakan perintah \texttt{dplyr} ke \texttt{pandas}. Penguasaan modul ini menjadi
+      prasyarat untuk seluruh modul Python berikutnya, khususnya Modul 7 (statistik deskriptif) dan
+      Modul 10 (visualisasi dengan seaborn) yang keduanya bekerja di atas DataFrame.
+    - "\\begin{kotakcatatan}[Padanan dari R]\nPemetaan operasi \\texttt{dplyr} ke \\texttt{pandas}:\\\\[3pt]\n\\begin{tabular}{@{}ll@{}}\n\\textbf{dplyr (R)} & \\textbf{pandas (Python)}\\\\\n\\texttt{select(a, b)} & \\texttt{df[[\"a\", \"b\"]]}\\\\\n\\texttt{filter(syarat)} & \\texttt{df[syarat]} atau \\texttt{df.query()}\\\\\n\\texttt{arrange(x)} & \\texttt{df.sort\\_values(\"x\")}\\\\\n\\texttt{mutate(baru = ...)} & \\texttt{df.assign(baru = ...)}\\\\\n\\texttt{if\\_else()} & \\texttt{numpy.where()}\\\\\n\\texttt{case\\_when()} & \\texttt{numpy.select()}\\\\\n\\texttt{summarise()} & \\texttt{df.agg()}\\\\\n\\texttt{group\\_by() + summarise()} & \\texttt{df.groupby().agg()}\\\\\n\\texttt{count(g)} & \\texttt{df[\"g\"].value\\_counts()}\\\\\n\\texttt{left\\_join(x, y)} & \\texttt{x.merge(y, how=\"left\")}\\\\\n\\texttt{drop\\_na()} & \\texttt{df.dropna()}\\\\\n\\texttt{coalesce(a, b)} & \\texttt{a.combine\\_first(b)}\\\\\n\\texttt{|>} & rantai metode (titik)\\\\\n\\end{tabular}\n\\end{kotakcatatan}"
+    - "### Struktur Data pandas: Series, DataFrame, dan Index"
+    - >
+      \textbf{Series} adalah satu kolom data bersama labelnya; \textbf{DataFrame} adalah tabel yang
+      tersusun dari beberapa Series dengan indeks baris yang sama. Yang membedakan \texttt{pandas}
+      dari data frame R adalah peran \textbf{Index}: setiap baris memiliki label, dan label ini ikut
+      terbawa dalam hampir semua operasi. Banyak kebingungan pemula berasal dari indeks yang tidak
+      diperhatikan, misalnya setelah penyaringan atau setelah \texttt{groupby}.
+    - "### Seleksi Data: loc dan iloc"
+    - >
+      Terdapat dua cara mengakses data yang harus dibedakan dengan tegas. \texttt{df.loc[baris, kolom]}
+      bekerja dengan \textbf{label}: nama kolom dan label indeks baris; rentangnya \emph{inklusif} di
+      kedua ujung. \texttt{df.iloc[baris, kolom]} bekerja dengan \textbf{posisi} bilangan bulat mulai
+      dari nol; rentangnya \emph{eksklusif} di ujung kanan seperti iris biasa di Python.
+    - "\\begin{kotaksalah}[loc dan iloc tertukar]\nMenulis \\texttt{df.iloc[0, \"provinsi\"]} akan gagal karena \\texttt{iloc} hanya menerima posisi, bukan nama kolom; yang benar adalah \\texttt{df.loc[0, \"provinsi\"]} atau \\texttt{df.iloc[0, 0]}. Ingat pula perbedaan rentang: \\texttt{df.loc[0:2]} memberi \\textbf{tiga} baris (0, 1, 2), sedangkan \\texttt{df.iloc[0:2]} memberi \\textbf{dua} baris (0, 1).\n\\end{kotaksalah}"
+    - "### Agregasi: Split-Apply-Combine"
+    - >
+      \texttt{groupby} menerapkan pola \emph{split-apply-combine}: data dipecah menurut kunci
+      pengelompokan, fungsi diterapkan pada tiap potongan, lalu hasilnya digabung kembali. Hasil
+      \texttt{groupby().agg()} menempatkan kunci pengelompokan sebagai \textbf{indeks}, bukan kolom
+      biasa - inilah padanan persoalan "pengelompokan yang tertinggal" pada \texttt{dplyr}.
+    - "\\begin{kotaksalah}[Kunci pengelompokan menjadi indeks]\nSetelah \\texttt{df.groupby(\"provinsi\").agg(...)}, kolom \\texttt{provinsi} berpindah menjadi indeks sehingga \\texttt{hasil[\"provinsi\"]} akan gagal. Tambahkan \\texttt{.reset\\_index()} agar kunci kembali menjadi kolom biasa - inilah padanan \\texttt{.groups = \"drop\"} pada \\texttt{dplyr}. Alternatif lain: pakai \\texttt{groupby(..., as\\_index=False)}.\n\\end{kotaksalah}"
+    - >
+      \textbf{Named aggregation} memberi nama kolom hasil secara eksplisit dengan pola
+      \texttt{nama\_baru = ("kolom", "fungsi")}, sehingga keluarannya rapi seperti \texttt{summarise()}
+      pada \texttt{dplyr}. Sementara \texttt{transform} mengembalikan hasil dengan panjang yang sama
+      dengan data asal - berguna untuk menambahkan ringkasan kelompok ke tiap baris, padanan
+      \texttt{mutate()} setelah \texttt{group\_by()}.
+    - "### Penanganan Nilai Hilang"
+    - >
+      Nilai hilang di \texttt{pandas} umumnya berupa \texttt{NaN}. Fungsi yang tersedia:
+      \texttt{isna()} menandai posisinya, \texttt{dropna()} membuang barisnya, \texttt{fillna()}
+      menggantinya dengan nilai tertentu, dan \texttt{combine\_first()} mengambil nilai pertama yang
+      bukan NaN dari dua Series. Berbeda dari R, sebagian besar fungsi ringkasan \texttt{pandas}
+      \textbf{mengabaikan NaN secara bawaan}, sehingga \texttt{mean()} tetap menghasilkan angka
+      meskipun ada nilai hilang.
+    - "\\begin{kotaktips}\nJustru karena pandas mengabaikan NaN secara diam-diam, biasakan memeriksa \\texttt{df.isna().sum()} di awal pekerjaan. Rata-rata yang dihitung dari sebagian data tanpa disadari jauh lebih berbahaya daripada galat yang terlihat jelas.\n\\end{kotaktips}"
+    - "### Penggabungan Tabel"
+    - >
+      \texttt{merge} menggabungkan dua DataFrame berdasarkan kolom kunci, dengan pilihan
+      \texttt{how} bernilai \texttt{left}, \texttt{inner}, \texttt{right}, atau \texttt{outer}.
+      Padanan \texttt{anti\_join} tidak tersedia langsung, tetapi dapat dibuat dengan
+      \texttt{indicator=True} lalu menyaring baris yang hanya muncul di tabel kiri.
+    - "\\begin{kotaksalah}[Merge menggandakan baris]\nSama seperti pada \\texttt{dplyr}, kunci yang tidak unik pada tabel kanan akan menggandakan baris hasil. \\texttt{pandas} menyediakan pengaman: argumen \\texttt{validate=\"m:1\"} akan memunculkan galat bila hubungan antar-tabel ternyata bukan banyak-ke-satu. Biasakan memakainya, dan bandingkan jumlah baris sebelum serta sesudah penggabungan.\n\\end{kotaksalah}"
+    - "### Rantai Metode"
+    - >
+      Padanan \emph{pipe} di \texttt{pandas} adalah \emph{rantai metode}: hasil satu metode langsung
+      dilanjutkan metode berikutnya dengan tanda titik. Agar terbaca, seluruh rantai dibungkus tanda
+      kurung dan tiap langkah ditulis pada barisnya sendiri. Metode \texttt{assign} dan \texttt{query}
+      sangat membantu menjaga rantai tetap utuh tanpa membuat peubah antara.
+    - "\\begin{kotakrumus}\n\\textbf{Kerangka rantai metode:}\\\\\n\\texttt{(df}\\\\\n\\quad \\texttt{.query(\"syarat\")}\\\\\n\\quad \\texttt{.assign(baru=lambda d: d[\"a\"] / d[\"b\"])}\\\\\n\\quad \\texttt{.groupby(\"kelompok\")}\\\\\n\\quad \\texttt{.agg(rata=(\"x\", \"mean\"), n=(\"x\", \"size\"))}\\\\\n\\quad \\texttt{.reset\\_index()}\\\\\n\\quad \\texttt{.sort\\_values(\"rata\", ascending=False))}\n\\end{kotakrumus}"
+  contoh:
+    - contoh: "Memuat data dan memeriksa strukturnya"
+      kode: "import pandas as pd\nimport numpy as np\ndesa = pd.read_csv(\"data/data_desa.csv\")\nprint(desa.shape)          # (baris, kolom)\nprint(desa.dtypes)         # tipe tiap kolom\nprint(desa.head(3))"
+      bahasa: Python
+      kode_judul: "read_csv, shape, dtypes, head"
+      eval: true
+      penjelasan: >
+        Dua pustaka diimpor lebih dahulu dengan nama singkat yang lazim dipakai. Fungsi read_csv membaca
+        berkas menjadi DataFrame. Atribut shape mengembalikan pasangan banyaknya baris dan kolom; karena
+        atribut, penulisannya tanpa tanda kurung. Atribut dtypes menampilkan tipe tiap kolom, sedangkan
+        head adalah metode sehingga ditulis dengan kurung dan menerima argumen banyaknya baris.
+      interpretasi: >
+        shape memberi ukuran tabel, dtypes menampilkan tipe tiap kolom, dan head menampilkan beberapa
+        baris pertama. Ketiganya adalah pemeriksaan awal yang setara dengan glimpse pada Modul 5.
+        Perhatikan kolom paling kiri tanpa nama: itulah indeks baris yang otomatis dibuat pandas mulai
+        dari nol - konsep yang tidak ada pada data frame R.
+    - contoh: "Seleksi kolom"
+      kode: "print(desa[[\"provinsi\", \"penduduk\", \"akses_air\"]].head(3))   # beberapa kolom\nprint(desa.drop(columns=[\"luas_km2\", \"rumah_tangga\"]).columns.tolist())\nprint(desa.filter(like=\"akses\").columns.tolist())   # kolom yang memuat 'akses'\nprint(desa.select_dtypes(\"number\").columns.tolist())  # kolom numerik saja"
+      bahasa: Python
+      kode_judul: "memilih dan membuang kolom"
+      eval: true
+      penjelasan: >
+        Empat cara memilih kolom diperagakan. Kurung siku ganda berisi daftar nama menghasilkan DataFrame
+        berisi kolom terpilih; kurung siku tunggal pada satu nama akan menghasilkan Series. Metode drop
+        dengan argumen columns membuang kolom yang disebutkan. Metode filter dengan argumen like memilih
+        berdasarkan potongan nama, dan select_dtypes memilih berdasarkan tipe. Atribut columns dibungkus
+        tolist agar tercetak sebagai daftar sederhana.
+      interpretasi: >
+        Kurung siku ganda memilih beberapa kolom sekaligus dan menghasilkan DataFrame; drop membuang
+        kolom; filter dengan argumen like memilih berdasarkan potongan nama, padanan starts\_with dan
+        contains pada dplyr; select\_dtypes memilih berdasarkan tipe, padanan where(is.numeric).
+        Perhatikan kurung siku ganda: kurung siku tunggal pada satu nama menghasilkan Series, bukan
+        DataFrame.
+    - contoh: "Seleksi baris dengan syarat"
+      kode: "print(desa[desa[\"penduduk\"] > 10000].shape[0])                 # satu syarat\nprint(desa[(desa[\"penduduk\"] > 10000) & (desa[\"status\"] == \"Perkotaan\")].shape[0])\nprint(desa[(desa[\"provinsi\"] == \"Papua\") | (desa[\"akses_air\"] < 50)].shape[0])\nprint(desa[desa[\"provinsi\"].isin([\"Jawa Barat\", \"Jawa Tengah\"])].shape[0])"
+      bahasa: Python
+      kode_judul: "penyaringan boolean, and, or, isin"
+      eval: true
+      penjelasan: >
+        Penyaringan dilakukan dengan menempatkan topeng boolean di dalam kurung siku, lalu shape indeks
+        nol mengambil banyaknya baris hasil. Untuk menggabungkan dua syarat, pandas memakai ampersand
+        untuk DAN dan garis tegak untuk ATAU, bukan kata and dan or seperti Python biasa. Setiap syarat
+        wajib dibungkus tanda kurung karena operator tersebut berprioritas lebih tinggi daripada
+        perbandingan. Metode isin memeriksa keanggotaan pada daftar nilai.
+      interpretasi: >
+        Penyaringan memakai topeng boolean di dalam kurung siku. Untuk menggabungkan syarat, pandas
+        memakai ampersand untuk DAN dan garis tegak untuk ATAU - bukan kata and atau or seperti Python
+        biasa, dan tiap syarat wajib dibungkus tanda kurung karena urutan operasinya. Metode isin
+        adalah padanan operator persen-in-persen pada R. Bandingkan angka yang dihasilkan dengan
+        contoh filter pada Modul 5.
+    - contoh: "query(): penyaringan yang lebih terbaca"
+      kode: "print(desa.query(\"penduduk > 10000 and status == 'Perkotaan'\").shape[0])\nprint(desa.query(\"provinsi in ['Jawa Barat', 'Jawa Tengah']\").shape[0])\nbatas = 12000\nprint(desa.query(\"penduduk > @batas\").shape[0])   # @ merujuk peubah Python"
+      bahasa: Python
+      kode_judul: "query dan rujukan peubah"
+      eval: true
+      penjelasan: >
+        Metode query menerima syarat sebagai teks sehingga penulisannya lebih ringkas dan menyerupai
+        kalimat; di dalamnya kata and, or, dan in boleh dipakai. Nama kolom ditulis apa adanya tanpa
+        kurung siku. Baris terakhir memperlihatkan bahwa peubah Python di luar tabel dapat dirujuk
+        dengan menambahkan tanda at di depan namanya.
+      interpretasi: >
+        Metode query menuliskan syarat sebagai teks sehingga lebih ringkas dan menyerupai filter pada
+        dplyr, termasuk penggunaan kata and, or, serta in. Tanda at merujuk peubah Python di luar
+        tabel. Hasilnya sama dengan penyaringan boolean; pilih mana yang lebih terbaca untuk kasus
+        Anda.
+    - contoh: "loc dan iloc: label versus posisi"
+      kode: "print(desa.loc[0, \"provinsi\"])          # label baris 0, kolom bernama\nprint(desa.iloc[0, 0])                  # posisi baris 0, kolom 0\nprint(desa.loc[0:2, [\"provinsi\", \"penduduk\"]])   # loc: 0,1,2 (inklusif)\nprint(desa.iloc[0:2, 0:2])              # iloc: 0,1 saja (eksklusif)"
+      bahasa: Python
+      kode_judul: "perbedaan loc dan iloc"
+      eval: true
+      penjelasan: >
+        Empat baris membandingkan dua cara pengaksesan. Metode loc memakai label, sehingga menerima nama
+        kolom, sedangkan iloc memakai posisi bilangan bulat sehingga hanya menerima angka. Perbedaan
+        kedua ada pada rentang: pada loc batas akhir ikut termasuk sehingga nol titik dua dua memberi
+        tiga baris, sedangkan pada iloc batas akhir tidak termasuk sehingga hanya memberi dua baris.
+      interpretasi: >
+        Inilah salah satu perbedaan paling sering menjebak. loc memakai label dan rentangnya mencakup
+        ujung kanan, sehingga 0 titik dua 2 memberi tiga baris. iloc memakai posisi dan rentangnya
+        tidak mencakup ujung kanan, sehingga 0 titik dua 2 hanya memberi dua baris. Perhatikan pula
+        bahwa iloc tidak menerima nama kolom. Bandingkan jumlah baris kedua keluaran terakhir.
+    - contoh: "Mengurutkan data"
+      kode: "print(desa.sort_values(\"penduduk\")[[\"provinsi\", \"penduduk\"]].head(3))\nprint(desa.sort_values(\"penduduk\", ascending=False)[[\"provinsi\", \"penduduk\"]].head(3))\nprint(desa.sort_values([\"provinsi\", \"akses_air\"], ascending=[True, False])\n      [[\"provinsi\", \"akses_air\"]].head(4))"
+      bahasa: Python
+      kode_judul: "sort_values naik, turun, bertingkat"
+      eval: true
+      penjelasan: >
+        Metode sort_values mengurutkan menurut kolom yang disebutkan, secara bawaan menaik. Argumen
+        ascending bernilai False membalik menjadi menurun. Bentuk ketiga menerima daftar kolom beserta
+        daftar arah urutan yang sejajar, sehingga kolom kedua menjadi penentu di dalam nilai kolom
+        pertama yang sama. Setiap hasil dibatasi kolomnya dengan kurung siku ganda dan barisnya dengan head.
+      interpretasi: >
+        sort\_values adalah padanan arrange. Argumen ascending bernilai False membalik urutan menjadi
+        turun, padanan desc pada dplyr. Pengurutan bertingkat menerima daftar kolom beserta daftar arah
+        urutannya masing-masing. Perhatikan bahwa indeks baris ikut terbawa dalam urutan baru; bila
+        indeks berurutan diperlukan, tambahkan reset\_index dengan drop bernilai True.
+    - contoh: "Membuat peubah turunan"
+      kode: "hasil = desa.assign(\n    kepadatan = lambda d: (d[\"penduduk\"] / d[\"luas_km2\"]).round(1),\n    anggota_rt = lambda d: (d[\"penduduk\"] / d[\"rumah_tangga\"]).round(2))\nprint(hasil[[\"provinsi\", \"penduduk\", \"luas_km2\", \"kepadatan\", \"anggota_rt\"]].head(4))"
+      bahasa: Python
+      kode_judul: "assign dengan lambda"
+      eval: true
+      penjelasan: >
+        Metode assign membuat kolom baru dan mengembalikan DataFrame baru sehingga rantai metode tetap
+        utuh. Tiap kolom didefinisikan dengan lambda yang menerima DataFrame saat itu sebagai argumen,
+        di sini diberi nama d, lalu kolomnya diakses dengan kurung siku. Pemakaian lambda inilah yang
+        membuat kolom yang baru dibuat dapat langsung dipakai oleh kolom berikutnya. Hasilnya dibulatkan
+        dengan metode round.
+      interpretasi: >
+        assign adalah padanan mutate dan dapat membuat beberapa kolom sekaligus. Penggunaan lambda
+        membuat kolom yang baru dibuat dapat langsung dipakai oleh kolom berikutnya, dan yang lebih
+        penting, menjaga rantai metode tetap utuh tanpa membuat peubah antara. Alternatifnya adalah
+        penetapan langsung dengan kurung siku, tetapi cara itu memutus rantai.
+    - contoh: "Peubah bersyarat: np.where dan np.select"
+      kode: "hasil = desa.assign(\n    padat = lambda d: np.where(d[\"penduduk\"] / d[\"luas_km2\"] > 500, \"Padat\", \"Tidak padat\"),\n    kategori_air = lambda d: np.select(\n        [d[\"akses_air\"] >= 90, d[\"akses_air\"] >= 75, d[\"akses_air\"] >= 60],\n        [\"Sangat baik\", \"Baik\", \"Cukup\"],\n        default=\"Kurang\"))\nprint(hasil[\"kategori_air\"].value_counts())"
+      bahasa: Python
+      kode_judul: "np.where dan np.select"
+      eval: true
+      penjelasan: >
+        Dua kolom bersyarat dibuat sekaligus di dalam assign. Fungsi np.where menerima tiga argumen:
+        syarat, nilai bila benar, dan nilai bila salah - padanan if_else. Fungsi np.select menerima dua
+        daftar sejajar, yaitu daftar syarat dan daftar nilainya, diperiksa berurutan dari yang pertama;
+        argumen default menangkap sisanya. Baris terakhir menghitung frekuensi tiap kategori dengan
+        value_counts.
+      interpretasi: >
+        np.where menangani dua kemungkinan, padanan if\_else. np.select menangani banyak kemungkinan
+        bertingkat, padanan case\_when: daftar syarat dan daftar nilai diberikan sejajar, diperiksa
+        berurutan dari yang pertama, dan default menangkap sisanya. Bandingkan hasil value\_counts di
+        sini dengan keluaran count pada contoh case\_when Modul 5 - angkanya harus sama.
+    - contoh: "Agregasi keseluruhan"
+      kode: "print(desa.agg(\n    n=(\"penduduk\", \"size\"),\n    total_penduduk=(\"penduduk\", \"sum\"),\n    rata_akses_air=(\"akses_air\", \"mean\"),\n    maks_penduduk=(\"penduduk\", \"max\")))"
+      bahasa: Python
+      kode_judul: "agg dengan named aggregation"
+      eval: true
+      penjelasan: >
+        Metode agg dipakai dengan gaya named aggregation: tiap keluaran ditulis sebagai nama sama dengan
+        pasangan berisi nama kolom dan nama fungsi. Gaya ini membuat nama kolom hasil ditentukan sendiri
+        sehingga keluarannya rapi. Fungsi size menghitung banyaknya baris, sedangkan sum, mean, dan max
+        menghitung ringkasan seperti biasa.
+      interpretasi: >
+        agg meringkas seluruh tabel menjadi beberapa nilai sekaligus, padanan summarise tanpa
+        pengelompokan. Pola nama sama dengan pasangan kolom dan fungsi disebut named aggregation dan
+        menghasilkan penamaan yang jelas. Fungsi size menghitung banyaknya baris, padanan n() pada
+        dplyr.
+    - contoh: "groupby + agg: ringkasan per kelompok"
+      kode: "ringkas = (desa\n    .groupby(\"provinsi\")\n    .agg(n_desa=(\"penduduk\", \"size\"),\n         total_penduduk=(\"penduduk\", \"sum\"),\n         rata_listrik=(\"akses_listrik\", \"mean\"))\n    .reset_index()\n    .sort_values(\"total_penduduk\", ascending=False))\nprint(ringkas.round(1))"
+      bahasa: Python
+      kode_judul: "groupby, agg, reset_index"
+      eval: true
+      penjelasan: >
+        Rantai metode dibungkus tanda kurung agar dapat ditulis beberapa baris. Metode groupby menandai
+        pengelompokan, agg menghitung tiga ringkasan sekaligus dengan penamaan sendiri, lalu reset_index
+        mengembalikan kunci pengelompokan dari indeks menjadi kolom biasa. Terakhir sort_values
+        mengurutkan hasilnya menurun. Metode round di luar rantai membulatkan seluruh kolom numerik.
+      interpretasi: >
+        Inilah pola paling sering dipakai: kelompokkan, ringkas, lalu urutkan. Perhatikan reset\_index
+        yang mengembalikan provinsi dari indeks menjadi kolom biasa - langkah yang setara dengan
+        menutup pengelompokan pada dplyr dan sering terlupakan. Bandingkan tabel ini dengan hasil
+        group\_by pada Modul 5; angkanya identik karena datanya sama.
+    - contoh: "Pengelompokan lebih dari satu peubah"
+      kode: "dua = (desa\n    .groupby([\"provinsi\", \"status\"])\n    .agg(n=(\"penduduk\", \"size\"), rata_air=(\"akses_air\", \"mean\"))\n    .reset_index())\nprint(dua.round(1).head(6))\n# tanpa reset_index, kunci tetap menjadi indeks bertingkat:\ntanpa = desa.groupby([\"provinsi\", \"status\"]).agg(n=(\"penduduk\", \"size\"))\nprint(type(tanpa.index).__name__)"
+      bahasa: Python
+      kode_judul: "dua kunci dan indeks bertingkat"
+      eval: true
+      penjelasan: >
+        Bagian pertama mengelompokkan menurut dua kolom yang ditulis sebagai daftar, sehingga ringkasan
+        dihitung untuk tiap kombinasi, lalu reset_index dipanggil seperti biasa. Bagian kedua sengaja
+        tidak memanggil reset_index, lalu jenis indeksnya diperiksa; hasilnya menunjukkan MultiIndex,
+        yaitu indeks bertingkat, yang membuat kunci tidak dapat diakses sebagai kolom biasa.
+      interpretasi: >
+        Pengelompokan dengan dua kunci menghasilkan ringkasan untuk tiap kombinasi. Baris terakhir
+        memperlihatkan jebakan yang dibahas di teori: tanpa reset\_index, hasilnya memakai MultiIndex
+        sehingga kolom provinsi dan status tidak dapat diakses seperti kolom biasa. Ini padanan
+        persoalan pengelompokan tertinggal pada dplyr.
+    - contoh: "value_counts, nunique, dan crosstab"
+      kode: "print(desa[\"provinsi\"].value_counts())            # frekuensi\nprint(desa[\"provinsi\"].nunique())                # banyaknya nilai unik\nprint(desa[\"provinsi\"].unique())\nprint(pd.crosstab(desa[\"provinsi\"], desa[\"status\"]))   # tabel silang"
+      bahasa: Python
+      kode_judul: "frekuensi dan tabel silang"
+      eval: true
+      penjelasan: >
+        Metode value_counts menghitung frekuensi tiap nilai pada satu kolom dan langsung mengurutkannya
+        menurun. Metode nunique menghitung banyaknya nilai unik, sedangkan unique menampilkan nilainya.
+        Fungsi crosstab berada di tingkat pandas, bukan metode DataFrame, dan menerima dua Series untuk
+        membentuk tabel silang dua peubah kategori.
+      interpretasi: >
+        value\_counts adalah padanan count pada dplyr dan langsung mengurutkan dari frekuensi terbesar.
+        nunique dan unique adalah padanan n\_distinct dan distinct. crosstab membuat tabel silang dua
+        peubah kategori - sangat lazim dalam penyajian statistik resmi dan tidak memiliki padanan
+        sesingkat itu di dplyr.
+    - contoh: "transform: ringkasan kelompok pada tiap baris"
+      kode: "hasil = desa.assign(\n    rata_prov = lambda d: d.groupby(\"provinsi\")[\"akses_air\"].transform(\"mean\"),\n    selisih = lambda d: d[\"akses_air\"] - d.groupby(\"provinsi\")[\"akses_air\"].transform(\"mean\"))\nprint(hasil[[\"provinsi\", \"akses_air\", \"rata_prov\", \"selisih\"]].round(1).head(5))"
+      bahasa: Python
+      kode_judul: "groupby transform"
+      eval: true
+      penjelasan: >
+        Kunci contoh ini ada pada transform. Berbeda dari agg yang memampatkan data, transform
+        mengembalikan hasil sepanjang data asal sehingga nilainya dapat ditempelkan sebagai kolom baru.
+        Kolom pertama berisi rata-rata kelompok yang diulang untuk setiap baris anggotanya. Kolom kedua
+        menghitung selisih tiap amatan terhadap rata-rata kelompoknya dengan memanggil transform sekali
+        lagi.
+      interpretasi: >
+        Berbeda dari agg yang memampatkan data, transform mengembalikan hasil sepanjang data asal
+        sehingga ringkasan kelompok dapat ditempelkan ke tiap baris. Ini padanan mutate setelah
+        group\_by pada dplyr, dan sangat berguna untuk menghitung simpangan tiap amatan terhadap
+        rata-rata kelompoknya - langkah awal yang lazim sebelum analisis lanjutan.
+    - contoh: "Mengambil nilai teratas"
+      kode: "print(desa.nlargest(3, \"penduduk\")[[\"provinsi\", \"penduduk\"]])\n# satu terbaik per provinsi\nterbaik = (desa\n    .sort_values(\"akses_air\", ascending=False)\n    .groupby(\"provinsi\", as_index=False)\n    .head(1)[[\"provinsi\", \"akses_air\"]])\nprint(terbaik)"
+      bahasa: Python
+      kode_judul: "nlargest dan teratas per kelompok"
+      eval: true
+      penjelasan: >
+        Metode nlargest langsung mengambil sejumlah baris dengan nilai terbesar pada kolom yang
+        disebutkan. Bagian kedua mengambil baris teratas per kelompok dengan tiga langkah berurutan:
+        data diurutkan menurun lebih dahulu, lalu dikelompokkan dengan as_index bernilai False agar kunci
+        tetap menjadi kolom, kemudian head mengambil satu baris pertama tiap kelompok. Urutan langkahnya
+        penting, karena pengurutan harus terjadi sebelum pengelompokan.
+      interpretasi: >
+        nlargest adalah padanan slice\_max, dan nsmallest padanan slice\_min. Untuk mengambil baris
+        teratas per kelompok, urutkan lebih dahulu lalu ambil beberapa baris pertama tiap kelompok
+        dengan groupby dan head. Perhatikan bahwa urutan langkah penting: pengurutan harus dilakukan
+        sebelum pengelompokan.
+    - contoh: "Penanganan nilai hilang"
+      kode: "desa_na = desa.copy()\ndesa_na.loc[[1, 4, 8], \"akses_air\"] = np.nan\nprint(desa_na[\"akses_air\"].isna().sum())        # banyaknya NaN\nprint(round(desa_na[\"akses_air\"].mean(), 2))    # NaN diabaikan secara bawaan\nprint(desa_na.dropna(subset=[\"akses_air\"]).shape[0])   # buang barisnya\nprint(desa_na[\"akses_air\"].fillna(0).eq(0).sum())      # ganti dengan 0\nprint(desa_na[\"akses_air\"].combine_first(desa_na[\"akses_listrik\"]).isna().sum())"
+      bahasa: Python
+      kode_judul: "isna, dropna, fillna, combine_first"
+      eval: true
+      penjelasan: >
+        Salinan data dibuat dengan copy agar data asli tidak ikut berubah, lalu tiga nilai dikosongkan
+        memakai loc dengan daftar indeks baris. Metode isna menandai posisi kosong dan sum menghitungnya.
+        Perhitungan rata-rata dijalankan tanpa argumen tambahan karena pandas mengabaikan NaN secara
+        bawaan. Metode dropna dengan argumen subset hanya membuang baris yang kolom tertentunya kosong.
+        Metode fillna mengganti nilai kosong, dan combine_first mengambil nilai dari kolom kedua bila
+        kolom pertama kosong.
+      interpretasi: >
+        Empat cara menangani nilai hilang. Yang paling perlu diwaspadai adalah baris kedua: berbeda
+        dari R yang menghasilkan NA, pandas mengabaikan NaN secara bawaan sehingga rata-rata tetap
+        keluar sebagai angka meski dihitung dari sebagian data saja. dropna membuang baris,
+        fillna menggantinya, dan combine\_first adalah padanan coalesce yang mengambil nilai pertama
+        yang bukan NaN.
+    - contoh: "merge: menggabungkan tabel referensi"
+      kode: "ref_pulau = pd.DataFrame({\n    \"provinsi\": [\"Jawa Barat\", \"Jawa Tengah\", \"Sulawesi Selatan\", \"Papua\"],\n    \"pulau\":    [\"Jawa\", \"Jawa\", \"Sulawesi\", \"Papua\"],\n    \"zona\":     [\"Barat\", \"Barat\", \"Tengah\", \"Timur\"]})\ngab = desa.merge(ref_pulau, on=\"provinsi\", how=\"left\", validate=\"m:1\")\nprint(desa.shape[0], \"->\", gab.shape[0])      # jumlah baris harus sama\nprint(gab.groupby([\"pulau\", \"zona\"]).size().reset_index(name=\"n\"))"
+      bahasa: Python
+      kode_judul: "merge how left dengan validate"
+      eval: true
+      penjelasan: >
+        Tabel referensi dibuat dari dictionary berisi tiga daftar sejajar. Metode merge menggabungkan
+        berdasarkan kolom kunci yang disebut pada argumen on, dengan how bernilai left agar seluruh baris
+        tabel kiri dipertahankan. Argumen validate bernilai m titik dua satu menegaskan hubungan
+        banyak-ke-satu sehingga pandas memunculkan galat bila kunci tabel kanan ternyata tidak unik.
+        Baris berikutnya membandingkan jumlah baris sebelum dan sesudah sebagai pemeriksaan.
+      interpretasi: >
+        merge dengan how bernilai left adalah padanan left\_join: seluruh baris tabel kiri
+        dipertahankan. Argumen validate bernilai m titik dua 1 menegaskan bahwa hubungan yang
+        diharapkan adalah banyak-ke-satu; bila kunci tabel kanan ternyata tidak unik, pandas langsung
+        memunculkan galat sehingga penggandaan baris tidak lolos tanpa disadari. Perbandingan jumlah
+        baris sebelum dan sesudah adalah pemeriksaan wajib.
+    - contoh: "inner merge dan padanan anti_join"
+      kode: "ref_sebagian = pd.DataFrame({\n    \"provinsi\": [\"Jawa Barat\", \"Papua\"],\n    \"target_air\": [95, 80]})\nprint(desa.merge(ref_sebagian, on=\"provinsi\", how=\"inner\").shape[0])   # hanya yang cocok\n# padanan anti_join: pakai indicator lalu saring\ncek = desa.merge(ref_sebagian, on=\"provinsi\", how=\"left\", indicator=True)\nanti = cek[cek[\"_merge\"] == \"left_only\"]\nprint(anti[\"provinsi\"].value_counts())"
+      bahasa: Python
+      kode_judul: "inner merge dan indicator"
+      eval: true
+      penjelasan: >
+        Tabel referensi sengaja dibuat tidak lengkap. Penggabungan inner hanya mempertahankan baris yang
+        kuncinya cocok sehingga jumlah barisnya berkurang. Bagian kedua meniru anti_join: penggabungan
+        left dijalankan dengan argumen indicator bernilai True yang menambahkan kolom penanda asal baris,
+        lalu baris bertanda left_only disaring karena berarti tidak punya pasangan di tabel kanan.
+      interpretasi: >
+        Penggabungan inner hanya mempertahankan baris yang kuncinya cocok di kedua tabel sehingga
+        jumlah baris berkurang. pandas tidak memiliki anti\_join, tetapi hasilnya dapat diperoleh
+        dengan argumen indicator yang menambahkan kolom penanda asal baris, lalu menyaring baris yang
+        hanya berasal dari tabel kiri. Teknik ini sangat berguna untuk memeriksa kelengkapan tabel
+        referensi.
+    - contoh: "Studi kasus: penyusunan indikator wilayah"
+      kode: "ref_pulau = pd.DataFrame({\n    \"provinsi\": [\"Jawa Barat\", \"Jawa Tengah\", \"Sulawesi Selatan\", \"Papua\"],\n    \"pulau\":    [\"Jawa\", \"Jawa\", \"Sulawesi\", \"Papua\"]})\nlaporan = (desa\n    .merge(ref_pulau, on=\"provinsi\", how=\"left\", validate=\"m:1\")\n    .assign(kepadatan = lambda d: d[\"penduduk\"] / d[\"luas_km2\"],\n            layak = lambda d: ((d[\"akses_air\"] >= 75) & (d[\"akses_listrik\"] >= 80)).astype(int))\n    .groupby([\"pulau\", \"status\"])\n    .agg(n_desa=(\"penduduk\", \"size\"),\n         penduduk=(\"penduduk\", \"sum\"),\n         rata_kepadatan=(\"kepadatan\", \"mean\"),\n         persen_layak=(\"layak\", \"mean\"))\n    .reset_index()\n    .assign(persen_layak = lambda d: (100 * d[\"persen_layak\"]).round(1),\n            rata_kepadatan = lambda d: d[\"rata_kepadatan\"].round(1))\n    .sort_values([\"pulau\", \"status\"]))\nprint(laporan)"
+      bahasa: Python
+      kode_judul: "rantai metode lengkap"
+      eval: true
+      penjelasan: >
+        Seluruh langkah dirangkai dalam satu rantai yang dibungkus tanda kurung. Tabel referensi
+        digabungkan lebih dahulu dengan validasi. Metode assign membuat kolom kepadatan dan penanda layak;
+        penanda dibentuk dari gabungan dua syarat lalu diubah menjadi angka nol atau satu dengan astype.
+        Pengelompokan dilakukan menurut dua kunci, agg menghitung empat ringkasan, dan reset_index
+        mengembalikan kunci menjadi kolom. Metode assign dipanggil sekali lagi untuk mengubah proporsi
+        menjadi persentase dan membulatkan, lalu sort_values merapikan urutannya.
+      interpretasi: >
+        Studi kasus ini merangkai seluruh keterampilan modul dalam satu rantai metode: penggabungan
+        tabel referensi disertai validasi, pembuatan peubah turunan dan penanda kelayakan, agregasi per
+        kombinasi pulau dan status, pengembalian kunci menjadi kolom, pembulatan, lalu pengurutan.
+        Rata-rata dari penanda bernilai 0 dan 1 sama dengan proporsinya sehingga tinggal dikali seratus.
+        Bandingkan tabel akhir ini dengan studi kasus Modul 5 - hasilnya identik, membuktikan bahwa
+        yang berbeda hanyalah sintaks, bukan cara berpikirnya.
+  latihan:
+    - "Kerjakan bertahap. **Dasar** melengkapi kode; **Menengah** menulis sendiri dan membetulkan kode; **Lanjut** memecahkan kasus. Gunakan `data/data_desa.csv`. Bila memungkinkan, bandingkan hasil Anda dengan latihan padanannya pada Modul 5."
+    - "#### Tingkat Dasar (melengkapi kode)"
+    - "\\latihan{Seleksi kolom dan baris}"
+    - "```{python eval=FALSE}\nimport pandas as pd\ndesa = pd.read_csv(\"data/data_desa.csv\")\nprint(desa[____].head())                 # pilih kolom provinsi, penduduk, akses_air\nprint(desa[desa[____] > 8000].shape[0])   # saring penduduk di atas 8000\n```"
+    - "\\latihan{Mengurutkan dan kolom baru}"
+    - "```{python eval=FALSE}\nprint(desa.sort_values(\"akses_listrik\", ascending=____).head(3))  # urut TURUN\nhasil = desa.assign(kepadatan = lambda d: d[\"penduduk\"] / d[____])  # bagi luas\n```"
+    - "\\latihan{Agregasi per kelompok}"
+    - "```{python eval=FALSE}\nringkas = (desa\n    .____(\"status\")                       # kelompokkan menurut status\n    .agg(n=(\"penduduk\", \"size\"), rata=(\"akses_air\", \"mean\"))\n    .____())                              # kembalikan kunci jadi kolom\nprint(ringkas)\n```"
+    - "#### Tingkat Menengah (menulis sendiri)"
+    - "\\latihan{Rantai metode}"
+    - "Susun satu rantai metode yang: menyaring desa berstatus `Perdesaan`, membuat kolom `anggota_rt` (penduduk dibagi rumah tangga), meringkas rata-rata `anggota_rt` dan banyaknya desa per provinsi, lalu mengurutkan dari rata-rata terbesar. Jelaskan perubahan bentuk data pada tiap langkah."
+    - "\\latihan{Kategori bertingkat dan tabel silang}"
+    - "Dengan `np.select`, buat kolom `kelas_listrik` bernilai \"Tinggi\" (akses listrik minimal 90), \"Sedang\" (75 sampai kurang dari 90), dan \"Rendah\" (selebihnya). Tampilkan tabel silangnya terhadap `provinsi` menggunakan `pd.crosstab`."
+    - "\\latihan{Membetulkan kode yang salah}"
+    - "Kode berikut memuat beberapa kesalahan (penempatan kurung, `iloc` dan `loc` tertukar, nama fungsi agregasi, dan indeks yang belum dikembalikan). Temukan dan perbaiki, lalu jelaskan tiap kesalahannya."
+    - "```{python eval=FALSE}\nimport pandas as pd\ndesa = pd.read_csv(\"data/data_desa.csv\")\n\nprint(desa.iloc[0, \"provinsi\"])                 # iloc diberi nama kolom\n\nprint(desa[desa[\"penduduk\" > 5000]].shape[0])    # kurung salah tempat\n\nringkas = desa.groupby(\"provinsi\").agg(rata=(\"penduduk\", \"average\"))  # nama fungsi salah\nprint(ringkas[\"provinsi\"])                       # provinsi masih menjadi indeks\n```"
+    - "**Keluaran yang benar.** Setelah diperbaiki, kode akan menghasilkan keluaran berikut. Gunakan ini untuk memverifikasi perbaikan Anda.\n\n```\n# 1) nilai baris pertama kolom provinsi\nSulawesi Selatan\n\n# 2) banyaknya desa berpenduduk di atas 5000\n28\n\n# 3) kolom provinsi setelah reset_index\n0          Jawa Barat\n1         Jawa Tengah\n2               Papua\n3    Sulawesi Selatan\nName: provinsi, dtype: str\n```\n\nTabel ringkasan lengkapnya (bila dicetak seluruhnya):\n\n```\n           provinsi    rata\n0        Jawa Barat  6386.6\n1       Jawa Tengah  9409.9\n2             Papua  8916.0\n3  Sulawesi Selatan  8703.0\n```"
+    - "#### Tingkat Lanjut (kasus kecil)"
+    - "\\latihan{Penggabungan dan pemeriksaan}"
+    - "Buat DataFrame referensi berisi `provinsi` dan `target_air` untuk keempat provinsi. Gabungkan dengan `merge` memakai `how=\"left\"` dan `validate=\"m:1\"`, buat kolom `selisih` (akses air dikurangi target), lalu tampilkan banyaknya desa yang berada di bawah target per provinsi. Bandingkan jumlah baris sebelum dan sesudah penggabungan, serta jelaskan apa yang akan terjadi bila `validate` dihilangkan dan kunci ternyata tidak unik."
+  penugasan:
+    - "\\begin{kotaktugas}\nSebagai calon pengolah data \\emph{official statistics}, susun tabel indikator wilayah dari \\texttt{data\\_desa.csv} (\\emph{data simulasi}) menggunakan \\texttt{pandas}, lalu bandingkan hasilnya dengan pengerjaan \\texttt{dplyr} pada Modul 5.\n\\end{kotaktugas}"
+    - "**Konteks.** Data 40 desa dari empat provinsi beserta jumlah penduduk, rumah tangga, luas wilayah, serta persentase akses air bersih dan listrik. Berkasnya sama dengan Modul 5 sehingga hasil kedua pustaka dapat diperbandingkan."
+    - "\\tugas{Pemeriksaan dan penyiapan data}"
+    - "1. Muat data, tampilkan `shape`, `dtypes`, dan `isna().sum()`. Laporkan ukuran tabel, tipe tiap kolom, dan ada tidaknya nilai hilang."
+    - "2. Dengan `assign`, buat kolom `kepadatan` (penduduk per km persegi) dan `anggota_rt` (penduduk per rumah tangga)."
+    - "\\tugas{Klasifikasi dan agregasi}"
+    - "3. Dengan `np.select`, buat kolom `kelas_air` bernilai \"Sangat baik\", \"Baik\", \"Cukup\", atau \"Kurang\" berdasarkan persentase akses air (tentukan sendiri batasnya dan jelaskan alasannya)."
+    - "4. Susun tabel ringkasan per **provinsi dan status** memuat: banyaknya desa, total penduduk, rata-rata kepadatan, rata-rata akses air, dan rata-rata akses listrik. Gunakan *named aggregation* dan `reset_index`, lalu jelaskan mengapa `reset_index` diperlukan."
+    - "\\tugas{Penggabungan tabel}"
+    - "5. Buat DataFrame referensi berisi `provinsi`, `pulau`, dan `target_air`, lalu gabungkan dengan `merge` memakai `validate=\"m:1\"`. Bandingkan jumlah baris sebelum dan sesudah penggabungan."
+    - "6. Hitung banyaknya dan persentase desa yang **memenuhi target** akses air pada tiap pulau."
+    - "\\tugas{Perbandingan dan laporan}"
+    - "7. Jalankan kembali **satu** tabel ringkasan yang sama menggunakan `dplyr` (rujuk Modul 5), lalu tunjukkan bahwa hasilnya identik. Buat **tabel padanan** minimal enam operasi `dplyr` dan `pandas` yang Anda pakai."
+    - "8. Susun laporan Jupyter Notebook berisi kode, keluaran, dan interpretasi. Tutup dengan **ringkasan (maksimal 300 kata)** yang menjawab: provinsi mana yang paling tertinggal aksesnya, apakah terdapat perbedaan mencolok antara perkotaan dan perdesaan, serta pustaka mana yang menurut Anda lebih nyaman untuk pekerjaan ini beserta alasannya."
+  ringkasan:
+    - "\\begin{kotaktujuan}\n\\textbf{Daftar periksa penguasaan:}\n\\begin{itemize}\n\\item[$\\square$] Saya memahami peran \\texttt{Index} dan dapat membedakan \\texttt{loc} dari \\texttt{iloc}.\n\\item[$\\square$] Saya dapat memilih kolom dan menyaring baris, baik dengan topeng boolean maupun \\texttt{query}.\n\\item[$\\square$] Saya dapat mengurutkan data dan membuat peubah turunan dengan \\texttt{assign}.\n\\item[$\\square$] Saya dapat memakai \\texttt{np.where} dan \\texttt{np.select} untuk peubah bersyarat.\n\\item[$\\square$] Saya dapat meringkas per kelompok dengan \\texttt{groupby} dan tidak lupa \\texttt{reset\\_index}.\n\\item[$\\square$] Saya dapat memakai \\texttt{transform} untuk menempelkan ringkasan kelompok ke tiap baris.\n\\item[$\\square$] Saya dapat menangani nilai hilang dan menyadari bahwa pandas mengabaikan NaN secara bawaan.\n\\item[$\\square$] Saya dapat menggabungkan tabel dengan \\texttt{merge} beserta \\texttt{validate}.\n\\item[$\\square$] Saya dapat memetakan tiap operasi \\texttt{pandas} ke padanannya di \\texttt{dplyr}.\n\\end{itemize}\n\\end{kotaktujuan}"
+    - "**Kartu Referensi Cepat.** Padanan `dplyr` dan `pandas`:"
+    - "\\begin{kotakrumus}\n\\begin{tabular}{@{}ll@{}}\n\\textbf{dplyr (R)} & \\textbf{pandas (Python)}\\\\\n\\texttt{select(a, b)} & \\texttt{df[[\"a\",\"b\"]]}\\\\\n\\texttt{select(-a)} & \\texttt{df.drop(columns=\"a\")}\\\\\n\\texttt{filter(s)} & \\texttt{df[s]} / \\texttt{df.query(\"...\")}\\\\\n\\texttt{x \\%in\\% c(...)} & \\texttt{df[\"x\"].isin([...])}\\\\\n\\texttt{arrange(desc(x))} & \\texttt{df.sort\\_values(\"x\", ascending=False)}\\\\\n\\texttt{mutate(b = ...)} & \\texttt{df.assign(b = ...)}\\\\\n\\texttt{if\\_else()} & \\texttt{np.where()}\\\\\n\\texttt{case\\_when()} & \\texttt{np.select()}\\\\\n\\texttt{summarise()} & \\texttt{df.agg(nama=(\"k\",\"fn\"))}\\\\\n\\texttt{group\\_by(g)} & \\texttt{df.groupby(\"g\")}\\\\\n\\texttt{.groups = \"drop\"} & \\texttt{.reset\\_index()}\\\\\n\\texttt{count(g)} & \\texttt{df[\"g\"].value\\_counts()}\\\\\n\\texttt{n\\_distinct(x)} & \\texttt{df[\"x\"].nunique()}\\\\\n\\texttt{slice\\_max(x, n=3)} & \\texttt{df.nlargest(3, \"x\")}\\\\\n\\texttt{mutate} setelah \\texttt{group\\_by} & \\texttt{groupby().transform()}\\\\\n\\texttt{drop\\_na()} & \\texttt{df.dropna()}\\\\\n\\texttt{coalesce(a, b)} & \\texttt{a.combine\\_first(b)}\\\\\n\\texttt{left\\_join(x, y)} & \\texttt{x.merge(y, how=\"left\")}\\\\\n\\texttt{|>} & rantai metode (titik)\\\\\n\\end{tabular}\n\\end{kotakrumus}"
+    - "Modul ini melengkapi pasangan manipulasi data: gagasan yang dikuasai lewat `dplyr` pada Modul 5 kini dapat dikerjakan pula dengan `pandas`. Perbedaan utama yang perlu diingat: peran `Index` yang khas pandas, keharusan `reset_index` setelah agregasi, perbedaan `loc` dan `iloc`, serta perilaku NaN yang diabaikan secara bawaan. Prinsip kerjanya tetap sama: kerjakan bertahap, periksa hasil tiap langkah, dan sadari perubahan bentuk data. Modul berikutnya masuk ke statistik deskriptif dan eksplorasi data."
+  referensi:
+    - "McKinney, W. (2022). *Python for Data Analysis*, 3rd ed. O'Reilly Media. (Rujukan utama pandas, ditulis oleh penciptanya; tersedia daring gratis.)"
+    - "The pandas development team. (2024). *pandas documentation: User Guide*. (Dokumentasi resmi tiap metode.)"
+    - "Chen, D. Y. (2018). *Pandas for Everyone: Python Data Analysis*. Addison-Wesley. (Pengantar pandas yang bertahap.)"
+    - "Zhang, N. (2020). *A Tour of Data Science: Learn R and Python in Parallel*. Chapman and Hall/CRC. (Perbandingan langsung dplyr dan pandas.)"
+
+exercises:
+  - id: "L6.1"
+    points: 15
+    solution: "Tingkat Dasar: seleksi kolom/baris, sort_values, assign, groupby + reset_index."
+    judul_py: "Solusi Tingkat Dasar (Python)"
+    solusi_py: |
+      import pandas as pd
+      desa = pd.read_csv("data/data_desa.csv")
+
+      print(desa[["provinsi", "penduduk", "akses_air"]].head())
+      print(desa[desa["penduduk"] > 8000].shape[0])
+      print(desa.sort_values("akses_listrik", ascending=False).head(3))
+      hasil = desa.assign(kepadatan = lambda d: d["penduduk"] / d["luas_km2"])
+      ringkas = (desa
+          .groupby("status")
+          .agg(n=("penduduk", "size"), rata=("akses_air", "mean"))
+          .reset_index())
+      print(ringkas)
+    interpretasi: >
+      Kurung siku ganda memilih beberapa kolom, topeng boolean menyaring baris, ascending bernilai
+      False membalik urutan, assign menambah kolom turunan, dan groupby dipadu reset\_index
+      menghasilkan tabel ringkasan dengan kunci sebagai kolom biasa. Bandingkan angkanya dengan solusi
+      dplyr pada Modul 5 - hasilnya sama.
+  - id: "L6.2"
+    points: 25
+    solution: "Tingkat Menengah dan Lanjut: rantai metode, np.select dengan crosstab, serta merge dengan validate."
+    judul_py: "Solusi Menengah dan Lanjut (Python)"
+    solusi_py: |
+      import pandas as pd, numpy as np
+      desa = pd.read_csv("data/data_desa.csv")
+
+      # Rantai metode
+      print(desa
+          .query("status == 'Perdesaan'")
+          .assign(anggota_rt = lambda d: d["penduduk"] / d["rumah_tangga"])
+          .groupby("provinsi")
+          .agg(n=("penduduk", "size"), rata_anggota=("anggota_rt", "mean"))
+          .reset_index()
+          .assign(rata_anggota = lambda d: d["rata_anggota"].round(2))
+          .sort_values("rata_anggota", ascending=False))
+
+      # Kategori bertingkat + tabel silang
+      hasil = desa.assign(kelas_listrik = lambda d: np.select(
+          [d["akses_listrik"] >= 90, d["akses_listrik"] >= 75],
+          ["Tinggi", "Sedang"], default="Rendah"))
+      print(pd.crosstab(hasil["provinsi"], hasil["kelas_listrik"]))
+
+      # Penggabungan dan pemeriksaan
+      ref = pd.DataFrame({
+          "provinsi": ["Jawa Barat", "Jawa Tengah", "Sulawesi Selatan", "Papua"],
+          "target_air": [90, 88, 80, 70]})
+      print(ref["provinsi"].is_unique)                 # kunci harus unik
+      gab = desa.merge(ref, on="provinsi", how="left", validate="m:1")
+      print(desa.shape[0], "->", gab.shape[0])         # jumlah baris harus sama
+      print(gab.assign(selisih = lambda d: d["akses_air"] - d["target_air"])
+               .query("selisih < 0")["provinsi"].value_counts())
+    interpretasi: >
+      Rantai metode mengubah bentuk data berturut-turut: query mengurangi baris, assign menambah kolom,
+      groupby dan agg memampatkan menjadi satu baris per provinsi, reset\_index mengembalikan kunci
+      menjadi kolom, lalu sort\_values mengurutkan. np.select memberi kategori bertingkat yang
+      diperiksa berurutan. Pada penggabungan, argumen validate bernilai m titik dua 1 menjadi pengaman
+      otomatis: bila kunci tabel kanan tidak unik, pandas memunculkan galat sehingga penggandaan baris
+      tidak lolos diam-diam.
+  - id: "L6.D"
+    points: 10
+    solution: "Membetulkan kode: loc untuk nama kolom, kurung pada topeng boolean, fungsi mean, dan reset_index."
+    judul_py: "Solusi Membetulkan Kode (Python)"
+    solusi_py: |
+      import pandas as pd
+      desa = pd.read_csv("data/data_desa.csv")
+
+      # 1) iloc hanya menerima posisi; pakai loc untuk nama kolom
+      print(desa.loc[0, "provinsi"])      # atau desa.iloc[0, 0]
+
+      # 2) kurung siku harus menutup nama kolom lebih dahulu
+      print(desa[desa["penduduk"] > 5000].shape[0])
+
+      # 3) nama fungsi agregasi adalah "mean", bukan "average";
+      #    dan reset_index mengembalikan provinsi menjadi kolom
+      ringkas = (desa
+          .groupby("provinsi")
+          .agg(rata=("penduduk", "mean"))
+          .reset_index())
+      print(ringkas["provinsi"])
+    interpretasi: >
+      Empat kesalahan diperbaiki. Pertama, iloc hanya menerima posisi bilangan bulat sehingga nama
+      kolom harus memakai loc. Kedua, kurung siku ditempatkan keliru: perbandingan harus dilakukan pada
+      Series hasil pemilihan kolom, bukan pada teks nama kolom. Ketiga, nama fungsi agregasi di pandas
+      adalah mean, bukan average. Keempat, setelah groupby kunci berpindah menjadi indeks sehingga
+      pemanggilan sebagai kolom gagal sampai reset\_index dipanggil - padanan persoalan pengelompokan
+      tertinggal pada dplyr.
+  - id: "T6.1"
+    points: 50
+    solution: "Penugasan: pemeriksaan, peubah turunan, klasifikasi, agregasi dua kunci, merge dengan validate, dan perbandingan dengan dplyr."
+    judul_py: "Solusi Penugasan (Python)"
+    solusi_py: |
+      import pandas as pd, numpy as np
+      desa = pd.read_csv("data/data_desa.csv")
+      print(desa.shape); print(desa.dtypes); print(desa.isna().sum())
+
+      desa2 = desa.assign(
+          kepadatan  = lambda d: d["penduduk"] / d["luas_km2"],
+          anggota_rt = lambda d: d["penduduk"] / d["rumah_tangga"],
+          kelas_air  = lambda d: np.select(
+              [d["akses_air"] >= 90, d["akses_air"] >= 75, d["akses_air"] >= 60],
+              ["Sangat baik", "Baik", "Cukup"], default="Kurang"))
+
+      ringkas = (desa2
+          .groupby(["provinsi", "status"])
+          .agg(n_desa=("penduduk", "size"),
+               penduduk=("penduduk", "sum"),
+               kepadatan=("kepadatan", "mean"),
+               air=("akses_air", "mean"),
+               listrik=("akses_listrik", "mean"))
+          .reset_index()
+          .round(1)
+          .sort_values(["provinsi", "status"]))
+      print(ringkas)
+
+      ref = pd.DataFrame({
+          "provinsi": ["Jawa Barat", "Jawa Tengah", "Sulawesi Selatan", "Papua"],
+          "pulau":    ["Jawa", "Jawa", "Sulawesi", "Papua"],
+          "target_air": [90, 88, 80, 70]})
+      gab = desa2.merge(ref, on="provinsi", how="left", validate="m:1")
+      print(desa2.shape[0], "->", gab.shape[0])
+
+      print(gab
+          .assign(memenuhi = lambda d: (d["akses_air"] >= d["target_air"]).astype(int))
+          .groupby("pulau")
+          .agg(n_desa=("memenuhi", "size"),
+               n_memenuhi=("memenuhi", "sum"),
+               persen=("memenuhi", "mean"))
+          .reset_index()
+          .assign(persen = lambda d: (100 * d["persen"]).round(1))
+          .sort_values("persen", ascending=False))
+    interpretasi: >
+      Alur penugasan mengikuti urutan kerja nyata: periksa ukuran, tipe, dan nilai hilang; buat peubah
+      turunan serta klasifikasi bertingkat; susun ringkasan per kombinasi kelompok dengan named
+      aggregation; gabungkan tabel referensi disertai validasi hubungan; lalu hitung capaian target.
+      Persentase diperoleh dari rata-rata penanda bernilai 0 dan 1 dikali seratus. Karena berkas
+      datanya sama dengan Modul 5, seluruh angka dapat dibandingkan langsung dengan hasil dplyr sebagai
+      pemeriksaan silang. Perlu diingat bahwa data ini simulasi sehingga tidak boleh ditafsirkan
+      sebagai keadaan sebenarnya.
+
+references:
+  - "McKinney, W. (2022). Python for Data Analysis, 3rd ed. O'Reilly Media."
+  - "The pandas development team. (2024). pandas documentation: User Guide."
+  - "Chen, D. Y. (2018). Pandas for Everyone: Python Data Analysis. Addison-Wesley."
+  - "Zhang, N. (2020). A Tour of Data Science: Learn R and Python in Parallel. Chapman and Hall/CRC."

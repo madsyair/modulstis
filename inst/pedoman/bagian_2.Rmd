@@ -1,0 +1,809 @@
+---
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_sections: true
+    keep_tex: false
+    fig_caption: true
+    includes:
+      in_header: preamble_pedoman_b2.tex
+geometry: "left=2.6cm,right=2.4cm,top=3.0cm,bottom=2.4cm"
+fontsize: 11pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, warning = FALSE, message = FALSE, comment = "",
+  fig.align = "center", out.width = "92%"
+)
+options(width = 88)
+```
+
+# Anatomi Spesifikasi YAML
+
+Bab ini membedah berkas spesifikasi --- sumber kebenaran seluruh modul. Setelah bab ini
+Anda akan mengenali setiap kunci yang boleh ditulis dan tahu di mana meletakkannya.
+
+## Mengapa YAML
+
+Spesifikasi ditulis dalam YAML karena format ini mudah dibaca manusia sekaligus mudah dibaca
+mesin. Tidak ada tanda kurung berlebih, dan strukturnya dinyatakan oleh **indentasi**.
+
+\begin{kotakinfo}[Tiga bentuk dasar YAML]
+\begin{tabular}{@{}p{4.6cm}p{9.4cm}@{}}
+\textbf{Pasangan kunci--nilai} & \texttt{number: 1}\\[3pt]
+\textbf{Daftar} & baris berawalan tanda hubung, mis. \texttt{- "Pertama"}\\[3pt]
+\textbf{Peta bersarang} & kunci diikuti blok yang menjorok ke dalam\\
+\end{tabular}
+\end{kotakinfo}
+
+## Kerangka Utuh Sebuah Spesifikasi
+
+Berikut kerangka lengkap dengan seluruh kunci tingkat atas. Rinciannya dibahas satu per satu
+pada subbab berikutnya.
+
+```yaml
+number: 11                        # nomor modul (wajib)
+title: "Pendugaan dan Uji Rata-rata"
+short_code: "inferensia_rata"     # dipakai pada nama berkas
+topic: "Inferensia Rata-rata"     # dipakai pada kepala halaman
+pertemuan: 11                     # pertemuan ke berapa pada RPS
+sub_cpmk: >
+  Sub-CPMK 11: Mahasiswa mampu ...
+packages: [dplyr]                 # paket yang dipakai modul
+contoh_title: "Contoh Praktikum dengan R"     # opsional
+tambahan_title: "Tambahan: Penyelesaian dengan Fungsi R"   # opsional
+
+course:                           # identitas mata kuliah
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  semester: "3 (Ganjil)"
+  penyusun:
+    - "Achmad Syahrul Choir"
+
+datasets:                         # resep data simulasi
+  - name: data_pelatihan
+    role: contoh
+    recipe:
+      kind: tabular
+      "n": 60
+      seed: 2025
+      columns:
+        kelompok: {type: category, levels: [Kontrol, Perlakuan]}
+        nilai: {type: numeric, min: 50, max: 95, digits: 1}
+
+body:                             # ISI MODUL (dibahas Bab 5)
+  deskripsi: [...]
+  tujuan: [...]
+  # ... sebelas bagian
+
+exercises:                        # latihan & penugasan + solusinya
+  - id: "L11.1"
+    points: 15
+    solution: "Ringkasan solusi"
+    judul_r: "Solusi Tingkat Dasar (R)"
+    solusi_r: |
+      mean(x)
+    interpretasi: >
+      Penjelasan solusinya ...
+
+references:                       # daftar pustaka
+  - "Walpole, R. E., dkk. (2016). Probability and Statistics ..."
+```
+
+## Kunci Tingkat Atas
+
+\begin{kotakinfo}[Rujukan kunci tingkat atas]
+\begin{tabular}{@{}p{3.1cm}p{2.0cm}p{9.2cm}@{}}
+\textbf{Kunci} & \textbf{Tipe} & \textbf{Keterangan}\\
+\texttt{number} & integer & nomor modul; menentukan penomoran bagian \texttt{N.1}--\texttt{N.11}\\[2pt]
+\texttt{title} & teks & judul lengkap; tampil pada sampul dan daftar isi\\[2pt]
+\texttt{short\_code} & teks & potongan nama berkas keluaran\\[2pt]
+\texttt{topic} & teks & judul ringkas untuk kepala halaman\\[2pt]
+\texttt{pertemuan} & integer & pertemuan ke berapa pada RPS; tampil di sampul\\[2pt]
+\texttt{sub\_cpmk} & teks & rumusan capaian; tampil di sampul\\[2pt]
+\texttt{packages} & daftar & paket yang dipakai; dirujuk bagian \emph{Alat dan Bahan}\\[2pt]
+\texttt{contoh\_title} & teks & judul bagian Contoh; kosongkan untuk memakai bawaan\\[2pt]
+\texttt{tambahan\_title} & teks & judul bagian Tambahan\\[2pt]
+\texttt{course} & peta & identitas mata kuliah\\[2pt]
+\texttt{datasets} & daftar & resep data simulasi\\[2pt]
+\texttt{body} & peta & isi kesebelas bagian modul\\[2pt]
+\texttt{exercises} & daftar & solusi latihan dan penugasan\\[2pt]
+\texttt{references} & daftar & daftar pustaka\\
+\end{tabular}
+\end{kotakinfo}
+
+\begin{kotaktips}
+Hanya \texttt{number}, \texttt{title}, dan \texttt{body} yang benar-benar wajib. Sisanya
+memiliki nilai bawaan yang masuk akal --- tetapi mengisinya membuat modul jauh lebih rapi.
+\end{kotaktips}
+
+## Blok `course`: Identitas Mata Kuliah
+
+Blok ini menentukan teks yang muncul pada sampul pembatas dan kepala halaman.
+
+```yaml
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  semester: "3 (Ganjil)"
+  prodi: "D-IV Statistika"
+  penyusun:
+    - "Achmad Syahrul Choir"
+    - "Rudi Salam"
+    - "Christiana Anggraeni Putri"
+```
+
+\begin{kotakinfo}[Kunci pada \texttt{course}]
+\begin{tabular}{@{}p{3.2cm}p{11.2cm}@{}}
+\texttt{matkul} & nama mata kuliah; tampil pada pita sampul\\[2pt]
+\texttt{matkul\_besar} & versi huruf kapital untuk judul besar\\[2pt]
+\texttt{kode} & kode mata kuliah\\[2pt]
+\texttt{semester} & mis. \texttt{"3 (Ganjil)"}\\[2pt]
+\texttt{prodi} & nama program studi; tampil pada sampul dan kaki halaman.
+Bawaannya \texttt{"D-IV Komputasi Statistik"}\\[2pt]
+\texttt{penyusun} & daftar nama; boleh satu, boleh banyak --- seluruhnya dirangkai
+otomatis dengan koma\\[2pt]
+\texttt{halaman\_awal} & nomor halaman pertama modul; dipakai penomoran berlanjut
+(lihat Bab 10)\\
+\end{tabular}
+\end{kotakinfo}
+
+Karena identitas ini sama untuk seluruh modul dalam satu mata kuliah, blok `course` biasanya
+disalin apa adanya antar-spesifikasi.
+
+\begin{kotaktips}
+Kunci \texttt{prodi} memungkinkan satu paket melayani beberapa program studi sekaligus. Kedua
+himpunan spesifikasi bawaan memperagakannya: \texttt{inst/specs\_ps/} memakai
+\texttt{"D-IV Statistika"} dan \texttt{inst/specs\_d3/} memakai \texttt{"D-III Statistika"} ---
+isinya berbeda, tetapi bentuk spesifikasinya sama dan cukup satu baris yang disetel.
+\end{kotaktips}
+
+## Blok `datasets`: Resep Data Simulasi
+
+Data modul tidak disimpan sebagai berkas mentah, melainkan sebagai **resep**. Dengan begitu
+data dapat dibangkitkan ulang kapan saja dan selalu identik.
+
+```yaml
+datasets:
+  - name: data_pelatihan          # menjadi data/data_pelatihan.csv
+    role: contoh                  # contoh | latihan | penugasan
+    recipe:
+      kind: tabular
+      "n": 60                     # perhatikan tanda kutipnya
+      seed: 2025
+      columns:
+        peserta:  {type: integer, min: 1001, max: 1060}
+        kelompok: {type: category, levels: [Kontrol, Perlakuan], probs: [0.5, 0.5]}
+        nilai:    {type: numeric, min: 50, max: 95, digits: 1}
+```
+
+### Jenis kolom yang tersedia
+
+\begin{kotakinfo}[Tipe kolom]
+\begin{tabular}{@{}p{2.3cm}p{5.0cm}p{7.2cm}@{}}
+\textbf{Tipe} & \textbf{Argumen} & \textbf{Menghasilkan}\\
+\texttt{numeric} & \texttt{min}, \texttt{max}, \texttt{digits} & bilangan pecahan seragam\\[2pt]
+\texttt{integer} & \texttt{min}, \texttt{max} & bilangan bulat\\[2pt]
+\texttt{category} & \texttt{levels}, \texttt{probs} & kategori acak menurut peluang\\[2pt]
+\texttt{balanced} & \texttt{levels}, \texttt{each} & kategori berulang \textbf{berimbang},
+untuk rancangan faktorial\\
+\end{tabular}
+\end{kotakinfo}
+
+Tipe `balanced` diperlukan ketika rancangan menuntut jumlah amatan sama di tiap sel ---
+misalnya percobaan faktorial pada modul ANOVA.
+
+```yaml
+columns:
+  varietas: {type: balanced, levels: [V1, V2, V3], each: 30}
+  pupuk:    {type: balanced, levels: [Organik, Anorganik], each: 15}
+```
+
+Resep di atas menghasilkan rancangan 3 × 2 dengan 15 amatan per sel.
+
+\begin{kotaksalah}[Kunci \texttt{n} harus diberi tanda kutip]
+Tulislah \texttt{"n": 60}, bukan \texttt{n: 60}. Dalam YAML 1.1, kunci telanjang \texttt{n}
+terbaca sebagai \emph{boolean} \texttt{false} (singkatan dari \emph{no}), sehingga ukuran
+contoh terabaikan dan paket diam-diam memakai nilai bawaan 100 baris. Kekeliruan ini tidak
+memunculkan pesan galat --- data tetap terbentuk, hanya jumlahnya keliru.
+\end{kotaksalah}
+
+## Blok `references`
+
+Daftar pustaka ditulis sebagai daftar teks biasa. Penulisan gaya APA dianjurkan agar seragam.
+
+```yaml
+references:
+  - "Walpole, R. E., Myers, R. H., & Ye, K. (2016). *Probability and Statistics
+     for Engineers and Scientists* (9th ed.). Pearson."
+  - "Wickham, H. (2016). *ggplot2: Elegant Graphics for Data Analysis*. Springer."
+```
+
+Tanda bintang berpasangan menghasilkan cetak miring, mengikuti kelaziman Markdown.
+
+## Aturan Penulisan YAML yang Sering Menjebak
+
+\begin{kotaksalah}[Lima jebakan penulisan YAML]
+\textbf{1. Indentasi memakai spasi, bukan tab.} Tab menyebabkan galat pembacaan yang
+pesannya sering membingungkan.\\[3pt]
+\textbf{2. Titik dua di dalam teks harus dikutip.} Tulis
+\texttt{title: "Bab 1: Pengantar"} --- tanpa kutip, YAML mengira ada kunci baru.\\[3pt]
+\textbf{3. Nilai yang mirip boolean.} Selain \texttt{n}, kata \texttt{y}, \texttt{yes},
+\texttt{on}, dan \texttt{off} juga tertafsir sebagai boolean. Beri tanda kutip bila yang
+dimaksud teks.\\[3pt]
+\textbf{4. Blok teks panjang.} Pakai \texttt{>} untuk menggabungkan baris menjadi satu
+paragraf, atau \texttt{|} untuk mempertahankan pergantian barisnya.\\[3pt]
+\textbf{5. Garis miring terbalik.} Di dalam teks berkutip ganda, tulislah
+\texttt{\textbackslash\textbackslash} untuk menghasilkan satu garis miring terbalik LaTeX.
+\end{kotaksalah}
+
+### Perbedaan `>` dan `|`
+
+```yaml
+# > menggabungkan baris menjadi satu paragraf
+interpretasi: >
+  Kalimat pertama.
+  Masih paragraf yang sama.
+
+# | mempertahankan pergantian baris -- dipakai untuk kode
+solusi_r: |
+  x <- c(1, 2, 3)
+  mean(x)
+```
+
+Gunakan `>` untuk prosa dan `|` untuk kode. Tertukar akan membuat kode kehilangan
+pergantian barisnya sehingga tidak dapat dijalankan.
+
+## Memvalidasi Spesifikasi
+
+Sebelum render, jalankan validasi. Paket melaporkan **seluruh** kekeliruan sekaligus, bukan
+satu per satu.
+
+```{r eval=FALSE}
+sp  <- module_spec_from_yaml("modul-11.yml")
+lap <- sp$validate()
+
+lap$ok          # TRUE bila sah
+lap$messages    # daftar kekeliruan bila tidak
+```
+
+\begin{kotaktips}
+Biasakan memvalidasi setiap kali menyunting spesifikasi. Validasi berlangsung seketika,
+sedangkan render memakan waktu puluhan detik --- menemukan kekeliruan lebih awal menghemat
+banyak waktu.
+\end{kotaktips}
+
+\newpage
+
+# Sebelas Bagian Modul
+
+Setiap modul memiliki struktur baku yang sama. Keseragaman ini disengaja: mahasiswa tahu di
+mana mencari apa, dan penyusun tidak perlu memikirkan ulang kerangka setiap kali.
+
+## Peta Kesebelas Bagian
+
+\begin{kotakinfo}[Urutan baku]
+\begin{tabular}{@{}p{0.8cm}p{3.4cm}p{9.8cm}@{}}
+\textbf{N.1} & \texttt{deskripsi} & apa isi modul dan mengapa penting\\
+\textbf{N.2} & \texttt{tujuan} & capaian yang diharapkan\\
+\textbf{N.3} & \texttt{alat} & perangkat lunak, paket, dan berkas data\\
+\textbf{N.4} & \texttt{instruksi} & cara mengerjakan dan mengumpulkan\\
+\textbf{N.5} & \texttt{teori} & landasan ringkas beserta rumus\\
+\textbf{N.6} & \texttt{contoh} & contoh terpandu beserta kode\\
+\textbf{N.7} & \texttt{latihan} & latihan berjenjang\\
+\textbf{N.8} & \texttt{penugasan} & tugas terstruktur\\
+\textbf{N.9} & \texttt{tambahan} & \emph{opsional}; dilewati bila kosong\\
+\textbf{N.10} & \texttt{ringkasan} & daftar periksa dan kartu referensi\\
+\textbf{N.11} & \texttt{referensi} & daftar pustaka modul\\
+\end{tabular}
+\end{kotakinfo}
+
+Nomor bagian dihitung otomatis. Bila bagian `tambahan` tidak diisi, `ringkasan` menjadi
+`N.9` --- penomoran menyesuaikan sendiri.
+
+## Bentuk Umum Pengisian
+
+Setiap bagian diisi sebagai **daftar**. Tiap unsur daftar menjadi satu paragraf, satu blok
+LaTeX, atau satu contoh.
+
+```yaml
+body:
+  deskripsi:
+    - >
+      Paragraf pertama ditulis dengan tanda lebih besar sehingga
+      barisnya digabung menjadi satu paragraf.
+    - >
+      Paragraf kedua.
+    - "\\begin{kotakperhatian}\nIsi kotak.\n\\end{kotakperhatian}"
+```
+
+\begin{kotakinfo}[Tiga jenis unsur]
+\begin{tabular}{@{}p{4.0cm}p{10.4cm}@{}}
+\textbf{Prosa Markdown} & teks biasa; boleh memakai \texttt{**tebal**}, \texttt{*miring*},
+\texttt{`kode`}, tabel, dan daftar\\[3pt]
+\textbf{Blok LaTeX mentah} & teks berawalan \texttt{\textbackslash\textbackslash begin\{...\}};
+dipakai untuk kotak berwarna\\[3pt]
+\textbf{Peta contoh} & khusus bagian \texttt{contoh} dan \texttt{tambahan}; dibahas Bab 6\\
+\end{tabular}
+\end{kotakinfo}
+
+## N.1 Deskripsi Modul
+
+Menjawab dua pertanyaan: **apa** yang dipelajari dan **mengapa** itu penting. Panjangnya
+biasanya tiga sampai lima paragraf.
+
+```yaml
+  deskripsi:
+    - >
+      Modul ini membahas pendugaan parameter dan uji hipotesis rata-rata.
+      Sampai modul sebelumnya kita hanya menggambarkan data yang ada di
+      tangan; mulai modul ini kita menarik kesimpulan tentang populasi.
+    - >
+      Materi dibahas dari dasar hingga lanjut: pendugaan titik, pendugaan
+      selang, kerangka uji hipotesis, hingga ukuran pengaruh.
+    - "\\begin{kotakperhatian}[Tentang data]\nBerkas data pada modul ini adalah
+       \\textbf{data simulasi}, bukan data resmi.\n\\end{kotakperhatian}"
+```
+
+\begin{kotaktips}
+Akhiri Deskripsi dengan kotak \emph{Perhatian} yang menegaskan status data. Penegasan ini
+diulang pada setiap modul agar mahasiswa tidak keliru menganggap angkanya nyata.
+\end{kotaktips}
+
+## N.2 Tujuan Praktikum
+
+Ditulis sebagai daftar bernomor dengan **kata kerja operasional** yang terukur.
+
+```yaml
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini, mahasiswa diharapkan mampu:"
+    - "1. **Menghitung** pendugaan titik untuk rata-rata dan ragam."
+    - "2. **Menyusun** dan **menafsirkan** pendugaan selang."
+    - "3. **Melakukan** uji t satu sampel, dua sampel, dan berpasangan."
+```
+
+Kata kerja dicetak tebal agar capaiannya menonjol saat dibaca sekilas.
+
+## N.3 Alat dan Bahan
+
+Menyebutkan perangkat lunak, paket, dan berkas data yang diperlukan.
+
+```yaml
+  alat:
+    - "Perangkat dan bahan yang diperlukan:"
+    - "- **R** (RStudio); modul ini fokus pada R sesuai RPS."
+    - "- Paket: `dplyr` (pasang dengan `install.packages(\"dplyr\")`)."
+    - "- Berkas data: `data/data_pelatihan.csv`."
+```
+
+## N.4 Instruksi Pengerjaan
+
+Mengatur cara kerja: apa yang disiapkan sebelum sesi, apa yang dikerjakan saat sesi, dan
+bagaimana pengumpulannya.
+
+```yaml
+  instruksi:
+    - "Ikuti tahapan berikut:"
+    - "**Sebelum praktikum:** siapkan direktori kerja; letakkan berkas data
+       pada subfolder `data/`."
+    - "**Selama praktikum:** kerjakan Contoh berurutan; untuk setiap
+       pengujian, **tuliskan hipotesisnya lebih dahulu**."
+    - "**Pembagian kerja:** Contoh dan Latihan dikerjakan di kelas;
+       **Penugasan dikerjakan di luar sesi**.\n\n**Pengumpulan:** susun
+       laporan R Markdown dan kumpulkan melalui Google Classroom."
+```
+
+\begin{kotaktips}
+Hindari menyebut durasi dalam menit. Alokasi waktu berbeda antar-kelas dan antar-semester,
+sehingga penyebutan durasi cepat menjadi usang.
+\end{kotaktips}
+
+## N.5 Teori Singkat
+
+Bagian terpanjang setelah Contoh. Susunan yang dianjurkan: kaitan dengan materi sebelumnya,
+lalu konsep, lalu rumus, lalu peringatan kekeliruan yang lazim.
+
+```yaml
+  teori:
+    - "### Kaitan dengan Materi Sebelumnya"
+    - >
+      Modul ini memakai langsung bekal Modul 7. Sebaran normal dan
+      keluarga fungsi d/p/q/r kini dipakai menghitung nilai kritis.
+    - "### Pendugaan Titik"
+    - >
+      Pendugaan titik adalah satu angka yang dipakai menduga parameter.
+    - "\\begin{kotakrumus}\n$SE = \\dfrac{s}{\\sqrt{n}}$\n\\end{kotakrumus}"
+    - "\\begin{kotaksalah}[Salah menafsirkan selang]\nSelang 95 persen bukan
+       berarti ada peluang 95 persen parameter berada di dalamnya.
+       \n\\end{kotaksalah}"
+```
+
+Judul berawalan `###` menghasilkan subbagian bernomor `N.5.1`, `N.5.2`, dan seterusnya.
+
+\begin{kotaktips}
+Membuka Teori dengan subbagian \emph{Kaitan dengan Materi Sebelumnya} sangat membantu
+mahasiswa melihat modul sebagai rangkaian, bukan potongan yang terpisah-pisah.
+\end{kotaktips}
+
+## N.6 Contoh Praktikum
+
+Bagian inti modul. Karena strukturnya paling rumit, seluruh Bab 6 dikhususkan untuk membahasnya.
+
+## N.7 Latihan Mandiri
+
+Latihan disusun berjenjang. Bagian ini dibahas bersama Contoh pada Bab 6.
+
+## N.8 Penugasan
+
+Tugas terstruktur yang dikerjakan di luar sesi, sebaiknya berlatar kasus statistik resmi.
+
+```yaml
+  penugasan:
+    - "\\begin{kotaktugas}\nSebagai calon analis \\emph{official statistics},
+       susun laporan inferensia atas data pelatihan.\n\\end{kotaktugas}"
+    - "**Konteks.** Sebuah unit menyelenggarakan pelatihan bagi 60 peserta ..."
+    - "\\tugas{Pendugaan}"
+    - "1. Hitung pendugaan titik beserta galat bakunya."
+    - "\\tugas{Laporan}"
+    - "2. Susun laporan R Markdown berisi kode, keluaran, dan interpretasi."
+```
+
+Perintah `\tugas{...}` menghasilkan sub-judul bernomor otomatis di dalam Penugasan.
+
+## N.9 Tambahan (Opsional)
+
+Bagian ini **hanya muncul bila diisi**. Pada modul inferensia, bagian ini dipakai untuk
+menempatkan penyelesaian dengan fungsi bawaan R --- setelah Penugasan --- sehingga bagian
+Contoh dapat berfokus pada perhitungan manual.
+
+```yaml
+  tambahan:
+    - >
+      Seluruh perhitungan pada bagian Contoh sengaja dikerjakan manual agar
+      rumusnya dipahami. Bagian ini menyajikan penyelesaian yang sama dengan
+      fungsi bawaan R. Kerjakan setelah Penugasan selesai.
+    - contoh: "Uji t dengan fungsi bawaan"
+      kode_r: "t.test(x, mu = 70)"
+      judul_r: "t.test satu contoh"
+      eval: true
+      penjelasan: >
+        Fungsi t.test menerima vektor data dan nilai acuan pada argumen mu.
+      interpretasi: >
+        Angkanya sama persis dengan hasil manual pada Contoh 11.8.
+```
+
+Judulnya dapat diganti melalui kunci `tambahan_title` di tingkat atas.
+
+## N.10 Ringkasan Modul
+
+Berisi daftar periksa penguasaan dan kartu referensi cepat.
+
+```yaml
+  ringkasan:
+    - "\\begin{kotaktujuan}\n\\textbf{Daftar periksa penguasaan:}
+       \n\\begin{itemize}
+       \n\\item[$\\square$] Saya dapat menghitung galat baku.
+       \n\\item[$\\square$] Saya dapat menyusun selang kepercayaan.
+       \n\\end{itemize}\n\\end{kotaktujuan}"
+    - "**Kartu Referensi Cepat.**"
+    - "\\begin{kotakrumus}\n\\begin{tabular}{@{}ll@{}}
+       \n\\textbf{Keperluan} & \\textbf{Perintah}\\\\
+       \nGalat baku & \\texttt{sd(x)/sqrt(length(x))}\\\\
+       \n\\end{tabular}\n\\end{kotakrumus}"
+    - "Modul ini membuka rangkaian inferensia ... Modul berikutnya membahas ..."
+```
+
+Paragraf penutup sebaiknya menyebut kaitannya dengan modul berikutnya, sehingga rangkaian
+modul terasa menyambung.
+
+## N.11 Referensi
+
+Diisi otomatis dari kunci `references` di tingkat atas. Bagian ini tidak perlu ditulis
+di dalam `body`.
+
+## Ringkasan Bab
+
+\begin{kotakinfo}[Yang perlu diingat]
+\begin{tabular}{@{}p{5.0cm}p{9.4cm}@{}}
+Struktur tetap & sebelas bagian, urutannya ditetapkan paket\\[3pt]
+Penomoran otomatis & \texttt{N.1} sampai \texttt{N.11} mengikuti \texttt{number}\\[3pt]
+Bagian opsional & hanya \texttt{tambahan}; dilewati bila kosong\\[3pt]
+Isi berupa daftar & tiap unsur menjadi paragraf, kotak, atau contoh\\[3pt]
+Subbagian & judul berawalan \texttt{\#\#\#} menghasilkan \texttt{N.x.y}\\
+\end{tabular}
+\end{kotakinfo}
+
+\newpage
+
+# Contoh, Kode, dan Latihan
+
+Bab ini membahas dua bagian yang paling banyak memakan waktu penyusunan: **Contoh Praktikum**
+dan **Latihan Mandiri**, beserta kunci jawabannya.
+
+## Struktur Baku Sebuah Contoh
+
+Setiap contoh mengikuti alur lima langkah yang sama. Keseragaman ini membuat mahasiswa cepat
+terbiasa membacanya.
+
+```{=latex}
+\begin{center}
+\begin{tikzpicture}[
+  lgk/.style={draw=bpsnavy, fill=bpsbiru!8, rounded corners=2pt, minimum height=0.9cm,
+              minimum width=2.55cm, align=center, font=\small, line width=0.7pt},
+  panah/.style={->, >=stealth, bpsoranye, line width=1.1pt}]
+  \node[lgk] (a) at (0,0)    {\textbf{Judul}};
+  \node[lgk] (b) at (2.9,0)  {\textbf{Kode}};
+  \node[lgk] (c) at (5.8,0)  {\textbf{Output}};
+  \node[lgk, fill=bpsnavy!12] (d) at (8.7,0) {\textbf{Penjelasan}\\[-1pt]\textbf{Kode}};
+  \node[lgk, fill=bpsbirumuda!22] (e) at (11.6,0) {\textbf{Interpretasi}\\[-1pt]\textbf{Output}};
+  \draw[panah] (a) -- (b); \draw[panah] (b) -- (c);
+  \draw[panah] (c) -- (d); \draw[panah] (d) -- (e);
+\end{tikzpicture}
+\end{center}
+\begin{center}
+{\small\color{abuteks} Gambar 6.1: Alur baku setiap contoh praktikum}
+\end{center}
+```
+
+\begin{kotakinfo}[Peran tiap langkah]
+\begin{tabular}{@{}p{3.8cm}p{10.6cm}@{}}
+\textbf{Judul} & menyatakan apa yang dikerjakan contoh ini\\[3pt]
+\textbf{Kode} & perintah yang akan dijalankan\\[3pt]
+\textbf{Output} & keluaran sungguhan hasil menjalankan kode\\[3pt]
+\textbf{Penjelasan Kode} & \emph{apa yang dikerjakan kode} --- baris demi baris,
+argumen demi argumen\\[3pt]
+\textbf{Interpretasi Output} & \emph{apa arti hasilnya} --- kesimpulan dan kaitannya
+dengan konteks\\
+\end{tabular}
+\end{kotakinfo}
+
+\begin{kotaksalah}[Dua hal yang berbeda]
+Penjelasan Kode dan Interpretasi Output sering tercampur ketika ditulis tergesa-gesa.
+Kalimat ``\texttt{glimpse} menampilkan tipe tiap kolom'' menjelaskan \textbf{kode};
+kalimat ``kolom provinsi bertipe teks sehingga tidak dapat dirata-ratakan'' menafsirkan
+\textbf{keluaran}. Keduanya adalah keterampilan berbeda dan sebaiknya dipisahkan.
+\end{kotaksalah}
+
+## Menulis Satu Contoh
+
+Sebuah contoh ditulis sebagai peta dengan enam kunci.
+
+```yaml
+  contoh:
+    - contoh: "Pendugaan titik dan galat baku"
+      kode_r: "pel <- read.csv(\"data/data_pelatihan.csv\")\nx <- pel$nilai_post\nc(rata = mean(x), se = sd(x)/sqrt(length(x)))"
+      judul_r: "mean, sd, dan galat baku"
+      eval: true
+      penjelasan: >
+        Data dibaca lalu kolom nilai disimpan ke peubah x agar tidak ditulis
+        berulang. Galat baku dihitung sesuai rumusnya, yaitu simpangan baku
+        dibagi akar banyaknya amatan.
+      interpretasi: >
+        Perhatikan bahwa galat baku jauh lebih kecil daripada simpangan baku:
+        simpangan baku mengukur keragaman antar-amatan, sedangkan galat baku
+        mengukur keragaman rata-rata contoh antar-penarikan contoh.
+```
+
+\begin{kotakinfo}[Kunci pada sebuah contoh]
+\begin{tabular}{@{}p{2.6cm}p{2.0cm}p{9.7cm}@{}}
+\textbf{Kunci} & \textbf{Wajib} & \textbf{Keterangan}\\
+\texttt{contoh} & ya & judul contoh; muncul sebagai \emph{Contoh N.x}\\[2pt]
+\texttt{kode\_r} & ya\footnotemark[1] & kode R yang dijalankan\\[2pt]
+\texttt{judul\_r} & tidak & label pada kotak kode\\[2pt]
+\texttt{kode\_py} & --- & kode Python (modul dwibahasa)\\[2pt]
+\texttt{judul\_py} & --- & label kotak kode Python\\[2pt]
+\texttt{eval} & tidak & \texttt{true} menjalankan kode; \texttt{false} hanya menampilkan\\[2pt]
+\texttt{penjelasan} & tidak & isi kotak \emph{Penjelasan Kode}\\[2pt]
+\texttt{interpretasi} & tidak & isi kotak \emph{Interpretasi Output}\\
+\end{tabular}
+\end{kotakinfo}
+
+\footnotetext[1]{Salah satu dari \texttt{kode\_r} atau \texttt{kode\_py} harus ada.}
+
+## Menulis Kode di dalam YAML
+
+Kode ditulis sebagai teks berkutip ganda dengan `\n` sebagai penanda baris baru.
+
+```yaml
+kode_r: "x <- c(1, 2, 3)\nmean(x)"
+```
+
+Cara ini ringkas tetapi menyulitkan bila kodenya panjang. Untuk kode panjang, gunakan blok
+literal.
+
+```yaml
+kode_r: |
+  x <- c(1, 2, 3)
+  y <- c(4, 5, 6)
+  cor(x, y)
+```
+
+\begin{kotaksalah}[Tanda kutip di dalam kode]
+Bila kode memuat tanda kutip ganda --- misalnya \texttt{read.csv("data/x.csv")} --- maka di
+dalam teks berkutip ganda tanda tersebut harus ditulis \texttt{\textbackslash"}. Blok literal
+dengan \texttt{|} tidak memerlukan pelolosan ini, sehingga lebih aman untuk kode yang banyak
+memuat teks.
+\end{kotaksalah}
+
+## Contoh Dwibahasa
+
+Pada modul yang mengajarkan R dan Python berdampingan, satu contoh dapat memuat keduanya.
+Keduanya ditampilkan berurutan dengan label bahasa masing-masing.
+
+```yaml
+    - contoh: "Membaca berkas CSV"
+      kode_r: "df <- read.csv(\"data/demo.csv\")\nhead(df, 3)"
+      judul_r: "read.csv di R"
+      kode_py: "import pandas as pd\ndf = pd.read_csv('data/demo.csv')\nprint(df.head(3))"
+      judul_py: "read_csv di pandas"
+      eval: true
+      penjelasan: >
+        Kedua perintah membaca berkas CSV menjadi tabel. Jalur berkas ditulis
+        relatif terhadap direktori kerja.
+      interpretasi: >
+        Keluaran keduanya setara. Perbedaannya, pandas menampilkan indeks baris
+        di kolom paling kiri.
+```
+
+## Mengendalikan Eksekusi dengan `eval`
+
+Tidak semua kode dapat atau perlu dijalankan.
+
+\begin{kotakinfo}[Kapan memakai \texttt{eval: false}]
+\begin{tabular}{@{}p{5.4cm}p{9.0cm}@{}}
+\textbf{Keadaan} & \textbf{Alasan}\\
+Kode aplikasi Shiny & aplikasi berjalan interaktif, tidak menghasilkan keluaran cetak\\[3pt]
+Perintah pemasangan paket & tidak perlu dijalankan ulang saat render\\[3pt]
+Kode yang memakan waktu lama & memperlambat render tanpa manfaat\\[3pt]
+Kode yang sengaja salah & dipakai memperagakan galat\\
+\end{tabular}
+\end{kotakinfo}
+
+\begin{kotaktips}
+Bila kode tidak dijalankan, sediakan penggantinya agar mahasiswa tetap memperoleh umpan
+balik: sertakan tangkapan layar hasilnya, atau tampilkan pemeriksaan objek yang \emph{dapat}
+dijalankan --- misalnya \texttt{class(ui)} untuk memastikan kerangka aplikasi Shiny sudah sah.
+\end{kotaktips}
+
+## Menyisipkan Kotak di antara Contoh
+
+Unsur daftar pada bagian `contoh` tidak harus selalu berupa peta contoh. Teks biasa akan
+tampil sebagai paragraf atau kotak, sehingga dapat dipakai menyisipkan penjelasan di
+tengah rangkaian contoh.
+
+```yaml
+  contoh:
+    - contoh: "Contoh pertama"
+      kode_r: "..."
+    - "\\begin{kotaktips}\nSebelum melanjutkan, jalankan ulang contoh di atas
+       dengan nilai berbeda.\n\\end{kotaktips}"
+    - contoh: "Contoh kedua"
+      kode_r: "..."
+```
+
+## Menyusun Latihan Berjenjang
+
+Latihan disusun tiga tingkat. Penjenjangan ini membuat mahasiswa dengan kesiapan berbeda
+sama-sama memperoleh tantangan yang sesuai.
+
+\begin{kotakinfo}[Tiga tingkat latihan]
+\begin{tabular}{@{}p{2.8cm}p{4.4cm}p{7.2cm}@{}}
+\textbf{Tingkat} & \textbf{Bentuk} & \textbf{Tujuan}\\
+\textbf{Dasar} & melengkapi kode yang dikosongkan & memastikan sintaks dikuasai\\[3pt]
+\textbf{Menengah} & menulis kode sendiri; membetulkan kode salah & melatih kemandirian
+dan ketelitian\\[3pt]
+\textbf{Lanjut} & menyelesaikan kasus kecil & melatih perangkaian keterampilan\\
+\end{tabular}
+\end{kotakinfo}
+
+```yaml
+  latihan:
+    - "Kerjakan bertahap. Gunakan `data/data_pelatihan.csv`."
+    - "#### Tingkat Dasar (melengkapi kode)"
+    - "\\latihan{Pendugaan titik}"
+    - "```{r eval=FALSE}\nx <- pel$nilai_post\nmean(x)\n____(x)   # simpangan baku\n```"
+    - "#### Tingkat Menengah (menulis sendiri)"
+    - "\\latihan{Uji dua kelompok}"
+    - "Uji apakah rata-rata berbeda antara kedua kelompok. Tuliskan hipotesis,
+       sajikan ringkasan, jalankan uji, lalu simpulkan."
+```
+
+Perintah `\latihan{...}` menghasilkan judul latihan bernomor otomatis.
+
+## Latihan Membetulkan Kode
+
+Jenis latihan ini terbukti sangat efektif karena menyasar miskonsepsi secara langsung.
+Susunannya: kode yang sengaja salah, lalu **keluaran yang benar** sebagai pembanding.
+
+```yaml
+    - "\\latihan{Membetulkan kode yang salah}"
+    - "Kode berikut memuat beberapa kesalahan (nama argumen keliru dan
+       derajat bebas salah). Temukan dan perbaiki."
+    - "```{r eval=FALSE}\n# (a) nama argumen nilai acuan keliru\nt.test(x, mean = 70)\n\n# (b) derajat bebas pada regresi sederhana\ndb <- n - 1\n```"
+    - "**Keluaran yang benar.** Setelah diperbaiki:\n\n```\n# (a) argumen yang benar adalah mu\nt.test(x, mu = 70)\n\n# (b) dua koefisien diduga, sehingga db = n - 2\ndb <- n - 2\n```"
+```
+
+\begin{kotaktips}
+Sertakan \emph{Keluaran yang benar} agar mahasiswa dapat memverifikasi perbaikannya sendiri
+sebelum melihat kunci jawaban. Bila keluarannya berupa gambar, gantikan dengan pemeriksaan
+objek yang dapat dijalankan --- misalnya \texttt{class(p)} dan \texttt{length(p\$layers)}
+untuk grafik \texttt{ggplot2}.
+\end{kotaktips}
+
+## Menulis Kunci Jawaban
+
+Solusi tidak ditulis di dalam `body`, melainkan pada blok `exercises` di tingkat atas.
+Dengan begitu soal dan solusinya hidup dalam satu berkas dan tidak mungkin tercecer.
+
+```yaml
+exercises:
+  - id: "L11.1"
+    points: 15
+    solution: "Tingkat Dasar: sd, sqrt, dan argumen conf.level."
+    judul_r: "Solusi Tingkat Dasar (R)"
+    solusi_r: |
+      pel <- read.csv("data/data_pelatihan.csv")
+      x <- pel$nilai_post
+      mean(x)
+      sd(x)                       # simpangan baku
+      sd(x) / sqrt(length(x))     # galat baku
+    interpretasi: >
+      Galat baku dihitung sebagai simpangan baku dibagi akar banyaknya amatan.
+      Argumen conf.level mengatur tingkat keyakinan selang.
+```
+
+\begin{kotakinfo}[Kunci pada sebuah solusi]
+\begin{tabular}{@{}p{2.8cm}p{11.6cm}@{}}
+\texttt{id} & penanda butir, mis. \texttt{"L11.1"} untuk latihan, \texttt{"T11.1"}
+untuk penugasan\\[2pt]
+\texttt{points} & bobot nilai; tampil pada kotak kunci\\[2pt]
+\texttt{solution} & ringkasan satu kalimat tentang isi solusi\\[2pt]
+\texttt{judul\_r} & label kotak kode solusi\\[2pt]
+\texttt{solusi\_r} & kode solusi (gunakan blok literal \texttt{|})\\[2pt]
+\texttt{solusi\_py} & solusi Python bila diperlukan\\[2pt]
+\texttt{eval} & \texttt{false} bila solusi tidak boleh dijalankan\\[2pt]
+\texttt{interpretasi} & penjelasan mengapa solusinya demikian\\
+\end{tabular}
+\end{kotakinfo}
+
+\begin{kotaktips}
+Isi \texttt{interpretasi} pada solusi bukan sekadar mengulang jawabannya, melainkan
+menjelaskan \emph{alasannya}. Bagian inilah yang dipakai dosen sebagai acuan menilai
+jawaban mahasiswa yang caranya berbeda tetapi tetap benar.
+\end{kotaktips}
+
+## Penomoran Otomatis
+
+Seluruh penomoran dihitung paket saat render. Anda tidak perlu --- dan sebaiknya tidak ---
+menuliskannya sendiri.
+
+\begin{kotakinfo}[Yang dinomori otomatis]
+\begin{tabular}{@{}p{4.2cm}p{10.2cm}@{}}
+\textbf{Contoh N.x} & bertambah setiap kunci \texttt{contoh} baru\\[3pt]
+\textbf{Kode N.x} & bertambah setiap blok kode\\[3pt]
+\textbf{Latihan N.x} & bertambah setiap perintah \texttt{\textbackslash latihan\{\}}\\[3pt]
+\textbf{Tugas N.x} & bertambah setiap perintah \texttt{\textbackslash tugas\{\}}\\[3pt]
+\textbf{Bagian N.x} & mengikuti urutan sebelas bagian\\
+\end{tabular}
+\end{kotakinfo}
+
+Karena itu, menyisipkan contoh baru di tengah tidak menuntut penyesuaian apa pun --- seluruh
+nomor sesudahnya menyesuaikan sendiri saat render berikutnya.
+
+## Ringkasan Bab
+
+\begin{kotakinfo}[Yang perlu diingat]
+\begin{tabular}{@{}p{5.2cm}p{9.2cm}@{}}
+Alur baku contoh & Judul $\rightarrow$ Kode $\rightarrow$ Output $\rightarrow$
+Penjelasan Kode $\rightarrow$ Interpretasi\\[3pt]
+Dua kotak berbeda peran & Penjelasan menerangkan kode; Interpretasi menafsirkan hasil\\[3pt]
+Kode panjang & pakai blok literal \texttt{|} agar tanda kutip tidak perlu diloloskan\\[3pt]
+Latihan berjenjang & Dasar, Menengah, Lanjut\\[3pt]
+Membetulkan kode & sertakan \emph{Keluaran yang benar}\\[3pt]
+Solusi & ditulis pada \texttt{exercises}, bukan di dalam \texttt{body}\\[3pt]
+Penomoran & seluruhnya otomatis\\
+\end{tabular}
+\end{kotakinfo}

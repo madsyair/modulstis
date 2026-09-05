@@ -1,0 +1,594 @@
+number: 2
+title: "Dasar R dan Python: Tipe Data, Struktur Data, Operator, dan Fungsi"
+short_code: "dasar_r_python"
+topic: "Dasar R & Python"
+pertemuan: 2
+sub_cpmk: >
+  Sub-CPMK 2: Mahasiswa mengenal, mengetahui, dan mampu menjelaskan serta menjalankan
+  dasar-dasar R dan Python: tipe data, struktur data, operator aritmatika dan logika,
+  serta fungsi sederhana.
+packages: [reticulate]
+contoh_title: "Contoh Praktikum dengan R dan Python"
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  ta: "2025/2026"
+  semester: "3 (Ganjil)"
+  prodi: "D-III Statistika"
+  penyusun:
+    - "Achmad Syahrul Choir"
+    - "Rudi Salam"
+    - "Christiana Anggraeni Putri"
+
+datasets:
+  - name: data_mahasiswa
+    role: contoh
+    recipe:
+      kind: tabular
+      "n": 8
+      seed: 2026
+      columns:
+        nim: {type: integer, min: 22100, max: 22199}
+        ipk: {type: numeric, min: 2.5, max: 3.9, digits: 2}
+        sks: {type: integer, min: 18, max: 24}
+        lulus: {type: category, levels: [Ya, Tidak], probs: [0.75, 0.25]}
+
+body:
+  deskripsi:
+    - >
+      Modul ini membahas fondasi pemrograman yang dipakai di seluruh mata kuliah: tipe data,
+      struktur data, operator, dan fungsi. Empat konsep ini adalah "kosakata" dasar sebelum
+      mahasiswa menulis program yang lebih panjang. Seperti modul sebelumnya, materi disajikan
+      berpasangan: konsep yang sama ditunjukkan di R lalu di Python agar mahasiswa memahami
+      gagasannya, bukan sekadar menghafal sintaks.
+    - >
+      Pemahaman tipe dan struktur data sangat penting dalam pengolahan data statistik. Kesalahan
+      tipe - misalnya angka yang tanpa sengaja terbaca sebagai teks - adalah salah satu sumber
+      galat paling umum dan paling membingungkan bagi pemula. Dengan menguasai dasar ini secara
+      menyeluruh, langkah manipulasi dan analisis pada modul-modul berikutnya akan terasa jauh
+      lebih lancar dan bebas galat.
+    - >
+      Modul ini membahas tuntas: keempat tipe data dasar dan cara memeriksa serta mengubahnya;
+      seluruh struktur data penting di kedua bahasa beserta cara mengaksesnya; operator aritmatika,
+      perbandingan, dan logika lengkap dengan perbedaan sintaksnya; serta pembuatan fungsi dari
+      yang paling sederhana hingga berargumen bawaan. Setiap konsep dilengkapi contoh berjenjang,
+      catatan kesalahan umum, tips, dan variasi penulisan.
+    - "\\begin{kotakperhatian}[Tentang data]\nBerkas data pada modul ini adalah \\textbf{data simulasi} (\\texttt{set.seed(2026)}), \\textbf{bukan data nyata} dan \\textbf{bukan data resmi} instansi mana pun.\n\\end{kotakperhatian}"
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:"
+    - "1. **Menjelaskan** keempat tipe data dasar di R dan Python, memeriksa tipe suatu objek, serta melakukan konversi tipe (\\emph{type casting})."
+    - "2. **Membuat**, mengakses, dan memodifikasi struktur data: vektor, list, faktor, dan data frame di R; list, tuple, dictionary, dan Series/DataFrame di Python."
+    - "3. **Menggunakan** operator aritmatika, perbandingan, dan logika di kedua bahasa dengan memahami perbedaan sintaksnya."
+    - "4. **Menulis** fungsi dari yang sederhana hingga berargumen bawaan, serta memahami nilai kembalian di R dan Python."
+    - "5. **Mengenali** dan menghindari kesalahan tipe dan indeks yang umum terjadi saat berpindah bahasa."
+  alat:
+    - "Perangkat dan bahan yang diperlukan:"
+    - "- **R** (RStudio) dan **Python** (Jupyter), dijalankan berdampingan via paket `reticulate`."
+    - "- Pustaka Python: `numpy`, `pandas`."
+    - "- Berkas data: `data/data_mahasiswa.csv`."
+  instruksi:
+    - "Ikuti tahapan berikut:"
+    - "**Sebelum praktikum:** siapkan direktori kerja; letakkan `data_mahasiswa.csv` di subfolder `data/`."
+    - "**Selama praktikum:** kerjakan Contoh berurutan; jalankan tiap potongan kode R dan Python sepotong demi sepotong; tulis interpretasi dengan kalimat sendiri; perhatikan khusus perbedaan indeks (R mulai 1, Python mulai 0)."
+    - "**Pembagian kerja:** Contoh dan Latihan dikerjakan selama sesi praktikum di kelas; **Penugasan dikerjakan sebagai tugas terstruktur di luar sesi**.\n\n**Pengumpulan:** susun laporan R Markdown/Jupyter, render ke PDF/HTML, dan kumpulkan via Google Classroom sesuai tenggat yang ditetapkan dosen."
+  teori:
+    - "### Kaitan dengan Materi Sebelumnya"
+    - >
+      Modul 1 sudah membekali Anda dengan lingkungan kerja yang siap dan beberapa perintah pokok:
+      menciptakan objek lewat \texttt{<-}/\texttt{=}, menengok tipenya dengan
+      \texttt{class()}/\texttt{type()}, serta memuat data melalui
+      \texttt{read.csv}/\texttt{pd.read\_csv}. Kini perhatian bergeser ke isi objek itu sendiri: ragam
+      nilai yang dapat disimpan, wadah untuk menampungnya sekaligus banyak, tanda operasi untuk
+      mengolahnya, dan cara membungkus langkah berulang menjadi fungsi.
+    - >
+      Bila Modul 1 mengajarkan cara menjalankan perintah, modul ini mengenalkan bahan yang diolah perintah
+      itu. Keduanya berlanjut langsung: alur kendali pada Modul 3 dan 4 bekerja di atas tipe serta
+      struktur yang dibahas sekarang, dan manipulasi data pada Modul 5 dan 6 bertumpu pada data frame,
+      struktur terpenting di antara semuanya.
+    - "\\begin{kotakcatatan}\nBila Anda belum lancar membuat objek dan membaca data (Modul 1), sebaiknya tinjau ulang sebentar sebelum melanjutkan - modul ini membangun langsung di atasnya.\n\\end{kotakcatatan}"
+    - "### Tipe Data Dasar"
+    - >
+      **Mengapa tipe perlu diperhatikan.** Tiap nilai membawa **tipe** yang membatasi perlakuan apa saja
+      yang sah atasnya. Menambahkan dua bilangan jelas bermakna, sedangkan menambahkan dua teks
+      berperilaku lain sama sekali atau justru gagal. Karena itulah mengenali tipe dan mengendalikannya
+      termasuk keterampilan paling dasar dalam pemrograman.
+    - >
+      **Empat tipe pokok.** R mengenal \texttt{numeric} untuk bilangan pecahan seperti 3.14,
+      \texttt{integer} untuk bilangan bulat yang ditandai akhiran \texttt{L} seperti \texttt{5L},
+      \texttt{character} untuk teks berkutip, dan \texttt{logical} untuk nilai kebenaran
+      \texttt{TRUE}/\texttt{FALSE}. Python menyediakan padanan berturut-turut \texttt{float},
+      \texttt{int}, \texttt{str}, dan \texttt{bool}. Gagasannya persis sama; yang berbeda hanya nama
+      dan sedikit tata tulis.
+    - >
+      **Menengok dan mengalihkan tipe.** Pemeriksaan dilakukan dengan \texttt{class()} di R dan
+      \texttt{type()} di Python. Pengalihan tipe (\emph{casting}) tersedia lewat \texttt{as.numeric()},
+      \texttt{as.character()}, \texttt{as.integer()}, dan \texttt{as.logical()} pada R; sedangkan
+      Python memakai \texttt{int()}, \texttt{float()}, \texttt{str()}, serta \texttt{bool()}.
+    - "\\begin{kotaksalah}\nKesalahan tipe yang paling sering: angka yang terbaca sebagai teks (mis. \\texttt{\"25\"} bukan \\texttt{25}) sehingga tak bisa dijumlahkan. Selalu periksa dengan \\texttt{class()}/\\texttt{type()} bila hasil operasi aneh, lalu konversi bila perlu.\n\\end{kotaksalah}"
+    - "### Struktur Data"
+    - >
+      **Struktur data** berperan sebagai wadah yang menampung banyak nilai sekaligus. Memilih wadah yang
+      sesuai menentukan seberapa mudah dan seberapa cepat data itu kelak diolah.
+    - >
+      **Pada R.** \textbf{Vektor} yang dibuat dengan \texttt{c()} menampung elemen \emph{bertipe
+      seragam} dan menjadi tumpuan hampir seluruh analisis. \textbf{List} lewat \texttt{list()} justru
+      menerima isi \emph{beragam}, mulai angka, teks, sampai vektor lain. \textbf{Faktor} melalui
+      \texttt{factor()} dipakai bagi kategori bertingkat seperti rendah, sedang, dan tinggi. Adapun
+      \textbf{data frame} dari \texttt{data.frame()} berbentuk tabel, yakni himpunan vektor berukuran
+      sama yang berperan sebagai kolom - inilah bentuk yang paling lazim bagi data statistik.
+    - >
+      **Pada Python.** \textbf{List} bertanda \texttt{[]} menampung isi beragam dan boleh diubah
+      sesudahnya. \textbf{Tuple} bertanda \texttt{()} serupa list namun \emph{tak dapat diubah}
+      (\emph{immutable}). \textbf{Dictionary} berbentuk \texttt{\{kunci: nilai\}} menyimpan pasangan
+      kunci beserta nilainya. Untuk keperluan numerik dan tabel, pustaka menambahkan \textbf{array} dari
+      numpy, \textbf{Series} dari pandas bagi satu kolom, dan \textbf{DataFrame} dari pandas yang setara
+      data frame di R.
+    - "\\begin{kotakcatatan}\nPerbedaan indeks sangat penting: R memulai penomoran dari \\textbf{1}, sedangkan Python dari \\textbf{0}. Jadi elemen pertama adalah \\texttt{v[1]} di R tetapi \\texttt{v[0]} di Python. Kesalahan indeks adalah galat paling sering saat berpindah antar bahasa.\n\\end{kotakcatatan}"
+    - "### Nilai Hilang dan Membuat Urutan"
+    - >
+      **Nilai hilang.** Data lapangan jarang lengkap. Penandanya adalah \texttt{NA} (\emph{Not
+      Available}) di R, sedangkan Python dan pandas memakai \texttt{None} atau \texttt{NaN}. Perlu
+      ditegaskan bahwa penanda ini bukan angka nol maupun teks kosong, melainkan pernyataan bahwa nilainya
+      memang tidak ada. Akibatnya terasa pada fungsi peringkas: \texttt{mean(x)} di R mengembalikan
+      \texttt{NA} begitu ada satu nilai hilang, kecuali ditambahkan \texttt{na.rm = TRUE}. Sebaliknya
+      \texttt{.mean()} pada pandas mengabaikan NaN secara bawaan.
+    - "\\begin{kotaksalah}\nLupa menangani nilai hilang adalah galat yang sering luput. Bila \\texttt{mean(x)} tiba-tiba menghasilkan \\texttt{NA}, kemungkinan besar ada nilai hilang; gunakan \\texttt{mean(x, na.rm = TRUE)} (R). Periksa keberadaan NA dengan \\texttt{is.na(x)} (R) atau \\texttt{x.isna()} (pandas).\n\\end{kotaksalah}"
+    - >
+      **Membangun urutan.** Menuliskan elemen satu demi satu lewat \texttt{c()} bukan satu-satunya jalan.
+      R menyediakan jalan pintas: \texttt{1:10} menghasilkan bilangan 1 hingga 10, \texttt{seq(0, 1, by
+      = 0.25)} membentuk urutan berlangkah tetap, dan \texttt{rep(0, 5)} mengulang satu nilai. Peran
+      serupa dipegang \texttt{range(10)} serta \texttt{list(range(0, 11, 2))} pada Python. Urutan
+      semacam ini kerap dipakai sebagai indeks perulangan maupun untuk menyiapkan data uji.
+    - "### Operator"
+    - >
+      **Aritmatika:** empat operasi pokok memakai lambang yang sama di kedua bahasa, yaitu \texttt{+},
+      \texttt{-}, \texttt{*}, dan \texttt{/}. Perbedaan muncul pada tiga operasi lain: sisa bagi
+      ditulis \texttt{\%\%} pada R tetapi \texttt{\%} pada Python; pemangkatan memakai
+      \texttt{\textasciicircum} pada R dan \texttt{**} pada Python; sedangkan pembagian bulat ditulis
+      \texttt{\%/\%} pada R dan \texttt{//} pada Python.
+    - >
+      **Perbandingan:** tersedia \texttt{==} untuk kesamaan, \texttt{!=} untuk ketidaksamaan, serta
+      \texttt{<}, \texttt{>}, \texttt{<=}, dan \texttt{>=}. Seluruhnya mengembalikan nilai logika.
+      Satu hal patut dicermati: \texttt{==} bertanda ganda dipakai membandingkan, sedangkan \texttt{=}
+      bertanda tunggal dipakai menetapkan nilai.
+    - >
+      **Logika:** penghubung DAN ditulis \texttt{\&} pada R dan \texttt{and} pada Python; ATAU ditulis
+      \texttt{|} pada R dan \texttt{or} pada Python; sedangkan pengingkaran memakai \texttt{!} pada R
+      dan \texttt{not} pada Python.
+    - "\\begin{kotaksalah}\nJangan tertukar antara \\texttt{=} dan \\texttt{==}. \\texttt{x = 5} menetapkan nilai; \\texttt{x == 5} memeriksa apakah x sama dengan 5. Menukar keduanya adalah galat klasik yang sulit ditemukan.\n\\end{kotaksalah}"
+    - "### Fungsi"
+    - >
+      **Fungsi** adalah potongan kode bernama yang menerima \emph{argumen} sebagai masukan lalu
+      mengembalikan \emph{nilai} sebagai keluaran. Manfaatnya rangkap: kode menjadi lebih pendek, dapat
+      dipanggil berulang, dan lebih enak dibaca. Pembuatannya memakai \texttt{nama <- function(arg) \{
+      ... \}} di R serta \texttt{def nama(arg): ...} di Python. Argumen boleh diberi \emph{nilai
+      bawaan}, misalnya \texttt{ambang = 0.6}, sehingga pemanggilnya tidak wajib mengisinya.
+    - "\\begin{kotakrumus}\n\\textbf{Kerangka fungsi:}\\\\\nR:\\quad \\texttt{nama <- function(arg, n = bawaan) \\{ ... ; return(hasil) \\}}\\\\\nPython:\\quad \\texttt{def nama(arg, n=bawaan): ... ; return hasil}\n\\end{kotakrumus}"
+    - "\\begin{kotaktips}\nBeri nama fungsi dan variabel yang deskriptif (mis. \\texttt{rata\\_ipk} bukan \\texttt{x}). Kode yang mudah dibaca menghemat waktu Anda sendiri saat meninjau ulang di kemudian hari.\n\\end{kotaktips}"
+  contoh:
+    - contoh: "Empat tipe data dasar"
+      kode_r: "x <- 3.14      # numeric\ny <- 5L        # integer (akhiran L)\nz <- \"STIS\"    # character\nb <- TRUE      # logical\nclass(x); class(y); class(z); class(b)"
+      judul_r: "Tipe data di R"
+      kode_py: "x = 3.14       # float\ny = 5          # int\nz = \"STIS\"     # str\nb = True       # bool\nprint(type(x).__name__, type(y).__name__, type(z).__name__, type(b).__name__)"
+      judul_py: "Tipe data di Python"
+      eval: true
+      penjelasan: >
+        Empat objek dibuat berturut-turut untuk mewakili empat tipe dasar. Di R, akhiran huruf L pada
+        angka menandai bilangan bulat; tanpa akhiran itu angka dianggap pecahan. Teks ditulis dalam
+        tanda kutip, sedangkan nilai logika ditulis dengan huruf besar seluruhnya di R dan huruf awal
+        besar di Python. Baris terakhir memeriksa tipe tiap objek, memakai class di R dan type di
+        Python; atribut __name__ dipakai agar yang tercetak hanya nama tipenya.
+      interpretasi: >
+        R menamai tipe numeric/integer/character/logical; Python menamai float/int/str/bool. Objek
+        yang secara konsep sama memiliki nama tipe berbeda di tiap bahasa. Perhatikan akhiran L di R
+        untuk menandai bilangan bulat; tanpa L, angka dianggap numeric (pecahan).
+    - contoh: "Memeriksa dan mengubah tipe (casting)"
+      kode_r: "umur_teks <- \"25\"       # ini TEKS, bukan angka\nclass(umur_teks)\numur_angka <- as.numeric(umur_teks)  # konversi ke angka\numur_angka + 5           # kini bisa dijumlahkan\nclass(umur_angka)"
+      judul_r: "Konversi tipe di R"
+      kode_py: "umur_teks = \"25\"        # str\nprint(type(umur_teks).__name__)\numur_angka = int(umur_teks)  # konversi ke int\nprint(umur_angka + 5)        # 30\nprint(type(umur_angka).__name__)"
+      judul_py: "Konversi tipe di Python"
+      eval: true
+      penjelasan: >
+        Objek pertama sengaja dibuat sebagai teks meski isinya berupa angka, lalu tipenya diperiksa
+        untuk membuktikannya. Konversi dilakukan dengan as.numeric di R dan int di Python, yang
+        membaca isi teks lalu menghasilkan objek bertipe angka. Setelah dikonversi, operasi penjumlahan
+        berhasil dijalankan, dan pemeriksaan tipe terakhir memastikan perubahannya benar-benar terjadi.
+      interpretasi: >
+        Nilai "25" awalnya bertipe teks sehingga tak bisa dijumlahkan langsung. Setelah dikonversi
+        (as.numeric di R, int di Python), operasi aritmatika berhasil. Inilah solusi untuk kesalahan
+        tipe yang paling umum: data angka yang terbaca sebagai teks saat impor.
+    - contoh: "Vektor di R dan list di Python"
+      kode_r: "v <- c(10, 20, 30, 40)   # vektor numerik\nv[1]                     # elemen pertama (indeks mulai 1)\nlength(v)                # panjang\nv * 2                    # operasi tervektor: tiap elemen dikali 2"
+      judul_r: "Vektor di R"
+      kode_py: "v = [10, 20, 30, 40]     # list\nprint(v[0])              # elemen pertama (indeks mulai 0)\nprint(len(v))            # panjang\nprint([x * 2 for x in v])# tiap elemen dikali 2"
+      judul_py: "List di Python"
+      eval: true
+      penjelasan: >
+        Vektor dibuat dengan fungsi c di R, sedangkan Python memakai kurung siku untuk membuat list.
+        Baris kedua mengambil elemen pertama; perhatikan perbedaan penomoran, yaitu angka satu di R dan
+        angka nol di Python. Baris ketiga mengukur panjang dengan length atau len. Baris terakhir
+        mengalikan setiap elemen dengan dua: di R cukup ditulis langsung karena operasinya tervektor,
+        sedangkan list Python memerlukan comprehension.
+      interpretasi: >
+        Perhatikan indeks: v[1] (R) dan v[0] (Python) menunjuk elemen pertama. Vektor R mendukung
+        operasi tervektor bawaan (v * 2 langsung mengalikan semua elemen); di Python list biasa
+        memerlukan list comprehension, atau numpy array untuk operasi tervektor otomatis.
+    - contoh: "List (R) dan dictionary (Python)"
+      kode_r: "mhs <- list(nama = \"Ani\", umur = 20, nilai = c(80, 90))\nmhs$nama            # akses dengan $\nmhs$nilai[2]        # elemen kedua dari komponen nilai"
+      judul_r: "List bernama di R"
+      kode_py: "mhs = {\"nama\": \"Ani\", \"umur\": 20, \"nilai\": [80, 90]}\nprint(mhs[\"nama\"])       # akses dengan kunci\nprint(mhs[\"nilai\"][1])    # elemen kedua dari nilai"
+      judul_py: "Dictionary di Python"
+      eval: true
+      penjelasan: >
+        Objek dibuat dengan penamaan tiap komponen: fungsi list di R dan kurung kurawal berisi pasangan
+        kunci dan nilai di Python. Komponen diakses lewat namanya, memakai tanda dolar di R dan kurung
+        siku berisi kunci di Python. Baris terakhir memperlihatkan akses bertingkat: setelah komponen
+        nilai diambil, elemen keduanya dipilih lagi, sekali lagi dengan penomoran yang berbeda.
+      interpretasi: >
+        List bernama R (diakses dengan mhs$nama) sepadan dengan dictionary Python (diakses dengan
+        mhs["nama"]). Keduanya menyimpan campuran tipe dan cocok untuk mengelompokkan informasi
+        terkait. Akses bertingkat (mhs$nilai[2]) juga tersedia di kedua bahasa.
+    - contoh: "Faktor (R) untuk data kategori"
+      kode_r: "status <- factor(c(\"Lulus\", \"Tidak\", \"Lulus\", \"Lulus\"),\n                 levels = c(\"Tidak\", \"Lulus\"))\nstatus\nlevels(status)      # kategori yang ada\ntable(status)       # frekuensi tiap kategori"
+      judul_r: "Faktor di R"
+      kode_py: "import pandas as pd\nstatus = pd.Categorical([\"Lulus\", \"Tidak\", \"Lulus\", \"Lulus\"],\n                        categories=[\"Tidak\", \"Lulus\"])\nprint(status)\nprint(status.categories)\nprint(pd.Series(status).value_counts())"
+      judul_py: "Categorical di pandas"
+      eval: true
+      penjelasan: >
+        Fungsi factor di R dan pd.Categorical di pandas mengubah vektor teks menjadi data kategori.
+        Argumen levels atau categories menetapkan daftar kategori sekaligus urutannya, yang penting
+        agar kategori tetap dikenali meskipun tidak muncul di data. Baris berikutnya menampilkan daftar
+        kategori, dan baris terakhir menghitung frekuensi tiap kategori dengan table di R atau
+        value_counts di pandas.
+      interpretasi: >
+        Faktor (R) dan Categorical (pandas) merepresentasikan data kategori secara efisien dan
+        menjaga daftar kategori yang mungkin (levels). table() dan `value_counts()` menghitung frekuensi
+        tiap kategori. Ini penting untuk variabel seperti jenis kelamin, tingkat pendidikan, atau
+        status - sangat lazim dalam data statistik resmi.
+    - contoh: "Data frame: struktur data utama"
+      kode_r: "mhs <- read.csv(\"data/data_mahasiswa.csv\")\nstr(mhs)            # struktur: tipe tiap kolom\nmhs$ipk             # akses satu kolom\nmhs[1, ]            # baris pertama\nmhs[mhs$ipk > 3.5, ]# baris dengan IPK > 3.5"
+      judul_r: "Data frame di R"
+      kode_py: "import pandas as pd\nmhs = pd.read_csv(\"data/data_mahasiswa.csv\")\nprint(mhs.dtypes)          # tipe tiap kolom\nprint(mhs[\"ipk\"])          # akses satu kolom\nprint(mhs.iloc[0])         # baris pertama\nprint(mhs[mhs[\"ipk\"] > 3.5])  # baris IPK > 3.5"
+      judul_py: "DataFrame di pandas"
+      eval: true
+      penjelasan: >
+        Berkas dibaca lebih dahulu, lalu strukturnya diperiksa dengan str di R atau dtypes di pandas
+        untuk melihat tipe tiap kolom. Baris berikutnya mengakses satu kolom. Setelah itu diambil baris
+        pertama: di R dengan kurung siku berisi nomor baris diikuti koma dan bagian kolom dikosongkan,
+        sedangkan pandas memakai .iloc yang bekerja berdasarkan posisi. Baris terakhir menyaring baris
+        dengan syarat logika, yang di R diletakkan sebelum koma dan di pandas di dalam kurung siku.
+      interpretasi: >
+        Data frame (R) dan DataFrame (pandas) adalah struktur tabel: baris = amatan, kolom = peubah.
+        str()/.dtypes menampilkan tipe kolom; akses kolom dengan $ (R) atau [] (pandas); penyaringan
+        baris dengan syarat logika bekerja serupa. Struktur inilah yang paling sering dipakai
+        sepanjang mata kuliah.
+    - contoh: "Operator aritmatika, perbandingan, dan logika"
+      kode_r: "7 %% 3            # sisa bagi -> 1\n7 %/% 3           # bagi bulat -> 2\n2 ^ 10            # pangkat -> 1024\n(5 > 3) & (2 < 1) # logika DAN -> FALSE\n(5 > 3) | (2 < 1) # logika ATAU -> TRUE"
+      judul_r: "Operator di R"
+      kode_py: "print(7 % 3)          # sisa bagi -> 1\nprint(7 // 3)         # bagi bulat -> 2\nprint(2 ** 10)        # pangkat -> 1024\nprint((5 > 3) and (2 < 1))  # DAN -> False\nprint((5 > 3) or (2 < 1))   # ATAU -> True"
+      judul_py: "Operator di Python"
+      eval: true
+      penjelasan: >
+        Lima baris menguji operator yang sintaksnya berbeda antar-bahasa. Sisa bagi memakai dua tanda
+        persen di R dan satu di Python; pembagian bulat memakai tanda persen garis miring di R dan dua
+        garis miring di Python; pangkat memakai tanda sisipan di R dan dua bintang di Python. Dua baris
+        terakhir menggabungkan dua perbandingan: R memakai ampersand dan garis tegak, sedangkan Python
+        memakai kata and dan or. Tiap perbandingan dibungkus tanda kurung agar urutan pengerjaannya jelas.
+      interpretasi: >
+        Perbedaan sintaks: sisa bagi %% vs %, bagi bulat %/% vs //, pangkat ^ vs **, logika &/| vs
+        and/or. Hasil operasi setara di kedua bahasa. Operator perbandingan menghasilkan nilai logika
+        yang menjadi dasar penyaringan data dan pernyataan kondisi (dibahas di Modul 3 dan 4).
+    - contoh: "Menulis fungsi dengan argumen bawaan"
+      kode_r: "kategori_ipk <- function(ipk, ambang = 3.5) {\n  if (ipk >= ambang) \"Cumlaude\" else \"Reguler\"\n}\nkategori_ipk(3.7)              # pakai ambang bawaan\nkategori_ipk(3.2, ambang = 3.0)  # ambang ditimpa"
+      judul_r: "Fungsi di R"
+      kode_py: "def kategori_ipk(ipk, ambang=3.5):\n    return \"Cumlaude\" if ipk >= ambang else \"Reguler\"\nprint(kategori_ipk(3.7))               # ambang bawaan\nprint(kategori_ipk(3.2, ambang=3.0))   # ambang ditimpa"
+      judul_py: "Fungsi di Python"
+      eval: true
+      penjelasan: >
+        Fungsi dibuat dengan function di R dan def di Python, keduanya menerima dua argumen dengan
+        argumen kedua diberi nilai bawaan 3.5. Isi fungsi memeriksa syarat lalu mengembalikan salah satu
+        dari dua teks; Python memakai bentuk ekspresi kondisional satu baris. Pemanggilan pertama tidak
+        menyebut ambang sehingga nilai bawaan dipakai, sedangkan pemanggilan kedua menimpanya dengan
+        menyebut nama argumen secara eksplisit.
+      interpretasi: >
+        Fungsi yang sama ditulis di kedua bahasa: menerima ipk dan ambang (bawaan 3.5). Argumen
+        bawaan membuat fungsi fleksibel - dapat dipanggil tanpa menyebut ambang, atau dengan ambang
+        khusus. R memakai function() dan Python memakai def; keduanya mengembalikan hasil identik.
+    - contoh: "Nilai hilang (NA) dan urutan"
+      kode_r: "x <- c(80, NA, 90, 65)   # ada satu nilai hilang\nmean(x)                  # -> NA\nmean(x, na.rm = TRUE)    # abaikan NA -> 78.33\nis.na(x)                 # tandai posisi NA\nseq(0, 10, by = 2)       # urutan 0,2,4,6,8,10\nrep(\"A\", 3)             # ulang \"A\" tiga kali"
+      judul_r: "NA dan urutan di R"
+      kode_py: "import numpy as np, pandas as pd\nx = pd.Series([80, np.nan, 90, 65])\nprint(x.mean())          # pandas mengabaikan NaN -> 78.33\nprint(x.isna().tolist()) # tandai posisi NaN\nprint(list(range(0, 11, 2)))  # 0,2,4,6,8,10\nprint([\"A\"] * 3)         # ulang \"A\" tiga kali"
+      judul_py: "NaN dan urutan di Python"
+      eval: true
+      penjelasan: >
+        Vektor pertama sengaja memuat satu nilai hilang. Perhitungan rata-rata dijalankan dua kali di R
+        untuk memperlihatkan perbedaannya: tanpa argumen dan dengan na.rm bernilai TRUE yang mengabaikan
+        nilai hilang; pandas mengabaikannya secara bawaan. Fungsi is.na atau .isna menandai posisi nilai
+        hilang. Dua baris terakhir membuat urutan: seq dengan argumen by dan range dengan langkah,
+        serta rep di R dan perkalian list di Python untuk pengulangan.
+      interpretasi: >
+        Nilai hilang (NA di R, NaN di Python) memerlukan penanganan khusus: mean(x) di R menghasilkan
+        NA sampai diberi na.rm=TRUE, sedangkan pandas mengabaikan NaN secara bawaan. is.na/.isna
+        menandai posisi nilai hilang. Fungsi seq/range dan rep/perkalian list membuat urutan dengan
+        ringkas - jauh lebih praktis daripada menulis c() panjang.
+    - contoh: "Mencari bantuan fungsi"
+      kode_r: "# ?mean          # buka dokumentasi fungsi mean (jalankan di Console)\n# help(seq)       # sama dengan ?seq\nargs(round)        # lihat argumen fungsi round"
+      judul_r: "Dokumentasi di R"
+      kode_py: "# help(round)     # dokumentasi (jalankan di Jupyter)\n# round?          # bantuan cepat di Jupyter\nprint(round.__doc__[:60])  # cuplikan docstring"
+      judul_py: "Dokumentasi di Python"
+      eval: true
+      penjelasan: >
+        Perintah pembuka dokumentasi ditulis sebagai komentar karena membuka jendela bantuan yang tidak
+        dapat ditampilkan dalam laporan tercetak; jalankanlah sendiri di Console atau Jupyter. Yang
+        dijalankan di sini adalah args di R yang menampilkan daftar argumen suatu fungsi, dan atribut
+        __doc__ di Python yang memuat teks dokumentasi; pengirisan dipakai agar hanya cuplikan awalnya
+        yang tercetak.
+      interpretasi: >
+        Keterampilan menemukan bantuan sendiri sangat penting. Di R gunakan ?fungsi atau help(fungsi);
+        args() menampilkan argumen suatu fungsi. Di Python gunakan help(fungsi), fungsi? di Jupyter,
+        atau atribut __doc__. Biasakan membuka dokumentasi ketika ragu cara memakai fungsi.
+    - contoh: "Operasi vektor dan pengindeksan lanjut"
+      kode_r: "v <- c(15, 8, 23, 4, 16)\nv[v > 10]              # penyaringan: elemen > 10\nv[c(1, 3)]             # ambil elemen ke-1 dan ke-3\nv[-1]                  # semua KECUALI elemen pertama\nsort(v)                # urutkan naik\nwhich(v == max(v))     # posisi nilai maksimum"
+      judul_r: "Indeks vektor di R"
+      kode_py: "import numpy as np\nv = np.array([15, 8, 23, 4, 16])\nprint(v[v > 10])          # penyaringan boolean\nprint(v[[0, 2]])          # elemen ke-0 dan ke-2\nprint(v[1:])              # semua kecuali pertama\nprint(np.sort(v))         # urutkan\nprint(np.argmax(v))       # posisi maksimum"
+      judul_py: "Indeks array di Python"
+      eval: true
+      penjelasan: >
+        Enam teknik pengindeksan diperagakan berurutan. Penyaringan boolean menempatkan syarat di dalam
+        kurung siku. Pemilihan beberapa posisi memakai c di R dan list di dalam kurung siku di Python.
+        Indeks negatif di R berarti membuang elemen, sedangkan Python memakai pengirisan untuk hasil
+        serupa. Dua baris terakhir mengurutkan nilai dan mencari posisi nilai maksimum, memakai which
+        dengan perbandingan di R dan argmax di numpy.
+      interpretasi: >
+        Pengindeksan adalah keterampilan inti. Penyaringan boolean (v[v > 10]) memilih elemen yang
+        memenuhi syarat; indeks ganda (v[c(1,3)] / v[[0,2]]) memilih beberapa posisi; indeks negatif
+        di R (v[-1]) membuang elemen, sedangkan Python memakai iris (v[1:]). Perhatikan lagi perbedaan
+        indeks: elemen pertama adalah posisi 1 (R) vs 0 (Python). which/argmax menemukan posisi nilai
+        tertentu - berguna untuk melacak amatan ekstrem.
+    - contoh: "Vektor bernama dan operasi antar-vektor"
+      kode_r: "nilai <- c(mtk = 85, fis = 78, kim = 92)\nnilai[\"fis\"]           # akses dengan nama\nnames(nilai)            # semua nama\nbobot <- c(3, 2, 3)\nsum(nilai * bobot) / sum(bobot)   # rata-rata tertimbang"
+      judul_r: "Vektor bernama di R"
+      kode_py: "import pandas as pd\nnilai = pd.Series([85, 78, 92], index=[\"mtk\",\"fis\",\"kim\"])\nprint(nilai[\"fis\"])       # akses dengan label\nprint(nilai.index.tolist())\nbobot = pd.Series([3, 2, 3], index=nilai.index)\nprint((nilai * bobot).sum() / bobot.sum())  # rata-rata tertimbang"
+      judul_py: "Series bernama di Python"
+      eval: true
+      penjelasan: >
+        Vektor diberi nama untuk tiap elemen: penamaan langsung di dalam c pada R, dan argumen index
+        pada pd.Series. Elemen kemudian diakses lewat namanya, bukan posisinya. Baris berikutnya
+        menampilkan seluruh nama. Dua baris terakhir menghitung rata-rata tertimbang: nilai dikalikan
+        bobot elemen per elemen secara otomatis, lalu jumlahnya dibagi dengan jumlah bobot.
+      interpretasi: >
+        Vektor bernama (R) dan Series (pandas) memungkinkan akses melalui label, bukan hanya posisi -
+        lebih jelas dan tahan kesalahan. Operasi antar-vektor (nilai * bobot) bekerja elemen per elemen
+        secara otomatis, memungkinkan perhitungan seperti rata-rata tertimbang dalam satu baris. Ini
+        fondasi bagi kolom data frame yang pada dasarnya adalah vektor bernama.
+    - contoh: "Matriks: struktur dua dimensi"
+      kode_r: "m <- matrix(1:6, nrow = 2, byrow = TRUE)\nm\ndim(m)                 # dimensi: 2 baris 3 kolom\nm[1, ]                 # baris pertama\nm[, 2]                 # kolom kedua\nt(m)                   # transpos\nm * 2                  # operasi elemen"
+      judul_r: "Matriks di R"
+      kode_py: "import numpy as np\nm = np.arange(1, 7).reshape(2, 3)\nprint(m)\nprint(m.shape)           # (2, 3)\nprint(m[0, :])           # baris pertama\nprint(m[:, 1])           # kolom kedua\nprint(m.T)               # transpos\nprint(m * 2)             # operasi elemen"
+      judul_py: "Array 2D di Python"
+      eval: true
+      penjelasan: >
+        Matriks dibentuk dari deret angka: fungsi matrix di R dengan argumen nrow dan byrow agar
+        pengisian dilakukan menurut baris, sedangkan numpy memakai arange lalu reshape. Ukurannya
+        diperiksa dengan dim atau atribut shape. Pengaksesan memakai kurung siku berisi baris dan kolom
+        yang dipisah koma; mengosongkan salah satunya berarti mengambil seluruhnya. Dua baris terakhir
+        melakukan transpos dan mengalikan seluruh elemen dengan dua.
+      interpretasi: >
+        Matriks (R) dan array 2D numpy adalah struktur dua dimensi yang penting untuk aljabar linear
+        dan data numerik. Pengaksesan memakai [baris, kolom]; baris/kolom penuh ditandai koma kosong
+        (m[1, ] / m[0, :]). Transpos (t / .T) menukar baris dan kolom. Operasi seperti perkalian
+        bekerja per elemen. Data frame dapat dipandang sebagai perluasan matriks yang kolomnya boleh
+        berbeda tipe.
+    - contoh: "Memodifikasi data frame"
+      kode_r: "mhs <- read.csv(\"data/data_mahasiswa.csv\")\nmhs$predikat <- ifelse(mhs$ipk >= 3.6, \"A\", \"B\")  # kolom baru\nmhs$ipk[mhs$ipk > 3.9] <- 3.9    # batasi nilai (winsorize sederhana)\nnrow(mhs); ncol(mhs)             # ukuran setelah tambah kolom\naggregate(ipk ~ predikat, data = mhs, FUN = mean)  # rata-rata per predikat"
+      judul_r: "Modifikasi data frame di R"
+      kode_py: "import pandas as pd\nmhs = pd.read_csv(\"data/data_mahasiswa.csv\")\nmhs[\"predikat\"] = [\"A\" if v >= 3.5 else \"B\" for v in mhs[\"ipk\"]]  # kolom baru\nmhs.loc[mhs[\"ipk\"] > 3.9, \"ipk\"] = 3.9\nprint(mhs.shape)\nprint(mhs.groupby(\"predikat\")[\"ipk\"].mean())"
+      judul_py: "Modifikasi DataFrame di pandas"
+      eval: true
+      penjelasan: >
+        Tiga jenis modifikasi dijalankan. Pertama menambah kolom turunan: ifelse di R dan comprehension
+        di Python menghasilkan label berdasarkan syarat. Kedua mengubah sebagian nilai berdasarkan
+        syarat, yaitu membatasi nilai maksimum; di R syarat diletakkan di dalam kurung siku pada kolom,
+        sedangkan pandas memakai .loc dengan syarat baris dan nama kolom. Ketiga meringkas per kelompok
+        dengan aggregate di R dan groupby di pandas.
+      interpretasi: >
+        Memodifikasi data frame mencakup menambah kolom turunan (predikat), mengubah nilai berdasarkan
+        syarat (membatasi ipk maksimum 3.9), dan meringkas per kelompok (aggregate / groupby). Operasi
+        ini adalah inti manipulasi data yang diperdalam di Modul 5 (dplyr) dan 6 (pandas). Perhatikan
+        cara mengubah subset dengan syarat: mhs$ipk[syarat] <- nilai (R) dan mhs.loc[syarat, kolom]
+        (pandas).
+    - contoh: "Jebakan konversi faktor ke numerik"
+      kode_r: "f <- factor(c(\"30\", \"10\", \"20\"))\nas.numeric(f)                       # SALAH: menghasilkan kode level, bukan nilai\nlevels(f)                           # urutan level menentukan kodenya\nas.numeric(as.character(f))         # BENAR: lewat character dulu\nas.numeric(levels(f))[f]            # cara lain yang setara"
+      judul_r: "faktor ke angka di R"
+      kode_py: "import pandas as pd\nf = pd.Categorical([\"30\", \"10\", \"20\"])\nprint(f.codes)                      # kode kategori (mirip jebakan di R)\nprint(pd.to_numeric(pd.Series(f).astype(str)).tolist())  # BENAR"
+      judul_py: "Categorical ke angka di Python"
+      eval: true
+      penjelasan: >
+        Faktor dibuat dari teks berisi angka. Baris kedua sengaja memperlihatkan cara yang keliru, yaitu
+        as.numeric langsung pada faktor, yang mengembalikan kode level. Baris ketiga menampilkan daftar
+        level sehingga jelas dari mana kode itu berasal. Dua baris terakhir menunjukkan cara yang benar:
+        mengubahnya menjadi teks lebih dahulu, atau mengambil levelnya lalu mengindeksnya dengan faktor
+        itu sendiri. Di Python, atribut codes memperlihatkan jebakan serupa.
+      interpretasi: >
+        Ini salah satu jebakan paling terkenal di R. Faktor menyimpan nilai sebagai kode bilangan bulat
+        yang menunjuk ke daftar level, sehingga as.numeric pada faktor mengembalikan kode level (1, 2, 3)
+        bukan angka aslinya. Perbaikannya: konversi ke character lebih dahulu. Kesalahan ini sering
+        terjadi saat angka tak sengaja terbaca sebagai faktor dari berkas data, dan menghasilkan analisis
+        yang keliru tanpa pesan galat apa pun.
+    - contoh: "Ringkasan cepat seluruh kolom"
+      kode_r: "mhs <- read.csv(\"data/data_mahasiswa.csv\")\nsummary(mhs)              # ringkasan sesuai tipe tiap kolom\nsapply(mhs, class)        # tipe tiap kolom\ncolSums(is.na(mhs))       # banyaknya nilai hilang per kolom"
+      judul_r: "summary dan pemeriksaan kolom"
+      kode_py: "import pandas as pd\nmhs = pd.read_csv(\"data/data_mahasiswa.csv\")\nprint(mhs.describe())        # ringkasan kolom numerik\nprint(mhs.dtypes)            # tipe tiap kolom\nprint(mhs.isna().sum())      # nilai hilang per kolom"
+      judul_py: "describe dan pemeriksaan kolom"
+      eval: true
+      penjelasan: >
+        Tiga pemeriksaan dijalankan berurutan. Fungsi summary di R menyesuaikan ringkasannya dengan tipe
+        tiap kolom, sedangkan describe di pandas berfokus pada kolom numerik. Baris berikutnya
+        menampilkan tipe seluruh kolom sekaligus, memakai sapply dengan class di R dan dtypes di pandas.
+        Baris terakhir menghitung banyaknya nilai hilang tiap kolom dengan menjumlahkan hasil is.na atau
+        isna, karena nilai benar dihitung sebagai satu.
+      interpretasi: >
+        summary (R) menyesuaikan ringkasannya dengan tipe kolom: lima serangkai untuk numerik dan
+        pencacahan untuk teks, sedangkan describe (pandas) berfokus pada kolom numerik. Memeriksa tipe
+        seluruh kolom sekaligus dan menghitung nilai hilang per kolom adalah tiga langkah pemeriksaan
+        awal yang sebaiknya selalu dilakukan sebelum analisis - kebiasaan yang akan terus dipakai pada
+        modul manipulasi data.
+    - "\\begin{kotakvariasi}\nUntuk kondisi tervektor (banyak nilai sekaligus), R menyediakan \\texttt{ifelse(syarat, a, b)} dan Python menyediakan list comprehension \\texttt{[a if s else b for ...]} atau \\texttt{numpy.where}. Ini lebih ringkas daripada memanggil fungsi satu per satu untuk tiap elemen.\n\\end{kotakvariasi}"
+  latihan:
+    - "Kerjakan bertahap. **Dasar** melengkapi kode; **Menengah** menulis sendiri; **Lanjut** memecahkan kasus. Gunakan `data/data_mahasiswa.csv`."
+    - "#### Tingkat Dasar (melengkapi kode)"
+    - "\\latihan{Tipe dan konversi di R}"
+    - "```{r eval=FALSE}\na <- \"57\"                 # ini teks\nb <- as.____(a)          # ubah ke angka\nb + 13                    # harus menghasilkan 50\nclass(b)\n```"
+    - "\\latihan{Tipe dan konversi di Python}"
+    - "```{python eval=FALSE}\na = \"57\"\nb = ____(a)               # ubah ke int\nprint(b + 13)             # 70\nprint(type(b).__name__)\n```"
+    - "\\latihan{Vektor/list dan indeks (R)}"
+    - "```{r eval=FALSE}\nnilai <- c(72, 88, 64, 95)\nnilai[____]               # ambil elemen KEDUA\nmean(nilai)               # rata-rata\n```"
+    - "#### Tingkat Menengah (menulis sendiri)"
+    - "\\latihan{Struktur data campuran}"
+    - "Buat sebuah **list** (R) atau **dictionary** (Python) berisi identitas Anda: nama (teks), semester (angka), dan daftar tiga nilai mata kuliah (vektor/list). Akses dan tampilkan nama serta nilai kedua."
+    - "\\latihan{Penyaringan data frame}"
+    - "Baca `data_mahasiswa.csv`, lalu tampilkan hanya baris mahasiswa yang `lulus == \"Ya\"` **dan** memiliki `ipk >= 3.6`. Kerjakan di R atau Python (pilih salah satu) dan jelaskan langkahnya."
+    - "\\latihan{Membetulkan kode yang salah}"
+    - "Kode berikut memuat kesalahan tipe, indeks, dan operator. Temukan dan perbaiki, lalu jelaskan tiap kesalahannya."
+    - "```{r eval=FALSE}\nnilai <- c(\"80\", \"75\", \"90\")   # tersimpan sebagai teks\nrata <- mean(nilai)               # gagal: tak bisa rata-rata teks\nketiga <- nilai[0]                # salah indeks: ingin elemen ke-3\ncek <- (5 = 5)                    # salah operator perbandingan\n```"
+    - "```{python eval=FALSE}\nnilai = [80, 75, 90]\nketiga = nilai[3]                 # salah indeks (di luar batas)\nif nilai[0] = 80:                 # salah operator\n    print(\"benar\")\nrata = nilai.mean()               # list tak punya .mean()\n```"
+    - "**Keluaran yang benar.** Setelah diperbaiki, kode akan menghasilkan keluaran berikut. Gunakan ini untuk memverifikasi perbaikan Anda.\n\n```\n# R\n[1] 81.66667      # mean(nilai)\n[1] 90            # elemen ketiga\n[1] TRUE          # 5 == 5\n\n# Python\n90                # elemen ketiga\nbenar\n81.66666666666667 # rata-rata\n```"
+    - "#### Tingkat Lanjut (kasus kecil)"
+    - "\\latihan{Fungsi klasifikasi lengkap}"
+    - "Tulis fungsi `predikat(ipk)` yang mengembalikan \"Cumlaude\" untuk IPK $\\geq$ 3.6, \"Sangat Memuaskan\" untuk 3.0-3.49, dan \"Memuaskan\" untuk di bawah 3.0. Terapkan ke seluruh kolom `ipk` (dengan `sapply` di R atau `.apply` di Python) dan tampilkan hasilnya."
+  penugasan:
+    - "\\begin{kotaktugas}\nSebagai calon pengolah data \\emph{official statistics}, olah data akademik tiruan berikut memakai \\texttt{data\\_mahasiswa.csv} (\\emph{data simulasi}) di \\textbf{R dan Python}, lalu bandingkan hasilnya.\n\\end{kotaktugas}"
+    - "**Konteks.** Bagian akademik sebuah kampus vokasi memiliki data ringkas 8 mahasiswa (NIM, IPK, SKS, status lulus). Anda diminta memeriksa struktur data, meringkasnya, dan mengklasifikasikan mahasiswa."
+    - "\\tugas{Tipe dan struktur data}"
+    - "1. Baca `data_mahasiswa.csv` di **R** dan **Python**; tampilkan tipe tiap kolom (`str()` / `.dtypes`). Jelaskan tipe masing-masing kolom dan mengapa demikian."
+    - "\\tugas{Operasi dan ringkasan}"
+    - "2. Hitung **IPK tertinggi**, **rata-rata SKS**, dan **jumlah mahasiswa belum lulus** (`lulus == \"Ya\"`) di kedua bahasa; pastikan hasilnya setara."
+    - "3. Tampilkan mahasiswa dengan **IPK tertinggi** dan **IPK terendah**."
+    - "\\tugas{Fungsi klasifikasi}"
+    - "4. Tulis fungsi `status(ipk)` yang mengembalikan \"Cumlaude\" bila IPK $\\geq$ 3,6 dan \"Reguler\" bila tidak, lalu terapkan ke seluruh baris (`sapply` / `.apply`). Tambahkan hasilnya sebagai kolom baru."
+    - "\\tugas{Laporan}"
+    - "5. Susun laporan reproducible (R Markdown/Jupyter), render ke PDF/HTML, dan beri **ringkasan (maksimal 300 kata)**: persamaan konsep vs perbedaan sintaks R dan Python yang Anda temukan, serta kesalahan tipe/indeks yang sempat Anda alami dan cara mengatasinya."
+  ringkasan:
+    - "\\begin{kotaktujuan}\n\\textbf{Daftar periksa penguasaan:}\n\\begin{itemize}\n\\item[$\\square$] Saya dapat menyebut dan memeriksa keempat tipe data dasar, serta mengonversinya.\n\\item[$\\square$] Saya dapat membuat dan mengakses vektor, list, faktor, dan data frame (R) serta list, dict, dan DataFrame (Python).\n\\item[$\\square$] Saya memahami perbedaan indeks (R mulai 1, Python mulai 0).\n\\item[$\\square$] Saya dapat memakai operator aritmatika, perbandingan, dan logika dengan benar.\n\\item[$\\square$] Saya dapat menulis fungsi dengan argumen bawaan di kedua bahasa.\n\\item[$\\square$] Saya dapat mengenali dan memperbaiki kesalahan tipe dan indeks.\n\\end{itemize}\n\\end{kotaktujuan}"
+    - "**Kartu Referensi Cepat.** Rangkuman perintah dasar modul ini:"
+    - "\\begin{kotakrumus}\n\\begin{tabular}{@{}lll@{}}\n\\textbf{Tugas} & \\textbf{R} & \\textbf{Python}\\\\\nCek tipe & \\texttt{class(x)} & \\texttt{type(x)}\\\\\nKe angka & \\texttt{as.numeric(x)} & \\texttt{float(x)}/\\texttt{int(x)}\\\\\nVektor/list & \\texttt{c(1,2,3)} & \\texttt{[1,2,3]}\\\\\nElemen pertama & \\texttt{v[1]} & \\texttt{v[0]}\\\\\nPanjang & \\texttt{length(v)} & \\texttt{len(v)}\\\\\nKamus/list nama & \\texttt{list(a=1)} & \\texttt{\\{\"a\":1\\}}\\\\\nSisa bagi & \\texttt{\\%\\%} & \\texttt{\\%}\\\\\nPangkat & \\texttt{\\textasciicircum} & \\texttt{**}\\\\\nLogika DAN & \\texttt{\\&} & \\texttt{and}\\\\\nFungsi & \\texttt{function(x)} & \\texttt{def f(x):}\\\\\n\\end{tabular}\n\\end{kotakrumus}"
+    - "Modul ini memantapkan kosakata dasar pemrograman secara menyeluruh. Poin penting: konsep tipe, struktur, operator, dan fungsi sama di kedua bahasa; yang berbeda hanya sintaks dan konvensi (terutama indeks dan penamaan). Bekal ini dipakai langsung pada Modul 3 (pemrograman R: kondisi dan perulangan) dan Modul 4 (Python)."
+  referensi:
+    - "Zhang, N. (2020). *A Tour of Data Science: Learn R and Python in Parallel*. Chapman and Hall/CRC. (Referensi utama pendekatan berpasangan.)"
+    - "Pramana, S., dkk. (2016). *Dasar-dasar Statistik menggunakan R*. In-Media. (Tipe dan struktur data di R.)"
+    - "McKinney, W. (2017). *Python for Data Analysis*, 2nd ed. O'Reilly Media. (Struktur data pandas dan numpy.)"
+    - "Wickham, H., & Grolemund, G. (2017). *R for Data Science*. O'Reilly Media. (Vektor, list, dan data frame; tersedia daring gratis.)"
+
+exercises:
+  - id: "L2.1"
+    points: 15
+    solution: "Tingkat Dasar: konversi tipe dan indeks. Isian: numeric/int, 3."
+    judul_r: "Solusi Tingkat Dasar (R)"
+    solusi_r: |
+      a <- "42"; b <- as.numeric(a); b + 13   # 50
+      class(b)                                # numeric
+      nilai <- c(72, 88, 64, 95)
+      nilai[2]                                # 90 (elemen ketiga)
+      mean(nilai)                             # 77.5
+    judul_py: "Solusi Tingkat Dasar (Python)"
+    solusi_py: |
+      a = "42"; b = int(a); print(b + 13)      # 50
+      print(type(b).__name__)                 # int
+      nilai = [80, 75, 90, 65]
+      print(nilai[2])                         # 90 (indeks 2 = elemen ketiga)
+      print(sum(nilai)/len(nilai))            # 77.5
+    interpretasi: >
+      Elemen ketiga adalah nilai[2] di R dan nilai[2] di Python (indeks berbeda). Konversi tipe
+      memungkinkan operasi aritmatika pada nilai yang semula teks. Rata-rata identik di kedua bahasa.
+  - id: "L2.2"
+    points: 25
+    solution: "Tingkat Menengah/Lanjut: struktur campuran, penyaringan, dan fungsi klasifikasi bertingkat."
+    judul_r: "Solusi Menengah dan Lanjut (R)"
+    solusi_r: |
+      # struktur campuran
+      saya <- list(nama = "Budi", semester = 3, nilai = c(85, 78, 90))
+      saya$nama; saya$nilai[2]
+      # penyaringan
+      mhs <- read.csv("data/data_mahasiswa.csv")
+      mhs[mhs$lulus == "Ya" & mhs$ipk >= 3.6, ]
+      # fungsi klasifikasi bertingkat
+      predikat <- function(ipk) {
+        if (ipk >= 3.6) "Cumlaude"
+        else if (ipk >= 3.0) "Sangat Memuaskan"
+        else "Memuaskan"
+      }
+      sapply(mhs$ipk, predikat)
+    judul_py: "Solusi Menengah dan Lanjut (Python)"
+    solusi_py: |
+      saya = {"nama": "Budi", "semester": 3, "nilai": [85, 78, 90]}
+      print(saya["nama"], saya["nilai"][1])
+      import pandas as pd
+      mhs = pd.read_csv("data/data_mahasiswa.csv")
+      print(mhs[(mhs["lulus"] == "Ya") & (mhs["ipk"] >= 3.6)])
+      def predikat(ipk):
+          if ipk >= 3.6: return "Cumlaude"
+          elif ipk >= 3.0: return "Sangat Memuaskan"
+          else: return "Memuaskan"
+      print(mhs["ipk"].apply(predikat).tolist())
+    interpretasi: >
+      List/dictionary menyimpan campuran tipe; penyaringan menggabungkan dua syarat dengan & (R) atau
+      & pada pandas dengan tanda kurung; fungsi bertingkat memakai else if (R) / elif (Python).
+      Penerapan ke seluruh kolom memakai sapply (R) dan .apply (pandas).
+  - id: "T2.1"
+    points: 60
+    solution: "Penugasan: tipe kolom, ringkasan, klasifikasi, dan laporan reproducible."
+    judul_r: "Solusi Penugasan (R)"
+    solusi_r: |
+      mhs <- read.csv("data/data_mahasiswa.csv")
+      str(mhs)                                      # tipe tiap kolom
+      cat("Rata-rata IPK:", round(mean(mhs$ipk), 2), "\n")
+      cat("Total SKS:", sum(mhs$sks), "\n")
+      cat("Jumlah lulus:", sum(mhs$lulus == "Ya"), "\n")
+      mhs[which.max(mhs$ipk), ]; mhs[which.min(mhs$ipk), ]
+      status <- function(ipk) if (ipk >= 3.6) "Cumlaude" else "Reguler"
+      mhs$status <- sapply(mhs$ipk, status)
+      mhs
+    judul_py: "Solusi Penugasan (Python)"
+    solusi_py: |
+      import pandas as pd
+      mhs = pd.read_csv("data/data_mahasiswa.csv")
+      print(mhs.dtypes)
+      print("Rata-rata IPK:", round(mhs["ipk"].mean(), 2))
+      print("Total SKS:", mhs["sks"].sum())
+      print("Jumlah lulus:", (mhs["lulus"] == "Ya").sum())
+      print(mhs.loc[mhs["ipk"].idxmax()]); print(mhs.loc[mhs["ipk"].idxmin()])
+      mhs["status"] = mhs["ipk"].apply(lambda v: "Cumlaude" if v >= 3.6 else "Reguler")
+      print(mhs)
+    interpretasi: >
+      Rata-rata IPK, total SKS, dan jumlah lulus identik di kedua bahasa. Mahasiswa IPK tertinggi/
+      terendah diidentifikasi dengan which.max/which.min (R) dan idxmax/idxmin (Python). Fungsi status
+      menambah kolom klasifikasi. Data simulasi, bukan data resmi.
+
+  - id: "L2.D"
+    points: 10
+    solution: "Membetulkan kode: konversi tipe, indeks benar, operator == ."
+    judul_r: "Solusi Membetulkan Kode (R)"
+    solusi_r: |
+      nilai <- as.numeric(c("80", "75", "90"))  # konversi ke angka
+      rata <- mean(nilai)                        # kini berhasil
+      ketiga <- nilai[2]                         # indeks R mulai 1
+      cek <- (5 == 5)                            # == untuk perbandingan
+    judul_py: "Solusi Membetulkan Kode (Python)"
+    solusi_py: |
+      import numpy as np
+      nilai = [80, 75, 90]
+      ketiga = nilai[2]              # indeks Python mulai 0
+      if nilai[0] == 80:            # == untuk perbandingan
+          print("benar")
+      rata = np.mean(nilai)         # pakai numpy, atau sum()/len()
+    interpretasi: >
+      Kesalahan R: teks perlu as.numeric sebelum dirata-rata; indeks ke-3 adalah nilai[2] (R mulai 1);
+      perbandingan pakai == bukan =. Kesalahan Python: nilai[2] di luar batas (pakai [2] untuk elemen
+      ketiga); if pakai == bukan =; list tak punya .mean() (pakai numpy atau sum/len).
+
+references:
+  - "Zhang, N. (2020). A Tour of Data Science: Learn R and Python in Parallel. Chapman and Hall/CRC."
+  - "Pramana, S., dkk. (2016). Dasar-dasar Statistik menggunakan R. In-Media."
+  - "McKinney, W. (2017). Python for Data Analysis, 2nd ed. O'Reilly Media."
+  - "Wickham, H., & Grolemund, G. (2017). R for Data Science. O'Reilly Media."

@@ -1,0 +1,659 @@
+number: 12
+title: "Uji Proporsi, Kesesuaian Sebaran, dan Uji Ragam"
+short_code: "proporsi_ragam"
+topic: "Uji Proporsi & Ragam"
+pertemuan: 12
+sub_cpmk: >
+  Sub-CPMK 12: Mahasiswa mampu melakukan pengolahan uji perbandingan proporsi, uji kesesuaian
+  sebaran, serta uji ragam satu populasi dan dua populasi, baik dengan fungsi R maupun dengan
+  perhitungan manual langkah demi langkah.
+packages: [dplyr, nortest, car]
+contoh_title: "Contoh Praktikum dengan R"
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  ta: "2025/2026"
+  semester: "3 (Ganjil)"
+  prodi: "D-IV Statistika"
+  penyusun:
+    - "Achmad Syahrul Choir"
+    - "Rudi Salam"
+    - "Christiana Anggraeni Putri"
+
+datasets:
+  - name: data_survei
+    role: contoh
+    recipe:
+      kind: tabular
+      "n": 200
+      seed: 2025
+      columns:
+        wilayah: {type: category, levels: [Perkotaan, Perdesaan], probs: [0.5, 0.5]}
+        akses_internet: {type: category, levels: [Ya, Tidak], probs: [0.62, 0.38]}
+        pendidikan: {type: category, levels: [SD, SMP, SMA, PT], probs: [0.25, 0.25, 0.3, 0.2]}
+        pengeluaran: {type: numeric, min: 500, max: 5000, digits: 1}
+        umur: {type: integer, min: 17, max: 70}
+
+body:
+  deskripsi:
+    - >
+      Modul ini melanjutkan rangkaian inferensia dengan tiga kelompok pengujian yang sangat lazim
+      dijumpai dalam pengolahan statistik resmi. \textbf{Uji proporsi} dipakai ketika data yang
+      dihadapi berupa cacahan atau persentase, misalnya persentase rumah tangga yang mengakses
+      internet. \textbf{Uji kesesuaian sebaran} memeriksa apakah data mengikuti pola sebaran tertentu
+      - langkah yang wajib dilakukan sebelum menerapkan uji yang mengandaikan kenormalan.
+      \textbf{Uji ragam} membandingkan keragaman antar-populasi, sekaligus menjadi pemeriksaan asumsi
+      bagi uji rata-rata dan analisis ragam.
+    - >
+      Seperti Modul 11, setiap pengujian disajikan melalui \textbf{dua jalur}: memakai fungsi bawaan R,
+      dan menghitungnya \textbf{manual langkah demi langkah} dengan kode R. Perhitungan manual
+      memanfaatkan keluarga fungsi sebaran dari Modul 7 - kini bertambah \texttt{qchisq} dan
+      \texttt{pchisq} untuk sebaran khi-kuadrat serta \texttt{qf} dan \texttt{pf} untuk sebaran F.
+      Kedua jalur dibandingkan agar terbukti menghasilkan angka yang sama.
+    - >
+      Materi dibahas dari dasar hingga lanjut: proporsi satu dan dua populasi beserta selangnya; uji
+      kesesuaian sebaran dengan Shapiro-Wilk, Lilliefors, dan Kolmogorov-Smirnov; uji kesesuaian
+      khi-kuadrat untuk sebaran yang ditetapkan; uji kebebasan pada tabel kontingensi; uji ragam satu
+      populasi dengan khi-kuadrat; uji ragam dua populasi dengan sebaran F; serta uji Bartlett dan
+      Levene beserta perbandingan ketahanannya terhadap penyimpangan kenormalan.
+    - "\\begin{kotakperhatian}[Tentang data]\nBerkas data pada modul ini adalah \\textbf{data simulasi} (\\texttt{set.seed(2025)}), \\textbf{bukan data nyata} dan \\textbf{bukan data resmi} instansi mana pun. Data menggambarkan 200 rumah tangga fiktif beserta akses internet, pendidikan, pengeluaran, dan umur.\n\\end{kotakperhatian}"
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:"
+    - "1. **Melakukan** uji proporsi satu dan dua populasi dengan `prop.test` dan `binom.test`, serta menyusun selang kepercayaannya."
+    - "2. **Menghitung manual** statistik z untuk proporsi, nilai kritisnya dengan `qnorm`, dan nilai-p dengan `pnorm`."
+    - "3. **Menguji kesesuaian sebaran** dengan Shapiro-Wilk, Lilliefors, dan Kolmogorov-Smirnov, serta memahami perbedaannya."
+    - "4. **Melakukan** uji kesesuaian dan uji kebebasan khi-kuadrat, termasuk **menghitung frekuensi harapan secara manual**."
+    - "5. **Menguji ragam** satu populasi dengan sebaran khi-kuadrat dan dua populasi dengan sebaran F, keduanya secara manual maupun dengan fungsi."
+    - "6. **Menggunakan** `bartlett.test` dan `leveneTest`, serta memilih yang sesuai berdasarkan kelayakan asumsi kenormalan."
+    - "7. **Memeriksa** asumsi tiap pengujian dan menyimpulkan hasilnya dengan kalimat yang benar secara statistik."
+  alat:
+    - "Perangkat dan bahan yang diperlukan:"
+    - "- **R** (RStudio); modul ini fokus pada R sesuai RPS."
+    - "- Paket: `dplyr`, `nortest` (uji Lilliefors), dan `car` (uji Levene)."
+    - "- Berkas data: `data/data_survei.csv`."
+  instruksi:
+    - "Ikuti tahapan berikut:"
+    - "**Sebelum praktikum:** siapkan direktori kerja; letakkan `data_survei.csv` di subfolder `data/`; pasang `nortest` dan `car` bila belum tersedia."
+    - "**Selama praktikum:** kerjakan Contoh berurutan; untuk setiap pengujian, **tuliskan hipotesisnya lebih dahulu**; kerjakan versi fungsi R **dan** versi manualnya, lalu bandingkan hasilnya - keduanya harus sama."
+    - "**Pembagian kerja:** Contoh dan Latihan dikerjakan selama sesi praktikum di kelas; **Penugasan dikerjakan sebagai tugas terstruktur di luar sesi**.\n\n**Pengumpulan:** susun laporan R Markdown, render ke PDF/HTML, dan kumpulkan via Google Classroom sesuai tenggat yang ditetapkan dosen."
+  teori:
+    - "### Kaitan dengan Materi Sebelumnya"
+    - >
+      Modul ini memakai kerangka lima langkah uji hipotesis yang dibangun pada Modul 11, hanya dengan
+      statistik uji dan sebaran acuan yang berbeda. Fungsi sebaran dari Modul 7 kembali menjadi
+      perkakas utama perhitungan manual: \texttt{qnorm} dan \texttt{pnorm} untuk proporsi,
+      \texttt{qchisq} dan \texttt{pchisq} untuk uji kesesuaian dan ragam satu populasi, serta
+      \texttt{qf} dan \texttt{pf} untuk perbandingan ragam dua populasi.
+    - >
+      Uji ragam di modul ini juga menjadi \emph{pemeriksaan asumsi} bagi Modul 11 dan Modul 13. Uji t
+      dua contoh mengandaikan kesamaan ragam bila memakai versi Student, dan analisis ragam pada Modul
+      13 mengandaikan kesamaan ragam antar-kelompok. Karena itu penguasaan modul ini melengkapi
+      keduanya.
+    - "### Uji Proporsi"
+    - >
+      Ketika data berupa cacahan sukses dari sejumlah percobaan, parameter yang diduga adalah proporsi
+      populasi. Untuk contoh berukuran cukup besar, sebaran penarikan contoh bagi proporsi mendekati
+      normal sehingga statistik uji berbentuk skor z.
+    - "\\begin{kotakrumus}\n\\textbf{Rumus proporsi.}\\\\[3pt]\nSatu populasi:\\quad $z = \\dfrac{\\hat{p} - p_0}{\\sqrt{p_0(1-p_0)/n}}$\\\\[5pt]\nSelang kepercayaan:\\quad $\\hat{p} \\pm z_{\\alpha/2}\\sqrt{\\dfrac{\\hat{p}(1-\\hat{p})}{n}}$\\\\[5pt]\nDua populasi:\\quad $z = \\dfrac{\\hat{p}_1 - \\hat{p}_2}{\\sqrt{\\hat{p}(1-\\hat{p})\\left(\\frac{1}{n_1}+\\frac{1}{n_2}\\right)}}$, \\quad $\\hat{p} = \\dfrac{x_1+x_2}{n_1+n_2}$\n\\end{kotakrumus}"
+    - "\\begin{kotaksalah}[Syarat kecukupan contoh]\nPendekatan normal bagi proporsi hanya sahih bila contohnya cukup besar, lazimnya disyaratkan $np_0 \\geq 5$ dan $n(1-p_0) \\geq 5$. Bila syarat ini tidak terpenuhi - misalnya proporsi sangat kecil atau contoh sangat sedikit - gunakan \\texttt{binom.test} yang bersifat eksak dan tidak bergantung pada pendekatan normal.\n\\end{kotaksalah}"
+    - "### Uji Kesesuaian Sebaran"
+    - >
+      Terdapat dua persoalan berbeda yang sering tertukar. \textbf{Uji kenormalan} memeriksa apakah data
+      numerik menyebar normal; perkakasnya antara lain Shapiro-Wilk, Lilliefors, dan Kolmogorov-Smirnov.
+      \textbf{Uji kesesuaian khi-kuadrat} memeriksa apakah sebaran frekuensi data kategori sesuai dengan
+      proporsi yang ditetapkan.
+    - "\\begin{kotakinfo}[Memilih uji kenormalan]\n\\begin{tabular}{@{}lll@{}}\n\\textbf{Uji} & \\textbf{Perintah} & \\textbf{Catatan}\\\\\nShapiro-Wilk & \\texttt{shapiro.test(x)} & paling berkuasa, n sampai 5000\\\\\nLilliefors & \\texttt{nortest::lillie.test(x)} & KS dengan parameter diduga\\\\\nKolmogorov-Smirnov & \\texttt{ks.test(x, \"pnorm\", m, s)} & parameter harus diketahui\\\\\n\\end{tabular}\\\\[4pt]\nPada ketiganya, $H_0$ menyatakan data \\textbf{berasal dari sebaran normal}.\n\\end{kotakinfo}"
+    - "\\begin{kotaksalah}[Ks.test dengan parameter dari data]\nMenjalankan \\texttt{ks.test} memakai rata-rata dan simpangan baku yang \\emph{dihitung dari data yang sama} membuat nilai-p menjadi terlalu besar sehingga uji terlalu longgar. Bila parameter harus diduga dari data, gunakan uji Lilliefors yang memang dirancang untuk keadaan itu.\n\\end{kotaksalah}"
+    - >
+      \textbf{Uji khi-kuadrat.} Statistik ujinya membandingkan frekuensi teramati dengan frekuensi
+      harapan. Bentuk yang sama dipakai baik untuk uji kesesuaian maupun uji kebebasan, hanya cara
+      menghitung frekuensi harapannya yang berbeda.
+    - "\\begin{kotakrumus}\n\\textbf{Statistik khi-kuadrat.}\\\\[3pt]\n$\\chi^{2} = \\displaystyle\\sum \\frac{(O_i - E_i)^{2}}{E_i}$\\\\[5pt]\nKesesuaian: $E_i = n \\cdot p_i$, \\quad db $= k - 1$\\\\[3pt]\nKebebasan: $E_{ij} = \\dfrac{(\\text{total baris})(\\text{total kolom})}{n}$, \\quad db $= (b-1)(k-1)$\n\\end{kotakrumus}"
+    - "\\begin{kotaksalah}[Frekuensi harapan terlalu kecil]\nUji khi-kuadrat mengandaikan frekuensi harapan tiap sel cukup besar, lazimnya seluruh $E_i \\geq 5$. Bila ada sel yang terlalu kecil, gabungkan kategori yang berdekatan atau gunakan uji eksak Fisher (\\texttt{fisher.test}). Perhatikan bahwa syarat ini berlaku pada frekuensi \\textbf{harapan}, bukan frekuensi teramati.\n\\end{kotaksalah}"
+    - "### Uji Ragam"
+    - >
+      \textbf{Satu populasi.} Untuk menguji apakah ragam populasi sama dengan nilai tertentu, statistik
+      ujinya mengikuti sebaran khi-kuadrat dengan derajat bebas $n-1$. R tidak menyediakan fungsi bawaan
+      untuk uji ini, sehingga perhitungannya memang harus dilakukan manual - justru menjadi latihan yang
+      baik.
+    - "\\begin{kotakrumus}\n\\textbf{Ragam satu populasi:}\\quad $\\chi^{2} = \\dfrac{(n-1)s^{2}}{\\sigma_0^{2}}$, \\quad db $= n-1$\\\\[5pt]\n\\textbf{Ragam dua populasi:}\\quad $F = \\dfrac{s_1^{2}}{s_2^{2}}$, \\quad db $= (n_1-1,\\; n_2-1)$\n\\end{kotakrumus}"
+    - >
+      \textbf{Dua populasi.} Perbandingan dua ragam memakai sebaran F, yang tersedia lewat
+      \texttt{var.test}. Selain itu terdapat dua uji untuk membandingkan ragam beberapa kelompok
+      sekaligus: \textbf{Bartlett} yang sangat peka terhadap penyimpangan kenormalan, dan
+      \textbf{Levene} yang jauh lebih tahan karena bekerja pada simpangan terhadap median.
+    - "\\begin{kotaktips}\nBila kenormalan data meragukan, pilihlah uji Levene. Uji Bartlett dapat menolak kesamaan ragam semata-mata karena datanya tidak normal, bukan karena ragamnya benar-benar berbeda. Karena uji ragam sering dipakai sebagai pemeriksaan asumsi, kekeliruan di tahap ini akan merembet ke keputusan uji utamanya.\n\\end{kotaktips}"
+    - "\\begin{kotaksalah}[Uji ragam sebagai penentu tunggal]\nJangan menjadikan hasil uji ragam sebagai satu-satunya dasar memilih uji t. Uji Welch pada Modul 11 tetap sahih baik ketika ragam sama maupun berbeda, sehingga memakainya secara bawaan lebih aman daripada memilih berdasarkan hasil uji ragam yang sendiri memiliki peluang galat.\n\\end{kotaksalah}"
+  contoh:
+    - contoh: "Deskripsi data kategori"
+      kode_r: "sur <- read.csv(\"data/data_survei.csv\")\ntabel <- table(sur$akses_internet)\ntabel\nround(prop.table(tabel), 4)\n# tabel silang dua peubah\ntabel2 <- table(sur$wilayah, sur$akses_internet)\ntabel2\nround(prop.table(tabel2, margin = 1), 4)   # proporsi per BARIS"
+      judul_r: "table dan prop.table"
+      eval: true
+      penjelasan: >
+        Fungsi table menghitung frekuensi tiap kategori, dan prop.table mengubahnya menjadi proporsi
+        dengan membagi total. Untuk dua peubah, table menghasilkan tabel silang. Argumen margin bernilai
+        satu pada prop.table berarti pembagian dilakukan menurut baris, sehingga tiap baris berjumlah
+        satu - inilah proporsi akses internet di dalam masing-masing wilayah.
+      interpretasi: >
+        Langkah deskriptif ini wajib mendahului pengujian. Proporsi per baris memperlihatkan perbedaan
+        antar-wilayah yang nantinya diuji secara formal. Perhatikan pemilihan margin: proporsi per baris
+        menjawab pertanyaan berapa persen penduduk tiap wilayah yang mengakses internet, sedangkan
+        proporsi per kolom menjawab pertanyaan yang sama sekali berbeda.
+    - contoh: "Perhitungan manual uji proporsi satu populasi"
+      kode_r: "sur <- read.csv(\"data/data_survei.csv\")\nx <- sum(sur$akses_internet == \"Ya\"); n <- nrow(sur)\np0 <- 0.60\np_topi <- x / n\n# Langkah 1: periksa syarat kecukupan contoh\nsyarat <- c(n_p0 = n * p0, n_1minp0 = n * (1 - p0))\nsyarat            # keduanya harus >= 5\n# Langkah 2: galat baku DI BAWAH H0 (memakai p0, bukan p_topi)\nse0 <- sqrt(p0 * (1 - p0) / n)\n# Langkah 3: statistik z\nz_hitung <- (p_topi - p0) / se0\n# Langkah 4: nilai kritis dan nilai-p (fungsi sebaran Modul 7)\nz_kritis <- qnorm(1 - 0.05/2)\np_value  <- 2 * pnorm(-abs(z_hitung))\nround(c(p_topi = p_topi, se0 = se0, z = z_hitung,\n        z_kritis = z_kritis, p = p_value), 5)\n# hubungan dengan keluaran prop.test\nround(c(z_kuadrat = z_hitung^2,\n        khi_prop.test = unname(prop.test(x, n, p = p0, correct = FALSE)$statistic)), 5)"
+      judul_r: "z manual dengan qnorm dan pnorm"
+      eval: true
+      penjelasan: >
+        Empat langkah dikerjakan berurutan. Syarat kecukupan diperiksa lebih dahulu. Galat baku dihitung
+        memakai proporsi acuan, bukan proporsi contoh, karena pengujian dilakukan dengan anggapan
+        hipotesis nol benar - ini berbeda dari rumus selang kepercayaan. Statistik z adalah selisih
+        proporsi dibagi galat baku tersebut. Nilai kritis diperoleh dari qnorm dan nilai-p dari pnorm,
+        keduanya fungsi sebaran normal dari Modul 7. Dua baris terakhir membandingkan kuadrat z dengan
+        statistik yang dilaporkan prop.test.
+      interpretasi: >
+        Kuadrat statistik z tepat sama dengan statistik khi-kuadrat dari prop.test, membuktikan keduanya
+        adalah pengujian yang sama dalam dua bentuk penyajian. Perhatikan pula perbedaan penting pada
+        galat baku: pengujian memakai proporsi acuan sedangkan selang kepercayaan memakai proporsi
+        contoh. Karena itu keputusan uji dan selang kepercayaan pada proporsi kadang tampak sedikit
+        tidak sejalan pada kasus yang berada tepat di batas.
+    - contoh: "Daerah penolakan uji proporsi"
+      kode_r: "curve(dnorm(x), from = -4, to = 4, lwd = 2, col = \"#123A6B\",\n      ylab = \"kepekatan\", xlab = \"nilai z\",\n      main = \"Sebaran normal baku dan daerah penolakan\")\nxk <- seq(z_kritis, 4, length.out = 200)\npolygon(c(z_kritis, xk, 4), c(0, dnorm(xk), 0), col = \"#F5822060\", border = NA)\nxk2 <- seq(-4, -z_kritis, length.out = 200)\npolygon(c(-4, xk2, -z_kritis), c(0, dnorm(xk2), 0), col = \"#F5822060\", border = NA)\nabline(v = c(-z_kritis, z_kritis), col = \"#F58220\", lty = 2, lwd = 2)\nabline(v = z_hitung, col = \"#00A651\", lwd = 2)\nlegend(\"topright\", c(\"z kritis\", \"z hitung\"), col = c(\"#F58220\", \"#00A651\"),\n       lty = c(2, 1), lwd = 2, bty = \"n\")"
+      judul_r: "arsiran daerah penolakan"
+      eval: true
+      penjelasan: >
+        Kurva normal baku digambar dengan curve. Kedua ekor di luar nilai kritis diarsir memakai polygon
+        dengan teknik yang sama seperti Modul 7 dan 11: rangkaian titik dimulai dari batas di sumbu nol,
+        menyusuri kurva, lalu turun kembali. Garis putus-putus menandai batas kritis dan garis pejal
+        menandai posisi statistik uji.
+      interpretasi: >
+        Gambar ini menerjemahkan keputusan menjadi bentuk kasatmata: bila garis hijau jatuh di daerah
+        berarsir, hipotesis nol ditolak. Karena proporsi memakai pendekatan normal, sebaran acuannya
+        adalah normal baku dengan nilai kritis 1,96 untuk taraf lima persen - angka yang sama dengan
+        yang dijumpai pada Modul 7 dan Modul 11.
+    - contoh: "Perhitungan manual uji dua proporsi"
+      kode_r: "tab <- table(sur$wilayah, sur$akses_internet)\nsukses <- tab[, \"Ya\"]; total <- rowSums(tab)\nx1 <- sukses[1]; n1 <- total[1]\nx2 <- sukses[2]; n2 <- total[2]\np1 <- x1/n1; p2 <- x2/n2\n# proporsi gabungan DI BAWAH H0\np_gab <- (x1 + x2) / (n1 + n2)\n# galat baku selisih di bawah H0\nse_gab <- sqrt(p_gab * (1 - p_gab) * (1/n1 + 1/n2))\nz2 <- (p1 - p2) / se_gab\np_val2 <- 2 * pnorm(-abs(z2))\nround(c(p1 = p1, p2 = p2, p_gab = p_gab, se = se_gab,\n        z = z2, p = p_val2), 5)\n# periksa terhadap prop.test\nround(c(z_kuadrat = unname(z2^2),\n        khi = unname(prop.test(sukses, total, correct = FALSE)$statistic)), 5)"
+      judul_r: "proporsi gabungan dan z dua sampel"
+      eval: true
+      penjelasan: >
+        Keempat besaran dasar diambil dari vektor sukses dan total. Proporsi gabungan dihitung dengan
+        menjumlahkan seluruh sukses dibagi seluruh percobaan; ini dipakai karena di bawah hipotesis nol
+        kedua populasi dianggap memiliki proporsi yang sama. Galat baku selisih memakai proporsi gabungan
+        tersebut dikali jumlah kebalikan kedua ukuran contoh. Statistik z adalah selisih proporsi dibagi
+        galat baku, dan nilai-p dihitung dengan pnorm.
+      interpretasi: >
+        Sekali lagi kuadrat statistik z sama dengan statistik khi-kuadrat dari prop.test. Kunci pemahaman
+        di sini adalah penggunaan proporsi gabungan: karena hipotesis nol menyatakan kedua proporsi sama,
+        penduga terbaik bagi proporsi bersama itu adalah gabungan seluruh data. Ini pola yang sama dengan
+        ragam gabungan pada uji t Student di Modul 11.
+    - contoh: "Perhitungan manual uji kesesuaian"
+      kode_r: "obs <- table(sur$pendidikan)[c(\"SD\", \"SMP\", \"SMA\", \"PT\")]\np_harap <- c(SD = 0.25, SMP = 0.25, SMA = 0.30, PT = 0.20)\nn_tot <- sum(obs)\n# Langkah 1: frekuensi harapan\nE <- n_tot * p_harap\n# Langkah 2: sumbangan tiap sel\nsumbangan <- (obs - E)^2 / E\nrbind(teramati = as.numeric(obs), harapan = E,\n      sumbangan = sumbangan) |> round(4)\n# Langkah 3: statistik uji\nchi_hitung <- sum(sumbangan)\ndb <- length(obs) - 1\n# Langkah 4: nilai kritis dan nilai-p (sebaran khi-kuadrat)\nchi_kritis <- qchisq(0.95, df = db)\np_chi <- 1 - pchisq(chi_hitung, df = db)\nround(c(chi = chi_hitung, db = db, kritis = chi_kritis, p = p_chi), 5)\n# periksa terhadap fungsi\nround(c(manual = chi_hitung,\n        fungsi = unname(chisq.test(obs, p = p_harap)$statistic)), 6)"
+      judul_r: "qchisq dan pchisq manual"
+      eval: true
+      penjelasan: >
+        Empat langkah dikerjakan berurutan. Frekuensi harapan diperoleh dengan mengalikan total amatan
+        dan proporsi harapan. Sumbangan tiap sel dihitung sebagai kuadrat selisih dibagi frekuensi
+        harapan, lalu ketiganya ditampilkan bersama dengan rbind agar terlihat sel mana yang paling
+        menyumbang. Statistik uji adalah jumlah seluruh sumbangan. Nilai kritis diambil dengan qchisq
+        dan nilai-p dihitung sebagai luas ekor kanan memakai satu dikurangi pchisq.
+      interpretasi: >
+        Statistik manual sama persis dengan keluaran fungsi. Perhatikan bahwa uji khi-kuadrat selalu
+        memakai ekor kanan saja, karena statistiknya berupa jumlah kuadrat sehingga selalu tak negatif
+        dan penyimpangan ke arah mana pun membesarkan nilainya. Baris sumbangan sangat berguna untuk
+        menelusuri kategori mana yang paling menyimpang dari harapan - informasi yang tidak tampak dari
+        nilai-p saja.
+    - contoh: "Daerah penolakan khi-kuadrat"
+      kode_r: "curve(dchisq(x, df = db), from = 0, to = 20, lwd = 2, col = \"#123A6B\",\n      ylab = \"kepekatan\", xlab = \"nilai khi-kuadrat\",\n      main = paste0(\"Sebaran khi-kuadrat (db = \", db, \")\"))\nxk <- seq(chi_kritis, 20, length.out = 300)\npolygon(c(chi_kritis, xk, 20), c(0, dchisq(xk, db), 0),\n        col = \"#F5822060\", border = NA)\nabline(v = chi_kritis, col = \"#F58220\", lty = 2, lwd = 2)\nabline(v = chi_hitung, col = \"#00A651\", lwd = 2)\nlegend(\"topright\", c(\"kritis\", \"hitung\"), col = c(\"#F58220\", \"#00A651\"),\n       lty = c(2, 1), lwd = 2, bty = \"n\")"
+      judul_r: "arsiran ekor kanan"
+      eval: true
+      penjelasan: >
+        Kurva khi-kuadrat digambar mulai dari nol karena sebaran ini tidak bernilai negatif. Hanya ekor
+        kanan yang diarsir, sesuai sifat pengujiannya yang satu arah. Garis putus-putus menandai nilai
+        kritis dan garis pejal menandai statistik hitung.
+      interpretasi: >
+        Bandingkan bentuknya dengan sebaran normal pada contoh proporsi: khi-kuadrat menceng (*skewed*) ke kanan
+        dan hanya memiliki satu daerah penolakan. Inilah alasan nilai-p uji khi-kuadrat selalu dihitung
+        sebagai satu dikurangi peluang kumulatif, tanpa dikali dua seperti pada uji dua arah berbasis
+        sebaran setangkup.
+    - contoh: "Perhitungan manual frekuensi harapan"
+      kode_r: "tab2 <- table(sur$wilayah, sur$akses_internet)\ntotal_baris <- rowSums(tab2)\ntotal_kolom <- colSums(tab2)\nN <- sum(tab2)\n# frekuensi harapan = (total baris x total kolom) / N\nE2 <- outer(total_baris, total_kolom) / N\nround(E2, 3)\nchi2 <- sum((tab2 - E2)^2 / E2)\ndb2 <- (nrow(tab2) - 1) * (ncol(tab2) - 1)\nround(c(chi = chi2, db = db2,\n        kritis = qchisq(0.95, db2),\n        p = 1 - pchisq(chi2, db2)), 6)\nround(c(manual = chi2,\n        fungsi = unname(chisq.test(tab2, correct = FALSE)$statistic)), 6)"
+      judul_r: "outer untuk frekuensi harapan"
+      eval: true
+      penjelasan: >
+        Total baris dan total kolom dihitung dengan rowSums dan colSums, sedangkan N adalah jumlah
+        seluruh sel. Fungsi outer membentuk matriks hasil kali seluruh kombinasi total baris dan total
+        kolom - penerapan langsung fungsi yang dikenalkan pada Modul 3 - lalu dibagi N untuk memperoleh
+        frekuensi harapan. Statistik uji dihitung dengan menjumlahkan seluruh sel, dan derajat bebasnya
+        mengikuti rumus tabel kontingensi.
+      interpretasi: >
+        Hasil manual sama persis dengan keluaran fungsi. Gagasan di balik rumus frekuensi harapan adalah
+        anggapan kebebasan: bila kedua peubah saling bebas, peluang bersama sama dengan hasil kali
+        peluang marginalnya, sehingga frekuensi harapan sel adalah total baris dikali total kolom dibagi
+        total keseluruhan. Memahami asal-usul rumus ini membuat syarat frekuensi harapan minimal lima
+        menjadi lebih masuk akal.
+    - contoh: "Uji ragam satu populasi (manual)"
+      kode_r: "# H0: sigma^2 = 1.500.000   (R tidak menyediakan fungsi bawaannya)\ny <- sur$pengeluaran\nsigma0_2 <- 1500000\nny <- length(y); s2 <- var(y)\nchi_var <- (ny - 1) * s2 / sigma0_2\ndb_v <- ny - 1\n# uji DUA ARAH: kedua ekor sebaran khi-kuadrat\nkritis_bawah <- qchisq(0.025, db_v)\nkritis_atas  <- qchisq(0.975, db_v)\np_var <- 2 * min(pchisq(chi_var, db_v), 1 - pchisq(chi_var, db_v))\nround(c(s2 = s2, chi = chi_var, db = db_v,\n        kritis_bawah = kritis_bawah, kritis_atas = kritis_atas,\n        p = p_var), 4)\n# selang kepercayaan bagi ragam populasi\nround(c(bawah = (ny-1)*s2/kritis_atas, atas = (ny-1)*s2/kritis_bawah), 1)"
+      judul_r: "khi-kuadrat untuk ragam"
+      eval: true
+      penjelasan: >
+        Karena R tidak menyediakan fungsi bawaan untuk uji ini, seluruhnya dihitung manual. Statistik uji
+        adalah derajat bebas dikali ragam contoh dibagi ragam acuan. Karena sebaran khi-kuadrat tidak
+        setangkup, pengujian dua arah memerlukan dua nilai kritis yang diambil pada peluang 0,025 dan
+        0,975. Nilai-p dihitung sebagai dua kali luas ekor yang lebih kecil, memakai min untuk memilih
+        sisi yang sesuai. Selang kepercayaan bagi ragam disusun dengan membalik posisi kedua nilai
+        kritis.
+      interpretasi: >
+        Perhatikan bahwa pada selang kepercayaan ragam, nilai kritis atas dipakai sebagai pembagi untuk
+        memperoleh batas bawah dan sebaliknya - akibat bentuk rumusnya yang berbanding terbalik. Karena
+        sebaran khi-kuadrat menceng, selangnya tidak setangkup terhadap ragam contoh. Uji ini juga
+        sangat peka terhadap penyimpangan kenormalan, sehingga hasilnya harus disikapi hati-hati bila
+        asumsi kenormalan meragukan.
+    - contoh: "Perhitungan manual uji F"
+      kode_r: "a <- sur$pengeluaran[sur$wilayah == \"Perkotaan\"]\nb <- sur$pengeluaran[sur$wilayah == \"Perdesaan\"]\nna <- length(a); nb <- length(b)\nF_hitung <- var(a) / var(b)\ndb1 <- na - 1; db2 <- nb - 1\n# nilai kritis dua arah pada sebaran F\nF_bawah <- qf(0.025, db1, db2)\nF_atas  <- qf(0.975, db1, db2)\np_F <- 2 * min(pf(F_hitung, db1, db2), 1 - pf(F_hitung, db1, db2))\nround(c(F = F_hitung, db1 = db1, db2 = db2,\n        kritis_bawah = F_bawah, kritis_atas = F_atas, p = p_F), 5)\nround(c(manual = p_F, fungsi = var.test(a, b)$p.value), 6)\n\ncurve(df(x, db1, db2), from = 0, to = 3, lwd = 2, col = \"#123A6B\",\n      ylab = \"kepekatan\", xlab = \"nilai F\", main = \"Sebaran F dan daerah penolakan\")\nxk <- seq(F_atas, 3, length.out = 200)\npolygon(c(F_atas, xk, 3), c(0, df(xk, db1, db2), 0), col = \"#F5822060\", border = NA)\nxk2 <- seq(0, F_bawah, length.out = 200)\npolygon(c(0, xk2, F_bawah), c(0, df(xk2, db1, db2), 0), col = \"#F5822060\", border = NA)\nabline(v = c(F_bawah, F_atas), col = \"#F58220\", lty = 2, lwd = 2)\nabline(v = F_hitung, col = \"#00A651\", lwd = 2)"
+      judul_r: "qf, pf, dan daerah penolakan"
+      eval: true
+      penjelasan: >
+        Statistik F adalah rasio kedua ragam contoh, dengan sepasang derajat bebas mengikuti ukuran
+        masing-masing kelompok. Seperti khi-kuadrat, sebaran F tidak setangkup sehingga pengujian dua
+        arah memerlukan dua nilai kritis dari qf. Nilai-p dihitung sebagai dua kali luas ekor yang lebih
+        kecil. Bagian penggambaran mengarsir kedua ekor; perhatikan bahwa ekor kiri dimulai dari nol
+        karena sebaran F tidak bernilai negatif.
+      interpretasi: >
+        Nilai-p manual sama dengan keluaran var.test. Sebaran F muncul karena rasio dua ragam contoh dari
+        populasi normal memang menyebar demikian. Perlu diingat bahwa uji F sangat peka terhadap
+        penyimpangan kenormalan, sehingga bila kenormalan meragukan sebaiknya beralih ke uji Levene yang
+        dibahas berikutnya. Sebaran F ini akan muncul kembali sebagai statistik utama pada Modul 13.
+  latihan:
+    - "Kerjakan bertahap. **Dasar** melengkapi kode; **Menengah** menulis sendiri dan membetulkan kode; **Lanjut** menyusun laporan. Gunakan `data/data_survei.csv`. Untuk setiap pengujian, **tuliskan hipotesisnya lebih dahulu**, dan kerjakan **versi fungsi R sekaligus versi manualnya**."
+    - "#### Tingkat Dasar (melengkapi kode)"
+    - "\\latihan{Proporsi}"
+    - "```{r eval=FALSE}\nsur <- read.csv(\"data/data_survei.csv\")\nx <- sum(sur$akses_internet == \"Ya\"); n <- nrow(sur)\n____.test(x, n, p = 0.5, correct = FALSE)     # uji proporsi\nz <- (x/n - 0.5) / sqrt(0.5 * 0.5 / n)\n2 * ____(-abs(z))                              # nilai-p dari sebaran normal\n```"
+    - "\\latihan{Nilai kritis}"
+    - "```{r eval=FALSE}\n____(0.975)              # nilai kritis z dua arah\n____(0.95, df = 3)       # nilai kritis khi-kuadrat db 3\n____(0.95, df1 = 10, df2 = 20)   # nilai kritis F\n```"
+    - "\\latihan{Uji kesesuaian}"
+    - "```{r eval=FALSE}\nobs <- table(sur$pendidikan)\n____.test(obs, p = c(0.25, 0.25, 0.30, 0.20))   # uji kesesuaian\n```"
+    - "#### Tingkat Menengah (menulis sendiri)"
+    - "\\latihan{Proporsi dua kelompok, dua jalur}"
+    - "Uji apakah proporsi akses internet berbeda antara `Perkotaan` dan `Perdesaan`. Kerjakan **dua kali**: (a) dengan `prop.test`; (b) **manual** dengan menghitung proporsi gabungan, galat baku, statistik z, nilai kritis dengan `qnorm`, dan nilai-p dengan `pnorm`. Buktikan bahwa kuadrat statistik z sama dengan statistik khi-kuadrat dari `prop.test`."
+    - "\\latihan{Uji ragam satu populasi}"
+    - "Uji apakah ragam `umur` sama dengan 250. Karena R tidak menyediakan fungsinya, hitung **seluruhnya manual**: statistik khi-kuadrat, kedua nilai kritis dengan `qchisq`, nilai-p, dan selang kepercayaan bagi ragam. Gambarkan pula daerah penolakannya."
+    - "\\latihan{Membetulkan kode yang salah}"
+    - "Kode berikut memuat beberapa kesalahan (galat baku memakai proporsi yang keliru, nilai-p khi-kuadrat memakai ekor yang salah, argumen derajat bebas tertukar, dan uji Levene tanpa faktor). Temukan dan perbaiki, lalu jelaskan tiap kesalahannya."
+    - "```{r eval=FALSE}\nsur <- read.csv(\"data/data_survei.csv\")\nx <- sum(sur$akses_internet == \"Ya\"); n <- nrow(sur); p0 <- 0.60\np_topi <- x / n\n\n# (a) galat baku UJI harus memakai p0, bukan p_topi\nse <- sqrt(p_topi * (1 - p_topi) / n)\nz  <- (p_topi - p0) / se\n\n# (b) nilai-p khi-kuadrat memakai ekor KANAN\nobs <- table(sur$pendidikan)\nE <- sum(obs) * c(0.25, 0.25, 0.30, 0.20)\nchi <- sum((obs - E)^2 / E)\np  <- pchisq(chi, df = 3)\n\n# (c) argumen derajat bebas F tertukar urutannya\na <- sur$pengeluaran[sur$wilayah == \"Perkotaan\"]\nb <- sur$pengeluaran[sur$wilayah == \"Perdesaan\"]\nqf(0.975, df1 = length(b) - 1, df2 = length(a) - 1)   # untuk F = var(a)/var(b)\n\n# (d) leveneTest menuntut pengelompok berupa faktor\ncar::leveneTest(pengeluaran ~ wilayah, data = sur)\n```"
+    - "**Keluaran yang benar.** Setelah diperbaiki, kode menghasilkan keluaran berikut. Gunakan ini untuk memverifikasi perbaikan Anda.\n\n```\n# (a) galat baku di bawah H0 dan statistik z\nse = 0.03464102\nz  = -0.5773503\n\n# (b) nilai-p sebagai ekor KANAN: 1 - pchisq(...)\nchi = 2.084\np   = 0.5551\n\n# (c) urutan yang benar: df1 dari pembilang (a), df2 dari penyebut (b)\nqf(0.975, df1 = length(a) - 1, df2 = length(b) - 1)\n\n# (d) pengelompok dibungkus factor()\ncar::leveneTest(pengeluaran ~ factor(wilayah), data = sur)\n```\n\nCatatan: angka pada (a) dan (b) bergantung pada data yang dibangkitkan; yang wajib benar adalah **rumus** yang dipakai, yaitu galat baku uji memakai `p0`, dan nilai-p khi-kuadrat memakai `1 - pchisq(...)`."
+    - "#### Tingkat Lanjut (kasus kecil)"
+    - "\\latihan{Laporan pemeriksaan asumsi lengkap}"
+    - "Susun laporan yang menjawab: **apakah data `pengeluaran` layak dianalisis dengan uji t Student antara dua wilayah?** Kerjakan: (a) periksa kenormalan tiap kelompok dengan **tiga uji** (Shapiro-Wilk, Lilliefors, Kolmogorov-Smirnov) dan jelaskan mengapa hasilnya dapat berbeda; (b) periksa kesamaan ragam dengan `var.test`, `bartlett.test`, dan `leveneTest`, lalu jelaskan mana yang paling dapat dipercaya untuk data Anda **beserta alasannya**; (c) hitung **manual** statistik F beserta nilai kritis dan nilai-p, dan buktikan sama dengan `var.test`; (d) tuliskan rekomendasi uji rata-rata yang sebaiknya dipakai beserta alasannya."
+  penugasan:
+    - "\\begin{kotaktugas}\nSebagai calon analis \\emph{official statistics}, susun laporan pengujian atas data survei tiruan dari \\texttt{data\\_survei.csv} (\\emph{data simulasi}), mencakup uji proporsi, uji kesesuaian sebaran, dan uji ragam. Setiap pengujian dikerjakan \\textbf{dua jalur}: dengan fungsi R dan dengan perhitungan manual.\n\\end{kotaktugas}"
+    - "**Konteks.** Sebuah unit melakukan survei terhadap 200 rumah tangga, mencatat wilayah, akses internet, jenjang pendidikan, pengeluaran, dan umur. Anda diminta menguji beberapa dugaan mengenai populasi berdasarkan contoh tersebut."
+    - "\\tugas{Uji proporsi}"
+    - "1. Uji apakah proporsi rumah tangga yang mengakses internet berbeda dari 65 persen. Kerjakan dengan `prop.test` **dan** manual (statistik z, nilai kritis `qnorm`, nilai-p `pnorm`). Sertakan gambar daerah penolakannya."
+    - "2. Uji apakah proporsi akses internet berbeda antara `Perkotaan` dan `Perdesaan`. Kerjakan dua jalur, dan laporkan selang kepercayaan bagi selisih proporsinya."
+    - "\\tugas{Uji kesesuaian sebaran}"
+    - "3. Periksa kenormalan `umur` dengan Shapiro-Wilk, Lilliefors, dan Kolmogorov-Smirnov. Bandingkan ketiga nilai-p dan jelaskan mengapa dapat berbeda."
+    - "4. Uji apakah sebaran jenjang `pendidikan` sesuai dengan proporsi 30 : 25 : 25 : 20 persen. Kerjakan dengan `chisq.test` **dan** manual (frekuensi harapan, sumbangan tiap sel, `qchisq`, `pchisq`). Sebutkan kategori mana yang paling menyimpang dari harapan."
+    - "5. Uji kebebasan antara `wilayah` dan `pendidikan`. Hitung frekuensi harapannya **secara manual** dan periksa apakah seluruhnya minimal lima."
+    - "\\tugas{Uji ragam}"
+    - "6. Uji apakah ragam `pengeluaran` sama dengan 1.400.000. Kerjakan **seluruhnya manual** beserta selang kepercayaan bagi ragamnya."
+    - "7. Uji kesamaan ragam `pengeluaran` antara kedua wilayah dengan `var.test`, lalu **hitung manual** statistik F, kedua nilai kritis dengan `qf`, dan nilai-p dengan `pf`. Bandingkan pula hasilnya dengan `bartlett.test` dan `leveneTest`."
+    - "\\tugas{Laporan}"
+    - "8. Susun laporan R Markdown berisi kode, keluaran, gambar, dan interpretasi. Untuk setiap pengujian, sajikan **tabel perbandingan hasil fungsi R dan hasil manual** sebagai bukti keduanya sama. Tutup dengan **ringkasan (maksimal 300 kata)** mengenai temuan Anda, keterbatasan yang perlu diingat, dan penegasan bahwa data merupakan simulasi."
+  tambahan:
+    - >
+      Seluruh perhitungan pada bagian Contoh sengaja dikerjakan manual langkah demi langkah agar
+      rumus uji proporsi, kesesuaian, dan ragam benar-benar dipahami. Bagian ini menyajikan penyelesaian yang sama menggunakan
+      fungsi bawaan R, yang dalam praktik sehari-hari jauh lebih ringkas. Kerjakan bagian ini
+      setelah Anda menyelesaikan Penugasan, lalu bandingkan angkanya dengan hasil manual Anda.
+    - "\\begin{kotakcatatan}\nGunakan fungsi bawaan setelah Anda memahami perhitungan manualnya. Fungsi memang mempercepat pekerjaan, tetapi hanya bermanfaat penuh bila Anda mengetahui apa yang dihitungnya - itulah yang memungkinkan Anda menelusuri kekeliruan ketika keluarannya terasa janggal.\n\\end{kotakcatatan}"
+
+    - contoh: "Uji proporsi satu populasi dengan fungsi R"
+      kode_r: "# H0: p = 0,60   lawan   H1: p != 0,60\nx <- sum(sur$akses_internet == \"Ya\")\nn <- nrow(sur)\nc(sukses = x, n = n, p_topi = round(x/n, 4))\nuji <- prop.test(x, n, p = 0.60, correct = FALSE)\nuji"
+      judul_r: "prop.test"
+      eval: true
+      penjelasan: >
+        Banyaknya sukses dihitung dengan menjumlahkan hasil perbandingan logika, karena nilai benar
+        dihitung sebagai satu. Fungsi prop.test menerima banyaknya sukses, banyaknya percobaan, dan
+        proporsi acuan pada argumen p. Argumen correct bernilai FALSE mematikan koreksi kontinuitas
+        Yates agar hasilnya sepadan dengan perhitungan manual yang akan dilakukan berikutnya.
+      interpretasi: >
+        Keluaran memuat statistik uji, derajat bebas, nilai-p, selang kepercayaan bagi proporsi, dan
+        proporsi contoh. Perhatikan bahwa prop.test melaporkan statistik khi-kuadrat, bukan z; keduanya
+        berhubungan karena khi-kuadrat dengan derajat bebas satu tepat sama dengan kuadrat statistik z.
+        Hubungan ini akan dibuktikan pada contoh perhitungan manual.
+    - contoh: "Selang kepercayaan proporsi dan uji eksak"
+      kode_r: "# selang manual: memakai p_topi (bukan p0)\nse_p <- sqrt(p_topi * (1 - p_topi) / n)\nselang <- p_topi + c(-1, 1) * qnorm(0.975) * se_p\nround(selang, 5)\n# bandingkan dengan fungsi\nround(as.numeric(prop.test(x, n, correct = FALSE)$conf.int), 5)\n# uji eksak binomial (tidak memakai pendekatan normal)\nbinom.test(x, n, p = 0.60)$p.value"
+      judul_r: "selang manual, prop.test, binom.test"
+      eval: true
+      penjelasan: >
+        Selang kepercayaan dihitung manual memakai galat baku berbasis proporsi contoh, lalu ditambah
+        dan dikurangi hasil kali nilai kritis dengan galat baku; penulisan dengan vektor negatif satu
+        dan satu menghasilkan kedua batas sekaligus. Hasilnya dibandingkan dengan selang dari prop.test.
+        Baris terakhir menjalankan uji eksak binomial yang menghitung peluang langsung dari sebaran
+        binomial tanpa pendekatan normal.
+      interpretasi: >
+        Selang manual dan selang prop.test berdekatan meski tidak persis sama, karena prop.test memakai
+        metode Wilson yang lebih baik pada proporsi ekstrem. Nilai-p uji eksak juga berdekatan dengan
+        uji pendekatan normal karena ukuran contoh di sini besar. Pada contoh kecil perbedaannya akan
+        mencolok, dan dalam keadaan itu uji eksak yang seharusnya dipakai.
+    - contoh: "Uji dua proporsi dengan fungsi R"
+      kode_r: "# H0: p_perkotaan = p_perdesaan\ntab <- table(sur$wilayah, sur$akses_internet)\ntab\nsukses <- tab[, \"Ya\"]\ntotal  <- rowSums(tab)\nrbind(sukses = sukses, total = total,\n      proporsi = round(sukses/total, 4))\nuji2 <- prop.test(sukses, total, correct = FALSE)\nuji2"
+      judul_r: "prop.test dua kelompok"
+      eval: true
+      penjelasan: >
+        Tabel silang dibuat lebih dahulu. Kolom bernama Ya diambil sebagai banyaknya sukses tiap wilayah,
+        dan rowSums memberi total tiap wilayah. Ketiga baris digabung dengan rbind agar ringkasannya
+        mudah dibaca. Fungsi prop.test menerima vektor sukses dan vektor total sekaligus, sehingga
+        langsung menguji kesamaan kedua proporsi.
+      interpretasi: >
+        Keluaran memuat kedua proporsi contoh beserta selang kepercayaan bagi selisihnya. Selang selisih
+        inilah yang paling informatif: bila memuat angka nol, berarti selisih nol termasuk nilai yang
+        masuk akal sehingga hipotesis nol tidak ditolak. Perhatikan bahwa keputusan dari nilai-p dan
+        dari selang selalu bersesuaian.
+    - contoh: "Tiga uji kenormalan"
+      kode_r: "suppressPackageStartupMessages(library(nortest))\ny <- sur$pengeluaran\nm <- mean(y); s <- sd(y)\n\nsw  <- shapiro.test(y)\nlf  <- lillie.test(y)\nks  <- ks.test(y, \"pnorm\", mean = m, sd = s)\n\nrbind(Shapiro   = c(statistik = unname(sw$statistic), p = sw$p.value),\n      Lilliefors = c(unname(lf$statistic), lf$p.value),\n      KS        = c(unname(ks$statistic), ks$p.value)) |> round(6)"
+      judul_r: "shapiro, lillie, dan ks.test"
+      eval: true
+      penjelasan: >
+        Paket nortest dimuat untuk menyediakan uji Lilliefors. Rata-rata dan simpangan baku dihitung
+        lebih dahulu karena ks.test menuntut parameter sebaran pembanding disebutkan secara eksplisit.
+        Ketiga uji dijalankan lalu statistik dan nilai-p masing-masing digabung menjadi satu matriks
+        dengan rbind agar mudah dibandingkan.
+      interpretasi: >
+        Pada ketiga uji, hipotesis nol menyatakan data berasal dari sebaran normal, sehingga nilai-p yang
+        kecil berarti kenormalan ditolak. Karena data dibangkitkan dari sebaran seragam, wajar bila
+        ketiganya menolak kenormalan. Perhatikan bahwa nilai-p ks.test cenderung paling besar - inilah
+        gejala uji yang terlalu longgar karena parameternya diduga dari data yang sama, persoalan yang
+        dibahas di teori.
+    - contoh: "Uji kesesuaian khi-kuadrat dengan fungsi R"
+      kode_r: "# H0: proporsi pendidikan = 25 : 25 : 30 : 20 persen\nobs <- table(sur$pendidikan)[c(\"SD\", \"SMP\", \"SMA\", \"PT\")]\nobs\np_harap <- c(SD = 0.25, SMP = 0.25, SMA = 0.30, PT = 0.20)\nuji_gof <- chisq.test(obs, p = p_harap)\nuji_gof\nuji_gof$expected     # frekuensi harapan"
+      judul_r: "chisq.test kesesuaian"
+      eval: true
+      penjelasan: >
+        Frekuensi teramati diambil dengan table lalu diurutkan sesuai jenjang pendidikan memakai
+        pengindeksan dengan vektor nama. Proporsi harapan ditulis sebagai vektor bernama yang jumlahnya
+        harus satu. Fungsi chisq.test menerima frekuensi teramati beserta argumen p berupa proporsi
+        harapan. Komponen expected menampilkan frekuensi harapan yang dihitung fungsi tersebut.
+      interpretasi: >
+        Keluaran memuat statistik khi-kuadrat, derajat bebas, dan nilai-p. Derajat bebasnya adalah
+        banyaknya kategori dikurangi satu. Frekuensi harapan perlu selalu diperiksa: seluruhnya harus
+        minimal lima agar pendekatan khi-kuadrat sahih. Di sini syarat itu terpenuhi dengan mudah karena
+        ukuran contohnya besar.
+    - contoh: "Uji kebebasan pada tabel kontingensi"
+      kode_r: "# H0: akses internet bebas terhadap wilayah\ntab2 <- table(sur$wilayah, sur$akses_internet)\nuji_ind <- chisq.test(tab2, correct = FALSE)\nuji_ind\nuji_ind$expected\nround(uji_ind$residuals, 3)     # sisaan Pearson"
+      judul_r: "chisq.test kebebasan"
+      eval: true
+      penjelasan: >
+        Tabel silang dua peubah diserahkan langsung ke chisq.test, dan fungsi mengenali bahwa yang
+        dimaksud adalah uji kebebasan. Argumen correct bernilai FALSE mematikan koreksi Yates agar
+        sebanding dengan perhitungan manual. Komponen expected menampilkan frekuensi harapan, sedangkan
+        residuals memuat sisaan Pearson yaitu selisih dibagi akar frekuensi harapan.
+      interpretasi: >
+        Derajat bebas uji kebebasan adalah hasil kali banyaknya baris dikurangi satu dengan banyaknya
+        kolom dikurangi satu. Sisaan Pearson menunjukkan sel mana yang menyimpang paling jauh beserta
+        arahnya: nilai positif berarti teramati melebihi harapan. Sisaan bernilai mutlak lebih dari dua
+        lazim dipandang sebagai penyimpangan yang patut diperhatikan.
+    - contoh: "Uji ragam dua populasi dengan var.test"
+      kode_r: "# H0: sigma1^2 = sigma2^2\na <- sur$pengeluaran[sur$wilayah == \"Perkotaan\"]\nb <- sur$pengeluaran[sur$wilayah == \"Perdesaan\"]\nround(c(var_kota = var(a), var_desa = var(b),\n        rasio = var(a)/var(b)), 2)\nuji_f <- var.test(a, b)\nuji_f"
+      judul_r: "var.test"
+      eval: true
+      penjelasan: >
+        Kedua kelompok dipisahkan dengan penyaringan berdasarkan nilai kolom wilayah. Ragam masing-masing
+        dan rasionya dihitung lebih dahulu sebagai gambaran. Fungsi var.test menerima kedua vektor dan
+        menguji kesamaan ragam kedua populasi memakai sebaran F.
+      interpretasi: >
+        Keluaran memuat statistik F yang berupa rasio kedua ragam contoh, sepasang derajat bebas, nilai-p,
+        dan selang kepercayaan bagi rasio ragam. Selang rasio inilah yang informatif: bila memuat angka
+        satu, berarti rasio satu - yang berarti kedua ragam sama - termasuk nilai yang masuk akal
+        sehingga hipotesis nol tidak ditolak.
+    - contoh: "Bartlett dan Levene untuk beberapa kelompok"
+      kode_r: "suppressPackageStartupMessages(library(car))\n# tiga kelompok atau lebih: pendidikan\nbart <- bartlett.test(pengeluaran ~ pendidikan, data = sur)\nlev  <- leveneTest(pengeluaran ~ factor(pendidikan), data = sur)\nbart\nlev"
+      judul_r: "bartlett.test dan leveneTest"
+      eval: true
+      penjelasan: >
+        Paket car dimuat untuk menyediakan uji Levene. Kedua uji memakai bentuk rumus yang sama, yaitu
+        peubah numerik menurut peubah pengelompok. Fungsi leveneTest menuntut peubah pengelompok berupa
+        faktor sehingga dibungkus factor. Kedua hasil dicetak untuk dibandingkan.
+      interpretasi: >
+        Keduanya menguji hipotesis nol yang sama, yaitu ragam seluruh kelompok sama, tetapi dengan cara
+        berbeda. Bartlett bersandar pada anggapan kenormalan, sedangkan Levene bekerja pada simpangan
+        mutlak terhadap median sehingga jauh lebih tahan terhadap penyimpangan kenormalan. Bila kedua
+        uji memberi kesimpulan berbeda dan kenormalan meragukan, hasil Levene yang lebih dapat
+        dipercaya.
+    - contoh: "Membandingkan ketahanan Bartlett dan Levene"
+      kode_r: "set.seed(2025)\n# data TIDAK normal tetapi ragamnya SAMA\ng <- rep(c(\"A\", \"B\", \"C\"), each = 60)\nnilai <- c(rexp(60, rate = 1), rexp(60, rate = 1), rexp(60, rate = 1))\nsim <- data.frame(g = factor(g), nilai = nilai)\ntapply(sim$nilai, sim$g, var) |> round(4)     # ragam mirip\nc(bartlett = bartlett.test(nilai ~ g, data = sim)$p.value,\n  levene   = leveneTest(nilai ~ g, data = sim)$`Pr(>F)`[1]) |> round(4)"
+      judul_r: "data eksponensial, ragam sama"
+      eval: true
+      penjelasan: >
+        Data sengaja dibangkitkan dari sebaran eksponensial yang sangat menceng, dengan laju yang sama
+        untuk ketiga kelompok sehingga ragam populasinya benar-benar sama. Fungsi rep dengan argumen each
+        membuat label kelompok berulang. Ragam tiap kelompok diperiksa dengan tapply. Kedua nilai-p
+        diambil dan digabung; pada leveneTest nilai-p diambil dari kolom bernama Pr yang lebih besar dari
+        F pada baris pertama, memakai petik balik karena nama kolomnya memuat tanda khusus.
+      interpretasi: >
+        Karena ragam ketiga kelompok memang sama, uji yang baik seharusnya tidak menolak hipotesis nol.
+        Perhatikan kecenderungan nilai-p Bartlett yang lebih kecil daripada Levene: Bartlett terpengaruh
+        oleh kemencengan data dan berisiko menyimpulkan ragam berbeda padahal yang menyimpang adalah
+        bentuk sebarannya. Inilah bukti kuantitatif atas anjuran di teori untuk memilih Levene ketika
+        kenormalan meragukan.
+    - contoh: "Studi kasus: pemeriksaan lengkap sebelum uji lanjut"
+      kode_r: "cat(\"=== 1. Deskripsi ===\\n\")\nprint(round(tapply(sur$pengeluaran, sur$wilayah, mean), 2))\nprint(round(tapply(sur$pengeluaran, sur$wilayah, var), 2))\n\ncat(\"\\n=== 2. Kenormalan tiap kelompok ===\\n\")\ncat(\"Perkotaan p =\", round(shapiro.test(a)$p.value, 5), \"\\n\")\ncat(\"Perdesaan p =\", round(shapiro.test(b)$p.value, 5), \"\\n\")\n\ncat(\"\\n=== 3. Kesamaan ragam ===\\n\")\ncat(\"var.test p  =\", round(var.test(a, b)$p.value, 5), \"\\n\")\ncat(\"Levene   p  =\",\n    round(leveneTest(pengeluaran ~ factor(wilayah), data = sur)$`Pr(>F)`[1], 5), \"\\n\")\n\ncat(\"\\n=== 4. Rekomendasi ===\\n\")\nnormal_ok <- shapiro.test(a)$p.value > 0.05 && shapiro.test(b)$p.value > 0.05\nragam_ok  <- var.test(a, b)$p.value > 0.05\ncat(\"Kenormalan terpenuhi :\", normal_ok, \"\\n\")\ncat(\"Kesamaan ragam       :\", ragam_ok, \"\\n\")\ncat(\"Saran uji rata-rata  :\",\n    ifelse(!normal_ok, \"pertimbangkan uji nonparametrik (Wilcoxon)\",\n           ifelse(ragam_ok, \"uji t Student (var.equal = TRUE)\",\n                  \"uji t Welch (bawaan)\")), \"\\n\")"
+      judul_r: "alur pemeriksaan asumsi lengkap"
+      eval: true
+      penjelasan: >
+        Alurnya disusun dalam empat bagian bertanda judul memakai cat. Bagian pertama menyajikan
+        rata-rata dan ragam tiap kelompok dengan tapply; print diperlukan karena keluaran di dalam blok
+        tidak tercetak otomatis. Bagian kedua memeriksa kenormalan tiap kelompok. Bagian ketiga
+        memeriksa kesamaan ragam dengan dua uji sekaligus. Bagian keempat mengubah hasil pemeriksaan
+        menjadi keputusan memakai operator logika DAN dan ifelse bertingkat.
+      interpretasi: >
+        Inilah kegunaan praktis seluruh modul: uji kesesuaian sebaran dan uji ragam bukan tujuan akhir,
+        melainkan pemeriksaan yang menentukan uji apa yang layak dipakai selanjutnya. Perhatikan urutan
+        pertimbangannya: bila kenormalan tidak terpenuhi, persoalan ragam menjadi kurang relevan karena
+        uji nonparametrik yang lebih sesuai. Alur otomatis seperti ini memudahkan penerapan berulang,
+        tetapi keputusan akhir tetap memerlukan pertimbangan Anda atas konteks datanya.
+  ringkasan:
+    - "\\begin{kotaktujuan}\n\\textbf{Daftar periksa penguasaan:}\n\\begin{itemize}\n\\item[$\\square$] Saya dapat melakukan uji proporsi satu dan dua populasi, serta menghitungnya manual dengan \\texttt{qnorm} dan \\texttt{pnorm}.\n\\item[$\\square$] Saya memahami bahwa galat baku \\emph{uji} memakai $p_0$, sedangkan \\emph{selang} memakai $\\hat{p}$.\n\\item[$\\square$] Saya dapat memilih uji kenormalan yang sesuai dan mengetahui kelemahan \\texttt{ks.test} berparameter dugaan.\n\\item[$\\square$] Saya dapat menghitung frekuensi harapan dan statistik khi-kuadrat secara manual.\n\\item[$\\square$] Saya dapat menguji ragam satu populasi dengan \\texttt{qchisq} dan \\texttt{pchisq}.\n\\item[$\\square$] Saya dapat menguji ragam dua populasi dengan \\texttt{qf} dan \\texttt{pf}, serta menggambar daerah penolakannya.\n\\item[$\\square$] Saya dapat memilih antara Bartlett dan Levene berdasarkan kelayakan kenormalan.\n\\item[$\\square$] Saya memeriksa syarat frekuensi harapan minimal lima sebelum menyimpulkan uji khi-kuadrat.\n\\end{itemize}\n\\end{kotaktujuan}"
+    - "**Kartu Referensi Cepat.** Perintah uji proporsi, kesesuaian, dan ragam:"
+    - "\\begin{kotakrumus}\n\\begin{tabular}{@{}ll@{}}\n\\textbf{Keperluan} & \\textbf{Perintah R}\\\\\nFrekuensi & \\texttt{table(x)}, \\texttt{prop.table(t, margin=)}\\\\\nProporsi satu/dua & \\texttt{prop.test(x, n, p = )}\\\\\nProporsi eksak & \\texttt{binom.test(x, n, p = )}\\\\\nNilai kritis z & \\texttt{qnorm(1 - alpha/2)}\\\\\nNilai-p z & \\texttt{2 * pnorm(-abs(z))}\\\\\nKenormalan & \\texttt{shapiro.test(x)}\\\\\nLilliefors & \\texttt{nortest::lillie.test(x)}\\\\\nKolmogorov-Smirnov & \\texttt{ks.test(x, \"pnorm\", m, s)}\\\\\nKesesuaian & \\texttt{chisq.test(obs, p = )}\\\\\nKebebasan & \\texttt{chisq.test(tabel)}\\\\\nFrekuensi harapan & \\texttt{outer(rowSums, colSums)/N}\\\\\nNilai kritis khi & \\texttt{qchisq(0.95, db)}\\\\\nNilai-p khi & \\texttt{1 - pchisq(chi, db)}\\\\\nRagam satu populasi & \\texttt{(n-1)*s2/sigma0\\^{}2} (manual)\\\\\nRagam dua populasi & \\texttt{var.test(a, b)}\\\\\nNilai kritis F & \\texttt{qf(0.975, db1, db2)}\\\\\nBeberapa kelompok & \\texttt{bartlett.test()}, \\texttt{car::leveneTest()}\\\\\nUji eksak sel kecil & \\texttt{fisher.test(tabel)}\\\\\n\\end{tabular}\n\\end{kotakrumus}"
+    - "Modul ini memperluas kerangka uji hipotesis ke tiga keluarga persoalan baru, dan memperkenalkan dua sebaran acuan yang belum terpakai sebelumnya: khi-kuadrat dan F. Prinsip penting yang perlu dibawa: pahami rumusnya lewat perhitungan manual sebelum bersandar pada fungsi bawaan, periksa syarat kesahihan tiap uji, dan sadari bahwa uji kesesuaian serta uji ragam umumnya berperan sebagai **pemeriksaan asumsi**, bukan tujuan akhir. Sebaran F yang dikenalkan di sini menjadi statistik utama pada Modul 13 tentang analisis ragam."
+  referensi:
+    - "Walpole, R. E., Myers, R. H., Myers, S. L., & Ye, K. (2016). *Probability and Statistics for Engineers and Scientists*, 9th ed. Pearson. (Uji proporsi, khi-kuadrat, dan ragam.)"
+    - "Agresti, A. (2018). *Statistical Methods for the Social Sciences*, 5th ed. Pearson. (Analisis data kategori dan tabel kontingensi.)"
+    - "Pramana, S., dkk. (2016). *Dasar-dasar Statistik menggunakan R*. In-Media. (Penerapan pengujian dengan R.)"
+    - "Fox, J., & Weisberg, S. (2019). *An R Companion to Applied Regression*, 3rd ed. Sage. (Dokumentasi paket car dan uji Levene.)"
+
+exercises:
+  - id: "L12.1"
+    points: 15
+    solution: "Tingkat Dasar: prop.test, pnorm, qnorm/qchisq/qf, chisq.test."
+    judul_r: "Solusi Tingkat Dasar (R)"
+    solusi_r: |
+      sur <- read.csv("data/data_survei.csv")
+      x <- sum(sur$akses_internet == "Ya"); n <- nrow(sur)
+
+      prop.test(x, n, p = 0.5, correct = FALSE)      # uji proporsi
+      z <- (x/n - 0.5) / sqrt(0.5 * 0.5 / n)
+      2 * pnorm(-abs(z))                              # nilai-p dua arah
+
+      qnorm(0.975)                    # nilai kritis z
+      qchisq(0.95, df = 3)            # nilai kritis khi-kuadrat
+      qf(0.95, df1 = 10, df2 = 20)    # nilai kritis F
+
+      obs <- table(sur$pendidikan)
+      chisq.test(obs, p = c(0.25, 0.25, 0.30, 0.20))
+    interpretasi: >
+      Ketiga awalan q memberi nilai kritis dari sebaran yang berbeda, sedangkan pnorm mengubah statistik
+      menjadi peluang. Perhatikan bahwa sebaran khi-kuadrat dan F memerlukan derajat bebas sebagai
+      argumen tambahan, dan sebaran F memerlukan dua sekaligus.
+  - id: "L12.2"
+    points: 25
+    solution: "Tingkat Menengah dan Lanjut: dua proporsi dua jalur, ragam satu populasi manual, dan laporan asumsi."
+    judul_r: "Solusi Menengah dan Lanjut (R)"
+    solusi_r: |
+      suppressPackageStartupMessages({library(nortest); library(car)})
+      sur <- read.csv("data/data_survei.csv")
+
+      # ---- Dua proporsi: fungsi dan manual ----
+      tab <- table(sur$wilayah, sur$akses_internet)
+      sukses <- tab[, "Ya"]; total <- rowSums(tab)
+      u <- prop.test(sukses, total, correct = FALSE); u
+
+      x1 <- sukses[1]; n1 <- total[1]; x2 <- sukses[2]; n2 <- total[2]
+      p1 <- x1/n1; p2 <- x2/n2
+      p_gab <- (x1 + x2) / (n1 + n2)
+      se <- sqrt(p_gab * (1 - p_gab) * (1/n1 + 1/n2))
+      z  <- (p1 - p2) / se
+      c(z = z, kritis = qnorm(0.975), p = 2 * pnorm(-abs(z))) |> round(5)
+      c(z_kuadrat = unname(z^2), khi = unname(u$statistic)) |> round(5)   # sama
+
+      # ---- Uji ragam satu populasi (seluruhnya manual) ----
+      y <- sur$umur; ny <- length(y); s2 <- var(y); sigma0_2 <- 250
+      chi <- (ny - 1) * s2 / sigma0_2; db <- ny - 1
+      kb <- qchisq(0.025, db); ka <- qchisq(0.975, db)
+      p_chi <- 2 * min(pchisq(chi, db), 1 - pchisq(chi, db))
+      c(s2 = s2, chi = chi, db = db, kritis_bawah = kb,
+        kritis_atas = ka, p = p_chi) |> round(4)
+      c(ci_bawah = (ny-1)*s2/ka, ci_atas = (ny-1)*s2/kb) |> round(2)
+
+      curve(dchisq(x, db), from = max(0, chi - 4*sqrt(2*db)), to = chi + 4*sqrt(2*db),
+            lwd = 2, col = "#123A6B", ylab = "kepekatan", xlab = "khi-kuadrat")
+      abline(v = c(kb, ka), col = "#F58220", lty = 2, lwd = 2)
+      abline(v = chi, col = "#00A651", lwd = 2)
+
+      # ---- Laporan asumsi ----
+      a <- sur$pengeluaran[sur$wilayah == "Perkotaan"]
+      b <- sur$pengeluaran[sur$wilayah == "Perdesaan"]
+      c(shapiro_a = shapiro.test(a)$p.value,
+        lillie_a  = lillie.test(a)$p.value,
+        ks_a      = ks.test(a, "pnorm", mean(a), sd(a))$p.value) |> round(5)
+      c(varF = var.test(a, b)$p.value,
+        bartlett = bartlett.test(pengeluaran ~ wilayah, data = sur)$p.value,
+        levene = leveneTest(pengeluaran ~ factor(wilayah), data = sur)$`Pr(>F)`[1]) |> round(5)
+
+      F_h <- var(a)/var(b); db1 <- length(a)-1; db2 <- length(b)-1
+      c(F = F_h, kritis_bawah = qf(0.025, db1, db2), kritis_atas = qf(0.975, db1, db2),
+        p_manual = 2*min(pf(F_h, db1, db2), 1 - pf(F_h, db1, db2)),
+        p_fungsi = var.test(a, b)$p.value) |> round(6)
+    interpretasi: >
+      Pada uji dua proporsi, kesamaan kuadrat statistik z dengan statistik khi-kuadrat membuktikan
+      perhitungan manual benar. Pada uji ragam satu populasi, seluruhnya dihitung manual karena R tidak
+      menyediakan fungsinya; perhatikan pembalikan posisi nilai kritis saat menyusun selang kepercayaan.
+      Pada bagian laporan asumsi, ketiga uji kenormalan dapat berbeda karena kuasanya tidak sama, dan
+      nilai-p ks.test cenderung paling besar karena parameternya diduga dari data yang sama. Nilai-p F
+      manual dan fungsi terbukti identik.
+  - id: "L12.D"
+    points: 10
+    solution: "Membetulkan kode: galat baku memakai p0, ekor kanan khi-kuadrat, urutan derajat bebas F, dan factor pada leveneTest."
+    judul_r: "Solusi Membetulkan Kode (R)"
+    solusi_r: |
+      sur <- read.csv("data/data_survei.csv")
+      x <- sum(sur$akses_internet == "Ya"); n <- nrow(sur); p0 <- 0.60
+      p_topi <- x / n
+
+      # (a) galat baku UJI memakai p0 (di bawah H0), bukan p_topi
+      se <- sqrt(p0 * (1 - p0) / n)
+      z  <- (p_topi - p0) / se
+      c(se = se, z = z)
+
+      # (b) nilai-p khi-kuadrat = luas ekor KANAN
+      obs <- table(sur$pendidikan)[c("SD","SMP","SMA","PT")]
+      E <- sum(obs) * c(0.25, 0.25, 0.30, 0.20)
+      chi <- sum((obs - E)^2 / E)
+      p <- 1 - pchisq(chi, df = length(obs) - 1)
+      c(chi = chi, p = p)
+
+      # (c) df1 dari PEMBILANG (a), df2 dari PENYEBUT (b)
+      a <- sur$pengeluaran[sur$wilayah == "Perkotaan"]
+      b <- sur$pengeluaran[sur$wilayah == "Perdesaan"]
+      qf(0.975, df1 = length(a) - 1, df2 = length(b) - 1)
+
+      # (d) pengelompok harus berupa faktor
+      car::leveneTest(pengeluaran ~ factor(wilayah), data = sur)
+    interpretasi: >
+      Empat kesalahan diperbaiki. Pertama, galat baku pada pengujian dihitung dengan anggapan hipotesis
+      nol benar sehingga memakai proporsi acuan; proporsi contoh hanya dipakai pada selang kepercayaan.
+      Kedua, statistik khi-kuadrat selalu tak negatif dan penyimpangan membesarkan nilainya, sehingga
+      nilai-p adalah luas ekor kanan, yaitu satu dikurangi peluang kumulatif. Ketiga, derajat bebas
+      pertama pada sebaran F harus berasal dari ragam pembilang; menukarnya menghasilkan nilai kritis
+      yang keliru karena sebaran F tidak setangkup. Keempat, leveneTest menuntut peubah pengelompok
+      berupa faktor.
+  - id: "T12.1"
+    points: 50
+    solution: "Penugasan: proporsi, kesesuaian sebaran, kebebasan, dan ragam - masing-masing dua jalur."
+    judul_r: "Solusi Penugasan (R)"
+    solusi_r: |
+      suppressPackageStartupMessages({library(nortest); library(car)})
+      sur <- read.csv("data/data_survei.csv")
+
+      # 1) proporsi satu populasi: fungsi dan manual
+      x <- sum(sur$akses_internet == "Ya"); n <- nrow(sur); p0 <- 0.65
+      prop.test(x, n, p = p0, correct = FALSE)
+      p_topi <- x/n; se0 <- sqrt(p0*(1-p0)/n); z <- (p_topi - p0)/se0
+      c(z = z, kritis = qnorm(0.975), p = 2*pnorm(-abs(z))) |> round(5)
+      curve(dnorm(x), -4, 4, lwd = 2, col = "#123A6B", ylab = "kepekatan")
+      zk <- qnorm(0.975)
+      xs <- seq(zk, 4, length.out = 200)
+      polygon(c(zk, xs, 4), c(0, dnorm(xs), 0), col = "#F5822060", border = NA)
+      xs2 <- seq(-4, -zk, length.out = 200)
+      polygon(c(-4, xs2, -zk), c(0, dnorm(xs2), 0), col = "#F5822060", border = NA)
+      abline(v = z, col = "#00A651", lwd = 2)
+
+      # 2) dua proporsi
+      tab <- table(sur$wilayah, sur$akses_internet)
+      s <- tab[, "Ya"]; t <- rowSums(tab)
+      u2 <- prop.test(s, t, correct = FALSE); u2; u2$conf.int
+
+      # 3) kenormalan umur, tiga uji
+      y <- sur$umur
+      c(shapiro = shapiro.test(y)$p.value,
+        lillie  = lillie.test(y)$p.value,
+        ks      = ks.test(y, "pnorm", mean(y), sd(y))$p.value) |> round(6)
+
+      # 4) kesesuaian: 30:25:25:20
+      obs <- table(sur$pendidikan)[c("SD","SMP","SMA","PT")]
+      ph <- c(0.30, 0.25, 0.25, 0.20)
+      chisq.test(obs, p = ph)
+      E <- sum(obs) * ph
+      sumb <- (obs - E)^2 / E
+      rbind(teramati = as.numeric(obs), harapan = E, sumbangan = sumb) |> round(3)
+      chi <- sum(sumb); db <- length(obs) - 1
+      c(chi = chi, kritis = qchisq(0.95, db), p = 1 - pchisq(chi, db)) |> round(5)
+
+      # 5) kebebasan wilayah x pendidikan
+      tk <- table(sur$wilayah, sur$pendidikan)
+      ui <- chisq.test(tk); ui
+      E2 <- outer(rowSums(tk), colSums(tk)) / sum(tk)
+      round(E2, 2); all(E2 >= 5)
+
+      # 6) ragam satu populasi (manual)
+      pg <- sur$pengeluaran; np <- length(pg); s2 <- var(pg); sg <- 1400000
+      chiv <- (np-1)*s2/sg; dbv <- np-1
+      c(chi = chiv, kb = qchisq(0.025,dbv), ka = qchisq(0.975,dbv),
+        p = 2*min(pchisq(chiv,dbv), 1-pchisq(chiv,dbv))) |> round(4)
+      c(ci_bawah = (np-1)*s2/qchisq(0.975,dbv),
+        ci_atas  = (np-1)*s2/qchisq(0.025,dbv)) |> round(1)
+
+      # 7) ragam dua populasi
+      a <- pg[sur$wilayah == "Perkotaan"]; b <- pg[sur$wilayah == "Perdesaan"]
+      var.test(a, b)
+      Fh <- var(a)/var(b); d1 <- length(a)-1; d2 <- length(b)-1
+      c(F = Fh, kb = qf(0.025,d1,d2), ka = qf(0.975,d1,d2),
+        p_manual = 2*min(pf(Fh,d1,d2), 1-pf(Fh,d1,d2)),
+        p_fungsi = var.test(a,b)$p.value) |> round(6)
+      bartlett.test(pengeluaran ~ wilayah, data = sur)$p.value
+      leveneTest(pengeluaran ~ factor(wilayah), data = sur)$`Pr(>F)`[1]
+    interpretasi: >
+      Setiap pengujian dikerjakan dua jalur dan hasilnya terbukti sama, sehingga tabel perbandingan yang
+      diminta dapat disusun langsung dari angka-angka ini. Pada nomor 4, baris sumbangan menunjukkan
+      kategori yang paling menyimpang dari harapan. Pada nomor 5, pemeriksaan seluruh frekuensi harapan
+      minimal lima menentukan kesahihan pendekatan khi-kuadrat. Pada nomor 7, kesamaan nilai-p manual dan
+      fungsi membuktikan pemahaman rumus sebaran F. Perlu ditegaskan dalam laporan bahwa seluruh angka
+      berasal dari data simulasi sehingga tidak menggambarkan keadaan sebenarnya, dan bahwa gagal menolak
+      hipotesis nol berarti belum cukup bukti, bukan terbukti tidak berbeda.
+
+references:
+  - "Walpole, R. E., Myers, R. H., Myers, S. L., & Ye, K. (2016). Probability and Statistics for Engineers and Scientists, 9th ed. Pearson."
+  - "Agresti, A. (2018). Statistical Methods for the Social Sciences, 5th ed. Pearson."
+  - "Pramana, S., dkk. (2016). Dasar-dasar Statistik menggunakan R. In-Media."
+  - "Fox, J., & Weisberg, S. (2019). An R Companion to Applied Regression, 3rd ed. Sage."

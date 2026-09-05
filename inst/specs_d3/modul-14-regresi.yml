@@ -1,0 +1,700 @@
+number: 14
+title: "Analisis Korelasi dan Regresi"
+short_code: "regresi"
+topic: "Korelasi & Regresi"
+pertemuan: 14
+sub_cpmk: >
+  Sub-CPMK 14: Mahasiswa mampu membuat analisis dan melakukan pengolahan analisis korelasi,
+  regresi linear sederhana, dan regresi linear berganda, baik dengan perhitungan manual langkah
+  demi langkah maupun dengan fungsi bawaan R.
+packages: [dplyr, car]
+contoh_title: "Contoh Praktikum dengan R"
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  ta: "2025/2026"
+  semester: "3 (Ganjil)"
+  prodi: "D-III Statistika"
+  penyusun:
+    - "Achmad Syahrul Choir"
+    - "Rudi Salam"
+    - "Christiana Anggraeni Putri"
+
+datasets:
+  - name: data_wilayah
+    role: contoh
+    recipe:
+      kind: tabular
+      "n": 80
+      seed: 2026
+      columns:
+        wilayah: {type: category, levels: [Perkotaan, Perdesaan], probs: [0.5, 0.5]}
+        pengeluaran: {type: numeric, min: 500, max: 5000, digits: 1}
+        pendapatan: {type: numeric, min: 800, max: 7000, digits: 1}
+        lama_sekolah: {type: numeric, min: 0, max: 16, digits: 1}
+        umur_krt: {type: integer, min: 25, max: 70}
+
+body:
+  deskripsi:
+    - >
+      Modul ini menutup rangkaian mata kuliah dengan dua perkakas yang paling banyak dipakai dalam
+      analisis data: \textbf{korelasi} yang mengukur keeratan hubungan antar-peubah, dan
+      \textbf{regresi} yang memodelkan hubungan itu sehingga dapat dipakai untuk menerangkan maupun
+      meramalkan.
+    - >
+      Regresi juga menyatukan hampir seluruh materi sebelumnya. Pendugaan parameter dan selang
+      kepercayaan berasal dari Modul 11; uji t muncul kembali untuk menguji koefisien; tabel ANOVA
+      dari Modul 13 muncul lagi sebagai uji kebermaknaan model secara menyeluruh; dan pemeriksaan
+      asumsi memakai uji kenormalan serta kesamaan ragam dari Modul 12.
+    - >
+      Sesuai pendekatan modul inferensia, seluruh perhitungan pada bagian Contoh dikerjakan
+      \textbf{manual langkah demi langkah} - mulai dari koefisien korelasi, penduga kemiringan dan
+      intersep, galat baku koefisien, statistik t dan F, hingga koefisien determinasi - memakai
+      fungsi sebaran dari Modul 7 dan 12. Penyelesaian dengan fungsi bawaan R disajikan sebagai
+      \textbf{bagian tambahan setelah Penugasan}.
+    - >
+      Materi dibahas dari dasar hingga lanjut: korelasi Pearson dan Spearman beserta pengujiannya;
+      regresi sederhana dengan metode kuadrat terkecil; penguraian keragaman dan koefisien
+      determinasi; pengujian koefisien; selang kepercayaan dan selang prediksi; pemeriksaan asumsi
+      melalui sisaan; regresi berganda; peubah boneka untuk peubah kategori; serta pendeteksian
+      kekolinearan ganda.
+    - "\\begin{kotakperhatian}[Tentang data]\nBerkas data pada modul ini adalah \\textbf{data simulasi} (\\texttt{set.seed(2026)}), \\textbf{bukan data nyata} dan \\textbf{bukan data resmi} instansi mana pun. Karena peubahnya dibangkitkan secara acak dan saling bebas, hubungan yang ditemukan wajar bila lemah - dan justru itulah yang harus dilaporkan secara jujur.\n\\end{kotakperhatian}"
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:"
+    - "1. **Menghitung** koefisien korelasi Pearson dan Spearman **secara manual**, serta mengujinya dengan sebaran t."
+    - "2. **Menduga** koefisien regresi sederhana dengan metode kuadrat terkecil **dari rumusnya**."
+    - "3. **Menguraikan** keragaman menjadi terjelaskan dan sisa, serta menghitung koefisien determinasi."
+    - "4. **Menguji** kebermaknaan koefisien dengan uji t dan kebermaknaan model dengan uji F, memakai `qt`, `pt`, `qf`, dan `pf`."
+    - "5. **Menyusun** selang kepercayaan bagi koefisien serta membedakan **selang kepercayaan rata-rata** dari **selang prediksi**."
+    - "6. **Memeriksa** asumsi regresi melalui sisaan: kenormalan, kesamaan ragam, dan kebebasan."
+    - "7. **Membangun** model regresi berganda, memakai **peubah boneka**, dan mendeteksi **kekolinearan ganda**."
+  alat:
+    - "Perangkat dan bahan yang diperlukan:"
+    - "- **R** (RStudio); modul ini fokus pada R sesuai RPS."
+    - "- Paket: `dplyr` dan `car` (faktor inflasi ragam)."
+    - "- Berkas data: `data/data_wilayah.csv`."
+  instruksi:
+    - "Ikuti tahapan berikut:"
+    - "**Sebelum praktikum:** siapkan direktori kerja; letakkan `data_wilayah.csv` di subfolder `data/`."
+    - "**Selama praktikum:** kerjakan Contoh berurutan; seluruhnya dihitung **manual** agar rumusnya dipahami. Untuk setiap pengujian, **tuliskan hipotesisnya lebih dahulu**. Setelah menyelesaikan Penugasan, kerjakan **bagian Tambahan** yang menyajikan penyelesaian dengan fungsi bawaan R, lalu bandingkan angkanya dengan hasil manual Anda."
+    - "**Pembagian kerja:** Contoh dan Latihan dikerjakan selama sesi praktikum di kelas; **Penugasan dikerjakan sebagai tugas terstruktur di luar sesi**.\n\n**Pengumpulan:** susun laporan R Markdown, render ke PDF/HTML, dan kumpulkan via Google Classroom sesuai tenggat yang ditetapkan dosen."
+  teori:
+    - "### Kaitan dengan Materi Sebelumnya"
+    - >
+      Seluruh rangkaian bermuara pada modul ini. Diagram pencar dan korelasi sebagai penjajakan awal
+      datang dari Modul 7; kerangka pendugaan, selang kepercayaan, serta uji t datang dari Modul 11; uji
+      kenormalan dan kesamaan ragam untuk memeriksa asumsi datang dari Modul 12; sedangkan tabel ANOVA
+      dari Modul 13 muncul kembali di sini sebagai uji kebermaknaan model.
+    - >
+      Pada hakikatnya ANOVA dan regresi adalah dua rupa dari kerangka yang satu, yakni \emph{model
+      linear}. Bedanya terletak pada peubah penjelasnya: kategori pada ANOVA, numerik pada regresi. Karena
+      berakar sama itulah keduanya memakai statistik F serta penguraian jumlah kuadrat yang serupa.
+    - "### Korelasi"
+    - >
+      Yang diukur koefisien korelasi Pearson adalah keeratan hubungan \textbf{lurus} antara dua peubah
+      numerik, dengan nilai terbentang dari negatif satu sampai satu. Apabila hubungan yang diduga
+      ternyata tidak lurus, atau datanya memuat pencilan, korelasi Spearman yang bertumpu pada peringkat
+      lebih tepat dipakai.
+    - "\\begin{kotakrumus}\n\\textbf{Korelasi dan pengujiannya.}\\\\[3pt]\n$r = \\dfrac{\\sum (x_i - \\bar{x})(y_i - \\bar{y})}{\\sqrt{\\sum (x_i - \\bar{x})^{2} \\sum (y_i - \\bar{y})^{2}}}$\\\\[5pt]\n$t = \\dfrac{r\\sqrt{n-2}}{\\sqrt{1-r^{2}}}$, \\quad db $= n-2$\n\\end{kotakrumus}"
+    - "\\begin{kotaksalah}[Korelasi bukan sebab-akibat]\nKorelasi yang kuat tidak membuktikan bahwa satu peubah menyebabkan yang lain. Hubungan dapat muncul karena peubah ketiga yang memengaruhi keduanya, atau bahkan karena kebetulan. Selain itu korelasi Pearson hanya menangkap hubungan \\textbf{lurus}: pola melengkung yang kuat dapat menghasilkan korelasi mendekati nol. Karena itu \\textbf{selalu lihat diagram pencarnya}, jangan hanya angkanya.\n\\end{kotaksalah}"
+    - "### Regresi Linear Sederhana"
+    - >
+      Menurut model regresi sederhana, nilai harapan peubah tak bebas merupakan fungsi lurus atas peubah
+      bebas, ditambah galat yang bersifat acak. Penduga koefisiennya diperoleh melalui \textbf{metode
+      kuadrat terkecil}, yakni dengan memilih garis yang membuat jumlah kuadrat sisaannya sekecil mungkin.
+    - "\\begin{kotakrumus}\n\\textbf{Model dan penduganya.}\\\\[3pt]\n$y_i = \\beta_0 + \\beta_1 x_i + \\varepsilon_i$\\\\[5pt]\n$b_1 = \\dfrac{\\sum (x_i-\\bar{x})(y_i-\\bar{y})}{\\sum (x_i-\\bar{x})^{2}}$, \\qquad $b_0 = \\bar{y} - b_1\\bar{x}$\\\\[5pt]\n$JK_{total} = JK_{regresi} + JK_{sisa}$, \\qquad $R^{2} = \\dfrac{JK_{regresi}}{JK_{total}}$\\\\[5pt]\n$s^{2} = \\dfrac{JK_{sisa}}{n-2}$, \\qquad $SE(b_1) = \\dfrac{s}{\\sqrt{\\sum (x_i-\\bar{x})^{2}}}$, \\qquad $t = \\dfrac{b_1}{SE(b_1)}$\n\\end{kotakrumus}"
+    - >
+      \textbf{Dua macam pengujian.} Kebermaknaan tiap koefisien diperiksa sendiri-sendiri oleh uji t,
+      sementara kebermaknaan model secara keseluruhan diperiksa uji F. Pada regresi sederhana keduanya
+      setara, bahkan hubungannya persis: $F = t^{2}$. Namun pada regresi berganda keduanya menjawab
+      pertanyaan yang berlainan.
+    - "\\begin{kotaksalah}[Menafsirkan R kuadrat berlebihan]\nKoefisien determinasi menyatakan proporsi keragaman yang diterangkan model, tetapi nilainya \\textbf{selalu naik} ketika peubah ditambahkan, bahkan bila peubah itu tidak berguna. Untuk membandingkan model dengan banyak peubah berbeda, gunakan $R^{2}$ terkoreksi. Nilai $R^{2}$ yang tinggi juga tidak menjamin model benar - ia dapat tinggi meski asumsinya terlanggar berat.\n\\end{kotaksalah}"
+    - "### Selang Kepercayaan dan Selang Prediksi"
+    - >
+      Dua macam selang kerap tertukar. \textbf{Selang kepercayaan} menduga \emph{rata-rata} tanggapan
+      pada suatu nilai peubah bebas, sedangkan \textbf{selang prediksi} menduga \emph{satu amatan baru}.
+      Selang prediksi niscaya lebih lebar sebab menanggung dua sumber ketidakpastian sekaligus:
+      ketidakpastian pada penduga garisnya sendiri, ditambah keragaman amatan di sekitar garis itu.
+    - "### Asumsi Regresi"
+    - >
+      Empat asumsi wajib diperiksa dan seluruhnya bertumpu pada \textbf{sisaan}: hubungannya memang
+      lurus, sisaan menyebar normal, ragam sisaan tetap sepanjang nilai dugaan, dan antar-sisaan saling
+      bebas. Pemeriksaannya memakai diagram sisaan terhadap nilai dugaan, diagram kuantil-kuantil, serta
+      uji formal semacam Shapiro-Wilk.
+    - "\\begin{kotaktips}\nDiagram sisaan terhadap nilai dugaan adalah alat diagnosa paling informatif. Sebaran titik yang acak tanpa pola mendukung seluruh asumsi sekaligus. Pola melengkung menandakan hubungan sebenarnya tidak lurus, sedangkan pola menyerupai corong menandakan ragam sisaan tidak tetap.\n\\end{kotaktips}"
+    - "### Regresi Berganda dan Kekolinearan"
+    - >
+      Regresi berganda menyertakan beberapa peubah bebas sekaligus, dan penafsiran koefisiennya pun
+      bergeser. Tiap koefisien kini menyatakan perubahan rata-rata tanggapan akibat kenaikan satu satuan
+      peubah bersangkutan, \emph{sementara peubah lain ditahan tetap}. Peubah kategori disertakan melalui
+      \textbf{peubah boneka} yang bernilai nol dan satu.
+    - "\\begin{kotaksalah}[Kekolinearan ganda]\nBila antar-peubah bebas saling berkorelasi kuat, penduga koefisiennya menjadi sangat tidak stabil: tandanya dapat berbalik dan galat bakunya membengkak, sehingga tidak ada peubah yang tampak nyata meskipun modelnya secara keseluruhan nyata. Deteksi dengan faktor inflasi ragam; nilai di atas 10 lazim dipandang bermasalah.\n\\end{kotaksalah}"
+  contoh:
+    - contoh: "Eksplorasi awal sebelum pemodelan"
+      kode_r: "wil <- read.csv(\"data/data_wilayah.csv\")\nstr(wil)\nnum <- wil[, c(\"pengeluaran\", \"pendapatan\", \"lama_sekolah\", \"umur_krt\")]\nround(cor(num), 4)\nplot(wil$pendapatan, wil$pengeluaran, pch = 19, col = \"#0B6FB4\",\n     xlab = \"Pendapatan (ribu Rp)\", ylab = \"Pengeluaran (ribu Rp)\",\n     main = \"Diagram Pencar\")"
+      judul_r: "matriks korelasi dan diagram pencar"
+      eval: true
+      penjelasan: >
+        Data dibaca lalu strukturnya diperiksa. Subset berisi empat kolom numerik dibentuk agar dapat
+        dihitung matriks korelasinya sekaligus dengan cor. Diagram pencar digambar untuk pasangan peubah
+        yang akan dimodelkan, dengan nama sumbu bersatuan agar dapat dibaca sendiri.
+      interpretasi: >
+        Langkah ini wajib mendahului pemodelan. Matriks korelasi memberi gambaran menyeluruh keeratan
+        antar-peubah, sedangkan diagram pencar memperlihatkan bentuk hubungannya. Ingat peringatan di
+        teori: angka korelasi saja tidak cukup, karena pola melengkung dapat menghasilkan korelasi
+        mendekati nol. Pada data simulasi ini korelasinya wajar bila lemah karena peubahnya dibangkitkan
+        saling bebas.
+    - contoh: "Menghitung korelasi Pearson secara manual"
+      kode_r: "x <- wil$pendapatan\ny <- wil$pengeluaran\nn <- length(x)\n\n# Langkah 1: jumlah hasil kali simpangan\nSxy <- sum((x - mean(x)) * (y - mean(y)))\nSxx <- sum((x - mean(x))^2)\nSyy <- sum((y - mean(y))^2)\n\n# Langkah 2: koefisien korelasi\nr <- Sxy / sqrt(Sxx * Syy)\n\n# Langkah 3: statistik uji dan nilai-p (sebaran t, Modul 11)\nt_r <- r * sqrt(n - 2) / sqrt(1 - r^2)\ndb_r <- n - 2\np_r <- 2 * pt(-abs(t_r), df = db_r)\nt_kritis <- qt(0.975, df = db_r)\n\nround(c(Sxy = Sxy, Sxx = Sxx, Syy = Syy, r = r,\n        t = t_r, db = db_r, t_kritis = t_kritis, p = p_r), 5)"
+      judul_r: "rumus korelasi dan ujinya"
+      eval: true
+      penjelasan: >
+        Ketiga jumlah simpangan dihitung lebih dahulu: Sxy adalah jumlah hasil kali simpangan kedua
+        peubah, sedangkan Sxx dan Syy adalah jumlah kuadrat simpangan masing-masing. Koefisien korelasi
+        adalah Sxy dibagi akar hasil kali keduanya. Statistik uji mengikuti rumus di teori, dengan
+        derajat bebas n dikurangi dua. Nilai-p dihitung dengan pt sebagai uji dua arah, dan nilai kritis
+        dengan qt - keduanya fungsi sebaran dari Modul 11.
+      interpretasi: >
+        Ketiga besaran S ini akan dipakai lagi pada regresi, sehingga menghitungnya sekarang menghemat
+        pekerjaan berikutnya. Perhatikan bahwa pengujian korelasi memakai sebaran t dengan derajat bebas
+        n dikurangi dua, bukan n dikurangi satu - karena dua parameter diduga dari data. Keputusan
+        diambil dengan membandingkan nilai-p terhadap taraf nyata, atau nilai mutlak t terhadap nilai
+        kritis.
+    - contoh: "Korelasi Spearman secara manual"
+      kode_r: "# Spearman = Pearson pada PERINGKAT\nrx <- rank(x); ry <- rank(y)\nrs <- sum((rx - mean(rx)) * (ry - mean(ry))) /\n      sqrt(sum((rx - mean(rx))^2) * sum((ry - mean(ry))^2))\nt_s <- rs * sqrt(n - 2) / sqrt(1 - rs^2)\nround(c(pearson = r, spearman = rs,\n        t_spearman = t_s, p = 2 * pt(-abs(t_s), n - 2)), 5)"
+      judul_r: "rank lalu rumus Pearson"
+      eval: true
+      penjelasan: >
+        Fungsi rank mengubah nilai menjadi peringkatnya. Rumus yang dipakai persis sama dengan Pearson,
+        hanya masukannya berupa peringkat - inilah definisi korelasi Spearman. Pengujiannya juga memakai
+        pendekatan sebaran t yang sama.
+      interpretasi: >
+        Karena bekerja pada peringkat, korelasi Spearman tidak terpengaruh pencilan dan mampu menangkap
+        hubungan yang menaik atau menurun secara konsisten meski tidak lurus. Bila nilai Pearson dan
+        Spearman berbeda jauh, itu petunjuk adanya pencilan atau hubungan yang tidak lurus, sehingga
+        diagram pencarnya perlu diperiksa lebih saksama.
+    - contoh: "Menduga koefisien regresi dengan kuadrat terkecil"
+      kode_r: "# b1 dan b0 dari rumus kuadrat terkecil\nb1 <- Sxy / Sxx\nb0 <- mean(y) - b1 * mean(x)\nround(c(b0 = b0, b1 = b1), 6)\n\ncat(sprintf(\"Model dugaan: y_topi = %.4f + %.6f x\\n\", b0, b1))\n\n# nilai dugaan dan sisaan\ny_topi <- b0 + b1 * x\nsisaan <- y - y_topi\nround(head(cbind(x = x, y = y, dugaan = y_topi, sisaan = sisaan), 4), 3)\n# sifat kuadrat terkecil: jumlah sisaan nol\nround(c(jumlah_sisaan = sum(sisaan),\n        jumlah_x_kali_sisaan = sum(x * sisaan)), 8)"
+      judul_r: "b0, b1, dugaan, dan sisaan"
+      eval: true
+      penjelasan: >
+        Kemiringan diperoleh dengan membagi Sxy oleh Sxx, memanfaatkan besaran yang sudah dihitung pada
+        contoh korelasi. Intersep diperoleh dari sifat bahwa garis kuadrat terkecil selalu melewati titik
+        rata-rata. Nilai dugaan dihitung dari persamaan garisnya, dan sisaan adalah selisih amatan
+        terhadap dugaan. Dua baris terakhir memeriksa dua sifat matematis kuadrat terkecil.
+      interpretasi: >
+        Kedua pemeriksaan terakhir bernilai nol hingga ketelitian mesin. Inilah ciri penduga kuadrat
+        terkecil: jumlah sisaannya nol, dan sisaan tidak berkorelasi dengan peubah bebasnya. Bila kedua
+        nilai itu tidak nol, berarti ada kekeliruan perhitungan. Perhatikan bahwa seluruhnya diperoleh
+        tanpa memanggil fungsi pemodelan apa pun.
+    - contoh: "Penguraian keragaman dan koefisien determinasi"
+      kode_r: "JK_total <- Syy\nJK_regresi <- sum((y_topi - mean(y))^2)\nJK_sisa <- sum(sisaan^2)\n\nR2 <- JK_regresi / JK_total\nR2_koreksi <- 1 - (JK_sisa / (n - 2)) / (JK_total / (n - 1))\n\nround(c(JK_total = JK_total, JK_regresi = JK_regresi, JK_sisa = JK_sisa,\n        jumlah = JK_regresi + JK_sisa,\n        R2 = R2, R2_terkoreksi = R2_koreksi,\n        r_kuadrat = r^2), 6)"
+      judul_r: "JK regresi, JK sisa, dan R kuadrat"
+      eval: true
+      penjelasan: >
+        Jumlah kuadrat total sama dengan Syy yang sudah dihitung. Jumlah kuadrat regresi mengukur
+        simpangan nilai dugaan terhadap rata-rata, yaitu bagian yang diterangkan model. Jumlah kuadrat
+        sisa mengukur simpangan amatan terhadap dugaan. Koefisien determinasi adalah nisbah (*ratio*) bagian
+        terjelaskan terhadap total, sedangkan versi terkoreksi memperhitungkan derajat bebas.
+      interpretasi: >
+        Dua pemeriksaan penting tampak di sini. Pertama, jumlah kedua komponen tepat sama dengan jumlah
+        kuadrat total - penguraian yang sama bentuknya dengan ANOVA pada Modul 13. Kedua, koefisien
+        determinasi tepat sama dengan kuadrat koefisien korelasi; hal ini hanya berlaku pada regresi
+        sederhana. Perhatikan pula bahwa versi terkoreksi selalu lebih kecil.
+    - contoh: "Galat baku koefisien dan pengujiannya"
+      kode_r: "db_sisa <- n - 2\ns2 <- JK_sisa / db_sisa          # kuadrat tengah sisa\ns  <- sqrt(s2)                   # galat baku model\n\nSE_b1 <- s / sqrt(Sxx)\nSE_b0 <- s * sqrt(1/n + mean(x)^2 / Sxx)\n\nt_b1 <- b1 / SE_b1\nt_b0 <- b0 / SE_b0\np_b1 <- 2 * pt(-abs(t_b1), df = db_sisa)\np_b0 <- 2 * pt(-abs(t_b0), df = db_sisa)\n\nround(rbind(\n  b0 = c(duga = b0, SE = SE_b0, t = t_b0, p = p_b0),\n  b1 = c(b1, SE_b1, t_b1, p_b1)), 6)\nround(c(s = s, db_sisa = db_sisa, t_kritis = qt(0.975, db_sisa)), 5)"
+      judul_r: "SE, t, dan nilai-p koefisien"
+      eval: true
+      penjelasan: >
+        Kuadrat tengah sisa diperoleh dengan membagi jumlah kuadrat sisa oleh derajat bebasnya, yaitu n
+        dikurangi dua karena dua koefisien diduga. Akarnya adalah galat baku model. Galat baku kemiringan
+        berbanding terbalik dengan akar Sxx, sehingga makin menyebar nilai peubah bebas makin teliti
+        pendugaan kemiringannya. Statistik t tiap koefisien adalah penduga dibagi galat bakunya, dan
+        nilai-p dihitung dengan pt. Hasilnya disusun sebagai tabel dengan rbind menyerupai keluaran baku.
+      interpretasi: >
+        Tabel ini adalah inti keluaran regresi mana pun: penduga, galat baku, statistik t, dan nilai-p
+        tiap koefisien. Hipotesis nol untuk kemiringan menyatakan tidak ada hubungan lurus. Perhatikan
+        bahwa galat baku kemiringan mengecil bila keragaman peubah bebas membesar - inilah dasar
+        perancangan percobaan yang menyebar nilai peubah bebas selebar mungkin.
+    - contoh: "Tabel ANOVA regresi dan uji F"
+      kode_r: "db_reg <- 1\nKT_reg <- JK_regresi / db_reg\nKT_sisa <- JK_sisa / db_sisa\nF_hitung <- KT_reg / KT_sisa\nF_kritis <- qf(0.95, db_reg, db_sisa)\np_F <- 1 - pf(F_hitung, db_reg, db_sisa)\n\nround(rbind(\n  Regresi = c(db = db_reg, JK = JK_regresi, KT = KT_reg, F = F_hitung, p = p_F),\n  Sisa    = c(db_sisa, JK_sisa, KT_sisa, NA, NA),\n  Total   = c(n - 1, JK_total, NA, NA, NA)), 6)\n\n# pada regresi SEDERHANA: F = t^2\nround(c(F = F_hitung, t_b1_kuadrat = t_b1^2), 6)"
+      judul_r: "qf, pf, dan hubungan F = t kuadrat"
+      eval: true
+      penjelasan: >
+        Tabel ANOVA regresi disusun persis seperti pada Modul 13, hanya sumber keragamannya bernama
+        regresi dan sisa. Derajat bebas regresi adalah banyaknya peubah bebas, di sini satu. Statistik F
+        adalah rasio kedua kuadrat tengah, nilai kritis diambil dengan qf, dan nilai-p sebagai luas ekor
+        kanan dengan pf. Baris terakhir membandingkan F terhadap kuadrat statistik t kemiringan.
+      interpretasi: >
+        Kedua angka pada baris terakhir sama persis, membuktikan hubungan F sama dengan t kuadrat pada
+        regresi sederhana. Ini masuk akal karena keduanya menguji hal yang sama, yaitu apakah kemiringan
+        berbeda dari nol. Pada regresi berganda kesamaan ini tidak lagi berlaku: uji F menguji seluruh
+        koefisien sekaligus, sedangkan uji t menguji satu per satu.
+    - contoh: "Selang kepercayaan koefisien"
+      kode_r: "t_k <- qt(0.975, df = db_sisa)\nselang <- rbind(\n  b0 = c(bawah = b0 - t_k * SE_b0, atas = b0 + t_k * SE_b0),\n  b1 = c(b1 - t_k * SE_b1, b1 + t_k * SE_b1))\nround(selang, 6)\n# apakah selang b1 memuat nol?\ncat(\"Selang b1 memuat nol:\",\n    selang[\"b1\", \"bawah\"] < 0 && selang[\"b1\", \"atas\"] > 0, \"\\n\")"
+      judul_r: "selang bagi b0 dan b1"
+      eval: true
+      penjelasan: >
+        Nilai kritis t diambil sekali dengan qt lalu dipakai untuk kedua koefisien. Batas selang dihitung
+        sebagai penduga ditambah dan dikurangi hasil kali nilai kritis dengan galat bakunya. Hasilnya
+        disusun sebagai matriks dengan rbind. Baris terakhir memeriksa apakah selang kemiringan memuat
+        nol memakai operator logika DAN.
+      interpretasi: >
+        Pemeriksaan terakhir menghubungkan selang dengan pengujian: bila selang kemiringan memuat nol,
+        berarti nilai nol termasuk yang masuk akal sehingga hipotesis nol tidak ditolak - dan keputusan
+        ini selalu bersesuaian dengan nilai-p uji t. Melaporkan selang lebih informatif daripada sekadar
+        menyatakan nyata atau tidak, karena sekaligus menunjukkan ketelitian pendugaannya.
+    - contoh: "Selang kepercayaan rata-rata dan selang prediksi"
+      kode_r: "x0 <- mean(x)          # ramalkan pada nilai rata-rata\ny0 <- b0 + b1 * x0\n\n# selang bagi RATA-RATA tanggapan\nse_rata <- s * sqrt(1/n + (x0 - mean(x))^2 / Sxx)\n# selang bagi SATU amatan baru (tambah 1 di dalam akar)\nse_pred <- s * sqrt(1 + 1/n + (x0 - mean(x))^2 / Sxx)\n\nround(rbind(\n  kepercayaan = c(dugaan = y0, bawah = y0 - t_k*se_rata, atas = y0 + t_k*se_rata,\n                  lebar = 2*t_k*se_rata),\n  prediksi    = c(y0, y0 - t_k*se_pred, y0 + t_k*se_pred, 2*t_k*se_pred)), 4)"
+      judul_r: "dua jenis selang dibandingkan"
+      eval: true
+      penjelasan: >
+        Kedua selang dihitung pada nilai peubah bebas yang sama agar sebanding. Perbedaannya hanya pada
+        satu suku di dalam akar: selang prediksi menambahkan angka satu, yang mewakili keragaman satu
+        amatan di sekitar garis. Suku kuadrat selisih terhadap rata-rata membuat kedua selang melebar
+        ketika ramalan dilakukan jauh dari pusat data. Kolom lebar ditambahkan agar perbandingannya
+        langsung terlihat.
+      interpretasi: >
+        Selang prediksi jauh lebih lebar daripada selang kepercayaan, sesuai penjelasan di teori.
+        Keduanya menjawab pertanyaan berbeda: yang pertama menduga rata-rata pengeluaran seluruh rumah
+        tangga berpendapatan tertentu, yang kedua menduga pengeluaran satu rumah tangga tertentu.
+        Tertukarnya kedua selang adalah kekeliruan yang lazim dan berakibat serius bila hasilnya dipakai
+        untuk pengambilan keputusan.
+    - contoh: "Memeriksa asumsi melalui sisaan"
+      kode_r: "par(mfrow = c(1, 3))\nplot(y_topi, sisaan, pch = 19, col = \"#0B6FB4\",\n     xlab = \"nilai dugaan\", ylab = \"sisaan\", main = \"Sisaan vs dugaan\")\nabline(h = 0, col = \"#F58220\", lty = 2, lwd = 2)\nqqnorm(sisaan, pch = 19, col = \"#0B6FB4\", main = \"Q-Q sisaan\")\nqqline(sisaan, col = \"#F58220\", lwd = 2)\nhist(sisaan, breaks = 12, col = \"#0B6FB4\", border = \"white\",\n     main = \"Sebaran sisaan\", xlab = \"sisaan\")\npar(mfrow = c(1, 1))\nshapiro.test(sisaan)"
+      judul_r: "tiga diagram diagnosa"
+      eval: true
+      penjelasan: >
+        Tiga diagram ditampilkan berdampingan. Diagram pertama memetakan sisaan terhadap nilai dugaan
+        dengan garis acuan pada nol; ini alat diagnosa terpenting. Diagram kuantil-kuantil memeriksa
+        kenormalan, dan histogram memberi gambaran bentuk sebarannya. Uji Shapiro-Wilk melengkapinya
+        dengan pemeriksaan formal.
+      interpretasi: >
+        Cara membacanya: pada diagram pertama, sebaran titik yang acak tanpa pola dan lebar pita yang
+        seragam mendukung asumsi kelurusan sekaligus kesamaan ragam. Pola melengkung menandakan hubungan
+        sebenarnya tidak lurus, sedangkan bentuk corong menandakan ragam tidak tetap. Ingat bahwa yang
+        diperiksa selalu sisaan, bukan peubah aslinya.
+    - contoh: "Menggambar garis regresi beserta selangnya"
+      kode_r: "plot(x, y, pch = 19, col = \"#0B6FB4\",\n     xlab = \"Pendapatan (ribu Rp)\", ylab = \"Pengeluaran (ribu Rp)\",\n     main = \"Garis regresi, selang kepercayaan, dan selang prediksi\")\nabline(a = b0, b = b1, col = \"#F58220\", lwd = 2)\n\n# hitung kedua selang pada rentang nilai x\nxg <- seq(min(x), max(x), length.out = 100)\nyg <- b0 + b1 * xg\nse_r <- s * sqrt(1/n + (xg - mean(x))^2 / Sxx)\nse_p <- s * sqrt(1 + 1/n + (xg - mean(x))^2 / Sxx)\nlines(xg, yg - t_k*se_r, col = \"#00A651\", lty = 2, lwd = 2)\nlines(xg, yg + t_k*se_r, col = \"#00A651\", lty = 2, lwd = 2)\nlines(xg, yg - t_k*se_p, col = \"#7A5195\", lty = 3, lwd = 2)\nlines(xg, yg + t_k*se_p, col = \"#7A5195\", lty = 3, lwd = 2)\nlegend(\"topleft\", c(\"garis regresi\", \"selang kepercayaan\", \"selang prediksi\"),\n       col = c(\"#F58220\", \"#00A651\", \"#7A5195\"), lty = 1:3, lwd = 2, bty = \"n\")"
+      judul_r: "abline dan pita selang manual"
+      eval: true
+      penjelasan: >
+        Diagram pencar digambar lebih dahulu, lalu garis regresi ditambahkan dengan abline yang menerima
+        intersep dan kemiringan. Untuk menggambar pita selang, deret nilai peubah bebas dibuat dengan seq,
+        lalu dugaan dan kedua galat baku dihitung pada seluruh titik tersebut sekaligus secara tervektor.
+        Fungsi lines menggambar keempat batas selang dengan jenis garis berbeda.
+      interpretasi: >
+        Gambar ini merangkum seluruh hasil regresi dalam satu tampilan. Perhatikan bentuk kedua pita
+        yang melebar di kedua ujung - akibat suku kuadrat selisih terhadap rata-rata, yang menyatakan
+        bahwa ramalan makin tidak teliti bila dilakukan jauh dari pusat data. Perhatikan pula bahwa pita
+        prediksi selalu berada di luar pita kepercayaan.
+    - contoh: "Regresi berganda dengan aljabar matriks"
+      kode_r: "# X berisi kolom satuan dan dua peubah bebas\nX <- cbind(1, wil$pendapatan, wil$lama_sekolah)\ncolnames(X) <- c(\"(Intersep)\", \"pendapatan\", \"lama_sekolah\")\nY <- wil$pengeluaran\n\n# penduga kuadrat terkecil: b = (X'X)^-1 X'Y\nXtX <- t(X) %*% X\nb <- solve(XtX) %*% t(X) %*% Y\nround(t(b), 6)\n\n# sisaan dan ragamnya\nY_topi <- X %*% b\nsis_b <- Y - Y_topi\np_par <- ncol(X)                    # banyaknya parameter\ndb_b  <- length(Y) - p_par\ns2_b  <- sum(sis_b^2) / db_b\n# galat baku koefisien dari diagonal matriks ragam-peragam\nSE_b <- sqrt(diag(s2_b * solve(XtX)))\nt_b  <- as.vector(b) / SE_b\np_b  <- 2 * pt(-abs(t_b), df = db_b)\nround(cbind(duga = as.vector(b), SE = SE_b, t = t_b, p = p_b), 6)"
+      judul_r: "solve, matriks X, dan koefisien"
+      eval: true
+      penjelasan: >
+        Matriks rancangan dibentuk dengan cbind; angka satu pada kolom pertama menghasilkan kolom satuan
+        untuk intersep. Penduga kuadrat terkecil dihitung dengan rumus matriks: hasil kali kebalikan
+        matriks X transpos X dengan X transpos Y, memakai solve untuk pembalikan dan operator persen
+        kali persen untuk perkalian matriks. Galat baku koefisien diambil dari akar diagonal matriks
+        ragam-peragam, yaitu kuadrat tengah sisa dikali kebalikan X transpos X. Statistik t dan nilai-p
+        dihitung seperti biasa.
+      interpretasi: >
+        Inilah bentuk umum regresi yang mencakup regresi sederhana sebagai kasus khusus. Menghitungnya
+        lewat aljabar matriks memperlihatkan bahwa penambahan peubah bebas tidak mengubah kerangka
+        perhitungannya, hanya menambah kolom pada matriks rancangan. Penafsiran koefisien kini berubah:
+        tiap koefisien berlaku dengan peubah lain ditahan tetap.
+    - contoh: "Peubah boneka untuk peubah kategori"
+      kode_r: "# kategori diubah menjadi peubah bernilai 0 dan 1\nD <- ifelse(wil$wilayah == \"Perkotaan\", 1, 0)\ntable(wil$wilayah, D)\n\nX2 <- cbind(1, wil$pendapatan, D)\ncolnames(X2) <- c(\"(Intersep)\", \"pendapatan\", \"D_Perkotaan\")\nb2 <- solve(t(X2) %*% X2) %*% t(X2) %*% Y\nround(t(b2), 5)\ncat(sprintf(\"Perdesaan : y = %.2f + %.5f x\\n\", b2[1], b2[2]))\ncat(sprintf(\"Perkotaan : y = %.2f + %.5f x\\n\", b2[1] + b2[3], b2[2]))"
+      judul_r: "ifelse membentuk peubah boneka"
+      eval: true
+      penjelasan: >
+        Peubah kategori diubah menjadi peubah boneka bernilai nol dan satu dengan ifelse, lalu tabel
+        silang memastikan pengkodeannya benar. Matriks rancangan dibentuk seperti sebelumnya dengan
+        menambahkan kolom boneka. Dua baris terakhir menuliskan persamaan garis untuk masing-masing
+        kategori: kategori acuan memakai intersep apa adanya, sedangkan kategori berkode satu memakai
+        intersep ditambah koefisien bonekanya.
+      interpretasi: >
+        Koefisien peubah boneka menyatakan selisih intersep antara kedua kategori, dengan kemiringan
+        dianggap sama. Secara gambar, model ini menghasilkan dua garis sejajar. Kategori yang berkode nol
+        disebut kategori acuan, dan pemilihannya memengaruhi penafsiran meski tidak mengubah model secara
+        keseluruhan. Bila kemiringan kedua kategori juga diduga berbeda, diperlukan suku interaksi.
+    - contoh: "Mendeteksi kekolinearan ganda secara manual"
+      kode_r: "# VIF peubah ke-j = 1 / (1 - R2 dari regresi x_j terhadap peubah bebas lain)\nvif_manual <- function(Xmat, j) {\n  yj <- Xmat[, j]\n  Xj <- Xmat[, -j, drop = FALSE]\n  bj <- solve(t(Xj) %*% Xj) %*% t(Xj) %*% yj\n  sisa <- yj - Xj %*% bj\n  R2j <- 1 - sum(sisa^2) / sum((yj - mean(yj))^2)\n  1 / (1 - R2j)\n}\nXp <- cbind(1, wil$pendapatan, wil$lama_sekolah, wil$umur_krt)\nround(c(pendapatan = vif_manual(Xp, 2),\n        lama_sekolah = vif_manual(Xp, 3),\n        umur_krt = vif_manual(Xp, 4)), 4)"
+      judul_r: "fungsi VIF buatan sendiri"
+      eval: true
+      penjelasan: >
+        Fungsi dibuat sendiri sesuai definisi faktor inflasi ragam. Peubah ke-j dijadikan tanggapan,
+        sedangkan kolom lainnya menjadi peubah bebas; argumen drop bernilai FALSE menjaga hasilnya tetap
+        berupa matriks meski hanya satu kolom. Koefisien determinasi regresi bantu itu dihitung, lalu
+        faktor inflasi ragam adalah kebalikan dari satu dikurangi nilainya. Fungsi diterapkan ke ketiga
+        peubah bebas.
+      interpretasi: >
+        Nilai faktor inflasi ragam mendekati satu menandakan peubah bebas hampir tidak berkorelasi satu
+        sama lain, sehingga tidak ada persoalan kekolinearan. Nilai di atas sepuluh lazim dipandang
+        bermasalah. Rumusnya memperjelas maknanya: faktor ini mengukur seberapa besar ragam penduga
+        koefisien membengkak akibat peubah bebas dapat diterangkan oleh peubah bebas lainnya.
+    - contoh: "Studi kasus: laporan regresi lengkap"
+      kode_r: "cat(\"=== 1. Model dugaan ===\\n\")\ncat(sprintf(\"y_topi = %.4f + %.6f x\\n\", b0, b1))\n\ncat(\"\\n=== 2. Kebermaknaan ===\\n\")\ncat(sprintf(\"Uji t kemiringan : t = %.4f, db = %d, p = %.5f\\n\", t_b1, db_sisa, p_b1))\ncat(sprintf(\"Uji F model      : F = %.4f, p = %.5f\\n\", F_hitung, p_F))\ncat(sprintf(\"Selang 95 persen b1: [%.6f ; %.6f]\\n\",\n            selang[\"b1\",\"bawah\"], selang[\"b1\",\"atas\"]))\n\ncat(\"\\n=== 3. Kebaikan model ===\\n\")\ncat(sprintf(\"R2 = %.5f, R2 terkoreksi = %.5f, galat baku model = %.3f\\n\",\n            R2, R2_koreksi, s))\n\ncat(\"\\n=== 4. Asumsi ===\\n\")\ncat(sprintf(\"Shapiro sisaan p = %.5f\\n\", shapiro.test(sisaan)$p.value))\n\ncat(\"\\n=== 5. Kesimpulan ===\\n\")\ncat(ifelse(p_b1 < 0.05,\n  \"Tolak H0: terdapat cukup bukti hubungan lurus antara kedua peubah.\",\n  \"Tidak tolak H0: belum cukup bukti adanya hubungan lurus.\"), \"\\n\")\ncat(sprintf(\"Model menerangkan %.2f persen keragaman pengeluaran.\\n\", 100*R2))"
+      judul_r: "alur lima langkah pelaporan"
+      eval: true
+      penjelasan: >
+        Alurnya disusun dalam lima bagian bertanda judul memakai cat, seluruhnya memanfaatkan besaran
+        yang sudah dihitung manual pada contoh-contoh sebelumnya sehingga tidak ada perhitungan ulang.
+        Fungsi sprintf memformat angka dengan ketelitian yang sesuai. Bagian terakhir mengubah nilai-p
+        menjadi kalimat keputusan dengan ifelse, lalu menyatakan koefisien determinasi sebagai persentase.
+      interpretasi: >
+        Inilah kerangka laporan regresi yang lengkap: model dugaan, kebermaknaan koefisien dan model,
+        kebaikan model, pemeriksaan asumsi, dan kesimpulan dalam kalimat. Perhatikan bahwa yang
+        dilaporkan bukan hanya nilai-p, melainkan juga selang kepercayaan koefisien dan koefisien
+        determinasi. Perhatikan pula susunan kalimat kesimpulannya yang menyatakan kecukupan bukti, bukan
+        pembuktian.
+  latihan:
+    - "Kerjakan bertahap. **Dasar** melengkapi kode; **Menengah** menulis sendiri dan membetulkan kode; **Lanjut** menyusun laporan. Gunakan `data/data_wilayah.csv`. Seluruh perhitungan dikerjakan **manual**; fungsi bawaan R baru dipakai pada bagian Tambahan setelah Penugasan."
+    - "#### Tingkat Dasar (melengkapi kode)"
+    - "\\latihan{Korelasi manual}"
+    - "```{r eval=FALSE}\nwil <- read.csv(\"data/data_wilayah.csv\")\nx <- wil$umur_krt; y <- wil$pendapatan; n <- length(x)\nSxy <- sum((x - mean(x)) * (y - ____))        # simpangan y\nSxx <- sum((x - mean(x))^2)\nSyy <- sum((y - mean(y))^2)\nr <- Sxy / ____(Sxx * Syy)                     # akar hasil kali\n```"
+    - "\\latihan{Koefisien regresi}"
+    - "```{r eval=FALSE}\nb1 <- Sxy / ____                    # penyebut kemiringan\nb0 <- mean(y) - b1 * ____           # rumus intersep\n```"
+    - "\\latihan{Nilai kritis dan nilai-p}"
+    - "```{r eval=FALSE}\ndb <- n - 2\n____(0.975, df = db)                # nilai kritis t\n2 * ____(-abs(2.8), df = db)        # nilai-p dua arah untuk t = 2,5\n1 - ____(6.25, 1, db)               # nilai-p uji F untuk F = 6,25\n```"
+    - "#### Tingkat Menengah (menulis sendiri)"
+    - "\\latihan{Regresi sederhana manual lengkap}"
+    - "Untuk `pengeluaran` sebagai peubah tak bebas dan `lama_sekolah` sebagai peubah bebas, hitung **seluruhnya manual**: koefisien korelasi beserta ujinya, penduga `b0` dan `b1`, nilai dugaan dan sisaan, penguraian jumlah kuadrat, koefisien determinasi, galat baku kedua koefisien, statistik t beserta nilai-p, dan tabel ANOVA regresi beserta uji F. Buktikan bahwa (a) jumlah sisaan nol, (b) jumlah kuadrat regresi ditambah sisa sama dengan total, (c) koefisien determinasi sama dengan kuadrat korelasi, dan (d) F sama dengan t kuadrat."
+    - "\\latihan{Selang dan diagnosa}"
+    - "Susun selang kepercayaan 95 persen bagi kedua koefisien. Hitung selang kepercayaan rata-rata dan selang prediksi pada tiga nilai `lama_sekolah` pilihan Anda, lalu jelaskan mengapa lebarnya berbeda. Periksa asumsi melalui tiga diagram sisaan dan uji Shapiro-Wilk."
+    - "\\latihan{Membetulkan kode yang salah}"
+    - "Kode berikut memuat beberapa kesalahan (rumus kemiringan terbalik, derajat bebas keliru, nilai-p F memakai ekor yang salah, dan selang prediksi tertukar dengan selang kepercayaan). Temukan dan perbaiki, lalu jelaskan tiap kesalahannya."
+    - "```{r eval=FALSE}\nwil <- read.csv(\"data/data_wilayah.csv\")\nx <- wil$pendapatan; y <- wil$pengeluaran; n <- length(x)\nSxy <- sum((x - mean(x)) * (y - mean(y)))\nSxx <- sum((x - mean(x))^2); Syy <- sum((y - mean(y))^2)\n\n# (a) rumus kemiringan TERBALIK\nb1 <- Sxy / Syy\nb0 <- mean(y) - b1 * mean(x)\n\n# (b) derajat bebas sisa pada regresi sederhana KELIRU\ny_topi <- b0 + b1 * x; sisaan <- y - y_topi\ndb_sisa <- n - 1\ns2 <- sum(sisaan^2) / db_sisa\n\n# (c) nilai-p uji F memakai ekor KANAN\nJK_reg <- sum((y_topi - mean(y))^2)\nF_h <- (JK_reg / 1) / s2\np_F <- pf(F_h, 1, db_sisa)\n\n# (d) ini rumus selang KEPERCAYAAN, bukan selang PREDIKSI\nx0 <- mean(x)\nse_pred <- sqrt(s2) * sqrt(1/n + (x0 - mean(x))^2 / Sxx)\n```"
+    - "**Keluaran yang benar.** Setelah diperbaiki, rumus yang dipakai adalah sebagai berikut. Gunakan ini untuk memverifikasi perbaikan Anda.\n\n```\n# (a) kemiringan = Sxy / Sxx  (bukan Syy)\nb1 <- Sxy / Sxx\n\n# (b) dua koefisien diduga, sehingga db sisa = n - 2\ndb_sisa <- n - 2\n\n# (c) nilai-p uji F = luas ekor KANAN\np_F <- 1 - pf(F_h, 1, db_sisa)\n\n# (d) selang PREDIKSI menambahkan angka 1 di dalam akar\nse_pred <- sqrt(s2) * sqrt(1 + 1/n + (x0 - mean(x))^2 / Sxx)\n```\n\nPemeriksaan yang wajib berhasil setelah perbaikan: `round(sum(sisaan), 8)` bernilai **0**, dan `round(JK_reg + sum(sisaan^2) - Syy, 8)` juga bernilai **0**."
+    - "#### Tingkat Lanjut (kasus kecil)"
+    - "\\latihan{Regresi berganda dengan peubah boneka}"
+    - "Bangun model `pengeluaran` terhadap `pendapatan`, `lama_sekolah`, dan `wilayah` (sebagai peubah boneka), **seluruhnya dengan aljabar matriks**: bentuk matriks rancangan, hitung penduga dengan `solve`, hitung galat baku dari diagonal matriks ragam-peragam, lalu susun tabel koefisien lengkap dengan statistik t dan nilai-p. Hitung pula **faktor inflasi ragam manual** untuk ketiga peubah bebas dan simpulkan ada tidaknya kekolinearan. Tuliskan persamaan garis untuk masing-masing wilayah."
+  penugasan:
+    - "\\begin{kotaktugas}\nSebagai calon analis \\emph{official statistics}, susun laporan analisis korelasi dan regresi atas data wilayah tiruan dari \\texttt{data\\_wilayah.csv} (\\emph{data simulasi}). Seluruh perhitungan pada penugasan ini dikerjakan \\textbf{manual}; fungsi bawaan R dipakai hanya sebagai pemeriksaan pada bagian Tambahan.\n\\end{kotaktugas}"
+    - "**Konteks.** Seorang petugas pengolah data memegang catatan 80 rumah tangga dengan peubah pengeluaran, pendapatan, lama sekolah, umur kepala rumah tangga, dan wilayah. Anda diminta memodelkan pengeluaran rumah tangga."
+    - "\\tugas{Korelasi}"
+    - "1. Hitung **manual** matriks korelasi Pearson antar keempat peubah numerik. Uji kebermaknaan korelasi `pengeluaran` dengan `lama_sekolah` memakai statistik t, nilai kritis `qt`, dan nilai-p `pendapatan` memakai statistik t, nilai kritis `qt`, dan nilai-p `pt`."
+    - "2. Hitung korelasi **Spearman** untuk pasangan yang sama dan bandingkan dengan Pearson. Jelaskan apa yang dapat disimpulkan dari perbedaannya. Sertakan diagram pencar dan **peringatan bahwa korelasi bukan sebab-akibat**."
+    - "\\tugas{Regresi sederhana}"
+    - "3. Duga model `pengeluaran` terhadap `lama_sekolah` dengan **rumus kuadrat terkecil**. Tampilkan nilai dugaan dan sisaan beberapa amatan pertama, lalu buktikan jumlah sisaan nol."
+    - "4. Susun **tabel ANOVA regresi manual** beserta uji F, dan buktikan bahwa **F sama dengan kuadrat statistik t** kemiringan. Hitung koefisien determinasi dan versi terkoreksinya."
+    - "5. Susun selang kepercayaan bagi kedua koefisien. Hitung **selang kepercayaan rata-rata** dan **selang prediksi** pada tiga nilai pendapatan (rendah, tengah, tinggi), lalu jelaskan pola lebarnya."
+    - "6. Gambarkan diagram pencar beserta garis regresi dan **kedua pita selang**."
+    - "\\tugas{Asumsi dan regresi berganda}"
+    - "7. Periksa keempat asumsi regresi melalui sisaan. Tuliskan kesimpulan mengenai kelayakan model."
+    - "8. Bangun model **regresi berganda** dengan aljabar matriks: `pengeluaran` terhadap `pendapatan`, `lama_sekolah`, dan peubah boneka `wilayah`. Susun tabel koefisien lengkap, hitung koefisien determinasi, dan hitung **faktor inflasi ragam manual**."
+    - "\\tugas{Laporan}"
+    - "9. Susun laporan R Markdown berisi kode, keluaran, gambar, dan interpretasi. Tutup dengan **ringkasan (maksimal 300 kata)**: apa yang dapat disimpulkan, seberapa baik model menerangkan data, keterbatasan yang perlu diingat, dan penegasan bahwa data merupakan simulasi dengan peubah yang dibangkitkan saling bebas - sehingga hubungan yang lemah adalah hasil yang wajar dan harus dilaporkan apa adanya."
+  tambahan:
+    - >
+      Seluruh perhitungan pada bagian Contoh sengaja dikerjakan manual langkah demi langkah agar
+      rumus korelasi dan regresi benar-benar dipahami. Bagian ini menyajikan penyelesaian yang sama
+      menggunakan fungsi bawaan R, yang dalam praktik sehari-hari jauh lebih ringkas. Kerjakan bagian
+      ini setelah Anda menyelesaikan Penugasan, lalu bandingkan angkanya dengan hasil manual Anda.
+    - "\\begin{kotakcatatan}\nGunakan fungsi bawaan setelah Anda memahami perhitungan manualnya. Fungsi memang mempercepat pekerjaan, tetapi hanya bermanfaat penuh bila Anda mengetahui apa yang dihitungnya - itulah yang memungkinkan Anda menelusuri kekeliruan ketika keluarannya terasa janggal.\n\\end{kotakcatatan}"
+    - contoh: "Korelasi dengan cor dan cor.test"
+      kode_r: "round(cor(x, y), 6)\ncor.test(x, y)\n# Spearman\nround(cor(x, y, method = \"spearman\"), 6)\n# bandingkan dengan hasil manual\nround(c(manual = r, fungsi = cor(x, y)), 8)"
+      judul_r: "cor.test"
+      eval: true
+      penjelasan: >
+        Fungsi cor menghitung koefisien korelasi, dan cor.test menambahkan pengujian beserta selang
+        kepercayaannya. Argumen method memilih jenis korelasi; bawaannya Pearson. Baris terakhir
+        membandingkan hasil fungsi dengan nilai manual yang dihitung pada bagian Contoh.
+      interpretasi: >
+        Angka fungsi dan angka manual sama persis. Keluaran cor.test memuat statistik t, derajat bebas,
+        nilai-p, dan selang kepercayaan bagi korelasi - seluruhnya sudah kita hitung sendiri sebelumnya,
+        kecuali selang korelasi yang memakai transformasi Fisher.
+    - contoh: "Regresi sederhana dengan lm"
+      kode_r: "model <- lm(pengeluaran ~ pendapatan, data = wil)\nsummary(model)\n# bandingkan koefisien dengan hasil manual\nround(rbind(manual = c(b0, b1), lm = coef(model)), 8)"
+      judul_r: "lm dan summary"
+      eval: true
+      penjelasan: >
+        Fungsi lm menerima bentuk rumus yang dibaca sebagai pengeluaran menurut pendapatan, disertai
+        argumen data. Fungsi summary menampilkan tabel koefisien lengkap beserta galat baku, statistik t,
+        nilai-p, koefisien determinasi, dan uji F model. Fungsi coef mengambil kedua koefisiennya untuk
+        dibandingkan dengan hasil manual.
+      interpretasi: >
+        Seluruh angka pada keluaran summary sudah kita hitung sendiri di bagian Contoh: kolom Estimate
+        adalah b0 dan b1, Std. Error adalah galat baku koefisien, t value dan Pr adalah statistik t
+        beserta nilai-p, Multiple R-squared adalah koefisien determinasi, dan F-statistic adalah uji F
+        model. Membandingkannya menegaskan bahwa fungsi bawaan mengerjakan rumus yang sama.
+    - contoh: "Tabel ANOVA dan komponen model"
+      kode_r: "anova(model)\nround(c(R2 = summary(model)$r.squared,\n        R2_terkoreksi = summary(model)$adj.r.squared,\n        sigma = summary(model)$sigma), 6)\n# selang kepercayaan koefisien\nround(confint(model, level = 0.95), 6)"
+      judul_r: "anova, confint, dan komponen summary"
+      eval: true
+      penjelasan: >
+        Fungsi anova pada objek lm menghasilkan tabel ANOVA regresi. Komponen r.squared, adj.r.squared,
+        dan sigma diambil dari objek summary. Fungsi confint menghitung selang kepercayaan seluruh
+        koefisien sekaligus dengan tingkat keyakinan yang ditentukan.
+      interpretasi: >
+        Ketiganya sepadan dengan perhitungan manual di bagian Contoh: tabel anova sama dengan tabel yang
+        kita susun dengan rbind, komponen sigma adalah galat baku model, dan confint sama dengan selang
+        yang kita hitung dengan qt. Perhatikan bahwa fungsi menyajikannya dalam beberapa perintah
+        terpisah, sedangkan summary merangkumnya dalam satu keluaran.
+    - contoh: "Prediksi dengan predict"
+      kode_r: "baru <- data.frame(pendapatan = c(1500, 3500, 6000))\nkep <- predict(model, newdata = baru, interval = \"confidence\")\npre <- predict(model, newdata = baru, interval = \"prediction\")\nround(cbind(baru, kep), 3)\nround(cbind(baru, pre), 3)\n# lebar kedua selang\nround(c(lebar_kepercayaan = mean(kep[,3] - kep[,2]),\n        lebar_prediksi   = mean(pre[,3] - pre[,2])), 3)"
+      judul_r: "predict dengan interval"
+      eval: true
+      penjelasan: >
+        Data baru disusun sebagai data frame dengan nama kolom yang sama persis dengan peubah bebas
+        model. Fungsi predict menerima model dan data baru; argumen interval memilih jenis selang, yaitu
+        confidence untuk rata-rata tanggapan dan prediction untuk satu amatan baru. Hasilnya digabung
+        dengan data barunya memakai cbind agar mudah dibaca.
+      interpretasi: >
+        Bandingkan lebar kedua selang pada baris terakhir: selang prediksi jauh lebih lebar, persis
+        seperti yang kita hitung manual di bagian Contoh. Fungsi predict jelas jauh lebih ringkas
+        daripada menuliskan rumus galat bakunya sendiri, tetapi tanpa memahami rumus itu mudah tertukar
+        memilih jenis selang - kekeliruan yang berakibat serius dalam pengambilan keputusan.
+    - contoh: "Diagnosa model dengan plot bawaan"
+      kode_r: "par(mfrow = c(2, 2))\nplot(model)\npar(mfrow = c(1, 1))\nshapiro.test(residuals(model))"
+      judul_r: "plot(model) empat diagram"
+      eval: true
+      penjelasan: >
+        Memanggil plot pada objek lm menghasilkan empat diagram diagnosa baku sekaligus, sehingga daerah
+        gambar dibagi menjadi dua baris dua kolom lebih dahulu. Fungsi residuals mengambil sisaan model
+        untuk diuji kenormalannya.
+      interpretasi: >
+        Keempat diagram tersebut adalah sisaan terhadap dugaan, diagram kuantil-kuantil sisaan baku,
+        akar sisaan baku terhadap dugaan untuk memeriksa kesamaan ragam, dan diagram jarak Cook untuk
+        mengenali amatan berpengaruh. Dua yang pertama sudah kita buat manual di bagian Contoh; dua
+        sisanya adalah tambahan yang berguna untuk mendeteksi amatan yang berpengaruh besar terhadap
+        penduga.
+    - contoh: "Regresi berganda dan peubah boneka dengan lm"
+      kode_r: "model2 <- lm(pengeluaran ~ pendapatan + lama_sekolah + wilayah, data = wil)\nsummary(model2)\n# bandingkan koefisien dengan hasil aljabar matriks\nround(coef(model2), 6)\nsuppressPackageStartupMessages(library(car))\nround(vif(model2), 4)"
+      judul_r: "lm berganda dan vif"
+      eval: true
+      penjelasan: >
+        Peubah bebas dituliskan berurutan dipisah tanda tambah. Peubah kategori tidak perlu diubah
+        menjadi peubah boneka secara manual karena lm mengerjakannya sendiri, dengan kategori pertama
+        menurut abjad sebagai acuan. Fungsi vif dari paket car menghitung faktor inflasi ragam seluruh
+        peubah bebas sekaligus.
+      interpretasi: >
+        Perhatikan nama koefisien peubah kategori pada keluaran, yang memuat nama kategori bukan acuan -
+        inilah peubah boneka yang di bagian Contoh kita bentuk sendiri dengan ifelse. Nilai vif juga sama
+        dengan yang dihitung fungsi buatan kita. Membandingkan keduanya menegaskan bahwa kemudahan fungsi
+        bawaan berdiri di atas rumus yang sudah Anda kuasai.
+  ringkasan:
+    - "\\begin{kotaktujuan}\n\\textbf{Daftar periksa penguasaan:}\n\\begin{itemize}\n\\item[$\\square$] Saya dapat menghitung korelasi Pearson dan Spearman beserta ujinya secara manual.\n\\item[$\\square$] Saya dapat menduga koefisien regresi dengan rumus kuadrat terkecil.\n\\item[$\\square$] Saya dapat menguraikan keragaman dan menghitung koefisien determinasi.\n\\item[$\\square$] Saya dapat menghitung galat baku koefisien serta mengujinya dengan \\texttt{qt} dan \\texttt{pt}.\n\\item[$\\square$] Saya dapat menyusun tabel ANOVA regresi dan membuktikan $F = t^{2}$.\n\\item[$\\square$] Saya dapat membedakan selang kepercayaan rata-rata dari selang prediksi.\n\\item[$\\square$] Saya memeriksa keempat asumsi regresi melalui sisaan.\n\\item[$\\square$] Saya dapat membangun regresi berganda dengan aljabar matriks dan peubah boneka.\n\\item[$\\square$] Saya dapat mendeteksi kekolinearan dengan faktor inflasi ragam.\n\\item[$\\square$] Saya menyadari bahwa korelasi dan regresi tidak membuktikan sebab-akibat.\n\\end{itemize}\n\\end{kotaktujuan}"
+    - "**Kartu Referensi Cepat.** Rumus manual dan fungsi padanannya:"
+    - "\\begin{kotakrumus}\n\\begin{tabular}{@{}ll@{}}\n\\textbf{Perhitungan manual} & \\textbf{Fungsi R (bagian Tambahan)}\\\\\n\\texttt{Sxy/sqrt(Sxx*Syy)} & \\texttt{cor(x, y)}\\\\\n\\texttt{r*sqrt(n-2)/sqrt(1-r\\^{}2)} & \\texttt{cor.test(x, y)}\\\\\n\\texttt{b1 <- Sxy/Sxx} & \\texttt{coef(lm(y \\textasciitilde{} x))}\\\\\n\\texttt{b0 <- mean(y) - b1*mean(x)} & \\texttt{}\\\\\n\\texttt{JK\\_reg/JK\\_total} & \\texttt{summary(m)\\$r.squared}\\\\\n\\texttt{sqrt(JK\\_sisa/(n-2))} & \\texttt{summary(m)\\$sigma}\\\\\n\\texttt{s/sqrt(Sxx)} & kolom Std. Error\\\\\n\\texttt{2*pt(-abs(t), n-2)} & kolom Pr($>|$t$|$)\\\\\n\\texttt{qf/pf} untuk uji F & \\texttt{anova(m)}\\\\\n\\texttt{b1 +/- qt(.975,db)*SE} & \\texttt{confint(m)}\\\\\n\\texttt{s*sqrt(1/n + ...)} & \\texttt{predict(..., \"confidence\")}\\\\\n\\texttt{s*sqrt(1 + 1/n + ...)} & \\texttt{predict(..., \"prediction\")}\\\\\n\\texttt{solve(t(X)\\%*\\%X)\\%*\\%t(X)\\%*\\%Y} & \\texttt{lm(y \\textasciitilde{} x1 + x2)}\\\\\n\\texttt{1/(1-R2j)} & \\texttt{car::vif(m)}\\\\\n\\end{tabular}\n\\end{kotakrumus}"
+    - "Modul ini menutup rangkaian mata kuliah sekaligus menyatukan hampir seluruh materi sebelumnya: pendugaan dan selang dari Modul 11, uji asumsi dari Modul 12, tabel ANOVA dari Modul 13, serta eksplorasi grafis dari Modul 7 dan 9. Prinsip penting yang perlu dibawa: pahami rumusnya lebih dahulu sebelum memakai fungsi, periksa asumsi melalui sisaan, bedakan selang kepercayaan dari selang prediksi, laporkan koefisien determinasi bersama selang koefisien, dan jangan pernah menyimpulkan sebab-akibat dari hubungan statistik semata."
+  referensi:
+    - "Draper, N. R., & Smith, H. (1998). *Applied Regression Analysis*, 3rd ed. Wiley. (Rujukan utama regresi.)"
+    - "Walpole, R. E., Myers, R. H., Myers, S. L., & Ye, K. (2016). *Probability and Statistics for Engineers and Scientists*, 9th ed. Pearson. (Korelasi dan regresi sederhana.)"
+    - "Fox, J., & Weisberg, S. (2019). *An R Companion to Applied Regression*, 3rd ed. Sage. (Regresi dengan R, diagnosa, dan faktor inflasi ragam.)"
+    - "Kutner, M. H., Nachtsheim, C. J., Neter, J., & Li, W. (2005). *Applied Linear Statistical Models*, 5th ed. McGraw-Hill. (Model linear, selang prediksi, dan kekolinearan.)"
+
+exercises:
+  - id: "L14.1"
+    points: 15
+    solution: "Tingkat Dasar: rumus korelasi, koefisien regresi, qt/pt/pf."
+    judul_r: "Solusi Tingkat Dasar (R)"
+    solusi_r: |
+      wil <- read.csv("data/data_wilayah.csv")
+      x <- wil$lama_sekolah; y <- wil$pengeluaran; n <- length(x)
+      Sxy <- sum((x - mean(x)) * (y - mean(y)))
+      Sxx <- sum((x - mean(x))^2)
+      Syy <- sum((y - mean(y))^2)
+      r <- Sxy / sqrt(Sxx * Syy)
+
+      b1 <- Sxy / Sxx                 # penyebut = Sxx
+      b0 <- mean(y) - b1 * mean(x)    # memakai rata-rata x
+
+      db <- n - 2
+      qt(0.975, df = db)              # nilai kritis t
+      2 * pt(-abs(2.8), df = db)      # nilai-p dua arah
+      1 - pf(6.25, 1, db)             # nilai-p uji F (ekor kanan)
+    interpretasi: >
+      Koefisien korelasi memakai akar hasil kali Sxx dan Syy sebagai penyebut, sedangkan kemiringan
+      regresi hanya memakai Sxx. Derajat bebas sisa pada regresi sederhana adalah n dikurangi dua karena
+      dua koefisien diduga. Nilai-p uji t memakai dua arah, sedangkan uji F selalu ekor kanan.
+  - id: "L14.2"
+    points: 25
+    solution: "Tingkat Menengah dan Lanjut: regresi manual lengkap, selang dan diagnosa, serta regresi berganda matriks."
+    judul_r: "Solusi Menengah dan Lanjut (R)"
+    solusi_r: |
+      wil <- read.csv("data/data_wilayah.csv")
+      x <- wil$lama_sekolah; y <- wil$pengeluaran; n <- length(x)
+      Sxy <- sum((x-mean(x))*(y-mean(y))); Sxx <- sum((x-mean(x))^2); Syy <- sum((y-mean(y))^2)
+
+      # ---- regresi manual lengkap ----
+      r  <- Sxy/sqrt(Sxx*Syy)
+      b1 <- Sxy/Sxx; b0 <- mean(y) - b1*mean(x)
+      y_topi <- b0 + b1*x; sisaan <- y - y_topi
+      JK_total <- Syy; JK_reg <- sum((y_topi-mean(y))^2); JK_sisa <- sum(sisaan^2)
+      db_sisa <- n - 2; s2 <- JK_sisa/db_sisa; s <- sqrt(s2)
+      SE_b1 <- s/sqrt(Sxx); SE_b0 <- s*sqrt(1/n + mean(x)^2/Sxx)
+      t_b1 <- b1/SE_b1; p_b1 <- 2*pt(-abs(t_b1), db_sisa)
+      F_h <- (JK_reg/1)/s2; p_F <- 1 - pf(F_h, 1, db_sisa)
+      R2 <- JK_reg/JK_total
+
+      # empat pembuktian yang diminta
+      round(c(jumlah_sisaan = sum(sisaan),
+              selisih_JK = JK_reg + JK_sisa - JK_total,
+              R2_minus_r2 = R2 - r^2,
+              F_minus_t2 = F_h - t_b1^2), 8)   # keempatnya harus 0
+
+      # ---- selang dan diagnosa ----
+      tk <- qt(0.975, db_sisa)
+      rbind(b0 = c(b0 - tk*SE_b0, b0 + tk*SE_b0),
+            b1 = c(b1 - tk*SE_b1, b1 + tk*SE_b1))
+      for (x0 in c(3, 8, 14)) {
+        se_r <- s*sqrt(1/n + (x0-mean(x))^2/Sxx)
+        se_p <- s*sqrt(1 + 1/n + (x0-mean(x))^2/Sxx)
+        cat(sprintf("x0=%2d  lebar CI=%.2f  lebar PI=%.2f\n",
+                    x0, 2*tk*se_r, 2*tk*se_p))
+      }
+      par(mfrow = c(1, 3))
+      plot(y_topi, sisaan, pch=19, col="#0B6FB4"); abline(h=0, col="#F58220", lty=2)
+      qqnorm(sisaan, pch=19, col="#0B6FB4"); qqline(sisaan, col="#F58220", lwd=2)
+      hist(sisaan, breaks=12, col="#0B6FB4", border="white", main="")
+      par(mfrow = c(1, 1))
+      shapiro.test(sisaan)
+
+      # ---- regresi berganda dengan aljabar matriks ----
+      D <- ifelse(wil$wilayah == "Perkotaan", 1, 0)
+      X <- cbind(1, wil$pendapatan, wil$lama_sekolah, D)
+      colnames(X) <- c("(Intersep)","pendapatan","lama_sekolah","D_Perkotaan")
+      Y <- wil$pengeluaran
+      XtX <- t(X) %*% X
+      b <- solve(XtX) %*% t(X) %*% Y
+      sisb <- Y - X %*% b
+      dbb <- length(Y) - ncol(X); s2b <- sum(sisb^2)/dbb
+      SEb <- sqrt(diag(s2b * solve(XtX)))
+      tb <- as.vector(b)/SEb
+      round(cbind(duga = as.vector(b), SE = SEb, t = tb,
+                  p = 2*pt(-abs(tb), dbb)), 6)
+
+      vif_manual <- function(Xm, j) {
+        yj <- Xm[, j]; Xj <- Xm[, -j, drop = FALSE]
+        bj <- solve(t(Xj) %*% Xj) %*% t(Xj) %*% yj
+        1 / (1 - (1 - sum((yj - Xj %*% bj)^2)/sum((yj-mean(yj))^2)))
+      }
+      round(sapply(2:4, function(j) vif_manual(X, j)), 4)
+      cat(sprintf("Perdesaan : y = %.2f + %.5f x1 + %.5f x2\n", b[1], b[2], b[3]))
+      cat(sprintf("Perkotaan : y = %.2f + %.5f x1 + %.5f x2\n", b[1]+b[4], b[2], b[3]))
+    interpretasi: >
+      Keempat pembuktian bernilai nol hingga ketelitian mesin, menegaskan seluruh rumus dipakai dengan
+      benar. Perbandingan lebar selang pada tiga nilai peubah bebas memperlihatkan dua hal sekaligus:
+      selang prediksi selalu lebih lebar, dan kedua selang melebar ketika menjauh dari rata-rata. Pada
+      regresi berganda, aljabar matriks memberi seluruh keluaran yang sama dengan fungsi bawaan, dan
+      koefisien peubah boneka menyatakan selisih intersep kedua wilayah sehingga menghasilkan dua garis
+      sejajar.
+  - id: "L14.D"
+    points: 10
+    solution: "Membetulkan kode: penyebut kemiringan, derajat bebas sisa, ekor nilai-p F, dan rumus selang prediksi."
+    judul_r: "Solusi Membetulkan Kode (R)"
+    solusi_r: |
+      wil <- read.csv("data/data_wilayah.csv")
+      x <- wil$pendapatan; y <- wil$pengeluaran; n <- length(x)
+      Sxy <- sum((x - mean(x)) * (y - mean(y)))
+      Sxx <- sum((x - mean(x))^2); Syy <- sum((y - mean(y))^2)
+
+      # (a) penyebut kemiringan adalah Sxx, bukan Syy
+      b1 <- Sxy / Sxx
+      b0 <- mean(y) - b1 * mean(x)
+
+      # (b) dua koefisien diduga, sehingga db sisa = n - 2
+      y_topi <- b0 + b1 * x; sisaan <- y - y_topi
+      db_sisa <- n - 2
+      s2 <- sum(sisaan^2) / db_sisa
+
+      # (c) nilai-p uji F adalah luas ekor KANAN
+      JK_reg <- sum((y_topi - mean(y))^2)
+      F_h <- (JK_reg / 1) / s2
+      p_F <- 1 - pf(F_h, 1, db_sisa)
+
+      # (d) selang PREDIKSI menambahkan angka 1 di dalam akar
+      x0 <- mean(x)
+      se_pred <- sqrt(s2) * sqrt(1 + 1/n + (x0 - mean(x))^2 / Sxx)
+
+      # pemeriksaan wajib
+      round(c(jumlah_sisaan = sum(sisaan),
+              selisih_JK = JK_reg + sum(sisaan^2) - Syy), 8)
+    interpretasi: >
+      Empat kesalahan diperbaiki. Pertama, kemiringan membagi Sxy dengan Sxx; memakai Syy menghasilkan
+      besaran yang sama sekali berbeda dan satuannya pun keliru. Kedua, derajat bebas sisa pada regresi
+      sederhana adalah n dikurangi dua karena intersep dan kemiringan sama-sama diduga; memakai n
+      dikurangi satu membuat ragam sisa terlalu kecil sehingga uji menjadi terlalu longgar. Ketiga,
+      statistik F selalu diuji pada ekor kanan. Keempat, selang prediksi memperhitungkan keragaman satu
+      amatan sehingga menambahkan angka satu di dalam akar; tanpa itu yang dihitung adalah selang
+      kepercayaan bagi rata-rata. Kedua pemeriksaan di akhir harus bernilai nol.
+  - id: "T14.1"
+    points: 50
+    solution: "Penugasan: korelasi manual, regresi sederhana lengkap, selang, asumsi, dan regresi berganda matriks."
+    judul_r: "Solusi Penugasan (R)"
+    solusi_r: |
+      wil <- read.csv("data/data_wilayah.csv")
+      num <- wil[, c("pengeluaran","pendapatan","lama_sekolah","umur_krt")]
+
+      # 1) matriks korelasi MANUAL + uji
+      korelasi_manual <- function(a, b) {
+        sum((a-mean(a))*(b-mean(b))) / sqrt(sum((a-mean(a))^2)*sum((b-mean(b))^2))
+      }
+      K <- outer(1:4, 1:4, Vectorize(function(i, j) korelasi_manual(num[[i]], num[[j]])))
+      dimnames(K) <- list(names(num), names(num)); round(K, 4)
+
+      x <- wil$pendapatan; y <- wil$pengeluaran; n <- length(x)
+      Sxy <- sum((x-mean(x))*(y-mean(y))); Sxx <- sum((x-mean(x))^2); Syy <- sum((y-mean(y))^2)
+      r <- Sxy/sqrt(Sxx*Syy)
+      t_r <- r*sqrt(n-2)/sqrt(1-r^2)
+      c(r = r, t = t_r, kritis = qt(0.975, n-2), p = 2*pt(-abs(t_r), n-2)) |> round(5)
+
+      # 2) Spearman
+      rx <- rank(x); ry <- rank(y)
+      rs <- korelasi_manual(rx, ry)
+      c(pearson = r, spearman = rs) |> round(5)
+      plot(x, y, pch = 19, col = "#0B6FB4",
+           xlab = "Pendapatan", ylab = "Pengeluaran")
+
+      # 3-4) regresi manual + ANOVA + pembuktian
+      b1 <- Sxy/Sxx; b0 <- mean(y) - b1*mean(x)
+      y_topi <- b0 + b1*x; sisaan <- y - y_topi
+      JK_reg <- sum((y_topi-mean(y))^2); JK_sisa <- sum(sisaan^2)
+      db_sisa <- n-2; s2 <- JK_sisa/db_sisa; s <- sqrt(s2)
+      SE_b1 <- s/sqrt(Sxx); t_b1 <- b1/SE_b1
+      F_h <- (JK_reg/1)/s2
+      round(rbind(Regresi = c(1, JK_reg, JK_reg, F_h, 1-pf(F_h,1,db_sisa)),
+                  Sisa = c(db_sisa, JK_sisa, s2, NA, NA),
+                  Total = c(n-1, Syy, NA, NA, NA)), 5)
+      round(c(F = F_h, t2 = t_b1^2, R2 = JK_reg/Syy, r2 = r^2,
+              jumlah_sisaan = sum(sisaan)), 8)
+
+      # 5-6) selang dan gambar
+      tk <- qt(0.975, db_sisa); SE_b0 <- s*sqrt(1/n + mean(x)^2/Sxx)
+      rbind(b0 = c(b0-tk*SE_b0, b0+tk*SE_b0), b1 = c(b1-tk*SE_b1, b1+tk*SE_b1))
+      plot(x, y, pch = 19, col = "#0B6FB4", xlab = "Pendapatan", ylab = "Pengeluaran")
+      abline(a = b0, b = b1, col = "#F58220", lwd = 2)
+      xg <- seq(min(x), max(x), length.out = 100); yg <- b0 + b1*xg
+      ser <- s*sqrt(1/n + (xg-mean(x))^2/Sxx); sep <- s*sqrt(1 + 1/n + (xg-mean(x))^2/Sxx)
+      lines(xg, yg-tk*ser, col="#00A651", lty=2); lines(xg, yg+tk*ser, col="#00A651", lty=2)
+      lines(xg, yg-tk*sep, col="#7A5195", lty=3); lines(xg, yg+tk*sep, col="#7A5195", lty=3)
+
+      # 7) asumsi
+      shapiro.test(sisaan)
+
+      # 8) regresi berganda matriks + VIF
+      D <- ifelse(wil$wilayah == "Perkotaan", 1, 0)
+      X <- cbind(1, wil$pendapatan, wil$lama_sekolah, D); Y <- y
+      b <- solve(t(X)%*%X) %*% t(X) %*% Y
+      sisb <- Y - X%*%b; dbb <- n - ncol(X); s2b <- sum(sisb^2)/dbb
+      SEb <- sqrt(diag(s2b*solve(t(X)%*%X))); tb <- as.vector(b)/SEb
+      round(cbind(duga=as.vector(b), SE=SEb, t=tb, p=2*pt(-abs(tb), dbb)), 6)
+      round(1 - sum(sisb^2)/Syy, 5)     # R2 berganda
+    interpretasi: >
+      Matriks korelasi disusun memakai outer dengan Vectorize sehingga fungsi korelasi buatan dapat
+      diterapkan ke seluruh pasangan kolom. Seluruh pembuktian pada nomor 4 bernilai nol atau berpasangan
+      persis, menegaskan rumusnya benar. Gambar pada nomor 6 memperlihatkan kedua pita melebar di ujung.
+      Pada regresi berganda, koefisien determinasi dihitung sebagai satu dikurangi nisbah jumlah kuadrat
+      sisa terhadap total. Perlu ditegaskan dalam laporan bahwa data merupakan simulasi dengan peubah
+      yang dibangkitkan saling bebas, sehingga hubungan yang lemah adalah hasil yang wajar dan tidak
+      boleh ditafsirkan sebagai ketiadaan hubungan pada keadaan sebenarnya, apalagi sebagai hubungan
+      sebab-akibat.
+
+references:
+  - "Draper, N. R., & Smith, H. (1998). Applied Regression Analysis, 3rd ed. Wiley."
+  - "Walpole, R. E., Myers, R. H., Myers, S. L., & Ye, K. (2016). Probability and Statistics for Engineers and Scientists, 9th ed. Pearson."
+  - "Fox, J., & Weisberg, S. (2019). An R Companion to Applied Regression, 3rd ed. Sage."
+  - "Kutner, M. H., Nachtsheim, C. J., Neter, J., & Li, W. (2005). Applied Linear Statistical Models, 5th ed. McGraw-Hill."

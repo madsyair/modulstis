@@ -1,0 +1,143 @@
+---
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_sections: true
+    fig_caption: true
+    includes:
+      in_header: preamble.tex
+geometry: "left=2.6cm,right=2.4cm,top=3.0cm,bottom=2.4cm"
+fontsize: 11pt
+urlcolor: blue
+---
+
+```{r bootstrap, include=FALSE}
+# ============================================================
+#  UBAH DUA NILAI INI untuk modul Anda:
+nomor_modul <- 1
+topik_modul <- "Judul Modul Anda"
+# ============================================================
+# Menulis preamble tema BPS dari package modulstis (self-bootstrapping).
+if (requireNamespace("modulstis", quietly = TRUE)) {
+  th <- modulstis::theme_factory("bps")
+  writeLines(
+    th$preamble(number = nomor_modul, topic = topik_modul, variant = "modul"),
+    "preamble.tex"
+  )
+} else {
+  stop("Package 'modulstis' belum terpasang. Jalankan install.packages('modulstis').")
+}
+
+knitr::opts_chunk$set(
+  echo = TRUE, warning = FALSE, message = FALSE, comment = "",
+  fig.align = "center", fig.pos = "H", out.width = "88%"
+)
+options(width = 95, digits = 4, scipen = 999)
+knitr::knit_hooks$set(output = function(x, options) {
+  paste0("\\begin{routbox}\n\\begin{verbatim}\n", x,
+         "\\end{verbatim}\n\\end{routbox}\n")
+})
+```
+
+```{r cover, echo=FALSE, results='asis'}
+th <- modulstis::theme_factory("bps")
+cat(th$cover(
+  number    = nomor_modul,
+  title     = toupper(topik_modul),
+  pertemuan = "Pertemuan Minggu ke-XX",
+  sub_cpmk  = "Sub-CPMK XX: tuliskan capaian pembelajaran di sini."
+))
+```
+
+\tableofcontents
+\thispagestyle{fancy}
+\newpage
+
+# Deskripsi Modul
+
+Tuliskan deskripsi modul di sini.
+
+\begin{kotakperhatian}[Tentang data]
+Seluruh data pada modul ini adalah data ilustratif hasil simulasi dan
+\textbf{bukan angka resmi BPS}.
+\end{kotakperhatian}
+
+# Tujuan Praktikum
+
+1. Tujuan pertama.
+2. Tujuan kedua.
+
+# Alat dan Bahan
+
+- **R** dan **RStudio**.
+- Paket R: `...`.
+
+# Instruksi Pengerjaan
+
+## Sebelum Praktikum
+1. ...
+
+## Selama Praktikum
+2. ...
+
+## Penyusunan Laporan dan Pengumpulan
+3. ...
+
+\newpage
+
+# Teori Singkat
+
+Tuliskan teori singkat, sertakan rumus bila perlu.
+
+\begin{kotakrumus}
+$$ \text{rumus di sini} $$
+\end{kotakrumus}
+
+# Contoh Praktikum dengan R
+
+\contoh{Judul contoh pertama}
+
+\kode{Membaca data}
+
+```{r contoh-1, eval=FALSE}
+# tuliskan kode R di sini
+```
+
+\begin{kotakinterpretasi}
+Tuliskan interpretasi output di sini.
+\end{kotakinterpretasi}
+
+# Latihan Mandiri
+
+\latihan{Judul latihan}
+
+Lengkapi kode berikut (bagian `____`):
+
+```{r latihan-1, eval=FALSE}
+# hasil <- fungsi(____)
+```
+
+\newpage
+
+# Penugasan
+
+\begin{kotaktugas}
+Tuliskan konteks penugasan berbasis kasus \emph{official statistics}.
+\end{kotaktugas}
+
+\tugas{Judul tugas}
+
+1. ...
+
+# Ringkasan Modul
+
+\begin{kotaktujuan}
+\textbf{Daftar periksa penguasaan:}
+\begin{itemize}
+\item[$\square$] ...
+\end{itemize}
+\end{kotaktujuan}
+
+# Referensi
+
+1. Johnson, R. A. & Wichern, D. W. (2002). *Applied Multivariate Statistical Analysis*.

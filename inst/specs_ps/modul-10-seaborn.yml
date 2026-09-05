@@ -1,0 +1,655 @@
+number: 10
+title: "Visualisasi Data dengan Python: matplotlib dan seaborn"
+short_code: "seaborn"
+topic: "Visualisasi Data (Python)"
+pertemuan: 10
+sub_cpmk: >
+  Sub-CPMK 10: Mahasiswa mengenal pustaka visualisasi data yang populer di Python dan mampu
+  membuat plot dasar dengan seaborn beserta penyesuaiannya melalui matplotlib.
+packages: [matplotlib, seaborn, pandas]
+contoh_title: "Contoh Praktikum dengan Python"
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  ta: "2025/2026"
+  semester: "3 (Ganjil)"
+  prodi: "D-IV Statistika"
+  penyusun:
+    - "Achmad Syahrul Choir"
+    - "Rudi Salam"
+    - "Christiana Anggraeni Putri"
+
+datasets:
+  - name: data_rumahtangga
+    role: contoh
+    recipe:
+      kind: tabular
+      "n": 60
+      seed: 2025
+      columns:
+        wilayah: {type: category, levels: [Perkotaan, Perdesaan], probs: [0.45, 0.55]}
+        provinsi: {type: category, levels: [Provinsi A, Provinsi B, Provinsi C], probs: [0.4, 0.35, 0.25]}
+        pengeluaran: {type: numeric, min: 500, max: 5000, digits: 1}
+        pendapatan: {type: numeric, min: 800, max: 7000, digits: 1}
+        umur_krt: {type: integer, min: 25, max: 70}
+        lama_sekolah: {type: integer, min: 0, max: 16}
+        art: {type: integer, min: 1, max: 8}
+
+body:
+  deskripsi:
+    - >
+      Modul ini adalah pasangan Python dari Modul 9. Pekerjaan yang sama - menampilkan sebaran,
+      membandingkan kelompok, dan menampakkan hubungan antar-peubah - kini dikerjakan dengan
+      \texttt{matplotlib} dan \texttt{seaborn}. Karena kerangka berpikir penyajian data sudah dikuasai
+      dari \texttt{ggplot2}, fokus modul ini adalah memetakan tiap jenis grafik ke sintaks Python serta
+      memahami pembagian peran kedua pustaka tersebut.
+    - >
+      \texttt{matplotlib} adalah pustaka grafik dasar Python yang mengendalikan segala hal hingga ke
+      detail terkecil, tetapi karenanya cukup panjang untuk grafik statistik yang lazim.
+      \texttt{seaborn} dibangun di atasnya dan menyediakan perintah tingkat tinggi yang langsung
+      memahami DataFrame, termasuk melakukan agregasi dan pengelompokan secara otomatis. Dalam praktik
+      keduanya dipakai bersama: seaborn untuk membuat grafiknya, matplotlib untuk merapikannya.
+    - >
+      Agar perbandingannya langsung terasa, modul ini memakai \textbf{berkas data yang sama persis}
+      dengan Modul 7 dan Modul 9. Anda dapat menjalankan contoh di sini lalu membandingkan hasilnya
+      dengan grafik base R dan \texttt{ggplot2} pada modul sebelumnya.
+    - >
+      Materi dibahas dari dasar hingga lanjut: pengenalan ekosistem pustaka visualisasi Python; anatomi
+      Figure dan Axes; grafik sebaran, perbandingan kelompok, dan hubungan; pemetaan peubah ke warna dan
+      bentuk lewat argumen hue dan style; agregasi otomatis pada seaborn beserta jebakannya; pemisahan
+      panel dengan grafik tingkat figur; palet warna dan tema; penyesuaian lewat matplotlib; penataan
+      beberapa grafik; hingga penyimpanan berkas untuk publikasi.
+    - "\\begin{kotakperhatian}[Tentang data]\nBerkas data pada modul ini adalah \\textbf{data simulasi} (\\texttt{set.seed(2025)}), \\textbf{bukan data nyata} dan \\textbf{bukan data resmi} instansi mana pun. Berkas ini identik dengan Modul 7 dan Modul 9 agar ketiga pendekatan dapat dibandingkan.\n\\end{kotakperhatian}"
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:"
+    - "1. **Menjelaskan** ekosistem pustaka visualisasi Python serta pembagian peran `matplotlib` dan `seaborn`."
+    - "2. **Membedakan** objek `Figure` dan `Axes`, serta grafik tingkat *axes* dari tingkat *figure*."
+    - "3. **Membuat** grafik sebaran (`histplot`, `kdeplot`), perbandingan kelompok (`boxplot`, `violinplot`, `barplot`, `countplot`), dan hubungan (`scatterplot`, `regplot`)."
+    - "4. **Memetakan** peubah ke warna dan bentuk dengan argumen `hue` dan `style`."
+    - "5. **Menyadari** bahwa `seaborn.barplot` melakukan agregasi otomatis dan mengendalikannya lewat `estimator`."
+    - "6. **Memisahkan** panel dengan `relplot`, `displot`, dan `catplot`."
+    - "7. **Menyesuaikan** grafik lewat `matplotlib` (judul, sumbu, palet, tema) dan menyimpannya dengan `savefig`."
+  alat:
+    - "Perangkat dan bahan yang diperlukan:"
+    - "- **Python** (Jupyter/Anaconda); modul ini fokus pada Python."
+    - "- Pustaka: `matplotlib`, `seaborn`, dan `pandas`."
+    - "- Berkas data: `data/data_rumahtangga.csv` (identik dengan Modul 7 dan 9)."
+  instruksi:
+    - "Ikuti tahapan berikut:"
+    - "**Sebelum praktikum:** siapkan direktori kerja; letakkan `data_rumahtangga.csv` di subfolder `data/`; pastikan `seaborn` sudah terpasang."
+    - "**Selama praktikum:** kerjakan Contoh berurutan; untuk tiap grafik, **bandingkan dengan versi `ggplot2` pada Modul 9**; biasakan menuliskan apa yang Anda lihat sebelum membaca interpretasi; coba ubah satu argumen lalu amati akibatnya."
+    - "**Pembagian kerja:** Contoh dan Latihan dikerjakan selama sesi praktikum di kelas; **Penugasan dikerjakan sebagai tugas terstruktur di luar sesi**.\n\n**Pengumpulan:** susun laporan Jupyter Notebook (atau R Markdown), render ke PDF/HTML, dan kumpulkan via Google Classroom sesuai tenggat yang ditetapkan dosen."
+  teori:
+    - "### Kaitan dengan Materi Sebelumnya"
+    - >
+      Modul ini berdiri di atas tiga modul. Dari Modul 6 kita membawa kemampuan menyiapkan data dengan
+      \texttt{pandas}, karena seaborn bekerja langsung di atas DataFrame. Dari Modul 7 kita membawa
+      pemahaman jenis grafik dan kapan masing-masing dipakai. Dari Modul 9 kita membawa kerangka berpikir
+      penyajian: memetakan peubah ke unsur visual, memisahkan panel, dan melengkapi grafik agar layak
+      publikasi.
+    - >
+      Karena itu yang perlu dipelajari di sini terutama adalah penerjemahannya, ditambah beberapa
+      kekhasan Python yang tidak ada padanannya di R. Penguasaan modul ini melengkapi keterampilan
+      penyajian di kedua bahasa, sehingga mahasiswa dapat memilih perkakas sesuai kebutuhan pekerjaan.
+    - "\\begin{kotakcatatan}[Padanan dari R]\nPemetaan \\texttt{ggplot2} ke \\texttt{seaborn}:\\\\[3pt]\n\\begin{tabular}{@{}ll@{}}\n\\textbf{ggplot2 (R)} & \\textbf{seaborn (Python)}\\\\\n\\texttt{ggplot(df, aes(x, y))} & argumen \\texttt{data=}, \\texttt{x=}, \\texttt{y=}\\\\\n\\texttt{geom\\_point()} & \\texttt{sns.scatterplot()}\\\\\n\\texttt{geom\\_histogram()} & \\texttt{sns.histplot()}\\\\\n\\texttt{geom\\_density()} & \\texttt{sns.kdeplot()}\\\\\n\\texttt{geom\\_boxplot()} & \\texttt{sns.boxplot()}\\\\\n\\texttt{geom\\_violin()} & \\texttt{sns.violinplot()}\\\\\n\\texttt{geom\\_bar()} & \\texttt{sns.countplot()}\\\\\n\\texttt{geom\\_col()} & \\texttt{sns.barplot()}\\\\\n\\texttt{geom\\_smooth(method=\"lm\")} & \\texttt{sns.regplot()}\\\\\n\\texttt{aes(colour = g)} & \\texttt{hue=\"g\"}\\\\\n\\texttt{aes(shape = g)} & \\texttt{style=\"g\"}\\\\\n\\texttt{facet\\_wrap(\\textasciitilde{} g)} & \\texttt{col=\"g\"} pada \\texttt{relplot}/\\texttt{displot}\\\\\n\\texttt{labs()} & \\texttt{ax.set()} atau \\texttt{plt.title()}\\\\\n\\texttt{theme\\_minimal()} & \\texttt{sns.set\\_theme(style=)}\\\\\n\\texttt{ggsave()} & \\texttt{plt.savefig()}\\\\\n\\end{tabular}\n\\end{kotakcatatan}"
+    - "### Ekosistem Pustaka Visualisasi Python"
+    - >
+      Python memiliki beberapa pustaka visualisasi dengan peran berbeda. \textbf{matplotlib} adalah
+      fondasi yang dipakai hampir semua pustaka lain; ia sangat lentur tetapi menuntut penulisan
+      terperinci. \textbf{seaborn} dibangun di atasnya, berorientasi statistik, dan langsung memahami
+      DataFrame. \textbf{pandas} sendiri menyediakan metode \texttt{.plot} yang praktis untuk pemeriksaan
+      cepat. Untuk grafik interaktif tersedia \textbf{plotly}, sedangkan \textbf{plotnine} menawarkan
+      sintaks yang meniru \texttt{ggplot2}.
+    - "\\begin{kotaktips}\nPola kerja yang dianjurkan: pakai \\texttt{seaborn} untuk membuat grafiknya karena ringkas dan cerdas terhadap data, lalu pakai \\texttt{matplotlib} untuk merapikan judul, sumbu, dan ukurannya. Keduanya bukan pilihan yang saling meniadakan, melainkan dua lapis yang bekerja bersama.\n\\end{kotaktips}"
+    - "### Anatomi Figure dan Axes"
+    - >
+      Ini konsep terpenting yang membedakan matplotlib dari \texttt{ggplot2}. \textbf{Figure} adalah
+      keseluruhan kanvas atau halaman gambar, sedangkan \textbf{Axes} adalah satu bidang gambar di
+      dalamnya lengkap dengan sumbu, judul, dan isinya. Satu Figure dapat memuat beberapa Axes.
+      Perintah \texttt{plt.subplots()} menghasilkan keduanya sekaligus, dan objek Axes itulah yang
+      diserahkan ke seaborn lewat argumen \texttt{ax}.
+    - >
+      \textbf{Dua tingkat perintah seaborn.} Fungsi tingkat \emph{axes} seperti
+      \texttt{sns.scatterplot} dan \texttt{sns.boxplot} menggambar pada satu Axes sehingga dapat
+      digabung dan dirapikan dengan matplotlib. Fungsi tingkat \emph{figure} seperti
+      \texttt{sns.relplot}, \texttt{sns.displot}, dan \texttt{sns.catplot} membuat Figure sendiri
+      lengkap dengan panel-panelnya, sehingga tidak menerima argumen \texttt{ax}.
+    - "\\begin{kotaksalah}[Argumen ax pada fungsi tingkat figure]\nMenyerahkan argumen \\texttt{ax} kepada \\texttt{relplot}, \\texttt{displot}, atau \\texttt{catplot} akan menimbulkan galat, karena ketiganya membuat Figure sendiri. Bila Anda ingin menggambar pada Axes tertentu, gunakan padanan tingkat axes-nya: \\texttt{scatterplot}, \\texttt{histplot}, atau \\texttt{boxplot}.\n\\end{kotaksalah}"
+    - "### Pemetaan Peubah dan Agregasi Otomatis"
+    - >
+      Argumen \texttt{hue} memetakan peubah ke warna, \texttt{style} ke bentuk penanda atau jenis garis,
+      dan \texttt{size} ke ukuran. Ketiganya sepadan dengan pemetaan di dalam \texttt{aes} pada
+      \texttt{ggplot2}, dan legenda dibuat otomatis.
+    - >
+      \textbf{Yang perlu diwaspadai.} Beberapa fungsi seaborn melakukan perhitungan statistik sendiri.
+      \texttt{sns.barplot} secara bawaan menggambar \emph{rata-rata} tiap kategori beserta pita selang
+      kepercayaan, bukan menjumlahkannya. Ini berbeda dari \texttt{geom\_col} pada \texttt{ggplot2} yang
+      menggambar nilai apa adanya.
+    - "\\begin{kotaksalah}[barplot menghitung rata-rata]\nBila Anda menyerahkan data mentah ke \\texttt{sns.barplot} dan mengharapkan jumlah, hasilnya akan keliru karena yang digambar adalah rata-rata. Kendalikan lewat argumen \\texttt{estimator}, misalnya \\texttt{estimator=\"sum\"}, atau ringkas data lebih dahulu dengan \\texttt{groupby} lalu gambarkan hasilnya. Untuk sekadar mencacah banyaknya baris, gunakan \\texttt{sns.countplot}.\n\\end{kotaksalah}"
+    - "### Palet, Tema, dan Penyimpanan"
+    - >
+      Fungsi \texttt{sns.set\_theme} mengatur gaya seluruh grafik sekaligus lewat argumen
+      \texttt{style} dan \texttt{palette}. Warna dapat pula ditentukan per grafik lewat argumen
+      \texttt{palette} berupa daftar atau kamus. Penyimpanan memakai \texttt{plt.savefig} dengan
+      argumen \texttt{dpi} dan \texttt{bbox\_inches} bernilai tight agar tepiannya tidak terpotong.
+    - "\\begin{kotaksalah}[Grafik menumpuk]\nDi luar Jupyter, gambar tidak otomatis ditutup sehingga perintah berikutnya dapat menimpa gambar sebelumnya. Biasakan membuat Figure baru dengan \\texttt{plt.subplots()} untuk tiap grafik, dan memanggil \\texttt{plt.show()} atau \\texttt{plt.close()} setelah selesai.\n\\end{kotaksalah}"
+    - "\\begin{kotakrumus}\n\\textbf{Kerangka baku:}\\\\\n\\texttt{fig, ax = plt.subplots(figsize=(7, 4))}\\\\\n\\texttt{sns.scatterplot(data=df, x=\"a\", y=\"b\", hue=\"g\", ax=ax)}\\\\\n\\texttt{ax.set(title=\"Judul\", xlabel=\"Sumbu X\", ylabel=\"Sumbu Y\")}\\\\\n\\texttt{plt.tight\\_layout()}\\\\\n\\texttt{plt.show()}\n\\end{kotakrumus}"
+    - "\\begin{kotakvariasi}\nUntuk grafik interaktif tersedia \\texttt{plotly} yang menghasilkan grafik dapat digeser dan diperbesar, cocok untuk dasbor. Bagi yang terbiasa dengan R, \\texttt{plotnine} menyediakan sintaks yang hampir identik dengan \\texttt{ggplot2} di Python. Untuk pemeriksaan cepat, metode \\texttt{.plot} bawaan pandas sering sudah memadai.\n\\end{kotakvariasi}"
+  contoh:
+    - contoh: "Memuat pustaka dan menyiapkan gaya"
+      kode: "import matplotlib\nmatplotlib.use(\"Agg\")            # backend tanpa jendela, untuk laporan\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nimport pandas as pd\nimport numpy as np\n\nrt = pd.read_csv(\"data/data_rumahtangga.csv\")\nsns.set_theme(style=\"whitegrid\")   # gaya seluruh grafik\nprint(sns.__version__, matplotlib.__version__)\nprint(rt.shape)"
+      bahasa: Python
+      kode_judul: "impor pustaka dan set_theme"
+      eval: true
+      penjelasan: >
+        Backend Agg dipilih lebih dahulu agar grafik dibuat sebagai berkas tanpa membuka jendela, yang
+        diperlukan saat merender laporan; di Jupyter langkah ini tidak wajib. Pustaka diimpor dengan
+        nama singkat yang lazim, yaitu plt untuk pyplot dan sns untuk seaborn. Data dibaca dengan
+        pandas. Fungsi set_theme mengatur gaya seluruh grafik berikutnya sekaligus, di sini gaya berkisi
+        putih. Dua baris terakhir memastikan pustaka termuat dan data terbaca.
+      interpretasi: >
+        Pemanggilan set_theme cukup sekali di awal berkas dan berlaku untuk seluruh grafik setelahnya -
+        ini sepadan dengan menetapkan tema baku pada ggplot2. Ukuran data yang tercetak memastikan berkas
+        yang dibaca sama dengan yang dipakai pada Modul 7 dan Modul 9, sehingga seluruh grafik di modul
+        ini dapat dibandingkan langsung dengan kedua modul tersebut.
+    - contoh: "Anatomi Figure dan Axes"
+      kode: "fig, ax = plt.subplots(figsize=(7, 3.5))\nprint(type(fig).__name__, \"|\", type(ax).__name__)\nsns.scatterplot(data=rt, x=\"pendapatan\", y=\"pengeluaran\", ax=ax)\nax.set(title=\"Grafik pada satu Axes\",\n       xlabel=\"Pendapatan (ribu Rp)\", ylabel=\"Pengeluaran (ribu Rp)\")\nplt.tight_layout(); plt.show()"
+      bahasa: Python
+      kode_judul: "plt.subplots dan objek ax"
+      eval: true
+      penjelasan: >
+        Fungsi plt.subplots mengembalikan dua objek sekaligus: Figure sebagai kanvas keseluruhan dan
+        Axes sebagai bidang gambarnya; argumen figsize menetapkan ukuran dalam inci. Baris kedua
+        mencetak jenis kedua objek untuk membuktikannya. Objek ax kemudian diserahkan ke seaborn lewat
+        argumen ax sehingga grafik digambar di bidang tersebut. Metode ax.set mengisi judul dan nama
+        kedua sumbu sekaligus. Fungsi tight_layout merapikan jarak agar label tidak terpotong.
+      interpretasi: >
+        Inilah pola baku yang dipakai sepanjang modul. Memisahkan Figure dan Axes memberi kendali penuh:
+        ukuran diatur di tingkat Figure, sedangkan judul dan sumbu diatur di tingkat Axes. Pada ggplot2
+        keduanya menyatu dalam satu objek, sedangkan di Python pembagian ini justru memudahkan ketika
+        beberapa grafik harus ditata dalam satu gambar.
+    - contoh: "matplotlib murni dibandingkan seaborn"
+      kode: "fig, axes = plt.subplots(1, 2, figsize=(9, 3.4))\n# matplotlib murni: perlu menyiapkan sendiri\naxes[0].scatter(rt[\"pendapatan\"], rt[\"pengeluaran\"], color=\"#0B6FB4\", s=18)\naxes[0].set(title=\"matplotlib\", xlabel=\"pendapatan\", ylabel=\"pengeluaran\")\n# seaborn: memahami DataFrame dan nama kolom\nsns.scatterplot(data=rt, x=\"pendapatan\", y=\"pengeluaran\",\n                color=\"#0B6FB4\", s=18, ax=axes[1])\naxes[1].set(title=\"seaborn\", xlabel=\"pendapatan\", ylabel=\"pengeluaran\")\nplt.tight_layout(); plt.show()"
+      bahasa: Python
+      kode_judul: "dua pustaka berdampingan"
+      eval: true
+      penjelasan: >
+        Fungsi plt.subplots dipanggil dengan dua angka, yaitu satu baris dan dua kolom, sehingga
+        mengembalikan larik (*array*) berisi dua Axes yang diakses dengan nomor posisi. Panel kiri memakai metode
+        scatter milik matplotlib yang menerima dua rangkaian angka, sehingga kolomnya harus diambil
+        sendiri dari DataFrame. Panel kanan memakai seaborn yang cukup diberi nama kolom lewat argumen
+        data, x, dan y. Argumen s menetapkan ukuran penanda pada keduanya.
+      interpretasi: >
+        Kedua panel menghasilkan gambar yang praktis sama, tetapi cara penulisannya berbeda. matplotlib
+        bekerja pada rangkaian angka sehingga penggunanya harus mengurus sendiri pengambilan kolom;
+        seaborn bekerja pada DataFrame sehingga cukup menyebut nama kolomnya. Perbedaan ini makin terasa
+        pada grafik yang lebih rumit, misalnya ketika peubah dipetakan ke warna, yang di seaborn cukup
+        satu argumen saja.
+    - contoh: "Memetakan peubah ke warna dan bentuk"
+      kode: "fig, ax = plt.subplots(figsize=(7, 3.8))\nsns.scatterplot(data=rt, x=\"pendapatan\", y=\"pengeluaran\",\n                hue=\"wilayah\", style=\"wilayah\", s=45,\n                palette={\"Perkotaan\": \"#0B6FB4\", \"Perdesaan\": \"#F58220\"}, ax=ax)\nax.set(title=\"Pengeluaran menurut Pendapatan\",\n       xlabel=\"Pendapatan (ribu Rp)\", ylabel=\"Pengeluaran (ribu Rp)\")\nax.legend(title=\"Wilayah\")\nplt.tight_layout(); plt.show()"
+      bahasa: Python
+      kode_judul: "hue, style, dan palette"
+      eval: true
+      penjelasan: >
+        Argumen hue memetakan peubah wilayah ke warna, dan style memetakan peubah yang sama ke bentuk
+        penanda, sehingga kedua kelompok tetap terbedakan bila dicetak hitam putih. Argumen palette
+        menerima kamus yang memasangkan tiap kategori dengan warna tertentu, di sini palet BPS. Argumen
+        s ditulis di luar pemetaan karena ukurannya tetap. Metode ax.legend dipakai untuk memberi judul
+        pada legenda yang dibuat otomatis.
+      interpretasi: >
+        Bandingkan dengan contoh serupa pada Modul 9: argumen hue sepadan dengan colour di dalam aes,
+        dan style sepadan dengan shape. Perbedaan pentingnya, di seaborn pemetaan dan penetapan nilai
+        tetap dibedakan bukan oleh letak penulisannya melainkan oleh nama argumennya - hue menerima nama
+        kolom, sedangkan color menerima warna tunggal. Ini menghindarkan jebakan yang dibahas pada Modul 9.
+    - contoh: "Histogram dan kurva kepekatan"
+      kode: "fig, ax = plt.subplots(figsize=(7, 3.6))\nsns.histplot(data=rt, x=\"pengeluaran\", bins=12, kde=True,\n             color=\"#0B6FB4\", edgecolor=\"white\", ax=ax)\nax.set(title=\"Sebaran Pengeluaran Rumah Tangga\",\n       xlabel=\"Pengeluaran (ribu Rp)\", ylabel=\"Frekuensi\")\nax.axvline(rt[\"pengeluaran\"].mean(), color=\"#F58220\", linestyle=\"--\", linewidth=2)\nplt.tight_layout(); plt.show()"
+      bahasa: Python
+      kode_judul: "histplot dengan kde"
+      eval: true
+      penjelasan: >
+        Fungsi histplot menggambar histogram; argumen bins mengatur banyaknya selang dan edgecolor
+        memberi garis tepi putih agar batang terpisah jelas. Argumen kde bernilai True menambahkan kurva
+        kepekatan di atasnya sehingga tidak perlu memanggil fungsi terpisah. Metode ax.axvline
+        menggambar garis tegak pada posisi rata-rata, dengan jenis garis putus-putus lewat linestyle.
+      interpretasi: >
+        Pada Modul 9 histogram dan kurva kepekatan memerlukan dua lapisan terpisah beserta penyesuaian
+        skala lewat after_stat, sedangkan di seaborn cukup satu argumen kde. Ini contoh nyata seaborn
+        menyederhanakan tugas statistik yang lazim. Garis rata-rata ditambahkan lewat matplotlib,
+        memperlihatkan bagaimana kedua pustaka bekerja bersama.
+    - contoh: "Perbandingan kelompok: boxplot dan violinplot"
+      kode: "fig, axes = plt.subplots(1, 2, figsize=(9, 3.6))\nwarna = {\"Perkotaan\": \"#0B6FB4\", \"Perdesaan\": \"#F58220\"}\nsns.boxplot(data=rt, x=\"wilayah\", y=\"pengeluaran\",\n            hue=\"wilayah\", palette=warna, legend=False, ax=axes[0])\naxes[0].set(title=\"boxplot\", xlabel=\"\", ylabel=\"Pengeluaran (ribu Rp)\")\nsns.violinplot(data=rt, x=\"wilayah\", y=\"pengeluaran\",\n               hue=\"wilayah\", palette=warna, legend=False, ax=axes[1])\naxes[1].set(title=\"violinplot\", xlabel=\"\", ylabel=\"\")\nplt.tight_layout(); plt.show()"
+      bahasa: Python
+      kode_judul: "boxplot dan violinplot"
+      eval: true
+      penjelasan: >
+        Kamus warna disiapkan sekali lalu dipakai kedua grafik agar konsisten. Kedua fungsi menerima
+        peubah kategori pada sumbu mendatar dan peubah numerik pada sumbu tegak. Argumen hue diisi
+        peubah yang sama dengan x, disertai legend bernilai False, karena versi seaborn terbaru
+        mensyaratkan hue bila palette dipakai; legenda dimatikan karena informasinya sudah ada di sumbu.
+        Nama sumbu tegak dikosongkan pada panel kanan agar tidak berulang.
+      interpretasi: >
+        Diagram kotak-garis meringkas lima serangkai, sedangkan diagram biola menampilkan bentuk sebaran
+        secara utuh sehingga sebaran bermodus ganda pun akan terlihat. Keduanya menjawab pertanyaan yang
+        sedikit berbeda dan sering disajikan bersama. Bandingkan hasilnya dengan Modul 7 dan Modul 9
+        yang memakai data sama.
+    - contoh: "barplot melakukan agregasi otomatis"
+      kode: "fig, axes = plt.subplots(1, 2, figsize=(9, 3.6))\n# bawaan: menggambar RATA-RATA beserta pita selang kepercayaan\nsns.barplot(data=rt, x=\"provinsi\", y=\"pengeluaran\",\n            color=\"#0B6FB4\", ax=axes[0])\naxes[0].set(title=\"estimator bawaan (mean)\", xlabel=\"\", ylabel=\"Pengeluaran\")\n# diubah menjadi JUMLAH\nsns.barplot(data=rt, x=\"provinsi\", y=\"pengeluaran\", estimator=\"sum\",\n            errorbar=None, color=\"#F58220\", ax=axes[1])\naxes[1].set(title='estimator=\"sum\"', xlabel=\"\", ylabel=\"\")\nplt.tight_layout(); plt.show()"
+      bahasa: Python
+      kode_judul: "estimator pada barplot"
+      eval: true
+      penjelasan: >
+        Kedua panel memakai data mentah yang sama. Panel kiri memanggil barplot tanpa argumen tambahan
+        sehingga seaborn menghitung rata-rata tiap kategori dan menggambar pita selang kepercayaan yang
+        tampak sebagai garis tegak di ujung batang. Panel kanan mengubah perhitungannya lewat argumen
+        estimator bernilai sum, dan errorbar bernilai None mematikan pita tersebut karena tidak bermakna
+        untuk penjumlahan.
+      interpretasi: >
+        Perhatikan bahwa tinggi batang kedua panel berbeda jauh meski datanya sama - inilah jebakan yang
+        dibahas di teori. Berbeda dari geom_col pada Modul 9 yang menggambar nilai apa adanya, barplot
+        seaborn menghitung sendiri. Selalu sadari statistik apa yang sedang digambar, dan sebutkan
+        dengan jelas pada judul atau nama sumbu agar pembaca tidak salah menafsirkan.
+    - contoh: "countplot untuk mencacah kategori"
+      kode: "fig, ax = plt.subplots(figsize=(7, 3.6))\nsns.countplot(data=rt, x=\"provinsi\", hue=\"wilayah\",\n              palette={\"Perkotaan\": \"#0B6FB4\", \"Perdesaan\": \"#F58220\"}, ax=ax)\nax.set(title=\"Banyaknya Rumah Tangga Contoh\",\n       xlabel=\"\", ylabel=\"Banyaknya rumah tangga\")\nax.legend(title=\"Wilayah\")\nplt.tight_layout(); plt.show()\nprint(pd.crosstab(rt[\"provinsi\"], rt[\"wilayah\"]))"
+      bahasa: Python
+      kode_judul: "countplot dan pemeriksaannya"
+      eval: true
+      penjelasan: >
+        Fungsi countplot hanya menerima satu peubah kategori pada sumbu mendatar dan mencacah sendiri
+        banyaknya baris tiap kategori, sehingga tidak memerlukan argumen y. Argumen hue membagi tiap
+        batang menurut wilayah dengan penataan berdampingan sebagai bawaan. Baris terakhir mencetak
+        tabel silang sebagai pemeriksaan bahwa tinggi batang memang sesuai dengan cacahannya.
+      interpretasi: >
+        Fungsi countplot sepadan dengan geom_bar pada ggplot2, yaitu sama-sama mencacah. Tabel silang di
+        bawahnya memungkinkan pembaca memeriksa langsung kebenaran grafiknya - kebiasaan yang baik saat
+        menyusun publikasi. Perhatikan bahwa penataan bawaan countplot adalah berdampingan, berbeda dari
+        geom_bar yang bawaannya bertumpuk.
+    - contoh: "Hubungan dua peubah dengan garis regresi"
+      kode: "fig, ax = plt.subplots(figsize=(7, 3.8))\nsns.regplot(data=rt, x=\"pendapatan\", y=\"pengeluaran\",\n            scatter_kws={\"color\": \"#0B6FB4\", \"s\": 22, \"alpha\": 0.8},\n            line_kws={\"color\": \"#F58220\", \"linewidth\": 2}, ax=ax)\nax.set(title=\"Pengeluaran terhadap Pendapatan\",\n       xlabel=\"Pendapatan (ribu Rp)\", ylabel=\"Pengeluaran (ribu Rp)\")\nplt.tight_layout(); plt.show()\nprint(\"korelasi:\", round(rt[\"pendapatan\"].corr(rt[\"pengeluaran\"]), 3))"
+      bahasa: Python
+      kode_judul: "regplot"
+      eval: true
+      penjelasan: >
+        Fungsi regplot menggambar titik sekaligus garis regresi linear beserta pita selang kepercayaannya
+        dalam satu perintah. Penyesuaian tampilan diserahkan lewat dua kamus: scatter_kws untuk titiknya
+        dan line_kws untuk garisnya; keduanya diteruskan apa adanya ke matplotlib. Baris terakhir
+        menghitung korelasi dengan metode corr sebagai pelengkap angka.
+      interpretasi: >
+        Fungsi ini menggabungkan geom_point dan geom_smooth dari Modul 9 menjadi satu perintah. Karena
+        data ini simulasi dengan nilai acak yang saling bebas, korelasinya wajar bila mendekati nol dan
+        garisnya hampir mendatar. Perlu ditegaskan seperti pada modul sebelumnya bahwa korelasi tidak
+        membuktikan hubungan sebab-akibat.
+    - contoh: "Memisahkan panel dengan relplot"
+      kode: "g = sns.relplot(data=rt, x=\"pendapatan\", y=\"pengeluaran\",\n                hue=\"wilayah\", col=\"provinsi\", kind=\"scatter\",\n                palette={\"Perkotaan\": \"#0B6FB4\", \"Perdesaan\": \"#F58220\"},\n                height=3, aspect=0.85, s=35)\ng.set_axis_labels(\"Pendapatan (ribu Rp)\", \"Pengeluaran (ribu Rp)\")\ng.set_titles(\"{col_name}\")\ng.figure.suptitle(\"Menurut Provinsi\", y=1.04)\nplt.show()\nprint(type(g).__name__)"
+      bahasa: Python
+      kode_judul: "relplot dengan col"
+      eval: true
+      penjelasan: >
+        Fungsi relplot adalah perintah tingkat figure sehingga membuat Figure sendiri dan tidak menerima
+        argumen ax. Argumen col memecah grafik menjadi panel menurut provinsi, sedangkan kind memilih
+        jenis grafiknya. Ukuran diatur lewat height dan aspect, bukan figsize. Objek yang dikembalikan
+        bernama FacetGrid dan memiliki metodenya sendiri: set_axis_labels untuk nama sumbu, set_titles
+        dengan pola nama panel, dan atribut figure untuk menambahkan judul keseluruhan.
+      interpretasi: >
+        Argumen col sepadan dengan facet_wrap pada Modul 9, dan seperti di sana seluruh panel memakai
+        skala yang sama sehingga perbandingan antar-panel adil. Jenis objek yang tercetak menegaskan
+        bahwa yang dikembalikan bukan Axes melainkan FacetGrid - inilah sebabnya penyesuaiannya memakai
+        metode tersendiri, bukan ax.set seperti pada contoh sebelumnya.
+    - contoh: "displot dan catplot untuk panel"
+      kode: "g1 = sns.displot(data=rt, x=\"pengeluaran\", col=\"wilayah\", bins=10,\n                 color=\"#0B6FB4\", height=3, aspect=1.1)\ng1.set_axis_labels(\"Pengeluaran (ribu Rp)\", \"Frekuensi\")\nplt.show()\n\ng2 = sns.catplot(data=rt, x=\"wilayah\", y=\"pendapatan\", col=\"provinsi\",\n                 kind=\"box\", hue=\"wilayah\", legend=False,\n                 palette={\"Perkotaan\": \"#0B6FB4\", \"Perdesaan\": \"#F58220\"},\n                 height=3, aspect=0.8)\ng2.set_axis_labels(\"\", \"Pendapatan (ribu Rp)\")\ng2.set_titles(\"{col_name}\")\nplt.show()"
+      bahasa: Python
+      kode_judul: "displot dan catplot"
+      eval: true
+      penjelasan: >
+        Kedua fungsi ini juga bertingkat figure. Fungsi displot adalah versi berpanel dari histplot,
+        sedangkan catplot adalah versi berpanel untuk grafik kategori; jenisnya dipilih lewat argumen
+        kind, di sini box. Keduanya memakai argumen col untuk memecah panel dan mengembalikan FacetGrid,
+        sehingga penyesuaiannya memakai metode set_axis_labels dan set_titles.
+      interpretasi: >
+        Seaborn menyediakan tiga perintah tingkat figure yang berpasangan dengan tiga kelompok grafik:
+        relplot untuk hubungan, displot untuk sebaran, dan catplot untuk kategori. Mengingat pembagian
+        ini memudahkan pemilihan perintah: tentukan dahulu jenis pertanyaannya, lalu pilih perintah
+        tingkat figure yang sesuai bila memerlukan panel.
+    - contoh: "pairplot dan peta panas korelasi"
+      kode: "num = rt[[\"pengeluaran\", \"pendapatan\", \"umur_krt\", \"lama_sekolah\"]]\ng = sns.pairplot(num, height=1.5, plot_kws={\"s\": 12, \"color\": \"#0B6FB4\"})\nplt.show()\n\nfig, ax = plt.subplots(figsize=(5.2, 4))\nsns.heatmap(num.corr().round(2), annot=True, cmap=\"Blues\",\n            vmin=-1, vmax=1, ax=ax)\nax.set(title=\"Matriks Korelasi\")\nplt.tight_layout(); plt.show()"
+      bahasa: Python
+      kode_judul: "pairplot dan heatmap"
+      eval: true
+      penjelasan: >
+        Subset berisi empat kolom numerik disiapkan lebih dahulu. Fungsi pairplot menggambar seluruh
+        pasangan kolom sebagai matriks diagram pencar, dengan sebaran tiap peubah pada diagonalnya;
+        penyesuaian titik diserahkan lewat kamus plot_kws. Bagian kedua menghitung matriks korelasi
+        dengan metode corr lalu menggambarkannya sebagai peta panas; argumen annot menuliskan angkanya
+        pada tiap kotak, cmap memilih gradasi warna, dan vmin serta vmax mengunci rentang skala warna.
+      interpretasi: >
+        Pasangan pairplot dan heatmap adalah cara cepat memindai hubungan antar seluruh peubah numerik
+        sekaligus: gambar untuk melihat polanya, angka untuk mengukur keeratannya. Mengunci rentang
+        skala warna pada minus satu sampai satu penting agar warna dapat dibandingkan antar-grafik dan
+        tidak menyesatkan. Peta panas ini tidak memiliki padanan sesingkat itu di ggplot2.
+    - contoh: "Palet warna dan tema"
+      kode: "fig, axes = plt.subplots(1, 3, figsize=(10, 2.9))\nfor ax, gaya in zip(axes, [\"whitegrid\", \"darkgrid\", \"ticks\"]):\n    sns.set_style(gaya)\n    sns.boxplot(data=rt, x=\"wilayah\", y=\"pengeluaran\",\n                hue=\"wilayah\", legend=False,\n                palette=\"Blues\", ax=ax)\n    ax.set(title=gaya, xlabel=\"\", ylabel=\"\")\nplt.tight_layout(); plt.show()\nsns.set_theme(style=\"whitegrid\")   # kembalikan gaya baku"
+      bahasa: Python
+      kode_judul: "tiga gaya berdampingan"
+      eval: true
+      penjelasan: >
+        Tiga Axes dibuat sekaligus, lalu ditelusuri bersama daftar nama gaya memakai zip - penerapan
+        langsung keterampilan Modul 4. Pada tiap putaran, set_style mengubah gaya sebelum grafik
+        digambar. Argumen palette diisi nama palet bawaan, yaitu gradasi biru. Baris terakhir
+        mengembalikan gaya ke keadaan semula agar grafik berikutnya tidak terpengaruh.
+      interpretasi: >
+        Gaya berkisi terang cocok untuk laporan cetak karena hemat tinta, gaya berkisi gelap membantu
+        ketika titik data banyak, sedangkan gaya bergaris tepi memberi kesan paling bersih. Ini sepadan
+        dengan pemilihan tema pada Modul 9. Perhatikan bahwa perubahan gaya bersifat global, sehingga
+        mengembalikannya di akhir adalah kebiasaan yang baik.
+    - contoh: "Menata beberapa grafik dalam satu gambar"
+      kode: "fig, axes = plt.subplots(2, 2, figsize=(9, 6))\nsns.histplot(data=rt, x=\"pengeluaran\", bins=10, color=\"#0B6FB4\", ax=axes[0, 0])\naxes[0, 0].set(title=\"Sebaran pengeluaran\", xlabel=\"\", ylabel=\"Frekuensi\")\nsns.boxplot(data=rt, x=\"wilayah\", y=\"pengeluaran\",\n            hue=\"wilayah\", legend=False, palette=\"Blues\", ax=axes[0, 1])\naxes[0, 1].set(title=\"Menurut wilayah\", xlabel=\"\", ylabel=\"\")\nsns.scatterplot(data=rt, x=\"pendapatan\", y=\"pengeluaran\",\n                color=\"#0B6FB4\", s=18, ax=axes[1, 0])\naxes[1, 0].set(title=\"Hubungan\", xlabel=\"Pendapatan\", ylabel=\"Pengeluaran\")\nsns.countplot(data=rt, x=\"provinsi\", color=\"#0B6FB4\", ax=axes[1, 1])\naxes[1, 1].set(title=\"Banyaknya contoh\", xlabel=\"\", ylabel=\"\")\nfig.suptitle(\"Profil Rumah Tangga (data simulasi)\", fontweight=\"bold\")\nplt.tight_layout(); plt.show()"
+      bahasa: Python
+      kode_judul: "subplots 2 x 2"
+      eval: true
+      penjelasan: >
+        Fungsi plt.subplots dipanggil dengan dua baris dan dua kolom sehingga mengembalikan larik dua
+        dimensi; tiap Axes diakses dengan pasangan nomor baris dan kolom di dalam kurung siku. Empat
+        grafik berbeda jenis digambar pada masing-masing bidang, dan tiap bidang diberi judulnya sendiri
+        lewat metode set. Metode fig.suptitle menambahkan judul untuk keseluruhan gambar.
+      interpretasi: >
+        Kemampuan menata beberapa grafik dalam satu gambar inilah keunggulan pembagian Figure dan Axes.
+        Pada Modul 9 hal serupa memerlukan paket tambahan patchwork, sedangkan di matplotlib kemampuan
+        ini sudah tersedia sejak awal. Susunan empat panel seperti ini lazim dipakai sebagai halaman
+        ringkasan profil dalam publikasi statistik.
+    - contoh: "Grafik siap publikasi"
+      kode: "ringkas = (rt.groupby([\"provinsi\", \"wilayah\"], as_index=False)\n             .agg(rata=(\"pengeluaran\", \"mean\")))\nprint(ringkas.round(1))\n\nfig, ax = plt.subplots(figsize=(7.2, 4))\nsns.barplot(data=ringkas, x=\"provinsi\", y=\"rata\", hue=\"wilayah\",\n            palette={\"Perkotaan\": \"#0B6FB4\", \"Perdesaan\": \"#F58220\"}, ax=ax)\nfor bar in ax.containers:\n    ax.bar_label(bar, fmt=\"%.0f\", padding=2, fontsize=8)\nax.set(title=\"Rata-rata Pengeluaran Rumah Tangga\",\n       xlabel=\"\", ylabel=\"Rata-rata pengeluaran (ribu Rp)\")\nax.legend(title=\"Wilayah\", loc=\"upper right\")\nax.margins(y=0.15)\nfig.text(0.01, -0.02, \"Sumber: data simulasi, bukan data resmi\", fontsize=7)\nplt.tight_layout(); plt.show()"
+      bahasa: Python
+      kode_judul: "barplot dari data ringkasan + label"
+      eval: true
+      penjelasan: >
+        Data diringkas lebih dahulu dengan groupby sehingga yang diserahkan ke barplot sudah berupa
+        nilai jadi; karena tiap kombinasi hanya punya satu nilai, agregasi otomatis seaborn tidak lagi
+        menjadi masalah. Perulangan atas ax.containers menelusuri kelompok batang, lalu bar_label
+        menuliskan angkanya di atas tiap batang dengan format tanpa desimal. Metode margins menambah
+        ruang di atas agar label tidak terpotong, dan fig.text menyisipkan keterangan sumber di bawah
+        gambar.
+      interpretasi: >
+        Inilah bentuk grafik yang layak dimuat dalam publikasi: judul bermakna, nama sumbu bersatuan,
+        label angka, legenda berjudul, palet lembaga, dan keterangan sumber yang menegaskan bahwa data
+        merupakan simulasi. Bandingkan dengan grafik publikasi pada Modul 9 - unsur yang dilengkapi
+        sama persis, hanya perintahnya yang berbeda.
+    - contoh: "Menyimpan grafik dengan savefig"
+      kode: "fig, ax = plt.subplots(figsize=(7, 4))\nsns.histplot(data=rt, x=\"pendapatan\", bins=12, color=\"#0B6FB4\", ax=ax)\nax.set(title=\"Sebaran Pendapatan\", xlabel=\"Pendapatan (ribu Rp)\", ylabel=\"Frekuensi\")\nplt.tight_layout()\nfig.savefig(\"grafik_pendapatan.png\", dpi=300, bbox_inches=\"tight\")\nplt.close(fig)\n\nimport os\nprint(os.path.exists(\"grafik_pendapatan.png\"))\nprint(round(os.path.getsize(\"grafik_pendapatan.png\") / 1024, 1), \"KB\")\nos.remove(\"grafik_pendapatan.png\")"
+      bahasa: Python
+      kode_judul: "savefig dan close"
+      eval: true
+      penjelasan: >
+        Metode savefig dipanggil pada objek Figure dan menerima nama berkas; format ditentukan otomatis
+        dari akhirannya. Argumen dpi menetapkan resolusi, sedangkan bbox_inches bernilai tight memangkas
+        ruang kosong di tepi agar tidak ada bagian yang terpotong. Fungsi plt.close menutup Figure agar
+        tidak menumpuk di memori. Tiga baris terakhir memeriksa keberadaan dan ukuran berkas lewat modul
+        os, lalu menghapusnya kembali.
+      interpretasi: >
+        Metode savefig sepadan dengan ggsave pada Modul 9, tetapi ukurannya ditetapkan pada figsize saat
+        Figure dibuat, bukan pada perintah penyimpanan. Kebiasaan menutup Figure setelah selesai penting
+        pada skrip yang menghasilkan banyak grafik, karena Figure yang tidak ditutup akan terus tersimpan
+        di memori dan memunculkan peringatan.
+    - contoh: "Studi kasus: halaman ringkasan lengkap"
+      kode: "sns.set_theme(style=\"whitegrid\")\nwarna = {\"Perkotaan\": \"#0B6FB4\", \"Perdesaan\": \"#F58220\"}\n\nfig, axes = plt.subplots(1, 3, figsize=(11, 3.4))\n# 1) sebaran menurut wilayah\nsns.kdeplot(data=rt, x=\"pengeluaran\", hue=\"wilayah\", fill=True,\n            palette=warna, alpha=0.35, ax=axes[0])\naxes[0].set(title=\"Sebaran\", xlabel=\"Pengeluaran\", ylabel=\"Kepekatan\")\n# 2) perbandingan kelompok\nsns.boxplot(data=rt, x=\"provinsi\", y=\"pengeluaran\", hue=\"wilayah\",\n            palette=warna, ax=axes[1])\naxes[1].set(title=\"Perbandingan\", xlabel=\"\", ylabel=\"\")\naxes[1].legend_.remove()\n# 3) hubungan\nsns.scatterplot(data=rt, x=\"pendapatan\", y=\"pengeluaran\", hue=\"wilayah\",\n                palette=warna, s=25, legend=False, ax=axes[2])\naxes[2].set(title=\"Hubungan\", xlabel=\"Pendapatan\", ylabel=\"\")\nfig.suptitle(\"Profil Pengeluaran Rumah Tangga (data simulasi)\", fontweight=\"bold\")\nplt.tight_layout(); plt.show()"
+      bahasa: Python
+      kode_judul: "tiga grafik saling melengkapi"
+      eval: true
+      penjelasan: >
+        Kamus warna disiapkan sekali agar ketiga panel konsisten. Panel pertama memakai kdeplot dengan
+        argumen fill sehingga daerah di bawah kurva diarsir, dan alpha membuatnya tembus pandang agar
+        kedua kelompok tetap terlihat. Panel kedua memakai boxplot dengan hue; legendanya dihapus lewat
+        atribut legend_ karena sudah diwakili panel pertama. Panel ketiga memakai scatterplot dengan
+        legend bernilai False untuk alasan yang sama. Judul keseluruhan ditambahkan lewat suptitle.
+      interpretasi: >
+        Ketiga panel menjawab tiga pertanyaan berbeda pada data yang sama: bagaimana bentuk sebarannya,
+        bagaimana perbandingan antar-kelompok, dan bagaimana hubungannya dengan peubah lain. Menjaga
+        warna tetap konsisten dan menampilkan legenda hanya sekali membuat pembaca dapat menelusuri
+        kelompok yang sama di ketiga panel tanpa bingung - prinsip penyajian yang berlaku sama baik di
+        R maupun Python.
+  latihan:
+    - "Kerjakan bertahap. **Dasar** melengkapi kode; **Menengah** menulis sendiri dan membetulkan kode; **Lanjut** membuat grafik publikasi. Gunakan `data/data_rumahtangga.csv`. Bila memungkinkan, bandingkan hasil Anda dengan latihan padanannya pada Modul 9."
+    - "#### Tingkat Dasar (melengkapi kode)"
+    - "\\latihan{Kerangka dasar}"
+    - "```{python eval=FALSE}\nimport matplotlib.pyplot as plt, seaborn as sns, pandas as pd\nrt = pd.read_csv(\"data/data_rumahtangga.csv\")\nfig, ax = plt.____(figsize=(7, 4))          # membuat Figure dan Axes\nsns.____(data=rt, x=\"pendapatan\", y=\"pengeluaran\", ax=ax)   # diagram pencar\nplt.show()\n```"
+    - "\\latihan{Histogram dan pemetaan warna}"
+    - "```{python eval=FALSE}\nfig, ax = plt.subplots(figsize=(7, 4))\nsns.histplot(data=rt, x=\"umur_krt\", bins=____, ____=True, ax=ax)  # 10 selang + kurva kepekatan\nplt.show()\n```"
+    - "\\latihan{Panel}"
+    - "```{python eval=FALSE}\ng = sns.displot(data=rt, x=\"pengeluaran\", ____=\"wilayah\", bins=8)  # panel menurut wilayah\nplt.show()\n```"
+    - "#### Tingkat Menengah (menulis sendiri)"
+    - "\\latihan{Perbandingan kelompok berwarna}"
+    - "Buat diagram kotak-garis `pendapatan` menurut `provinsi` dengan warna dipetakan dari `provinsi`. Tetapkan palet sendiri lewat argumen `palette`, beri judul dan nama sumbu yang lengkap, lalu matikan legendanya. Jelaskan mengapa legenda tidak diperlukan di sini."
+    - "\\latihan{Ringkas lalu gambarkan}"
+    - "Dengan `pandas`, hitung rata-rata `lama_sekolah` menurut `provinsi` dan `wilayah` memakai `groupby`. Gambarkan hasilnya sebagai diagram batang berdampingan dengan `sns.barplot`, lengkap dengan label angka memakai `ax.bar_label`. Jelaskan mengapa data perlu diringkas lebih dahulu, dan apa yang akan terjadi bila data mentah langsung diserahkan ke `barplot`."
+    - "\\latihan{Membetulkan kode yang salah}"
+    - "Kode berikut memuat beberapa kesalahan (argumen `ax` pada fungsi tingkat figure, `countplot` diberi `y`, nama argumen panel keliru, dan `savefig` dipanggil setelah gambar ditutup). Temukan dan perbaiki, lalu jelaskan tiap kesalahannya."
+    - "```{python eval=FALSE}\nimport matplotlib.pyplot as plt, seaborn as sns, pandas as pd\nrt = pd.read_csv(\"data/data_rumahtangga.csv\")\n\n# (a) relplot adalah fungsi tingkat figure, tidak menerima ax\nfig, ax = plt.subplots()\nsns.relplot(data=rt, x=\"pendapatan\", y=\"pengeluaran\", ax=ax)\n\n# (b) countplot mencacah sendiri, tidak menerima y\nfig, ax = plt.subplots()\nsns.countplot(data=rt, x=\"provinsi\", y=\"pengeluaran\", ax=ax)\n\n# (c) nama argumen untuk memecah panel salah\nsns.displot(data=rt, x=\"pengeluaran\", facet=\"wilayah\")\n\n# (d) gambar ditutup sebelum disimpan\nfig, ax = plt.subplots()\nsns.histplot(data=rt, x=\"pendapatan\", ax=ax)\nplt.close(fig)\nfig.savefig(\"hasil.png\")\n```"
+    - "**Keluaran yang benar.** Setelah diperbaiki, keempat bagian berjalan tanpa galat. Karena keluarannya berupa gambar, verifikasilah dengan potongan berikut:\n\n```\n>>> # (a) relplot tanpa ax mengembalikan FacetGrid\n>>> type(g).__name__\n'FacetGrid'\n\n>>> # (b) countplot tanpa y: tinggi batang = cacahan\n>>> rt[\"provinsi\"].value_counts().sort_index().tolist()\n[24, 21, 15]\n\n>>> # (c) argumen yang benar adalah col\n>>> type(sns.displot(data=rt, x=\"pengeluaran\", col=\"wilayah\")).__name__\n'FacetGrid'\n\n>>> # (d) setelah savefig dipindah SEBELUM close\n>>> import os; os.path.exists(\"hasil.png\")\nTrue\n```\n\nSecara visual: (a) satu panel diagram pencar tanpa Figure kosong yang tersisa; (b) tiga batang berisi banyaknya rumah tangga tiap provinsi; (c) histogram terbagi dua panel `Perkotaan` dan `Perdesaan`; (d) berkas `hasil.png` benar-benar terbentuk."
+    - "#### Tingkat Lanjut (kasus kecil)"
+    - "\\latihan{Halaman ringkasan siap publikasi}"
+    - "Buat satu gambar berisi **empat panel** dengan `plt.subplots(2, 2)` yang memuat: (a) histogram `pengeluaran` dengan `kde=True`; (b) diagram kotak-garis `pengeluaran` menurut `wilayah`; (c) diagram pencar `pengeluaran` terhadap `pendapatan` dengan `hue=\"wilayah\"`; dan (d) `countplot` menurut `provinsi`. Jaga palet warna tetap konsisten, tampilkan legenda **hanya sekali**, beri judul keseluruhan dengan `fig.suptitle`, sertakan keterangan sumber yang menyebut data simulasi, lalu simpan sebagai PNG 300 dpi dengan `savefig`."
+  penugasan:
+    - "\\begin{kotaktugas}\nSebagai calon penyaji \\emph{official statistics}, susun satu set visualisasi dari \\texttt{data\\_rumahtangga.csv} (\\emph{data simulasi}) menggunakan \\texttt{seaborn} dan \\texttt{matplotlib}, lalu bandingkan pengalamannya dengan \\texttt{ggplot2} pada Modul 9.\n\\end{kotaktugas}"
+    - "**Konteks.** Unit publikasi memerlukan lampiran grafik untuk laporan profil rumah tangga. Berkas datanya sama dengan Modul 7 dan Modul 9, sehingga hasil ketiga pendekatan dapat diperbandingkan."
+    - "\\tugas{Grafik sebaran dan perbandingan}"
+    - "1. Buat histogram `pengeluaran` dengan `kde=True`, dipisahkan menjadi panel menurut `wilayah` memakai `displot`. Tuliskan tiga hal yang Anda amati."
+    - "2. Buat diagram kotak-garis dan diagram biola `pendapatan` menurut `provinsi` secara berdampingan dalam satu gambar. Jelaskan informasi tambahan apa yang diberikan diagram biola."
+    - "\\tugas{Grafik hubungan}"
+    - "3. Buat diagram pencar `pengeluaran` terhadap `pendapatan` dengan `hue=\"wilayah\"` dan garis regresi. Tafsirkan hasilnya disertai **peringatan bahwa korelasi bukan sebab-akibat**."
+    - "4. Buat `pairplot` untuk keempat peubah numerik dan `heatmap` matriks korelasinya. Sebutkan pasangan peubah dengan korelasi terkuat dan terlemah."
+    - "\\tugas{Agregasi dan penyajian}"
+    - "5. Dengan `groupby`, hitung rata-rata `pengeluaran` menurut `provinsi` dan `wilayah`, lalu gambarkan sebagai diagram batang berdampingan lengkap dengan label angka."
+    - "6. Buat **satu** diagram batang dari **data mentah** memakai `sns.barplot` tanpa meringkas lebih dahulu, sekali dengan `estimator` bawaan dan sekali dengan `estimator=\"sum\"`. Jelaskan mengapa keduanya berbeda dan mana yang sesuai untuk laporan Anda."
+    - "\\tugas{Perbandingan dan laporan}"
+    - "7. Pilih **satu** grafik terbaik Anda, sempurnakan hingga siap publikasi, lalu simpan dengan `savefig` pada 300 dpi. Buat **tabel padanan** minimal enam perintah `ggplot2` dan `seaborn` yang Anda pakai."
+    - "8. Susun laporan Jupyter Notebook berisi seluruh grafik beserta kode dan interpretasinya. Tutup dengan **ringkasan (maksimal 300 kata)** yang membandingkan `seaborn` dengan `ggplot2`: apa yang lebih ringkas, apa yang lebih rumit, dan dalam situasi apa Anda akan memilih masing-masing."
+  ringkasan:
+    - "\\begin{kotaktujuan}\n\\textbf{Daftar periksa penguasaan:}\n\\begin{itemize}\n\\item[$\\square$] Saya dapat menjelaskan pembagian peran \\texttt{matplotlib} dan \\texttt{seaborn}.\n\\item[$\\square$] Saya dapat membedakan \\texttt{Figure} dari \\texttt{Axes} dan memakai \\texttt{plt.subplots}.\n\\item[$\\square$] Saya dapat membedakan fungsi tingkat \\emph{axes} dari tingkat \\emph{figure}.\n\\item[$\\square$] Saya dapat membuat grafik sebaran, perbandingan kelompok, dan hubungan.\n\\item[$\\square$] Saya dapat memetakan peubah lewat \\texttt{hue} dan \\texttt{style}.\n\\item[$\\square$] Saya menyadari \\texttt{barplot} menggambar rata-rata dan dapat mengendalikannya.\n\\item[$\\square$] Saya dapat memisahkan panel dengan \\texttt{relplot}, \\texttt{displot}, dan \\texttt{catplot}.\n\\item[$\\square$] Saya dapat menyesuaikan grafik lewat \\texttt{matplotlib} dan menyimpannya dengan \\texttt{savefig}.\n\\end{itemize}\n\\end{kotaktujuan}"
+    - "**Kartu Referensi Cepat.** Padanan `ggplot2` dan `seaborn`:"
+    - "\\begin{kotakrumus}\n\\begin{tabular}{@{}ll@{}}\n\\textbf{ggplot2 (R)} & \\textbf{seaborn / matplotlib (Python)}\\\\\nKerangka & \\texttt{fig, ax = plt.subplots()}\\\\\n\\texttt{geom\\_point()} & \\texttt{sns.scatterplot(..., ax=ax)}\\\\\n\\texttt{geom\\_histogram()} & \\texttt{sns.histplot(..., bins=)}\\\\\n\\texttt{geom\\_density()} & \\texttt{sns.kdeplot()} atau \\texttt{kde=True}\\\\\n\\texttt{geom\\_boxplot()} & \\texttt{sns.boxplot()}\\\\\n\\texttt{geom\\_violin()} & \\texttt{sns.violinplot()}\\\\\n\\texttt{geom\\_bar()} & \\texttt{sns.countplot()}\\\\\n\\texttt{geom\\_col()} & \\texttt{sns.barplot()} (perhatikan \\texttt{estimator})\\\\\n\\texttt{geom\\_smooth(\"lm\")} & \\texttt{sns.regplot()}\\\\\n\\texttt{aes(colour = g)} & \\texttt{hue=\"g\"}\\\\\n\\texttt{aes(shape = g)} & \\texttt{style=\"g\"}\\\\\nWarna manual & \\texttt{palette=\\{...\\}}\\\\\n\\texttt{facet\\_wrap()} & \\texttt{col=} pada \\texttt{relplot}/\\texttt{displot}/\\texttt{catplot}\\\\\nMatriks pencar & \\texttt{sns.pairplot()}\\\\\nPeta panas & \\texttt{sns.heatmap(df.corr(), annot=True)}\\\\\n\\texttt{labs()} & \\texttt{ax.set(title=, xlabel=, ylabel=)}\\\\\nLabel batang & \\texttt{ax.bar\\_label()}\\\\\n\\texttt{theme\\_*()} & \\texttt{sns.set\\_theme(style=)}\\\\\nBeberapa panel & \\texttt{plt.subplots(2, 2)}\\\\\n\\texttt{ggsave()} & \\texttt{fig.savefig(..., dpi=300)}\\\\\n\\end{tabular}\n\\end{kotakrumus}"
+    - "Modul ini melengkapi pasangan penyajian data: gagasan yang dikuasai lewat `ggplot2` pada Modul 9 kini dapat dikerjakan pula dengan `seaborn`. Perbedaan utama yang perlu diingat: pembagian `Figure` dan `Axes`, adanya dua tingkat perintah seaborn, serta agregasi otomatis pada `barplot`. Prinsip penyajiannya tetap sama: pilih grafik sesuai pertanyaan, jaga konsistensi warna, dan lengkapi setiap grafik publikasi dengan judul, satuan, serta keterangan sumber. Modul berikutnya beralih ke inferensia statistik."
+  referensi:
+    - "Waskom, M. (2021). *seaborn: statistical data visualization*. Journal of Open Source Software, 6(60), 3021. Dokumentasi resmi tersedia di seaborn.pydata.org."
+    - "Hunter, J. D. (2007). *Matplotlib: A 2D Graphics Environment*. Computing in Science and Engineering, 9(3), 90-95. Dokumentasi resmi di matplotlib.org."
+    - "McKinney, W. (2022). *Python for Data Analysis*, 3rd ed. O'Reilly Media. (Bab visualisasi dengan pandas, matplotlib, dan seaborn.)"
+    - "Healy, K. (2018). *Data Visualization: A Practical Introduction*. Princeton University Press. (Prinsip penyajian data yang berlaku lintas perkakas.)"
+
+exercises:
+  - id: "L10.1"
+    points: 15
+    solution: "Tingkat Dasar: plt.subplots, scatterplot, bins dan kde, argumen col."
+    judul_py: "Solusi Tingkat Dasar (Python)"
+    solusi_py: |
+      import matplotlib.pyplot as plt, seaborn as sns, pandas as pd
+      rt = pd.read_csv("data/data_rumahtangga.csv")
+
+      # 1) kerangka dasar
+      fig, ax = plt.subplots(figsize=(7, 4))
+      sns.scatterplot(data=rt, x="pendapatan", y="pengeluaran", ax=ax)
+      plt.show()
+
+      # 2) histogram + kurva kepekatan
+      fig, ax = plt.subplots(figsize=(7, 4))
+      sns.histplot(data=rt, x="umur_krt", bins=10, kde=True, ax=ax)
+      plt.show()
+
+      # 3) panel menurut wilayah
+      g = sns.displot(data=rt, x="pengeluaran", col="wilayah", bins=8)
+      plt.show()
+    interpretasi: >
+      Fungsi plt.subplots menghasilkan Figure dan Axes sekaligus. Fungsi scatterplot menggambar diagram
+      pencar pada Axes yang diserahkan lewat argumen ax. Argumen bins mengatur banyaknya selang dan kde
+      bernilai True menambahkan kurva kepekatan. Untuk memecah panel, argumen yang benar adalah col,
+      bukan facet.
+  - id: "L10.2"
+    points: 25
+    solution: "Tingkat Menengah dan Lanjut: boxplot berpalet, groupby lalu barplot berlabel, serta halaman empat panel."
+    judul_py: "Solusi Menengah dan Lanjut (Python)"
+    solusi_py: |
+      import matplotlib.pyplot as plt, seaborn as sns, pandas as pd
+      rt = pd.read_csv("data/data_rumahtangga.csv")
+      sns.set_theme(style="whitegrid")
+
+      # ---- Perbandingan kelompok berwarna ----
+      fig, ax = plt.subplots(figsize=(7, 4))
+      sns.boxplot(data=rt, x="provinsi", y="pendapatan", hue="provinsi",
+                  legend=False,
+                  palette={"Provinsi A": "#0B6FB4", "Provinsi B": "#F58220",
+                           "Provinsi C": "#00A651"}, ax=ax)
+      ax.set(title="Pendapatan menurut Provinsi", xlabel="",
+             ylabel="Pendapatan (ribu Rp)")
+      plt.tight_layout(); plt.show()
+      # Legenda tidak perlu karena nama provinsi sudah tertulis di sumbu mendatar.
+
+      # ---- Ringkas lalu gambarkan ----
+      ringkas = (rt.groupby(["provinsi", "wilayah"], as_index=False)
+                   .agg(rata=("lama_sekolah", "mean")))
+      fig, ax = plt.subplots(figsize=(7, 4))
+      sns.barplot(data=ringkas, x="provinsi", y="rata", hue="wilayah",
+                  palette={"Perkotaan": "#0B6FB4", "Perdesaan": "#F58220"}, ax=ax)
+      for bar in ax.containers:
+          ax.bar_label(bar, fmt="%.1f", padding=2, fontsize=8)
+      ax.set(title="Rata-rata Lama Sekolah", xlabel="", ylabel="Tahun")
+      ax.margins(y=0.15)
+      plt.tight_layout(); plt.show()
+      # Data diringkas dahulu agar nilai yang digambar pasti; bila data mentah
+      # diserahkan langsung, barplot akan menghitung rata-rata sendiri beserta
+      # pita selang kepercayaan.
+
+      # ---- Halaman empat panel ----
+      warna = {"Perkotaan": "#0B6FB4", "Perdesaan": "#F58220"}
+      fig, axes = plt.subplots(2, 2, figsize=(9, 6))
+      sns.histplot(data=rt, x="pengeluaran", bins=10, kde=True,
+                   color="#0B6FB4", ax=axes[0, 0])
+      axes[0, 0].set(title="Sebaran", xlabel="", ylabel="Frekuensi")
+      sns.boxplot(data=rt, x="wilayah", y="pengeluaran", hue="wilayah",
+                  legend=False, palette=warna, ax=axes[0, 1])
+      axes[0, 1].set(title="Menurut wilayah", xlabel="", ylabel="")
+      sns.scatterplot(data=rt, x="pendapatan", y="pengeluaran", hue="wilayah",
+                      palette=warna, s=20, ax=axes[1, 0])
+      axes[1, 0].set(title="Hubungan", xlabel="Pendapatan", ylabel="Pengeluaran")
+      sns.countplot(data=rt, x="provinsi", color="#0B6FB4", ax=axes[1, 1])
+      axes[1, 1].set(title="Banyaknya contoh", xlabel="", ylabel="")
+      fig.suptitle("Profil Rumah Tangga (data simulasi)", fontweight="bold")
+      fig.text(0.01, -0.01, "Sumber: data simulasi, bukan data resmi", fontsize=7)
+      plt.tight_layout()
+      fig.savefig("ringkasan.png", dpi=300, bbox_inches="tight")
+      plt.show()
+    interpretasi: >
+      Pada diagram kotak-garis, argumen hue diisi peubah yang sama dengan x disertai legend bernilai
+      False, sesuai ketentuan versi seaborn terbaru ketika palette dipakai. Pada bagian kedua, data
+      diringkas lebih dahulu sehingga nilai yang digambar pasti dan agregasi otomatis tidak menjadi
+      persoalan; label angka ditambahkan lewat perulangan atas ax.containers. Pada halaman empat panel,
+      warna dijaga konsisten dan legenda hanya muncul pada panel yang memerlukannya, lalu gambar
+      disimpan sebelum ditampilkan.
+  - id: "L10.D"
+    points: 10
+    solution: "Membetulkan kode: relplot tanpa ax, countplot tanpa y, argumen col, dan savefig sebelum close."
+    judul_py: "Solusi Membetulkan Kode (Python)"
+    solusi_py: |
+      import matplotlib.pyplot as plt, seaborn as sns, pandas as pd
+      rt = pd.read_csv("data/data_rumahtangga.csv")
+
+      # (a) relplot membuat Figure sendiri: jangan beri ax.
+      g = sns.relplot(data=rt, x="pendapatan", y="pengeluaran", height=3.5)
+      print(type(g).__name__)            # FacetGrid
+      # Bila ingin menggambar pada Axes tertentu, pakai padanan tingkat axes:
+      fig, ax = plt.subplots()
+      sns.scatterplot(data=rt, x="pendapatan", y="pengeluaran", ax=ax)
+
+      # (b) countplot mencacah sendiri sehingga tidak menerima y
+      fig, ax = plt.subplots()
+      sns.countplot(data=rt, x="provinsi", ax=ax)
+      print(rt["provinsi"].value_counts().sort_index().tolist())
+
+      # (c) argumen untuk memecah panel adalah col (atau row)
+      g2 = sns.displot(data=rt, x="pengeluaran", col="wilayah")
+      print(type(g2).__name__)           # FacetGrid
+
+      # (d) simpan DAHULU, baru tutup
+      fig, ax = plt.subplots()
+      sns.histplot(data=rt, x="pendapatan", ax=ax)
+      fig.savefig("hasil.png", dpi=150, bbox_inches="tight")
+      plt.close(fig)
+      import os; print(os.path.exists("hasil.png")); os.remove("hasil.png")
+    interpretasi: >
+      Empat kesalahan diperbaiki. Pertama, relplot bertingkat figure sehingga membuat Figure sendiri dan
+      menolak argumen ax; bila memang perlu menggambar pada Axes tertentu, gunakan scatterplot. Kedua,
+      countplot melakukan pencacahan sendiri sehingga pemberian y tidak sah. Ketiga, nama argumen untuk
+      memecah panel adalah col atau row, bukan facet. Keempat, Figure yang sudah ditutup tidak dapat
+      disimpan, sehingga savefig harus dipanggil sebelum close.
+  - id: "T10.1"
+    points: 50
+    solution: "Penugasan: set visualisasi lengkap dengan seaborn, perbandingan estimator, dan perbandingan dengan ggplot2."
+    judul_py: "Solusi Penugasan (Python)"
+    solusi_py: |
+      import matplotlib.pyplot as plt, seaborn as sns, pandas as pd
+      rt = pd.read_csv("data/data_rumahtangga.csv")
+      sns.set_theme(style="whitegrid")
+      warna = {"Perkotaan": "#0B6FB4", "Perdesaan": "#F58220"}
+
+      # 1) histogram + kde, panel menurut wilayah
+      g = sns.displot(data=rt, x="pengeluaran", col="wilayah", bins=10,
+                      kde=True, color="#0B6FB4", height=3.2, aspect=1.1)
+      g.set_axis_labels("Pengeluaran (ribu Rp)", "Frekuensi")
+      plt.show()
+
+      # 2) boxplot dan violinplot berdampingan
+      fig, axes = plt.subplots(1, 2, figsize=(9, 3.6))
+      sns.boxplot(data=rt, x="provinsi", y="pendapatan", hue="provinsi",
+                  legend=False, palette="Blues", ax=axes[0])
+      axes[0].set(title="boxplot", xlabel="", ylabel="Pendapatan (ribu Rp)")
+      sns.violinplot(data=rt, x="provinsi", y="pendapatan", hue="provinsi",
+                     legend=False, palette="Blues", ax=axes[1])
+      axes[1].set(title="violinplot", xlabel="", ylabel="")
+      plt.tight_layout(); plt.show()
+
+      # 3) pencar + regresi menurut wilayah
+      g = sns.lmplot(data=rt, x="pendapatan", y="pengeluaran", hue="wilayah",
+                     palette=warna, height=3.8, aspect=1.4, ci=None)
+      g.set_axis_labels("Pendapatan (ribu Rp)", "Pengeluaran (ribu Rp)")
+      plt.show()
+      print(rt[["pendapatan", "pengeluaran"]].corr().round(3))
+
+      # 4) pairplot dan heatmap
+      num = rt[["pengeluaran", "pendapatan", "umur_krt", "lama_sekolah"]]
+      sns.pairplot(num, height=1.5, plot_kws={"s": 12}); plt.show()
+      fig, ax = plt.subplots(figsize=(5, 4))
+      sns.heatmap(num.corr().round(2), annot=True, cmap="Blues",
+                  vmin=-1, vmax=1, ax=ax)
+      plt.tight_layout(); plt.show()
+
+      # 5) ringkas lalu batang berdampingan
+      ringkas = (rt.groupby(["provinsi", "wilayah"], as_index=False)
+                   .agg(rata=("pengeluaran", "mean")))
+      fig, ax = plt.subplots(figsize=(7.2, 4))
+      sns.barplot(data=ringkas, x="provinsi", y="rata", hue="wilayah",
+                  palette=warna, ax=ax)
+      for bar in ax.containers:
+          ax.bar_label(bar, fmt="%.0f", padding=2, fontsize=8)
+      ax.set(title="Rata-rata Pengeluaran", xlabel="", ylabel="Ribu Rp")
+      ax.margins(y=0.15); plt.tight_layout(); plt.show()
+
+      # 6) perbandingan estimator pada data MENTAH
+      fig, axes = plt.subplots(1, 2, figsize=(9, 3.6))
+      sns.barplot(data=rt, x="provinsi", y="pengeluaran",
+                  color="#0B6FB4", ax=axes[0])
+      axes[0].set(title="estimator bawaan (mean)", xlabel="", ylabel="")
+      sns.barplot(data=rt, x="provinsi", y="pengeluaran", estimator="sum",
+                  errorbar=None, color="#F58220", ax=axes[1])
+      axes[1].set(title='estimator="sum"', xlabel="", ylabel="")
+      plt.tight_layout(); plt.show()
+    interpretasi: >
+      Nomor 1 sampai 4 menjawab pertanyaan yang berbeda: bentuk sebaran per wilayah, perbandingan
+      pemusatan dan keragaman antar-provinsi, pola hubungan dua peubah, serta pemindaian seluruh
+      pasangan peubah numerik sekaligus. Nomor 5 memakai data yang sudah diringkas sehingga nilai yang
+      digambar pasti. Nomor 6 sengaja memakai data mentah untuk memperlihatkan bahwa estimator bawaan
+      menghasilkan rata-rata sedangkan estimator sum menghasilkan jumlah; untuk laporan, yang dipilih
+      harus disesuaikan dengan pesan yang ingin disampaikan dan disebutkan jelas pada nama sumbu. Karena
+      data merupakan simulasi dengan nilai acak saling bebas, korelasi yang diperoleh wajar bila lemah,
+      dan hal ini harus dinyatakan jujur dalam laporan.
+
+references:
+  - "Waskom, M. (2021). seaborn: statistical data visualization. Journal of Open Source Software, 6(60), 3021."
+  - "Hunter, J. D. (2007). Matplotlib: A 2D Graphics Environment. Computing in Science and Engineering, 9(3), 90-95."
+  - "McKinney, W. (2022). Python for Data Analysis, 3rd ed. O'Reilly Media."
+  - "Healy, K. (2018). Data Visualization: A Practical Introduction. Princeton University Press."

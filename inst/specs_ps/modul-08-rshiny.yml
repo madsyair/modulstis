@@ -1,0 +1,690 @@
+number: 8
+title: "Membuat Antarmuka Grafis dengan RShiny"
+short_code: "rshiny"
+topic: "RShiny"
+pertemuan: 8
+sub_cpmk: >
+  Sub-CPMK 8: Mahasiswa mampu membuat antarmuka grafis (RGui) interaktif dengan RShiny
+  untuk menyajikan dan mengeksplorasi data secara mandiri oleh pengguna.
+packages: [shiny, dplyr]
+contoh_title: "Contoh Praktikum dengan R"
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  ta: "2025/2026"
+  semester: "3 (Ganjil)"
+  prodi: "D-IV Statistika"
+  penyusun:
+    - "Achmad Syahrul Choir"
+    - "Rudi Salam"
+    - "Christiana Anggraeni Putri"
+
+datasets:
+  - name: data_indikator
+    role: contoh
+    recipe:
+      kind: tabular
+      "n": 45
+      seed: 2025
+      columns:
+        provinsi: {type: category, levels: [Provinsi A, Provinsi B, Provinsi C, Provinsi D, Provinsi E], probs: [0.2, 0.2, 0.2, 0.2, 0.2]}
+        tahun: {type: category, levels: ["2021", "2022", "2023"], probs: [0.34, 0.33, 0.33]}
+        ipm: {type: numeric, min: 60, max: 80, digits: 2}
+        kemiskinan: {type: numeric, min: 3, max: 25, digits: 2}
+        pengangguran: {type: numeric, min: 2, max: 12, digits: 2}
+
+body:
+  deskripsi:
+    - >
+      Modul ini membahas pembuatan antarmuka grafis interaktif dengan \texttt{shiny}. Sampai modul
+      sebelumnya, seluruh hasil analisis disajikan sebagai keluaran statis: angka dan gambar yang
+      sudah ditetapkan penyusunnya. Dengan \texttt{shiny}, pengguna dapat memilih sendiri peubah,
+      wilayah, atau ambang yang ingin dilihat, dan hasilnya diperbarui seketika.
+    - >
+      Kemampuan ini sangat relevan bagi penyelenggara statistik resmi. Alih-alih menerbitkan ratusan
+      tabel statis, satu aplikasi \texttt{shiny} memungkinkan pengguna menelusuri data sesuai
+      kebutuhannya masing-masing. Banyak lembaga statistik kini menyajikan \emph{dashboard} semacam
+      ini sebagai pelengkap publikasi cetak.
+    - >
+      Materi dibahas dari dasar hingga lanjut: anatomi aplikasi (\texttt{ui}, \texttt{server}, dan
+      \texttt{shinyApp}); gagasan reaktivitas; ragam widget masukan dan jenis keluaran; tata letak
+      halaman; berbagi perhitungan dengan \texttt{reactive}; pengendalian waktu jalan dengan
+      \texttt{observeEvent} dan \texttt{eventReactive}; validasi masukan; pengunduhan hasil; hingga
+      penataan berkas dan penyebaran aplikasi.
+    - "\\begin{kotakperhatian}[Tentang praktikum ini]\nBerbeda dari modul lain, sebagian besar kode di sini \\textbf{tidak menghasilkan keluaran tercetak} karena aplikasi \\texttt{shiny} berjalan interaktif di peramban. Kode aplikasi ditandai untuk \\textbf{disalin dan dijalankan sendiri} di RStudio. Sebagai gantinya, beberapa contoh menampilkan pemeriksaan objek dan pratinjau grafik agar Anda tetap dapat memverifikasi kebenaran kode.\n\\end{kotakperhatian}"
+    - "\\begin{kotakperhatian}[Tentang data]\nBerkas data pada modul ini adalah \\textbf{data simulasi} (\\texttt{set.seed(2025)}), \\textbf{bukan data nyata} dan \\textbf{bukan data resmi} instansi mana pun.\n\\end{kotakperhatian}"
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:"
+    - "1. **Menjelaskan** anatomi aplikasi Shiny: `ui`, `server`, dan `shinyApp`, serta gagasan reaktivitas."
+    - "2. **Menggunakan** ragam widget masukan (`sliderInput`, `selectInput`, `checkboxInput`, dan lainnya)."
+    - "3. **Memasangkan** fungsi keluaran (`plotOutput`, `tableOutput`, `verbatimTextOutput`) dengan fungsi `render` yang sesuai."
+    - "4. **Menyusun** tata letak halaman dengan `sidebarLayout`, `fluidRow`, dan `tabsetPanel`."
+    - "5. **Menghindari** perhitungan berulang dengan `reactive`, serta mengendalikan waktu jalan dengan `eventReactive` dan `observeEvent`."
+    - "6. **Memvalidasi** masukan pengguna dengan `req` dan `validate`, serta menyediakan fitur unduh."
+    - "7. **Menata** berkas aplikasi dan **menjalankan** serta menyiapkannya untuk disebarkan."
+  alat:
+    - "Perangkat dan bahan yang diperlukan:"
+    - "- **R** dan **RStudio** (tombol *Run App* memudahkan pengujian)."
+    - "- Paket: `shiny` dan `dplyr` (pasang dengan `install.packages(c(\"shiny\",\"dplyr\"))`)."
+    - "- Berkas data: `data/data_indikator.csv`."
+    - "- Peramban (*browser*) web (Chrome, Firefox, atau lainnya) untuk menampilkan aplikasi."
+  instruksi:
+    - "Ikuti tahapan berikut:"
+    - "**Sebelum praktikum:** siapkan direktori kerja; letakkan `data_indikator.csv` di subfolder `data/`; pastikan `shiny` sudah terpasang."
+    - "**Selama praktikum:** untuk setiap contoh berisi kode aplikasi, **salin kode ke berkas `app.R`** lalu jalankan dengan tombol *Run App* atau perintah `shiny::runApp()`. Amati perilakunya, ubah-ubah nilai widget, lalu tutup aplikasi sebelum lanjut ke contoh berikutnya."
+    - "**Pembagian kerja:** Contoh dan Latihan dikerjakan selama sesi praktikum di kelas; **Penugasan dikerjakan sebagai tugas terstruktur di luar sesi**.\n\n**Pengumpulan:** kumpulkan berkas `app.R` beserta laporan R Markdown berisi penjelasan dan **tangkapan layar** aplikasi Anda, melalui Google Classroom sesuai tenggat yang ditetapkan dosen."
+  teori:
+    - "### Kaitan dengan Materi Sebelumnya"
+    - >
+      Modul ini menggabungkan hampir seluruh keterampilan sebelumnya menjadi satu produk. Bagian
+      \texttt{server} pada dasarnya adalah \textbf{fungsi} (Modul 3) yang di dalamnya memuat
+      \textbf{manipulasi data} dengan \texttt{dplyr} (Modul 5) dan \textbf{grafik} (Modul 7). Yang
+      benar-benar baru hanyalah lapisan antarmukanya: bagaimana pilihan pengguna masuk ke perhitungan,
+      dan bagaimana hasilnya dikembalikan ke layar.
+    - >
+      Karena itu, cara terbaik membangun aplikasi Shiny adalah menulis dan menguji logikanya lebih
+      dahulu sebagai kode R biasa - persis seperti yang sudah Anda kerjakan pada Modul 5 dan 7 - baru
+      kemudian membungkusnya ke dalam kerangka Shiny. Pendekatan bertahap ini jauh lebih mudah
+      ditelusuri ketika terjadi galat.
+    - "### Anatomi Aplikasi Shiny"
+    - >
+      Setiap aplikasi Shiny tersusun dari tiga bagian. \texttt{ui} menetapkan \emph{apa yang dilihat
+      pengguna}: widget masukan dan tempat keluaran. \texttt{server} menetapkan \emph{bagaimana
+      keluaran dihitung} dari masukan. \texttt{shinyApp(ui, server)} merangkai keduanya menjadi
+      aplikasi yang dapat dijalankan.
+    - "\\begin{kotakrumus}\n\\textbf{Kerangka minimal:}\\\\[3pt]\n\\texttt{library(shiny)}\\\\\n\\texttt{ui <- fluidPage(}\\\\\n\\quad \\texttt{sliderInput(\"n\", \"Jumlah\", 1, 100, 30),}\\\\\n\\quad \\texttt{plotOutput(\"grafik\")}\\\\\n\\texttt{)}\\\\\n\\texttt{server <- function(input, output) \\{}\\\\\n\\quad \\texttt{output\\$grafik <- renderPlot(\\{ hist(rnorm(input\\$n)) \\})}\\\\\n\\texttt{\\}}\\\\\n\\texttt{shinyApp(ui, server)}\n\\end{kotakrumus}"
+    - "\\begin{kotakanatomi}\n\\textbf{Warna yang sama menandai bagian yang berpasangan.} Setiap identitas harus ditulis \\emph{sama persis} di kedua sisi.\\\\[6pt]\n\\begin{tabular}{@{}p{0.46\\linewidth}p{0.46\\linewidth}@{}}\n\\textbf{\\small ui (yang dilihat pengguna)} & \\textbf{\\small server (cara menghitung)}\\\\[3pt]\n\\texttt{\\footnotesize fluidPage(} & \\texttt{\\footnotesize function(input, output) \\{}\\\\\n\\texttt{\\footnotesize ~~sliderInput(\\textcolor{padanA}{\\textbf{\"n\"}}, \"Jumlah:\", 1, 100, 30),} & \\texttt{\\footnotesize ~~output\\$\\textcolor{padanB}{\\textbf{grafik}} <- renderPlot(\\{}\\\\\n\\texttt{\\footnotesize ~~plotOutput(\\textcolor{padanB}{\\textbf{\"grafik\"}}),} & \\texttt{\\footnotesize ~~~~hist(rnorm(input\\$\\textcolor{padanA}{\\textbf{n}}))}\\\\\n\\texttt{\\footnotesize ~~tableOutput(\\textcolor{padanC}{\\textbf{\"tabel\"}})} & \\texttt{\\footnotesize ~~\\})}\\\\\n\\texttt{\\footnotesize )} & \\texttt{\\footnotesize ~~output\\$\\textcolor{padanC}{\\textbf{tabel}} <- renderTable(head(df))}\\\\\n & \\texttt{\\footnotesize \\}}\\\\\n\\end{tabular}\\\\[6pt]\n\\textcolor{padanA}{\\textbf{Oranye}} = identitas \\textbf{masukan}: nama pada widget dipakai sebagai \\texttt{input\\$nama} di server.\\\\\n\\textcolor{padanB}{\\textbf{Biru}} dan \\textcolor{padanC}{\\textbf{hijau}} = identitas \\textbf{keluaran}: nama pada \\texttt{*Output()} dipakai sebagai \\texttt{output\\$nama} di server, dan jenis \\texttt{render} harus cocok dengan jenis \\texttt{Output}.\n\\end{kotakanatomi}"
+    - >
+      \textbf{Aturan pemasangan.} Setiap keluaran memiliki \emph{identitas} yang harus sama persis di
+      kedua sisi: \texttt{plotOutput("grafik")} pada \texttt{ui} dipasangkan dengan
+      \texttt{output\$grafik} pada \texttt{server}. Selain itu, jenis keluaran harus cocok dengan
+      fungsi \texttt{render} yang dipakai.
+    - "\\begin{kotakinfo}[Pasangan keluaran dan render]\n\\begin{tabular}{@{}lll@{}}\n\\textbf{ui} & \\textbf{server} & \\textbf{Untuk}\\\\\n\\texttt{plotOutput()} & \\texttt{renderPlot()} & grafik\\\\\n\\texttt{tableOutput()} & \\texttt{renderTable()} & tabel\\\\\n\\texttt{textOutput()} & \\texttt{renderText()} & teks ringkas\\\\\n\\texttt{verbatimTextOutput()} & \\texttt{renderPrint()} & keluaran konsol\\\\\n\\texttt{uiOutput()} & \\texttt{renderUI()} & antarmuka dinamis\\\\\n\\end{tabular}\n\\end{kotakinfo}"
+    - "\\begin{kotaksalah}[Identitas atau render tak cocok]\nDua kesalahan paling sering pada pemula: (1) \\textbf{identitas berbeda} antara \\texttt{ui} dan \\texttt{server}, misalnya \\texttt{plotOutput(\"grafik\")} tetapi \\texttt{output\\$plot}, sehingga tidak ada yang tampil tanpa pesan galat sama sekali; dan (2) \\textbf{render tidak cocok}, misalnya \\texttt{plotOutput} dipasangkan dengan \\texttt{renderTable}. Bila aplikasi berjalan tetapi bagian tertentu kosong, periksalah kedua hal ini lebih dahulu.\n\\end{kotaksalah}"
+    - "### Reaktivitas"
+    - >
+      Inti Shiny adalah \emph{reaktivitas}: keluaran otomatis dihitung ulang ketika masukan yang
+      dipakainya berubah. Anda tidak perlu menulis kode "jika tombol ditekan maka perbarui grafik";
+      cukup menyebut \texttt{input\$n} di dalam \texttt{renderPlot}, dan Shiny akan mengurus sisanya.
+    - >
+      \textbf{Konteks reaktif.} Nilai \texttt{input} hanya boleh dibaca di dalam \emph{konteks
+      reaktif}, yaitu di dalam fungsi \texttt{render}, \texttt{reactive}, atau \texttt{observe}.
+      Membacanya di luar konteks tersebut - misalnya langsung di badan \texttt{server} - menimbulkan
+      galat.
+    - >
+      \textbf{Berbagi perhitungan.} Bila beberapa keluaran memerlukan hasil antara yang sama,
+      hitunglah sekali di dalam \texttt{reactive()} lalu panggil hasilnya sebagai fungsi. Selain lebih
+      ringkas, Shiny akan menyimpan hasilnya sehingga tidak dihitung berulang kali.
+    - "\\begin{kotaktips}\nBangun aplikasi selapis demi selapis: mulai dari satu widget dan satu keluaran, pastikan berjalan, baru tambahkan yang berikutnya. Menulis aplikasi berisi sepuluh widget sekaligus lalu menjalankannya untuk pertama kali hampir selalu berakhir dengan galat yang sulit dilacak.\n\\end{kotaktips}"
+    - "### Mengendalikan Waktu Jalan"
+    - >
+      Kadang kita tidak ingin perhitungan berjalan pada setiap perubahan masukan, misalnya karena
+      perhitungannya berat. \texttt{eventReactive(input\$tombol, \{ ... \})} menunda perhitungan
+      sampai tombol ditekan, sedangkan \texttt{observeEvent(input\$tombol, \{ ... \})} menjalankan
+      tindakan tanpa mengembalikan nilai. Keduanya dipasangkan dengan \texttt{actionButton} pada
+      \texttt{ui}.
+    - "### Validasi Masukan"
+    - >
+      Pengguna dapat mengosongkan pilihan atau memasukkan nilai yang tidak masuk akal.
+      \texttt{req(input\$x)} menghentikan perhitungan secara diam-diam sampai masukan tersedia,
+      sedangkan \texttt{validate(need(syarat, "pesan"))} menampilkan pesan yang ramah kepada pengguna.
+      Aplikasi yang baik selalu menangani kemungkinan ini.
+    - "### Penataan Berkas dan Penyebaran"
+    - >
+      Aplikasi kecil cukup ditulis dalam satu berkas bernama \texttt{app.R}. Aplikasi besar dapat
+      dipecah menjadi \texttt{ui.R} dan \texttt{server.R} dalam satu folder, ditambah subfolder
+      \texttt{data} dan \texttt{www} untuk berkas pendukung. Jalankan dengan \texttt{runApp()} atau
+      tombol \emph{Run App} di RStudio. Untuk disebarkan, aplikasi dapat diunggah ke layanan seperti
+      shinyapps.io atau dipasang pada Shiny Server milik institusi.
+    - "\\begin{kotakvariasi}\nUntuk tampilan yang lebih rapi tanpa banyak penyesuaian, tersedia paket pelengkap seperti \\texttt{shinydashboard} dan \\texttt{bslib} (tema), \\texttt{DT} (tabel interaktif dengan pencarian dan pengurutan), serta \\texttt{plotly} (grafik interaktif). Semuanya dibangun di atas kerangka yang sama sehingga dipelajari setelah dasar-dasar di modul ini dikuasai.\n\\end{kotakvariasi}"
+  contoh:
+    - contoh: "Memeriksa objek ui dan server tanpa menjalankan aplikasi"
+      kode_r: "suppressPackageStartupMessages(library(shiny))\nui <- fluidPage(\n  titlePanel(\"Aplikasi Pertama\"),\n  sliderInput(\"n\", \"Banyaknya data:\", min = 10, max = 200, value = 50),\n  plotOutput(\"grafik\"))\nserver <- function(input, output) {\n  output$grafik <- renderPlot({ hist(rnorm(input$n)) })\n}\n# periksa kebenaran objek TANPA meluncurkan aplikasi\nclass(ui)\nis.function(server)\nnames(formals(server))"
+      judul_r: "membangun dan memeriksa objek"
+      eval: true
+      penjelasan: >
+        Objek ui dibentuk dari fluidPage yang menerima beberapa unsur halaman dipisah koma: judul,
+        widget penggeser, dan tempat keluaran grafik. Objek server adalah fungsi biasa dengan argumen
+        input dan output; di dalamnya keluaran ditetapkan lewat output diikuti tanda dolar dan identitas
+        keluaran. Tiga baris terakhir memeriksa objek tanpa menjalankannya: class menunjukkan ui berupa
+        daftar tag HTML, is.function memastikan server berupa fungsi, dan formals menampilkan nama
+        argumennya.
+      interpretasi: >
+        Objek ui dan server dapat dibuat dan diperiksa tanpa menjalankan aplikasi. Kelas ui berupa
+        daftar tag HTML, sedangkan server adalah fungsi biasa dengan argumen input dan output. Teknik
+        pemeriksaan ini berguna untuk memastikan kode Anda sah sebelum diluncurkan, dan dipakai pula
+        pada latihan membetulkan kode di modul ini. Untuk benar-benar menjalankannya, tambahkan
+        shinyApp dengan argumen ui dan server.
+    - contoh: "Aplikasi minimal yang siap dijalankan"
+      kode_r: "library(shiny)\n\nui <- fluidPage(\n  titlePanel(\"Histogram Interaktif\"),\n  sliderInput(\"n\", \"Banyaknya data:\", min = 10, max = 500, value = 100),\n  plotOutput(\"grafik\"))\n\nserver <- function(input, output) {\n  output$grafik <- renderPlot({\n    hist(rnorm(input$n), col = \"#0B6FB4\", border = \"white\",\n         main = paste(\"Histogram dari\", input$n, \"data\"))\n  })\n}\n\nshinyApp(ui = ui, server = server)"
+      judul_r: "app.R lengkap (salin dan jalankan sendiri)"
+      eval: false
+      penjelasan: >
+        Kode ini menambahkan satu baris penting dibanding contoh sebelumnya, yaitu shinyApp yang
+        merangkai ui dan server menjadi aplikasi yang dapat dijalankan. Di dalam renderPlot, nilai
+        penggeser dibaca lewat input diikuti tanda dolar dan identitasnya, lalu dipakai dua kali:
+        sebagai banyaknya data yang dibangkitkan dan sebagai bagian judul grafik yang dirangkai dengan
+        paste.
+      interpretasi: >
+        Inilah aplikasi Shiny lengkap yang pertama. Salin seluruh kode ke berkas bernama app.R lalu
+        tekan tombol Run App di RStudio. Geser penggeser dan amati histogram berubah seketika tanpa
+        Anda menulis kode apa pun untuk menangani perubahan itu - inilah wujud reaktivitas. Perhatikan
+        identitas grafik yang sama persis di kedua sisi, dan penggunaan nilai penggeser di dalam judul
+        grafik.
+    - "**Tampilan aplikasi.** Berikut tangkapan layar aplikasi di atas ketika dijalankan:\n\n![Tampilan aplikasi minimal](gambar/tampilan_minimal.png){width=100%}\n\nPerhatikan penggeser di bagian atas dan histogram yang menyesuaikan nilainya. Judul grafik ikut berubah mengikuti nilai penggeser."
+    - contoh: "Widget masukan menghasilkan HTML"
+      kode_r: "library(shiny)\n# tiap widget sesungguhnya menghasilkan potongan HTML\ncat(as.character(sliderInput(\"n\", \"Jumlah\", 1, 10, 5)))"
+      judul_r: "melihat HTML yang dihasilkan widget"
+      eval: true
+      penjelasan: >
+        Fungsi sliderInput dipanggil sendirian di luar kerangka aplikasi. Hasilnya berupa objek tag yang
+        diubah menjadi teks dengan as.character lalu dicetak dengan cat agar tampil sebagai HTML apa
+        adanya, bukan ringkasan objek. Dari keluarannya terlihat bahwa widget sesungguhnya hanyalah
+        potongan HTML berisi label dan elemen input beserta atributnya.
+      interpretasi: >
+        Fungsi widget Shiny sebenarnya hanyalah pembangkit HTML. Keluaran di atas memperlihatkan bahwa
+        sliderInput menghasilkan sebuah div berisi label dan elemen input beserta atribut nilai minimum,
+        maksimum, dan awalnya. Memahami hal ini membantu ketika Anda perlu menyesuaikan tampilan atau
+        menelusuri masalah, dan menjelaskan mengapa aplikasi Shiny berjalan di peramban.
+    - contoh: "Ragam widget masukan"
+      kode_r: "library(shiny)\nui <- fluidPage(\n  numericInput(\"umur\", \"Umur:\", value = 30, min = 0, max = 120),\n  sliderInput(\"ambang\", \"Ambang IPM:\", min = 60, max = 80, value = 70, step = 0.5),\n  selectInput(\"prov\", \"Provinsi:\",\n              choices = c(\"Semua\", \"Provinsi A\", \"Provinsi B\"), selected = \"Semua\"),\n  radioButtons(\"peubah\", \"Peubah:\",\n               choices = c(\"ipm\", \"kemiskinan\", \"pengangguran\")),\n  checkboxInput(\"tampil\", \"Tampilkan garis rata-rata\", value = TRUE),\n  checkboxGroupInput(\"tahun\", \"Tahun:\", choices = c(\"2021\", \"2022\", \"2023\")),\n  dateRangeInput(\"periode\", \"Periode:\"),\n  actionButton(\"hitung\", \"Hitung\"))\nlength(ui)     # banyaknya elemen dalam halaman"
+      judul_r: "delapan jenis widget"
+      eval: true
+      penjelasan: >
+        Delapan widget disusun berurutan di dalam fluidPage. Pola argumennya seragam: argumen pertama
+        selalu identitas yang akan dirujuk di server, argumen kedua label yang dilihat pengguna, lalu
+        pilihan atau nilai awalnya. Widget berbasis pilihan memakai argumen choices dan selected,
+        sedangkan yang berbasis angka memakai value beserta batas minimum dan maksimum. Baris terakhir
+        menghitung banyaknya unsur di dalam halaman sebagai pemeriksaan sederhana.
+      interpretasi: >
+        Delapan widget yang paling sering dipakai ditampilkan sekaligus. Pola argumennya seragam:
+        argumen pertama selalu identitas yang akan dirujuk di server, argumen kedua label yang dilihat
+        pengguna, lalu pilihan atau nilai awal. Perhatikan bahwa checkboxGroupInput memungkinkan lebih
+        dari satu pilihan sedangkan radioButtons hanya satu. Salin ke app.R dengan server kosong untuk
+        melihat tampilannya.
+    - "**Tampilan aplikasi.** Tangkapan layar kode di atas ketika dijalankan:\n\n![Tampilan delapan widget masukan](gambar/tampilan_widget.png){width=100%}\n\nKedelapan widget tampil berurutan sesuai penulisannya. Perhatikan bentuk visual yang berbeda-beda: kotak angka dengan tombol naik turun, penggeser bernilai tunggal, daftar pilihan, tombol radio yang hanya boleh satu, kotak centang tunggal maupun berkelompok, dan tombol tindakan."
+    - contoh: "Menyiapkan logika sebelum dibungkus Shiny"
+      kode_r: "suppressPackageStartupMessages(library(dplyr))\nind <- read.csv(\"data/data_indikator.csv\")\n# logika yang nanti dipakai server: saring lalu ringkas\nambang <- 70\nhasil <- ind |>\n  filter(ipm >= ambang) |>\n  group_by(provinsi) |>\n  summarise(n = n(), rata_ipm = round(mean(ipm), 2), .groups = \"drop\")\nprint(hasil)"
+      judul_r: "uji logika sebagai kode R biasa"
+      eval: true
+      penjelasan: >
+        Kode ini sama sekali tidak memuat unsur Shiny. Nilai ambang ditetapkan sebagai peubah biasa,
+        lalu data disaring dan diringkas dengan alur dplyr seperti pada Modul 5. Inilah tahap pengujian
+        logika yang dianjurkan: setelah hasilnya benar, peubah ambang tinggal diganti dengan nilai dari
+        widget dan seluruh blok dipindahkan ke dalam fungsi render.
+      interpretasi: >
+        Inilah cara kerja yang dianjurkan: tulis dan uji logikanya sebagai kode R biasa lebih dahulu.
+        Kode ini memakai keterampilan dplyr dari Modul 5 tanpa unsur Shiny sama sekali. Setelah
+        hasilnya benar, nilai ambang tinggal diganti dengan nilai dari widget dan seluruh blok
+        dipindahkan ke dalam fungsi render. Memisahkan pengujian logika dari kerangka Shiny sangat
+        menghemat waktu penelusuran galat.
+    - contoh: "Pratinjau grafik yang akan ditampilkan aplikasi"
+      kode_r: "ind <- read.csv(\"data/data_indikator.csv\")\nsub <- ind[ind$provinsi %in% c(\"Provinsi A\", \"Provinsi B\"), ]\nboxplot(ipm ~ provinsi, data = sub, col = c(\"#0B6FB4\", \"#F58220\"),\n        main = \"Pratinjau keluaran aplikasi\", ylab = \"IPM\")"
+      judul_r: "grafik yang akan dirender aplikasi"
+      eval: true
+      penjelasan: >
+        Data disaring lebih dahulu memakai operator persen in persen untuk memilih dua provinsi, lalu
+        diagram kotak-garis digambar dengan bentuk rumus. Kode ini juga murni R tanpa unsur Shiny;
+        tujuannya memastikan tampilan grafik sudah sesuai sebelum dibungkus ke dalam fungsi renderPlot.
+      interpretasi: >
+        Gambar ini adalah pratinjau statis dari apa yang nanti dihasilkan renderPlot ketika pengguna
+        memilih dua provinsi tersebut. Menyiapkan grafik seperti ini lebih dahulu memastikan tampilannya
+        sudah sesuai sebelum dibungkus ke dalam aplikasi, sehingga bila nanti aplikasi menampilkan hal
+        berbeda, Anda tahu masalahnya ada pada lapisan Shiny, bukan pada kode grafiknya.
+    - contoh: "Tata letak dengan sidebarLayout"
+      kode_r: "library(shiny)\nlibrary(dplyr)\nind <- read.csv(\"data/data_indikator.csv\")\n\nui <- fluidPage(\n  titlePanel(\"Eksplorasi Indikator Wilayah\"),\n  sidebarLayout(\n    sidebarPanel(\n      selectInput(\"peubah\", \"Pilih peubah:\",\n                  choices = c(\"ipm\", \"kemiskinan\", \"pengangguran\")),\n      sliderInput(\"bins\", \"Banyaknya selang:\", 5, 30, 10)),\n    mainPanel(\n      plotOutput(\"hist\"),\n      verbatimTextOutput(\"ringkas\"))))\n\nserver <- function(input, output) {\n  output$hist <- renderPlot({\n    hist(ind[[input$peubah]], breaks = input$bins,\n         col = \"#0B6FB4\", border = \"white\",\n         main = paste(\"Sebaran\", input$peubah), xlab = input$peubah)\n  })\n  output$ringkas <- renderPrint({\n    summary(ind[[input$peubah]])\n  })\n}\n\nshinyApp(ui, server)"
+      judul_r: "sidebarLayout dengan dua keluaran"
+      eval: false
+      penjelasan: >
+        Tata letak dibentuk dengan sidebarLayout yang menerima dua bagian: sidebarPanel berisi kendali
+        dan mainPanel berisi hasil. Di server, kolom dipilih secara dinamis memakai kurung siku ganda
+        karena nama kolomnya berupa teks yang berasal dari widget. Dua keluaran berbeda jenis
+        didefinisikan: renderPlot untuk grafik dan renderPrint untuk keluaran konsol, masing-masing
+        berpasangan dengan plotOutput dan verbatimTextOutput di ui.
+      interpretasi: >
+        Tata letak sidebarLayout membagi halaman menjadi panel samping berisi kendali dan panel utama
+        berisi hasil - pola paling lazim untuk aplikasi eksplorasi. Perhatikan cara memilih kolom secara
+        dinamis dengan kurung siku ganda karena nama kolomnya berupa teks dari widget. Aplikasi ini
+        memiliki dua keluaran berbeda jenis yang keduanya bereaksi terhadap pilihan peubah.
+    - "**Tampilan aplikasi.** Berikut tangkapan layar aplikasi di atas ketika dijalankan:\n\n![Tampilan sidebarLayout](gambar/tampilan_sidebar.png){width=100%}\n\nPanel samping memuat kendali, panel utama memuat dua keluaran sekaligus: histogram dan ringkasan teks. Keduanya berubah bersamaan saat peubah diganti."
+    - "**Tampilan aplikasi.** Tangkapan layar kode di atas ketika dijalankan:\n\n![Tampilan dua jenis keluaran](gambar/tampilan_keluaran.png){width=100%}\n\nPerbandingan dua jenis keluaran teks. Bagian atas memakai verbatimTextOutput dengan renderPrint sehingga hasilnya tampil apa adanya seperti di Console, lengkap dengan huruf monospasi. Bagian bawah memakai tableOutput dengan renderTable sehingga tersaji sebagai tabel rapi."
+    - contoh: "Berbagi perhitungan dengan reactive"
+      kode_r: "library(shiny)\nlibrary(dplyr)\nind <- read.csv(\"data/data_indikator.csv\")\n\nui <- fluidPage(\n  sliderInput(\"ambang\", \"IPM minimum:\", 60, 80, 70, step = 0.5),\n  textOutput(\"jumlah\"),\n  tableOutput(\"tabel\"),\n  plotOutput(\"grafik\"))\n\nserver <- function(input, output) {\n  # dihitung SEKALI, dipakai tiga keluaran\n  terpilih <- reactive({\n    ind |> filter(ipm >= input$ambang)\n  })\n  output$jumlah <- renderText({\n    paste(\"Banyaknya amatan terpilih:\", nrow(terpilih()))\n  })\n  output$tabel <- renderTable({\n    terpilih() |>\n      group_by(provinsi) |>\n      summarise(n = n(), rata_ipm = mean(ipm), .groups = \"drop\")\n  })\n  output$grafik <- renderPlot({\n    hist(terpilih()$ipm, col = \"#00A651\", border = \"white\",\n         main = \"IPM amatan terpilih\", xlab = \"IPM\")\n  })\n}\n\nshinyApp(ui, server)"
+      judul_r: "reactive untuk hasil antara"
+      eval: false
+      penjelasan: >
+        Objek terpilih dibuat dengan reactive yang membungkus kode penyaringan. Objek ini bersifat malas
+        dan hasilnya disimpan, sehingga penyaringan hanya dihitung sekali meskipun dipakai tiga keluaran.
+        Perhatikan cara memanggilnya: selalu memakai tanda kurung, yaitu terpilih dengan kurung, karena
+        objek reaktif berperilaku seperti fungsi. Ketiga keluaran memakai jenis render yang berbeda sesuai
+        pasangannya di ui.
+      interpretasi: >
+        Tiga keluaran memerlukan data tersaring yang sama. Dengan reactive, penyaringan dihitung sekali
+        lalu hasilnya dipanggil sebagai fungsi dengan tanda kurung, yaitu terpilih dengan kurung.
+        Perhatikan kurung tersebut - inilah kesalahan yang paling sering terjadi: menulis terpilih tanpa
+        kurung berarti merujuk objek reaktifnya, bukan nilainya. Tanpa reactive, kode penyaringan harus
+        ditulis tiga kali dan dijalankan tiga kali pula.
+    - contoh: "Menunda perhitungan dengan eventReactive"
+      kode_r: "library(shiny)\n\nui <- fluidPage(\n  numericInput(\"n\", \"Ukuran contoh:\", value = 100, min = 10, max = 10000),\n  actionButton(\"jalan\", \"Bangkitkan\"),\n  plotOutput(\"grafik\"))\n\nserver <- function(input, output) {\n  # hanya dihitung ulang saat tombol ditekan\n  contoh <- eventReactive(input$jalan, {\n    rnorm(input$n)\n  })\n  output$grafik <- renderPlot({\n    hist(contoh(), col = \"#F58220\", border = \"white\",\n         main = \"Data yang dibangkitkan\")\n  })\n}\n\nshinyApp(ui, server)"
+      judul_r: "eventReactive dan actionButton"
+      eval: false
+      penjelasan: >
+        Fungsi eventReactive menerima dua bagian: peristiwa pemicu berupa penekanan tombol, dan blok kode
+        yang dijalankan. Selama tombol belum ditekan, nilainya belum ada sehingga grafik belum muncul.
+        Berbeda dari reactive biasa yang bereaksi terhadap setiap perubahan masukan, di sini perubahan
+        pada kotak angka tidak langsung memicu perhitungan ulang - berguna bila perhitungannya berat.
+      interpretasi: >
+        Tanpa eventReactive, mengubah ukuran contoh akan langsung membangkitkan data baru setiap
+        ketikan - boros bila perhitungannya berat. Dengan eventReactive, perhitungan menunggu tombol
+        ditekan. Perhatikan bahwa grafik tidak muncul sebelum tombol ditekan pertama kali, karena nilai
+        reaktifnya belum ada. Untuk menjalankan tindakan tanpa mengembalikan nilai, misalnya menyimpan
+        berkas, gunakan observeEvent.
+    - contoh: "Beberapa halaman dengan tabsetPanel"
+      kode_r: "library(shiny)\nind <- read.csv(\"data/data_indikator.csv\")\n\nui <- fluidPage(\n  titlePanel(\"Dasbor Indikator\"),\n  sidebarLayout(\n    sidebarPanel(\n      selectInput(\"prov\", \"Provinsi:\",\n                  choices = c(\"Semua\", sort(unique(ind$provinsi))))),\n    mainPanel(\n      tabsetPanel(\n        tabPanel(\"Grafik\", plotOutput(\"grafik\")),\n        tabPanel(\"Tabel\", tableOutput(\"tabel\")),\n        tabPanel(\"Ringkasan\", verbatimTextOutput(\"ringkas\"))))))\n\nserver <- function(input, output) {\n  data_terpilih <- reactive({\n    if (input$prov == \"Semua\") ind else ind[ind$provinsi == input$prov, ]\n  })\n  output$grafik  <- renderPlot(hist(data_terpilih()$ipm, col = \"#0B6FB4\",\n                                    border = \"white\", main = \"\", xlab = \"IPM\"))\n  output$tabel   <- renderTable(head(data_terpilih(), 10))\n  output$ringkas <- renderPrint(summary(data_terpilih()[, c(\"ipm\",\"kemiskinan\")]))\n}\n\nshinyApp(ui, server)"
+      judul_r: "tabsetPanel tiga tab"
+      eval: false
+      penjelasan: >
+        Fungsi tabsetPanel membungkus beberapa tabPanel, masing-masing menerima judul tab dan isinya.
+        Di sidebarPanel, daftar pilihan diisi secara dinamis dari data memakai sort dan unique sehingga
+        tidak perlu ditulis manual. Objek reaktif data_terpilih memakai if else untuk menangani pilihan
+        Semua. Ketiga keluaran memakai objek reaktif yang sama sehingga penyaringan tidak diulang.
+      interpretasi: >
+        tabsetPanel membagi panel utama menjadi beberapa tab sehingga banyak keluaran dapat disajikan
+        tanpa membuat halaman menjadi panjang. Perhatikan cara mengisi pilihan widget secara dinamis
+        dari data memakai sort dan unique, sehingga daftar provinsi tidak perlu ditulis manual dan
+        otomatis menyesuaikan bila datanya berubah. Ketiga tab memakai satu objek reaktif yang sama.
+    - "**Tampilan aplikasi.** Tangkapan layar kode di atas ketika dijalankan:\n\n![Tampilan tabsetPanel](gambar/tampilan_tab.png){width=100%}\n\nTiga tab tampak di bagian atas panel utama; di sini tab Tabel yang sedang aktif sehingga keluaran tabel yang ditampilkan. Pengguna berpindah tab tanpa memuat ulang halaman, dan ketiganya memakai objek reaktif yang sama."
+    - contoh: "Validasi masukan dengan req dan validate"
+      kode_r: "library(shiny)\nind <- read.csv(\"data/data_indikator.csv\")\n\nui <- fluidPage(\n  selectInput(\"prov\", \"Provinsi:\",\n              choices = c(\"\", sort(unique(ind$provinsi)))),\n  numericInput(\"batas\", \"IPM minimum:\", value = 70),\n  plotOutput(\"grafik\"))\n\nserver <- function(input, output) {\n  output$grafik <- renderPlot({\n    req(input$prov)                      # diam sampai provinsi dipilih\n    sub <- ind[ind$provinsi == input$prov & ind$ipm >= input$batas, ]\n    validate(need(nrow(sub) > 0,\n                  \"Tidak ada amatan yang memenuhi. Turunkan batas IPM.\"))\n    hist(sub$ipm, col = \"#0B6FB4\", border = \"white\",\n         main = input$prov, xlab = \"IPM\")\n  })\n}\n\nshinyApp(ui, server)"
+      judul_r: "req dan validate need"
+      eval: false
+      penjelasan: >
+        Dua lapis perlindungan dipakai di dalam renderPlot. Fungsi req memeriksa apakah masukan sudah
+        tersedia; bila belum, perhitungan dihentikan secara diam-diam tanpa pesan galat. Setelah data
+        disaring, validate dengan need memeriksa apakah hasilnya masih berisi; bila kosong, pesan yang
+        ditulis di dalamnya ditampilkan kepada pengguna. Pilihan kosong sengaja disertakan pada choices
+        agar keadaan belum memilih dapat terjadi.
+      interpretasi: >
+        Dua lapis perlindungan dipakai. Fungsi req menghentikan perhitungan secara diam-diam selama
+        provinsi belum dipilih, sehingga pengguna tidak melihat pesan galat merah yang membingungkan.
+        Sementara validate dengan need menampilkan pesan yang ramah ketika penyaringan menghasilkan
+        data kosong. Aplikasi tanpa kedua lapis ini akan menampilkan galat teknis begitu pengguna
+        memasukkan nilai ekstrem.
+    - "**Tampilan aplikasi.** Tangkapan layar kode di atas ketika dijalankan:\n\n![Tampilan pesan validasi](gambar/tampilan_validasi.png){width=100%}\n\nBatas IPM sengaja diisi 95 sehingga tidak ada amatan yang memenuhi. Yang muncul adalah pesan yang ditulis di dalam need, bukan galat teknis berwarna merah - inilah manfaat validate bagi pengguna awam."
+    - contoh: "Tabel interaktif dan tombol unduh"
+      kode_r: "library(shiny)\nlibrary(dplyr)\nind <- read.csv(\"data/data_indikator.csv\")\n\nui <- fluidPage(\n  sliderInput(\"ambang\", \"IPM minimum:\", 60, 80, 70),\n  downloadButton(\"unduh\", \"Unduh hasil (CSV)\"),\n  tableOutput(\"tabel\"))\n\nserver <- function(input, output) {\n  hasil <- reactive({\n    ind |>\n      filter(ipm >= input$ambang) |>\n      group_by(provinsi) |>\n      summarise(n = n(), rata_ipm = round(mean(ipm), 2), .groups = \"drop\")\n  })\n  output$tabel <- renderTable(hasil())\n  output$unduh <- downloadHandler(\n    filename = function() paste0(\"ringkasan_ipm_\", Sys.Date(), \".csv\"),\n    content  = function(file) write.csv(hasil(), file, row.names = FALSE))\n}\n\nshinyApp(ui, server)"
+      judul_r: "downloadHandler"
+      eval: false
+      penjelasan: >
+        Fungsi downloadHandler memerlukan dua argumen yang keduanya berupa fungsi. Argumen filename
+        menghasilkan nama berkas; di sini tanggal hari ini disisipkan dengan Sys.Date agar nama berkasnya
+        khas. Argumen content menerima nama berkas sementara lalu menuliskan isinya ke sana dengan
+        write.csv. Karena keduanya memakai objek reaktif yang sama dengan tabel di layar, berkas terunduh
+        dijamin sesuai dengan yang sedang dilihat.
+      interpretasi: >
+        Fitur unduh membuat aplikasi benar-benar berguna: pengguna dapat membawa pulang hasil
+        penyaringannya. downloadHandler memerlukan dua fungsi, yaitu penentu nama berkas dan penulis
+        isinya. Perhatikan bahwa keduanya memakai objek reaktif yang sama dengan tabel di layar,
+        sehingga berkas yang terunduh dijamin sesuai dengan yang sedang dilihat pengguna.
+    - contoh: "Aplikasi lengkap: dasbor eksplorasi indikator"
+      kode_r: "library(shiny)\nlibrary(dplyr)\nind <- read.csv(\"data/data_indikator.csv\")\n\nui <- fluidPage(\n  titlePanel(\"Dasbor Indikator Wilayah (data simulasi)\"),\n  sidebarLayout(\n    sidebarPanel(\n      selectInput(\"peubah\", \"Peubah:\",\n                  choices = c(\"ipm\", \"kemiskinan\", \"pengangguran\")),\n      checkboxGroupInput(\"tahun\", \"Tahun:\",\n                         choices = sort(unique(ind$tahun)),\n                         selected = sort(unique(ind$tahun))),\n      sliderInput(\"bins\", \"Selang histogram:\", 5, 25, 10),\n      checkboxInput(\"garis\", \"Tampilkan rata-rata\", TRUE),\n      downloadButton(\"unduh\", \"Unduh ringkasan\")),\n    mainPanel(\n      tabsetPanel(\n        tabPanel(\"Sebaran\", plotOutput(\"hist\")),\n        tabPanel(\"Perbandingan\", plotOutput(\"box\")),\n        tabPanel(\"Ringkasan\", tableOutput(\"tabel\"))))))\n\nserver <- function(input, output) {\n  dt <- reactive({\n    req(input$tahun)\n    ind |> filter(tahun %in% as.numeric(input$tahun))\n  })\n  output$hist <- renderPlot({\n    x <- dt()[[input$peubah]]\n    validate(need(length(x) > 0, \"Pilih minimal satu tahun.\"))\n    hist(x, breaks = input$bins, col = \"#0B6FB4\", border = \"white\",\n         main = paste(\"Sebaran\", input$peubah), xlab = input$peubah)\n    if (input$garis) abline(v = mean(x), col = \"#F58220\", lwd = 2, lty = 2)\n  })\n  output$box <- renderPlot({\n    boxplot(dt()[[input$peubah]] ~ dt()$provinsi, col = \"#0B6FB4\",\n            xlab = \"\", ylab = input$peubah, main = \"Menurut provinsi\")\n  })\n  output$tabel <- renderTable({\n    dt() |>\n      group_by(provinsi) |>\n      summarise(n = n(),\n                rata = round(mean(.data[[input$peubah]]), 2),\n                sd = round(sd(.data[[input$peubah]]), 2),\n                .groups = \"drop\")\n  })\n  output$unduh <- downloadHandler(\n    filename = function() paste0(\"ringkasan_\", input$peubah, \".csv\"),\n    content = function(file) {\n      write.csv(dt() |> group_by(provinsi) |>\n                  summarise(rata = mean(.data[[input$peubah]]), .groups = \"drop\"),\n                file, row.names = FALSE)\n    })\n}\n\nshinyApp(ui, server)"
+      judul_r: "dasbor lengkap (proyek modul)"
+      eval: false
+      penjelasan: >
+        Aplikasi ini menggabungkan seluruh unsur modul. Di ui terdapat lima widget dan tiga tab. Di
+        server, objek reaktif dt menyaring menurut tahun terpilih, didahului req agar aman ketika seluruh
+        pilihan dikosongkan; nilai tahun diubah dengan as.numeric karena widget mengembalikan teks. Pada
+        keluaran histogram, validate memastikan datanya berisi, dan garis rata-rata hanya digambar bila
+        kotak centang aktif. Pada keluaran tabel dipakai .data dengan kurung siku ganda, yaitu cara dplyr
+        merujuk kolom yang namanya tersimpan dalam peubah.
+      interpretasi: >
+        Aplikasi ini merangkai seluruh keterampilan modul: lima widget berbeda jenis, tiga tab keluaran,
+        satu objek reaktif yang dipakai bersama, validasi masukan, penanda rata-rata yang dapat
+        dinyalakan, dan fitur unduh. Perhatikan penggunaan .data dengan kurung siku ganda di dalam
+        summarise, yaitu cara merujuk kolom berdasarkan nama yang tersimpan dalam peubah - keterampilan
+        dplyr tingkat lanjut. Salin ke app.R dan jalankan; inilah bentuk yang diharapkan pada penugasan.
+    - "**Tampilan aplikasi.** Berikut tangkapan layar aplikasi di atas ketika dijalankan:\n\n![Tampilan dasbor lengkap](gambar/tampilan_dasbor.png){width=100%}\n\nTampak lima widget di panel samping, tiga tab di panel utama, serta garis putus-putus oranye penanda rata-rata yang muncul karena kotak centang aktif. Inilah bentuk hasil yang diharapkan pada penugasan."
+    - contoh: "observeEvent untuk tindakan tanpa keluaran"
+      kode_r: "library(shiny)\n\nui <- fluidPage(\n  numericInput(\"nilai\", \"Nilai:\", value = 10),\n  actionButton(\"simpan\", \"Simpan ke berkas\"),\n  actionButton(\"reset\", \"Kembalikan ke 10\"),\n  verbatimTextOutput(\"catatan\"))\n\nserver <- function(input, output, session) {\n  riwayat <- reactiveVal(character(0))       # penyimpan yang dapat diubah\n\n  observeEvent(input$simpan, {               # tindakan, bukan keluaran\n    riwayat(c(riwayat(), paste(\"disimpan:\", input$nilai)))\n  })\n\n  observeEvent(input$reset, {\n    updateNumericInput(session, \"nilai\", value = 10)   # ubah widget dari server\n  })\n\n  output$catatan <- renderPrint({ riwayat() })\n}\n\nshinyApp(ui, server)"
+      judul_r: "observeEvent, reactiveVal, dan update widget"
+      eval: false
+      penjelasan: >
+        Objek reactiveVal berperan sebagai penyimpan yang boleh diperbarui; dipanggil tanpa argumen untuk
+        membaca dan dengan argumen untuk menulis. Blok observeEvent pertama menambahkan catatan baru ke
+        riwayat setiap tombol simpan ditekan. Blok kedua memakai updateNumericInput untuk mengubah nilai
+        widget dari sisi server; inilah sebabnya fungsi server di sini menerima argumen ketiga bernama
+        session.
+      interpretasi: >
+        Berbeda dari eventReactive yang mengembalikan nilai, observeEvent menjalankan tindakan seperti
+        menyimpan berkas atau mengubah widget lain. Objek reactiveVal berperan sebagai penyimpan yang
+        boleh diperbarui, dipakai di sini untuk menumpuk riwayat. Perhatikan pula argumen session yang
+        ditambahkan pada server: argumen ini diperlukan oleh keluarga fungsi update yang mengubah widget
+        dari sisi server, misalnya mengembalikan nilai ke keadaan semula.
+    - contoh: "Antarmuka dinamis dengan renderUI"
+      kode_r: "library(shiny)\nind <- read.csv(\"data/data_indikator.csv\")\n\nui <- fluidPage(\n  selectInput(\"prov\", \"Provinsi:\", choices = sort(unique(ind$provinsi))),\n  uiOutput(\"pilih_tahun\"),        # widget ini dibuat oleh server\n  tableOutput(\"tabel\"))\n\nserver <- function(input, output) {\n  # daftar tahun menyesuaikan provinsi yang dipilih\n  output$pilih_tahun <- renderUI({\n    tersedia <- sort(unique(ind$tahun[ind$provinsi == input$prov]))\n    selectInput(\"tahun\", \"Tahun (hanya yang tersedia):\", choices = tersedia)\n  })\n  output$tabel <- renderTable({\n    req(input$tahun)\n    ind[ind$provinsi == input$prov & ind$tahun == as.numeric(input$tahun), ]\n  })\n}\n\nshinyApp(ui, server)"
+      judul_r: "uiOutput dan renderUI"
+      eval: false
+      penjelasan: >
+        Di ui, uiOutput hanya menyediakan tempat kosong tanpa menentukan widget apa pun. Widget
+        sesungguhnya dibuat di server oleh renderUI, yang isinya menyesuaikan provinsi terpilih sehingga
+        daftar tahun hanya memuat yang benar-benar tersedia. Pada keluaran tabel dipakai req karena
+        widget tahun belum ada ketika aplikasi pertama kali dimuat.
+      interpretasi: >
+        Kadang pilihan pada satu widget harus bergantung pada widget lain. Pasangan uiOutput dan
+        renderUI memungkinkan widget dibuat dari sisi server sehingga isinya menyesuaikan keadaan
+        terkini - di sini daftar tahun hanya memuat tahun yang benar-benar tersedia untuk provinsi
+        terpilih. Perhatikan req pada keluaran tabel: widget tahun belum ada pada saat aplikasi pertama
+        kali dimuat, sehingga tanpa req akan muncul galat sesaat.
+    - contoh: "Memeriksa aplikasi lengkap sebelum diluncurkan"
+      kode_r: "suppressPackageStartupMessages(library(shiny))\nind <- read.csv(\"data/data_indikator.csv\")\n\nui <- fluidPage(\n  selectInput(\"peubah\", \"Peubah:\", choices = c(\"ipm\", \"kemiskinan\")),\n  plotOutput(\"grafik\"),\n  tableOutput(\"tabel\"))\n\nserver <- function(input, output) {\n  dt <- reactive({ ind })\n  output$grafik <- renderPlot(hist(dt()[[input$peubah]]))\n  output$tabel  <- renderTable(head(dt(), 3))\n}\n\n# daftar periksa sebelum meluncurkan\nc(ui_sah = inherits(ui, \"shiny.tag.list\"),\n  server_fungsi = is.function(server),\n  argumen_benar = identical(names(formals(server)), c(\"input\", \"output\")))"
+      judul_r: "daftar periksa objek aplikasi"
+      eval: true
+      penjelasan: >
+        Sebuah aplikasi ringkas dibangun lebih dahulu. Tiga pemeriksaan lalu digabung menjadi satu vektor
+        bernama: inherits memastikan ui bertipe daftar tag, is.function memastikan server berupa fungsi,
+        dan identical membandingkan nama argumen server dengan yang seharusnya. Ketiganya dapat
+        dijalankan tanpa meluncurkan aplikasi.
+      interpretasi: >
+        Ketiga pemeriksaan ini dapat dijalankan kapan saja tanpa meluncurkan aplikasi, dan sangat
+        berguna sebagai langkah pertama ketika aplikasi bermasalah. Bila ketiganya bernilai TRUE, berarti
+        kerangka aplikasi sudah sah dan masalahnya kemungkinan besar terletak pada kecocokan identitas
+        keluaran atau pada logika di dalam fungsi render - dua hal yang tidak dapat diperiksa dari luar.
+        Teknik inilah yang dipakai pada latihan membetulkan kode.
+    - contoh: "Penataan berkas dan menjalankan aplikasi"
+      kode_r: "# Struktur folder yang dianjurkan:\n#\n# aplikasi_saya/\n#   +-- app.R          <- ui, server, dan shinyApp dalam satu berkas\n#   +-- data/\n#   |     +-- data_indikator.csv\n#   +-- www/           <- berkas pendukung (gambar, css)\n#\n# Menjalankan:\n#   shiny::runApp(\"aplikasi_saya\")        # dari folder induk\n#   shiny::runApp()                        # bila sudah berada di dalamnya\n#   (atau tekan tombol Run App di RStudio)\n#\n# Alternatif untuk aplikasi besar: pecah menjadi ui.R dan server.R\n#   aplikasi_saya/ui.R  dan  aplikasi_saya/server.R\n\n# memeriksa apakah folder aplikasi dikenali Shiny:\nfile.exists(\"app.R\")   # FALSE di sini karena kita belum membuatnya"
+      judul_r: "struktur folder dan runApp"
+      eval: true
+      penjelasan: >
+        Sebagian besar isi blok ini sengaja ditulis sebagai komentar karena berupa penjelasan struktur
+        folder dan perintah yang harus dijalankan sendiri di sesi Anda. Satu-satunya baris yang benar-benar
+        dijalankan adalah file.exists, yang memeriksa keberadaan berkas app.R di direktori kerja saat ini.
+      interpretasi: >
+        Aplikasi kecil cukup satu berkas bernama app.R, sedangkan aplikasi besar sebaiknya dipecah
+        menjadi ui.R dan server.R. Berkas data diletakkan di subfolder data dan dirujuk dengan jalur
+        relatif agar aplikasi tetap berjalan ketika dipindahkan atau diunggah. Pemeriksaan terakhir
+        wajar menghasilkan FALSE karena pada sesi ini kita belum membuat berkas app.R - buatlah saat
+        mengerjakan latihan.
+  latihan:
+    - "Kerjakan bertahap. **Dasar** melengkapi kode; **Menengah** menulis sendiri dan membetulkan kode; **Lanjut** membangun aplikasi utuh. Gunakan `data/data_indikator.csv`. Untuk tiap latihan aplikasi, simpan sebagai `app.R` lalu jalankan dan sertakan tangkapan layarnya."
+    - "#### Tingkat Dasar (melengkapi kode)"
+    - "\\latihan{Melengkapi aplikasi minimal}"
+    - "```{r eval=FALSE}\nlibrary(shiny)\nui <- fluidPage(\n  sliderInput(\"n\", \"Banyaknya data:\", 10, 300, 100),\n  ____(\"grafik\"))              # tempat keluaran grafik\nserver <- function(input, output) {\n  output$____ <- ____({          # identitas dan fungsi render yang sesuai\n    hist(rnorm(input$n))\n  })\n}\nshinyApp(ui, server)\n```"
+    - "\\latihan{Memasangkan keluaran dan render}"
+    - "```{r eval=FALSE}\n# Lengkapi pasangan yang benar:\n# tableOutput()        dipasangkan dengan ____\n# verbatimTextOutput() dipasangkan dengan ____\n# plotOutput()         dipasangkan dengan ____\n```"
+    - "\\latihan{Widget pilihan}"
+    - "```{r eval=FALSE}\nind <- read.csv(\"data/data_indikator.csv\")\nui <- fluidPage(\n  ____(\"prov\", \"Provinsi:\",                 # widget daftar pilihan\n       choices = sort(unique(ind$provinsi))),\n  tableOutput(\"tabel\"))\n```"
+    - "#### Tingkat Menengah (menulis sendiri)"
+    - "\\latihan{Aplikasi dua keluaran}"
+    - "Buat aplikasi dengan `selectInput` untuk memilih peubah (`ipm`, `kemiskinan`, `pengangguran`) dan `sliderInput` untuk banyaknya selang histogram. Tampilkan **dua keluaran**: histogram peubah terpilih dan ringkasan `summary` peubah tersebut. Gunakan `sidebarLayout`."
+    - "\\latihan{Menggunakan reactive}"
+    - "Kembangkan aplikasi sebelumnya: tambahkan `selectInput` provinsi (termasuk pilihan \"Semua\"), dan gunakan `reactive()` agar penyaringan data dihitung **sekali** lalu dipakai oleh histogram maupun ringkasan. Jelaskan dalam laporan mengapa `reactive` lebih baik daripada menyalin kode penyaringan dua kali."
+    - "\\latihan{Membetulkan kode yang salah}"
+    - "Kode berikut memuat beberapa kesalahan (identitas keluaran tak cocok, fungsi render keliru, pemanggilan objek reaktif tanpa kurung, dan pembacaan input di luar konteks reaktif). Temukan dan perbaiki, lalu jelaskan tiap kesalahannya."
+    - "```{r eval=FALSE}\nlibrary(shiny)\nind <- read.csv(\"data/data_indikator.csv\")\n\nui <- fluidPage(\n  sliderInput(\"ambang\", \"IPM minimum:\", 60, 80, 70),\n  plotOutput(\"grafik\"),\n  tableOutput(\"tabel\"))\n\nserver <- function(input, output) {\n  n_awal <- nrow(ind[ind$ipm >= input$ambang, ])   # input dibaca DI LUAR konteks reaktif\n\n  terpilih <- reactive({ ind[ind$ipm >= input$ambang, ] })\n\n  output$plot <- renderPlot({          # identitas tidak cocok dengan ui\n    hist(terpilih$ipm)                  # objek reaktif dipanggil tanpa kurung\n  })\n\n  output$tabel <- renderPlot({          # fungsi render tidak sesuai untuk tabel\n    head(terpilih(), 5)\n  })\n}\n\nshinyApp(ui, server)\n```"
+    - "**Keluaran yang benar.** Setelah diperbaiki, aplikasi berjalan tanpa galat: histogram IPM dan tabel lima baris pertama keduanya tampil dan berubah saat penggeser digerakkan. Karena aplikasi tidak mencetak keluaran ke konsol, verifikasilah kebenaran objeknya dengan potongan berikut (jalankan setelah mendefinisikan `ui` dan `server`, tanpa memanggil `shinyApp`):\n\n```\n> class(ui)\n[1] \"shiny.tag.list\" \"list\"\n\n> is.function(server)\n[1] TRUE\n\n> names(formals(server))\n[1] \"input\"  \"output\"\n```\n\nSelain itu, aplikasi yang sudah benar **tidak menampilkan pesan galat merah** di panel dan kedua keluaran terisi."
+    - "#### Tingkat Lanjut (kasus kecil)"
+    - "\\latihan{Dasbor mini dengan tab dan unduh}"
+    - "Bangun aplikasi dengan `tabsetPanel` berisi dua tab: tab **Sebaran** menampilkan histogram peubah terpilih, dan tab **Perbandingan** menampilkan diagram kotak-garis peubah tersebut menurut provinsi. Sediakan `checkboxGroupInput` untuk memilih tahun, gunakan `req()` agar aplikasi tidak galat ketika tidak ada tahun terpilih, dan tambahkan `downloadButton` untuk mengunduh tabel ringkasan per provinsi. Sertakan tangkapan layar kedua tab."
+  penugasan:
+    - "\\begin{kotaktugas}\nSebagai calon pengelola diseminasi \\emph{official statistics}, bangun sebuah \\emph{dashboard} interaktif dengan RShiny untuk menyajikan indikator wilayah dari \\texttt{data\\_indikator.csv} (\\emph{data simulasi}).\n\\end{kotaktugas}"
+    - "**Konteks.** Unit diseminasi ingin menggantikan puluhan tabel statis dengan satu aplikasi yang memungkinkan pengguna menelusuri sendiri indikator IPM, kemiskinan, dan pengangguran menurut provinsi dan tahun."
+    - "\\tugas{Rancangan}"
+    - "1. Tuliskan **rancangan singkat** aplikasi Anda sebelum menulis kode: siapa penggunanya, pertanyaan apa yang ingin mereka jawab, widget apa saja yang disediakan, dan keluaran apa yang ditampilkan. Sertakan sketsa tata letak (boleh gambar tangan yang difoto)."
+    - "\\tugas{Pembangunan aplikasi}"
+    - "2. Bangun aplikasi dalam berkas `app.R` yang memuat **minimal**: (a) tiga widget masukan berbeda jenis; (b) `sidebarLayout`; (c) `tabsetPanel` dengan minimal dua tab; (d) minimal tiga keluaran berbeda jenis (grafik, tabel, dan teks/ringkasan)."
+    - "3. Gunakan **`reactive()`** untuk hasil antara yang dipakai lebih dari satu keluaran, dan jelaskan di laporan bagian mana yang dihemat."
+    - "4. Terapkan **validasi masukan** dengan `req()` dan `validate(need(...))` sehingga aplikasi tidak pernah menampilkan galat teknis kepada pengguna, meskipun pengguna mengosongkan pilihan atau memasukkan nilai ekstrem."
+    - "5. Sediakan **tombol unduh** yang mengekspor tabel ringkasan sesuai pilihan pengguna saat itu."
+    - "\\tugas{Pengujian dan pelaporan}"
+    - "6. Uji aplikasi Anda dengan **minimal tiga skenario pengguna** (misalnya: memilih satu provinsi; mengosongkan seluruh tahun; menetapkan ambang yang tidak menyisakan data). Laporkan bagaimana aplikasi menanggapinya."
+    - "7. Susun laporan R Markdown berisi: rancangan, potongan kode penting beserta penjelasannya, **tangkapan layar** tiap tab, hasil pengujian ketiga skenario, dan **ringkasan (maksimal 300 kata)** tentang kelebihan penyajian interaktif dibandingkan tabel statis serta keterbatasannya. Ingatkan pembaca bahwa data yang dipakai adalah simulasi."
+  ringkasan:
+    - "\\begin{kotaktujuan}\n\\textbf{Daftar periksa penguasaan:}\n\\begin{itemize}\n\\item[$\\square$] Saya memahami peran \\texttt{ui}, \\texttt{server}, dan \\texttt{shinyApp}.\n\\item[$\\square$] Saya dapat memakai berbagai widget masukan dan memasangkan keluaran dengan fungsi \\texttt{render} yang tepat.\n\\item[$\\square$] Saya dapat menyusun tata letak dengan \\texttt{sidebarLayout} dan \\texttt{tabsetPanel}.\n\\item[$\\square$] Saya memahami reaktivitas dan tahu bahwa \\texttt{input} hanya dibaca di dalam konteks reaktif.\n\\item[$\\square$] Saya dapat memakai \\texttt{reactive()} dan memanggilnya dengan tanda kurung.\n\\item[$\\square$] Saya dapat menunda perhitungan dengan \\texttt{eventReactive} dan \\texttt{actionButton}.\n\\item[$\\square$] Saya dapat memvalidasi masukan dengan \\texttt{req} dan \\texttt{validate}.\n\\item[$\\square$] Saya dapat menambahkan fitur unduh dan menata berkas aplikasi.\n\\end{itemize}\n\\end{kotaktujuan}"
+    - "**Kartu Referensi Cepat.** Perintah pokok Shiny:"
+    - "\\begin{kotakrumus}\n\\begin{tabular}{@{}ll@{}}\n\\textbf{Keperluan} & \\textbf{Perintah}\\\\\nKerangka & \\texttt{fluidPage()}, \\texttt{shinyApp(ui, server)}\\\\\nJudul & \\texttt{titlePanel()}\\\\\nTata letak & \\texttt{sidebarLayout()}, \\texttt{fluidRow()}\\\\\nTab & \\texttt{tabsetPanel()}, \\texttt{tabPanel()}\\\\\nAngka & \\texttt{numericInput()}, \\texttt{sliderInput()}\\\\\nPilihan & \\texttt{selectInput()}, \\texttt{radioButtons()}\\\\\nCentang & \\texttt{checkboxInput()}, \\texttt{checkboxGroupInput()}\\\\\nTombol & \\texttt{actionButton()}, \\texttt{downloadButton()}\\\\\nGrafik & \\texttt{plotOutput()} + \\texttt{renderPlot()}\\\\\nTabel & \\texttt{tableOutput()} + \\texttt{renderTable()}\\\\\nTeks & \\texttt{textOutput()} + \\texttt{renderText()}\\\\\nKonsol & \\texttt{verbatimTextOutput()} + \\texttt{renderPrint()}\\\\\nHasil antara & \\texttt{reactive(\\{ ... \\})}, panggil \\texttt{nama()}\\\\\nTunda & \\texttt{eventReactive()}, \\texttt{observeEvent()}\\\\\nValidasi & \\texttt{req()}, \\texttt{validate(need())}\\\\\nUnduh & \\texttt{downloadHandler()}\\\\\nJalankan & \\texttt{runApp()} atau tombol Run App\\\\\n\\end{tabular}\n\\end{kotakrumus}"
+    - "Modul ini mengubah hasil analisis dari keluaran statis menjadi produk yang dapat ditelusuri sendiri oleh pengguna. Prinsip penting yang perlu dibawa: uji logikanya sebagai kode R biasa lebih dahulu, bangun aplikasi selapis demi selapis, pastikan identitas keluaran cocok di kedua sisi, panggil objek reaktif dengan tanda kurung, dan selalu validasi masukan pengguna. Pada Modul 9 kita kembali ke penyajian dengan `ggplot2`, yang grafiknya dapat langsung dipakai di dalam aplikasi Shiny seperti ini."
+  referensi:
+    - "Wickham, H. (2021). *Mastering Shiny*. O'Reilly Media. (Rujukan utama Shiny; tersedia daring gratis di mastering-shiny.org.)"
+    - "Chang, W., dkk. (2024). *shiny: Web Application Framework for R*. R package documentation dan galeri contoh resmi."
+    - "Sievert, C. (2020). *Interactive Web-Based Data Visualization with R, plotly, and shiny*. Chapman and Hall/CRC. (Grafik interaktif dalam Shiny.)"
+    - "Pramana, S., dkk. (2016). *Dasar-dasar Statistik menggunakan R*. In-Media. (Fondasi R yang dipakai dalam server Shiny.)"
+
+exercises:
+  - id: "L8.1"
+    eval: false
+    points: 15
+    solution: "Tingkat Dasar: plotOutput/renderPlot, pasangan output-render, selectInput."
+    judul_r: "Solusi Tingkat Dasar (R)"
+    solusi_r: |
+      library(shiny)
+
+      # 1) aplikasi minimal
+      ui <- fluidPage(
+        sliderInput("n", "Banyaknya data:", 10, 300, 100),
+        plotOutput("grafik"))            # tempat keluaran grafik
+      server <- function(input, output) {
+        output$grafik <- renderPlot({    # identitas sama dengan ui
+          hist(rnorm(input$n))
+        })
+      }
+      shinyApp(ui, server)
+
+      # 2) pasangan yang benar:
+      #    tableOutput()        -> renderTable()
+      #    verbatimTextOutput() -> renderPrint()
+      #    plotOutput()         -> renderPlot()
+
+      # 3) widget daftar pilihan
+      ind <- read.csv("data/data_indikator.csv")
+      ui2 <- fluidPage(
+        selectInput("prov", "Provinsi:",
+                    choices = sort(unique(ind$provinsi))),
+        tableOutput("tabel"))
+    interpretasi: >
+      Identitas keluaran harus sama persis di ui dan server; di sini keduanya bernama grafik. Tiap jenis
+      keluaran memiliki pasangan fungsi render tersendiri, dan memasangkannya keliru membuat bagian
+      tersebut kosong. Widget selectInput menyediakan daftar pilihan yang isinya diambil langsung dari
+      data sehingga otomatis menyesuaikan.
+  - id: "L8.2"
+    eval: false
+    points: 25
+    solution: "Tingkat Menengah dan Lanjut: aplikasi dua keluaran, penggunaan reactive, serta dasbor mini bertab dengan unduh."
+    judul_r: "Solusi Menengah dan Lanjut (R)"
+    solusi_r: |
+      library(shiny)
+      library(dplyr)
+      ind <- read.csv("data/data_indikator.csv")
+
+      # ---- Menengah: dua keluaran + reactive ----
+      ui <- fluidPage(
+        titlePanel("Eksplorasi Indikator"),
+        sidebarLayout(
+          sidebarPanel(
+            selectInput("peubah", "Peubah:",
+                        choices = c("ipm", "kemiskinan", "pengangguran")),
+            selectInput("prov", "Provinsi:",
+                        choices = c("Semua", sort(unique(ind$provinsi)))),
+            sliderInput("bins", "Banyaknya selang:", 5, 30, 10)),
+          mainPanel(
+            plotOutput("hist"),
+            verbatimTextOutput("ringkas"))))
+
+      server <- function(input, output) {
+        # dihitung SEKALI, dipakai dua keluaran
+        dt <- reactive({
+          if (input$prov == "Semua") ind else ind[ind$provinsi == input$prov, ]
+        })
+        output$hist <- renderPlot({
+          hist(dt()[[input$peubah]], breaks = input$bins,
+               col = "#0B6FB4", border = "white",
+               main = paste("Sebaran", input$peubah), xlab = input$peubah)
+        })
+        output$ringkas <- renderPrint({
+          summary(dt()[[input$peubah]])
+        })
+      }
+      shinyApp(ui, server)
+
+      # ---- Lanjut: dasbor mini bertab + unduh ----
+      ui2 <- fluidPage(
+        sidebarLayout(
+          sidebarPanel(
+            selectInput("peubah", "Peubah:",
+                        choices = c("ipm", "kemiskinan", "pengangguran")),
+            checkboxGroupInput("tahun", "Tahun:",
+                               choices = sort(unique(ind$tahun)),
+                               selected = sort(unique(ind$tahun))),
+            downloadButton("unduh", "Unduh ringkasan")),
+          mainPanel(
+            tabsetPanel(
+              tabPanel("Sebaran", plotOutput("hist")),
+              tabPanel("Perbandingan", plotOutput("box"))))))
+
+      server2 <- function(input, output) {
+        dt <- reactive({
+          req(input$tahun)                       # cegah galat saat kosong
+          ind |> filter(tahun %in% as.numeric(input$tahun))
+        })
+        output$hist <- renderPlot(
+          hist(dt()[[input$peubah]], col = "#0B6FB4", border = "white",
+               main = "", xlab = input$peubah))
+        output$box <- renderPlot(
+          boxplot(dt()[[input$peubah]] ~ dt()$provinsi,
+                  col = "#0B6FB4", xlab = "", ylab = input$peubah))
+        output$unduh <- downloadHandler(
+          filename = function() paste0("ringkasan_", input$peubah, ".csv"),
+          content = function(file) {
+            write.csv(dt() |> group_by(provinsi) |>
+                        summarise(rata = mean(.data[[input$peubah]]), .groups = "drop"),
+                      file, row.names = FALSE)
+          })
+      }
+      shinyApp(ui2, server2)
+    interpretasi: >
+      Pada bagian menengah, objek reaktif dt menyaring data sekali lalu dipakai histogram maupun
+      ringkasan; tanpa itu kode penyaringan harus ditulis dan dijalankan dua kali. Perhatikan kurung
+      pada pemanggilan dt. Pada bagian lanjut, req mencegah galat ketika seluruh tahun dikosongkan,
+      tabsetPanel memisahkan dua tampilan, dan downloadHandler mengekspor ringkasan yang konsisten
+      dengan pilihan pengguna saat itu.
+  - id: "L8.D"
+    eval: false
+    points: 10
+    solution: "Membetulkan kode: input di luar konteks reaktif, identitas keluaran, objek reaktif tanpa kurung, dan render tak sesuai."
+    judul_r: "Solusi Membetulkan Kode (R)"
+    solusi_r: |
+      library(shiny)
+      ind <- read.csv("data/data_indikator.csv")
+
+      ui <- fluidPage(
+        sliderInput("ambang", "IPM minimum:", 60, 80, 70),
+        plotOutput("grafik"),
+        tableOutput("tabel"))
+
+      server <- function(input, output) {
+        # 1) baris n_awal DIHAPUS: input tidak boleh dibaca di luar konteks reaktif.
+        #    Bila nilainya memang diperlukan, hitung di dalam reactive/observe.
+
+        terpilih <- reactive({ ind[ind$ipm >= input$ambang, ] })
+
+        # 2) identitas disesuaikan dengan ui: grafik (bukan plot)
+        # 3) objek reaktif dipanggil dengan tanda kurung: terpilih()
+        output$grafik <- renderPlot({
+          hist(terpilih()$ipm, col = "#0B6FB4", border = "white",
+               main = "Sebaran IPM terpilih", xlab = "IPM")
+        })
+
+        # 4) tabel memakai renderTable, bukan renderPlot
+        output$tabel <- renderTable({
+          head(terpilih(), 5)
+        })
+      }
+
+      shinyApp(ui, server)
+
+      # verifikasi tanpa meluncurkan aplikasi:
+      class(ui)              # "shiny.tag.list" "list"
+      is.function(server)    # TRUE
+      names(formals(server)) # "input" "output"
+    interpretasi: >
+      Empat kesalahan diperbaiki. Pertama, membaca input langsung di badan server berada di luar konteks
+      reaktif sehingga menimbulkan galat; baris itu dihapus karena nilainya tidak dipakai. Kedua,
+      identitas keluaran pada server harus sama persis dengan yang ditulis di ui, yaitu grafik. Ketiga,
+      objek yang dibuat dengan reactive adalah fungsi sehingga harus dipanggil memakai tanda kurung.
+      Keempat, keluaran tabel dipasangkan dengan renderTable, bukan renderPlot. Kesalahan kedua dan
+      keempat sering tidak memunculkan pesan galat, hanya menyisakan bagian yang kosong, sehingga perlu
+      diperiksa dengan teliti.
+  - id: "T8.1"
+    eval: false
+    points: 50
+    solution: "Penugasan: rancangan, dasbor lengkap dengan tiga widget, tab, tiga keluaran, reactive, validasi, unduh, dan pengujian skenario."
+    judul_r: "Solusi Penugasan (R) - kerangka acuan"
+    solusi_r: |
+      library(shiny)
+      library(dplyr)
+      ind <- read.csv("data/data_indikator.csv")
+
+      ui <- fluidPage(
+        titlePanel("Dasbor Indikator Wilayah (data simulasi)"),
+        sidebarLayout(
+          sidebarPanel(
+            selectInput("peubah", "Peubah:",
+                        choices = c("ipm", "kemiskinan", "pengangguran")),
+            checkboxGroupInput("tahun", "Tahun:",
+                               choices = sort(unique(ind$tahun)),
+                               selected = sort(unique(ind$tahun))),
+            sliderInput("bins", "Selang histogram:", 5, 25, 10),
+            downloadButton("unduh", "Unduh ringkasan")),
+          mainPanel(
+            tabsetPanel(
+              tabPanel("Sebaran", plotOutput("hist")),
+              tabPanel("Perbandingan", plotOutput("box")),
+              tabPanel("Ringkasan", tableOutput("tabel"))))))
+
+      server <- function(input, output) {
+        dt <- reactive({
+          req(input$tahun)                                   # skenario: tahun dikosongkan
+          ind |> filter(tahun %in% as.numeric(input$tahun))
+        })
+        output$hist <- renderPlot({
+          x <- dt()[[input$peubah]]
+          validate(need(length(x) > 0, "Tidak ada data untuk pilihan ini."))
+          hist(x, breaks = input$bins, col = "#0B6FB4", border = "white",
+               main = paste("Sebaran", input$peubah), xlab = input$peubah)
+        })
+        output$box <- renderPlot({
+          boxplot(dt()[[input$peubah]] ~ dt()$provinsi, col = "#0B6FB4",
+                  xlab = "", ylab = input$peubah, main = "Menurut provinsi")
+        })
+        output$tabel <- renderTable({
+          dt() |>
+            group_by(provinsi) |>
+            summarise(n = n(),
+                      rata = round(mean(.data[[input$peubah]]), 2),
+                      sd = round(sd(.data[[input$peubah]]), 2),
+                      .groups = "drop")
+        })
+        output$unduh <- downloadHandler(
+          filename = function() paste0("ringkasan_", input$peubah, ".csv"),
+          content = function(file) {
+            write.csv(dt() |> group_by(provinsi) |>
+                        summarise(rata = mean(.data[[input$peubah]]), .groups = "drop"),
+                      file, row.names = FALSE)
+          })
+      }
+
+      shinyApp(ui, server)
+    interpretasi: >
+      Kerangka ini memenuhi seluruh syarat penugasan: tiga widget berbeda jenis, sidebarLayout,
+      tabsetPanel tiga tab, tiga keluaran berbeda jenis, satu objek reaktif yang dipakai bersama,
+      validasi dua lapis, dan fitur unduh. Pengujian skenario dilakukan dengan mengosongkan seluruh
+      tahun - req menahan perhitungan sehingga tidak muncul galat teknis - serta memilih kombinasi yang
+      menyisakan sedikit data. Mahasiswa diharapkan mengembangkan rancangannya sendiri, bukan menyalin
+      kerangka ini apa adanya, dan wajib menyertakan tangkapan layar karena aplikasi tidak dapat
+      dinilai dari kode saja.
+
+references:
+  - "Wickham, H. (2021). Mastering Shiny. O'Reilly Media."
+  - "Chang, W., dkk. (2024). shiny: Web Application Framework for R. R package documentation."
+  - "Sievert, C. (2020). Interactive Web-Based Data Visualization with R, plotly, and shiny. Chapman and Hall/CRC."
+  - "Pramana, S., dkk. (2016). Dasar-dasar Statistik menggunakan R. In-Media."

@@ -1,0 +1,548 @@
+number: 1
+title: "Pengenalan dan Instalasi Perangkat Pemrograman Statistika"
+short_code: "pengenalan_instalasi"
+topic: "Pengenalan & Instalasi"
+pertemuan: 1
+sub_cpmk: >
+  Sub-CPMK 1: Mahasiswa mengetahui cakupan materi Pemrograman Statistika serta mengenal R
+  dan Python sebagai perangkat lunak statistik, mampu menyiapkan lingkungan kerja, menjalankan
+  perintah dasar di kedua bahasa, dan menyusun laporan reproducible.
+packages: [reticulate, dplyr, readr]
+contoh_title: "Contoh Praktikum dengan R dan Python"
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  ta: "2025/2026"
+  semester: "3 (Ganjil)"
+  prodi: "D-IV Statistika"
+  penyusun:
+    - "Achmad Syahrul Choir"
+    - "Rudi Salam"
+    - "Christiana Anggraeni Putri"
+
+datasets:
+  - name: data_demo
+    role: contoh
+    recipe:
+      kind: tabular
+      "n": 10
+      seed: 2025
+      columns:
+        wilayah: {type: category, levels: [WilA, WilB, WilC, WilD, WilE, WilF, WilG, WilH, WilI, WilJ]}
+        penduduk: {type: integer, min: 800000, max: 9500000}
+        pengeluaran: {type: integer, min: 700, max: 1600}
+        akses_internet: {type: numeric, min: 35, max: 92, digits: 1}
+
+body:
+  deskripsi:
+    - >
+      Modul ini adalah gerbang mata kuliah Pemrograman Statistika. Tujuannya menyiapkan
+      lingkungan kerja secara tuntas dan memperkenalkan dua perangkat lunak yang dipakai sepanjang
+      semester: R (melalui RStudio) dan Python (melalui Anaconda/Jupyter). Sepanjang mata kuliah,
+      kedua bahasa dipelajari berpasangan: sebuah konsep dikuasai lebih dahulu di R, lalu dilihat
+      padanannya di Python, agar mahasiswa memahami gagasan statistiknya, bukan sekadar menghafal
+      sintaks.
+    - >
+      Pada modul ini mahasiswa memasang perangkat langkah demi langkah, memverifikasi
+      keberhasilannya, mengenali antarmuka masing-masing secara rinci, menjalankan berbagai
+      perintah dasar, membaca berkas data, dan membuat laporan reproducible dengan tiga cara:
+      R Markdown, Jupyter Notebook, dan Google Colab. Kemampuan menyusun laporan yang dapat
+      dijalankan ulang ini menjadi bekal untuk seluruh praktikum berikutnya.
+    - >
+      Setelah menyelesaikan modul ini secara menyeluruh, mahasiswa diharapkan tidak hanya
+      "bisa menjalankan", tetapi memahami peran tiap komponen lingkungan kerja, terbiasa menemukan
+      dan memperbaiki galat pemasangan yang umum, serta percaya diri menyusun laporan analisis
+      pertama mereka.
+    - "\\begin{kotakperhatian}[Tentang data]\nBerkas data pada modul ini (\\texttt{data\\_demo.csv}) adalah \\textbf{data simulasi} (\\texttt{set.seed(2025)}), \\textbf{bukan data nyata} dan \\textbf{bukan data resmi} instansi mana pun.\n\\end{kotakperhatian}"
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:"
+    - "1. **Memasang** R, RStudio, dan Python (Anaconda/Jupyter) langkah demi langkah serta **memverifikasi** keberhasilan pemasangan."
+    - "2. **Mengenali** dan menjelaskan fungsi setiap komponen antarmuka RStudio dan Jupyter Notebook."
+    - "3. **Menjalankan** beragam perintah dasar di R dan Python: aritmatika, penetapan objek, pemeriksaan tipe, pemasangan paket, dan pembacaan data."
+    - "4. **Mendiagnosis** dan memperbaiki galat yang umum (paket belum terpasang, direktori kerja salah, kernel Python tidak terbaca)."
+    - "5. **Menjelaskan** persamaan konsep dan perbedaan sintaks R dan Python."
+    - "6. **Membuat** laporan reproducible dengan R Markdown, Jupyter Notebook, dan Google Colab, serta merendernya ke PDF/HTML."
+  alat:
+    - "Perangkat lunak dan bahan yang diperlukan:"
+    - "- **R** (versi 4.x) dari CRAN dan **RStudio Desktop** (versi terbaru)."
+    - "- **Python** (versi 3.x) melalui **Anaconda** atau **Miniconda**, dengan **Jupyter Notebook**."
+    - "- Paket R: `reticulate`, `dplyr`, `readr`, `rmarkdown`. Pustaka Python: `pandas`, `numpy`."
+    - "- Peramban (*browser*) untuk **Google Colab** (opsional; memerlukan akun Google) dan koneksi internet."
+    - "- Berkas data: `data/data_demo.csv`."
+    - "```{r pkg-r}\nlibrary(dplyr)\nlibrary(readr)\n```"
+  instruksi:
+    - "Ikuti tahapan berikut secara berurutan:"
+    - "**Tahap 1 - Persiapan.** Pastikan R, RStudio, dan Anaconda terpasang (Bagian 1.5). Buat folder kerja khusus, subfolder `data/`, dan letakkan `data_demo.csv` di dalamnya."
+    - "**Tahap 2 - Atur direktori kerja.** Di RStudio: Session > Set Working Directory, atau `setwd(\"path\")`. Verifikasi dengan `getwd()`."
+    - "**Tahap 3 - Kerjakan Contoh.** Jalankan kode Bagian 1.6 sepotong demi sepotong sambil mengamati keluaran."
+    - "**Tahap 4 - Latihan.** Selesaikan Latihan Mandiri (Bagian 1.7) dari tingkat Dasar hingga Lanjut."
+    - "**Tahap 5 - Penugasan (tugas terstruktur).** Contoh dan Latihan (Bagian 1.6-1.7) dikerjakan selama sesi praktikum di kelas. **Penugasan (Bagian 1.8) dikerjakan sebagai tugas terstruktur di luar sesi**: susun laporan reproducible, render ke PDF/HTML, dan kumpulkan via Google Classroom sesuai tenggat yang ditetapkan dosen."
+    - "\\begin{kotakperhatian}[Integritas akademik]\nMenyalin pekerjaan teman atau menyerahkan kode tanpa memahaminya termasuk pelanggaran akademik.\n\\end{kotakperhatian}"
+  teori:
+    - "### Peta Mata Kuliah dan Kedudukan Modul Ini"
+    - >
+      Sebelum masuk ke perkakas, penting memahami \emph{ke mana} mata kuliah ini menuju. Pemrograman
+      Statistika membangun keterampilan secara bertahap: modul ini (fondasi lingkungan) menjadi dasar
+      bagi Modul 2 (tipe dan struktur data), yang menjadi dasar bagi Modul 3-4 (alur kendali R dan
+      Python), lalu Modul 5-6 (manipulasi data), 7-10 (statistik deskriptif dan visualisasi), dan
+      11-14 (inferensia dan pemodelan). Setiap modul mengandalkan modul sebelumnya - itulah mengapa
+      fondasi yang kokoh di sini sangat menentukan.
+    - >
+      Karena laporan setiap praktikum dikumpulkan sebagai dokumen reproducible yang memuat kode dan
+      hasilnya, keterampilan menyiapkan lingkungan dan menyusun laporan yang dikuasai di modul ini
+      akan dipakai berulang di seluruh sisa semester. Dengan kata lain, modul ini bukan sekadar
+      "pemanasan" - ia adalah perkakas kerja yang Anda gunakan setiap minggu.
+    - "\\begin{kotakinfo}[Prasyarat]\nModul ini tidak mengasumsikan pengalaman pemrograman sebelumnya. Yang dibutuhkan hanyalah kemampuan dasar mengoperasikan komputer dan kemauan mencoba. Semua konsep dibangun dari nol.\n\\end{kotakinfo}"
+    - "### R dan Python: Dua Perangkat, Satu Tujuan"
+    - >
+      **Mengapa dua bahasa?** Dalam dunia pengolahan data resmi, R dan Python adalah dua perkakas
+      paling dominan. **R** lahir dari kalangan statistikawan dan sangat kuat untuk pemodelan
+      statistik, grafik, dan analisis eksploratori; ekosistem paketnya (seperti `dplyr`, `ggplot2`)
+      dirancang khusus untuk data. **Python** adalah bahasa serba guna yang populer untuk sains
+      data, otomasi, dan pembelajaran mesin, melalui pustaka seperti `pandas`, `numpy`, dan
+      `scikit-learn`. Keduanya gratis, sumber terbuka, dan lintas platform.
+    - >
+      **Filosofi mata kuliah ini.** Alih-alih menguasai satu bahasa dan mengabaikan yang lain,
+      mata kuliah ini mengajarkan keduanya secara berpasangan. Alasannya praktis: di tempat kerja,
+      Anda akan menemukan kode dalam kedua bahasa, dan kemampuan berpindah di antara keduanya
+      membuat Anda fleksibel. Secara pedagogis, membandingkan sintaks memperkuat pemahaman konsep
+      di baliknya.
+    - "\\begin{kotakcatatan}\nTujuan bukan menyatakan salah satu lebih unggul, melainkan agar Anda berpikir pada tataran \\emph{konsep} (mis. \"membaca data\", \"meringkas kolom\") dan fasih menuliskannya di kedua perangkat.\n\\end{kotakcatatan}"
+    - "### Antarmuka RStudio"
+    - >
+      **RStudio** adalah lingkungan pengembangan terpadu (IDE) untuk R dengan empat panel utama.
+      **Console** (kiri bawah) menjalankan perintah secara langsung dan menampilkan hasil.
+      **Source/Editor** (kiri atas) tempat menulis dan menyimpan skrip `.R` atau berkas `.Rmd`.
+      **Environment** (kanan atas) menampilkan objek yang sedang aktif beserta nilainya.
+      Panel **Files/Plots/Packages/Help** (kanan bawah) untuk menjelajah berkas, melihat grafik,
+      mengelola paket, dan membuka dokumentasi.
+    - "### Antarmuka Jupyter Notebook"
+    - >
+      **Jupyter Notebook** menyusun pekerjaan sebagai rangkaian **sel** (\emph{cell}) yang
+      dijalankan satu per satu. Ada dua jenis sel: **sel kode** (berisi perintah Python yang
+      dijalankan dengan Shift+Enter) dan **sel Markdown** (berisi teks/narasi berformat). Di balik
+      layar, sebuah **kernel** menjalankan kode dan menyimpan keadaan (objek yang sudah dibuat).
+      Urutan menjalankan sel penting: menjalankan sel di bawah sebelum sel di atasnya dapat
+      menimbulkan galat karena objek belum terdefinisi.
+    - "### Laporan Reproducible"
+    - >
+      **Laporan reproducible** adalah dokumen yang memuat kode, hasil, dan narasi dalam satu
+      berkas, sehingga siapa pun dapat menjalankannya ulang dan memperoleh hasil yang sama. Ini
+      adalah standar penting dalam statistik resmi: hasil harus dapat ditelusuri dan diproduksi
+      ulang. Ada tiga pilihan yang dipakai di mata kuliah ini.
+    - "\\begin{kotakcatatan}\n\\begin{itemize}\n\\item \\textbf{R Markdown} (\\texttt{.Rmd}): teks + potongan kode R (dan Python via \\texttt{reticulate}) yang dirender ke PDF/HTML/Word.\n\\item \\textbf{Jupyter Notebook} (\\texttt{.ipynb}): sel kode dan sel teks yang dijalankan interaktif.\n\\item \\textbf{Google Colab}: Jupyter Notebook yang berjalan di peramban tanpa pemasangan lokal.\n\\end{itemize}\n\\end{kotakcatatan}"
+    - "### Anatomi Dokumen R Markdown"
+    - >
+      Karena laporan praktikum disusun sebagai R Markdown, penting memahami strukturnya. Sebuah
+      berkas \texttt{.Rmd} terdiri atas tiga bagian: (1) \emph{YAML header} di paling atas
+      (diapit \texttt{---}) berisi judul, penulis, dan format keluaran; (2) \emph{teks naratif}
+      dalam sintaks Markdown (mis. \texttt{\#} untuk judul, \texttt{**tebal**}); dan (3)
+      \emph{potongan kode} (\emph{code chunk}) yang diapit tiga backtick dan dijalankan saat
+      dirender.
+    - "\\begin{kotakinfo}[Struktur berkas .Rmd]\nContoh kerangka minimal:\\\\\n\\texttt{---}\\\\\n\\texttt{title: \"Laporan Saya\"}\\\\\n\\texttt{output: pdf\\_document}\\\\\n\\texttt{---}\\\\\n\\texttt{\\# Pendahuluan}\\\\\n(teks naratif di sini)\\\\\n(lalu potongan kode R di dalam blok backtick)\n\\end{kotakinfo}"
+    - >
+      Saat berkas dirender (tombol \emph{Knit} di RStudio), setiap potongan kode dijalankan
+      berurutan, hasilnya (angka, tabel, grafik) disisipkan ke dokumen, dan seluruhnya diubah menjadi
+      PDF/HTML/Word. Karena kode dan hasil berada dalam satu berkas, laporan selalu sinkron dengan
+      datanya - inilah inti reproducibility.
+    - "### Alur Kerja Mengatasi Galat"
+    - >
+      Galat (\emph{error}) adalah bagian normal dari pemrograman, bukan kegagalan. Alur menghadapinya:
+      (1) \textbf{baca pesan galat} - biasanya menyebut baris dan jenis masalah; (2) \textbf{periksa
+      hal umum} - salah ketik nama, tanda kurung tak seimbang, objek belum dibuat, paket belum dimuat;
+      (3) \textbf{cari bantuan} - \texttt{?fungsi}, dokumentasi, atau mesin pencari dengan menyalin
+      pesan galat; (4) \textbf{uji potongan kecil} - jalankan sebagian kode untuk mempersempit letak
+      masalah.
+    - "\\begin{kotaktips}\nJangan panik melihat pesan galat berwarna merah. Pesan itu adalah petunjuk, bukan hukuman. Membaca dan memahami pesan galat adalah salah satu keterampilan terpenting seorang pemrogram - dan ia terasah dengan latihan.\n\\end{kotaktips}"
+    - "### Panduan Pemasangan Ringkas"
+    - "\\begin{kotakinfo}\n\\textbf{R + RStudio:} (1) unduh R dari \\texttt{cran.r-project.org} dan pasang; (2) unduh RStudio Desktop dari situs Posit dan pasang; (3) buka RStudio, jalankan \\texttt{version} untuk verifikasi. \\textbf{Python:} (1) unduh Anaconda dari \\texttt{anaconda.com}; (2) pasang; (3) buka Anaconda Navigator, luncurkan Jupyter Notebook; (4) di sel, jalankan \\texttt{import sys; sys.version}.\n\\end{kotakinfo}"
+    - "\\begin{kotaksalah}\nGalat pemasangan yang paling sering: (1) \\textbf{paket belum terpasang} - muncul pesan \\texttt{there is no package called ...}; atasi dengan \\texttt{install.packages(\"nama\")}. (2) \\textbf{PATH Python tidak terbaca reticulate} - atasi dengan \\texttt{reticulate::use\\_python(\"path\")} atau memasang Anaconda dengan opsi \"Add to PATH\". (3) \\textbf{kernel Jupyter salah} - pastikan memilih kernel Python 3 yang benar.\n\\end{kotaksalah}"
+    - "\\begin{kotaktips}\nBiasakan menyimpan pekerjaan sebagai berkas skrip/notebook sejak awal (bukan hanya mengetik di Console), beri nama berkas dan folder yang deskriptif, dan atur direktori kerja di awal setiap sesi. Kebiasaan ini menghemat banyak waktu dan mencegah kehilangan pekerjaan.\n\\end{kotaktips}"
+  contoh:
+    - contoh: "Memeriksa versi perangkat"
+      kode_r: "R.version.string       # versi R yang terpasang\nsessionInfo()$platform # informasi platform"
+      judul_r: "Verifikasi R"
+      kode_py: "import sys\nprint(sys.version)          # versi Python lengkap\nprint(sys.executable)       # lokasi interpreter Python"
+      judul_py: "Verifikasi Python"
+      eval: true
+      penjelasan: >
+        Di R, R.version.string adalah peubah bawaan berisi keterangan versi, dan getRversion()
+        mengembalikan nomor versinya saja. Di Python, modul sys diimpor lebih dahulu karena bukan
+        bagian dari perintah bawaan, lalu sys.version memuat keterangan versi; pengirisan dengan
+        kurung siku mengambil sebagian teksnya agar ringkas. Fungsi print diperlukan di Python karena
+        nilai tidak otomatis tercetak seperti di R.
+      interpretasi: >
+        Kedua perangkat menampilkan versi terpasang. Di R, \texttt{R.version.string} memberi versi
+        singkat dan \texttt{sessionInfo()} memberi rincian platform. Di Python, \texttt{sys.version}
+        memberi versi dan \texttt{sys.executable} menunjukkan interpreter mana yang aktif - penting
+        bila terpasang beberapa versi Python. Menjalankan keduanya memastikan lingkungan siap.
+    - contoh: "R dan Python sebagai kalkulator"
+      kode_r: "2 + 3 * 4        # perkalian didahulukan -> 14\n17 %% 5          # sisa bagi -> 2\n2 ^ 10           # pangkat -> 1024\nsqrt(144)        # akar -> 12"
+      judul_r: "Aritmatika di R"
+      kode_py: "print(2 + 3 * 4)     # 14\nprint(17 % 5)        # sisa bagi -> 2\nprint(2 ** 10)       # pangkat -> 1024\nprint(144 ** 0.5)    # akar -> 12.0"
+      judul_py: "Aritmatika di Python"
+      eval: true
+      penjelasan: >
+        Kedua kolom menjalankan operasi hitung yang sama. Tanda kurung menentukan urutan pengerjaan
+        seperti dalam matematika biasa. Perhatikan dua perbedaan sintaks: pangkat ditulis dengan
+        tanda sisipan di R tetapi dua bintang di Python, sedangkan sisa bagi memakai dua tanda persen
+        di R dan satu tanda persen di Python. Sekali lagi, Python memerlukan print sedangkan R
+        mencetak hasil secara otomatis.
+      interpretasi: >
+        Aturan urutan operasi sama (perkalian sebelum penjumlahan). Perhatikan perbedaan sintaks:
+        sisa bagi memakai \texttt{\%\%} (R) vs \texttt{\%} (Python); pangkat memakai \texttt{\textasciicircum}
+        (R) vs \texttt{**} (Python). Akar di R punya fungsi khusus \texttt{sqrt()}, sedangkan di Python
+        umumnya memakai pangkat 0,5 atau \texttt{math.sqrt}. Hasilnya setara.
+    - contoh: "Membuat objek dan memeriksa tipe"
+      kode_r: "nama <- \"Pemrograman Statistika\"  # <- penetapan (khas R)\njumlah <- 42L                     # L menandai bilangan bulat\nrerata <- 3.14                    # bilangan pecahan\naktif <- TRUE                     # logika\nclass(nama); class(jumlah); class(rerata); class(aktif)"
+      judul_r: "Objek dan tipe di R"
+      kode_py: "nama = \"Pemrograman Statistika\"   # = penetapan\njumlah = 42                       # int\nrerata = 3.14                     # float\naktif = True                      # bool\nprint(type(nama).__name__, type(jumlah).__name__, type(rerata).__name__, type(aktif).__name__)"
+      judul_py: "Objek dan tipe di Python"
+      eval: true
+      penjelasan: >
+        Baris-baris awal membuat objek dengan operator penugasan: anak panah kiri di R dan tanda sama
+        dengan di Python. Nama objek dipilih deskriptif agar kode mudah dibaca. Bagian berikutnya
+        memeriksa tipe tiap objek: class() di R dan type() di Python. Pada Python dipakai atribut
+        __name__ agar yang tercetak hanya nama tipenya, bukan keterangan lengkap.
+      interpretasi: >
+        Konsepnya identik: memberi nilai ke objek lalu memeriksa tipenya. R memakai \texttt{<-}
+        (walau \texttt{=} juga bisa) dan menamai tipe numeric/integer/character/logical; Python
+        memakai \texttt{=} dan menamai float/int/str/bool. Memahami kesamaan ini adalah inti
+        belajar dua bahasa berdampingan.
+    - contoh: "Memasang dan memuat paket"
+      kode_r: "# install.packages(\"dplyr\")   # sekali saja (dikomentari agar tak diulang)\nlibrary(dplyr)                 # muat paket ke sesi\nexists(\"filter\")               # cek fungsi tersedia"
+      judul_r: "Paket di R"
+      kode_py: "# !pip install pandas         # sekali saja di terminal/sel\nimport pandas as pd            # muat pustaka dengan alias\nprint(pd.__version__)          # versi pandas"
+      judul_py: "Pustaka di Python"
+      eval: true
+      penjelasan: >
+        Perlu dibedakan dua langkah. Memasang paket cukup dilakukan sekali di komputer, yaitu dengan
+        install.packages di R atau pip install di Python; karena itu baris tersebut ditulis sebagai
+        komentar. Memuat paket dilakukan setiap sesi baru, yaitu dengan library di R atau import di
+        Python. Kata as pada import memberi nama singkat sehingga pemanggilan berikutnya lebih ringkas.
+      interpretasi: >
+        Pemasangan (\texttt{install.packages}/\texttt{pip install}) dilakukan \textbf{sekali}, lalu
+        pemuatan (\texttt{library}/\texttt{import}) dilakukan \textbf{setiap sesi}. Python lazim
+        memakai alias (\texttt{import pandas as pd}) agar penulisan ringkas. Membedakan "pasang"
+        dan "muat" mencegah kebingungan yang umum pada pemula.
+    - contoh: "Membaca berkas data CSV"
+      kode_r: "demo <- read.csv(\"data/data_demo.csv\")\nhead(demo, 3)     # tiga baris pertama\nnrow(demo); ncol(demo)   # jumlah baris dan kolom"
+      judul_r: "Membaca CSV dengan R"
+      kode_py: "import pandas as pd\ndemo = pd.read_csv(\"data/data_demo.csv\")\nprint(demo.head(3))          # tiga baris pertama\nprint(demo.shape)            # (baris, kolom)"
+      judul_py: "Membaca CSV dengan pandas"
+      eval: true
+      penjelasan: >
+        Kedua perintah membaca berkas CSV dari subfolder data menjadi tabel. Jalur berkas ditulis
+        relatif terhadap direktori kerja, sehingga kode tetap berjalan bila folder dipindahkan. Fungsi
+        head menampilkan beberapa baris pertama untuk pemeriksaan cepat, sedangkan dim di R dan
+        atribut shape di pandas memberi ukuran tabel berupa banyaknya baris dan kolom.
+      interpretasi: >
+        Kedua bahasa membaca berkas CSV yang sama (10 baris, 4 kolom). R memakai \texttt{read.csv}
+        dan \texttt{head}; Python memakai \texttt{pd.read\_csv} dan \texttt{.head()}. Perhatikan
+        \texttt{demo.shape} mengembalikan pasangan (baris, kolom) sekaligus, sedangkan di R kita
+        memakai \texttt{nrow}/\texttt{ncol} terpisah. Data sama, cara berbeda, hasil setara.
+    - contoh: "Ringkasan statistik satu kolom"
+      kode_r: "summary(demo$akses_internet)   # ringkasan lima serangkai + rata-rata\nmean(demo$pengeluaran)         # rata-rata satu kolom"
+      judul_r: "Ringkasan di R"
+      kode_py: "print(demo[\"akses_internet\"].describe())  # ringkasan\nprint(demo[\"pengeluaran\"].mean())         # rata-rata"
+      judul_py: "Ringkasan di pandas"
+      eval: true
+      penjelasan: >
+        Bagian pertama mengakses satu kolom: R memakai tanda dolar setelah nama data, sedangkan pandas
+        memakai kurung siku berisi nama kolom dalam tanda kutip. Fungsi summary di R menghitung lima
+        serangkai sekaligus, dan .describe() di pandas melakukan hal serupa dengan tambahan banyaknya
+        amatan dan simpangan baku.
+      interpretasi: >
+        \texttt{summary()} (R) dan \texttt{.describe()} (pandas) sama-sama memberi ringkasan lima
+        serangkai (minimum, kuartil, median, maksimum) plus rata-rata. Untuk mengakses satu kolom,
+        R memakai \texttt{demo\$nama} sedangkan pandas memakai \texttt{demo[\"nama\"]}. Inilah contoh
+        pertama bagaimana satu tugas statistik dikerjakan di dua perkakas.
+    - contoh: "Mengintegrasikan R dan Python dengan reticulate"
+      kode_r: "library(reticulate)\n# objek Python 'demo' dapat diakses dari R melalui py$\nmean_r <- mean(py$demo$penduduk)\ncat(\"Rata-rata penduduk (dihitung di R dari objek Python):\",\n    format(round(mean_r), big.mark = \".\"), \"\\n\")"
+      judul_r: "Berbagi objek antar bahasa"
+      eval: true
+      penjelasan: >
+        Paket reticulate dimuat lebih dahulu agar R dapat berkomunikasi dengan Python. Objek Python
+        bernama demo diakses dari R melalui py diikuti tanda dolar, persis seperti mengakses komponen
+        list. Setelah diakses, kolomnya diperlakukan sebagai vektor R biasa sehingga dapat dihitung
+        rata-ratanya. Fungsi cat mencetak beberapa bagian sekaligus, dan format dengan argumen big.mark
+        menyisipkan pemisah ribuan.
+      interpretasi: >
+        Paket \texttt{reticulate} memungkinkan R dan Python berbagi objek dalam satu laporan:
+        data yang dibaca di Python (\texttt{demo}) diakses dari R melalui \texttt{py\$demo}.
+        Kemampuan inilah yang membuat kita dapat menyajikan kedua bahasa berdampingan dalam satu
+        dokumen sepanjang mata kuliah. (Sebaliknya, objek R dapat diakses dari Python melalui
+        \texttt{r.nama}.)
+    - contoh: "Mengelola lingkungan kerja dan objek"
+      kode_r: "a <- 10; b <- 20; hasil <- a + b\nls()              # daftar objek di Environment\nhasil\nrm(a)            # hapus objek a\nls()             # a sudah tidak ada\ngetwd()          # direktori kerja saat ini"
+      judul_r: "Environment di R"
+      kode_py: "a = 10; b = 20; hasil = a + b\nprint([v for v in dir() if not v.startswith(\"_\")][:5])  # objek pengguna\nprint(hasil)\nimport os\nprint(os.getcwd())   # direktori kerja"
+      judul_py: "Namespace di Python"
+      eval: true
+      penjelasan: >
+        Beberapa objek dibuat lebih dahulu untuk diperiksa. Fungsi ls() di R menampilkan daftar objek
+        yang ada di Environment, sedangkan dir() di Python menampilkan nama yang dikenali; penyaringan
+        dengan comprehension membuang nama sistem yang diawali garis bawah. Fungsi rm menghapus objek
+        di R. Baris terakhir menampilkan direktori kerja, yaitu getwd() di R dan os.getcwd() di Python
+        yang memerlukan impor modul os.
+      interpretasi: >
+        Mengelola lingkungan kerja penting agar tidak bingung dengan objek yang menumpuk. ls() (R)
+        dan dir() (Python) menampilkan objek yang ada; rm() menghapusnya di R. getwd()/os.getcwd()
+        menunjukkan direktori kerja - selalu periksa ini bila berkas "tidak ditemukan" saat membaca
+        data. Kebiasaan memeriksa Environment membantu melacak keadaan program.
+    - contoh: "Eksplorasi data lebih dalam"
+      kode_r: "demo <- read.csv(\"data/data_demo.csv\")\nnames(demo)          # nama kolom\nsapply(demo, class)  # tipe tiap kolom\ncolMeans(demo[sapply(demo, is.numeric)])  # rata-rata kolom numerik\ndemo[order(-demo$penduduk), ][1:3, ]      # 3 wilayah terpadat"
+      judul_r: "Eksplorasi di R"
+      kode_py: "import pandas as pd\ndemo = pd.read_csv(\"data/data_demo.csv\")\nprint(demo.columns.tolist())     # nama kolom\nprint(demo.dtypes)               # tipe kolom\nprint(demo.select_dtypes(\"number\").mean())  # rata-rata numerik\nprint(demo.nlargest(3, \"penduduk\"))         # 3 terpadat"
+      judul_py: "Eksplorasi di pandas"
+      eval: true
+      penjelasan: >
+        Empat langkah pemeriksaan dijalankan berurutan. Pertama nama kolom, yaitu names() di R dan
+        atribut columns di pandas. Kedua tipe tiap kolom: sapply menerapkan class ke seluruh kolom,
+        sedangkan pandas menyediakan dtypes. Ketiga rata-rata kolom numerik; di R kolom numerik dipilih
+        dengan sapply dan is.numeric, di pandas dengan select_dtypes. Keempat pengurutan: order dengan
+        tanda minus mengurutkan menurun lalu tiga baris teratas diambil, dan pandas menyediakan
+        nlargest untuk keperluan yang sama.
+      interpretasi: >
+        Eksplorasi awal data melibatkan beberapa langkah: melihat nama kolom (names/columns), tipe
+        tiap kolom (sapply class / dtypes), ringkasan numerik (colMeans / mean), dan pengurutan untuk
+        menemukan nilai ekstrem (order / nlargest). Rangkaian perintah ini adalah "pemeriksaan
+        kesehatan" data yang selalu dilakukan sebelum analisis - keterampilan yang dipakai di setiap
+        modul berikutnya.
+    - contoh: "Reproducibility dengan set.seed"
+      kode_r: "set.seed(2025)\nsampel1 <- sample(1:100, 5)   # 5 angka acak\nset.seed(2025)\nsampel2 <- sample(1:100, 5)   # diulang dengan seed sama\nidentical(sampel1, sampel2)   # TRUE: hasil identik"
+      judul_r: "Seed di R"
+      kode_py: "import numpy as np\nnp.random.seed(2025)\ns1 = np.random.choice(range(1, 101), 5)\nnp.random.seed(2025)\ns2 = np.random.choice(range(1, 101), 5)\nprint(np.array_equal(s1, s2))   # True: hasil identik"
+      judul_py: "Seed di Python"
+      eval: true
+      penjelasan: >
+        Pola kedua kolom sama persis. Pembangkit angka acak dikunci lebih dahulu dengan set.seed di R
+        atau np.random.seed di Python, lalu lima angka dibangkitkan. Proses itu diulang dengan nilai
+        kunci yang sama. Baris terakhir membandingkan kedua hasil: identical di R dan
+        np.array_equal di Python, yang keduanya menghasilkan nilai benar bila kedua rangkaian sama.
+      interpretasi: >
+        set.seed (R) dan np.random.seed (Python) mengunci pembangkit angka acak sehingga hasil dapat
+        direproduksi persis. Ini krusial untuk laporan resmi: siapa pun yang menjalankan ulang kode
+        memperoleh hasil yang sama. Seluruh data simulasi di mata kuliah ini memakai seed agar
+        konsisten - inilah wujud nyata prinsip reproducibility yang dibahas di teori.
+    - contoh: "Menyimpan hasil ke berkas"
+      kode_r: "demo <- read.csv(\"data/data_demo.csv\")\ndemo$padat <- demo$penduduk > 5e6   # kolom baru: apakah padat\nwrite.csv(demo, \"data/demo_olah.csv\", row.names = FALSE)\ncat(\"Berkas tersimpan. Jumlah wilayah padat:\", sum(demo$padat), \"\\n\")"
+      judul_r: "Menyimpan CSV di R"
+      kode_py: "import pandas as pd\ndemo = pd.read_csv(\"data/data_demo.csv\")\ndemo[\"padat\"] = demo[\"penduduk\"] > 5e6\ndemo.to_csv(\"data/demo_olah_py.csv\", index=False)\nprint(\"Berkas tersimpan. Padat:\", int(demo[\"padat\"].sum()))"
+      judul_py: "Menyimpan CSV di pandas"
+      eval: true
+      penjelasan: >
+        Data dibaca lebih dahulu, lalu kolom baru bernama padat dibuat dari syarat logika penduduk di
+        atas lima juta; notasi 5e6 adalah cara ringkas menulis bilangan tersebut. Perintah write.csv
+        di R dan .to_csv di pandas menulis tabel ke berkas, dengan argumen row.names bernilai FALSE
+        atau index bernilai False agar nomor baris tidak ikut tersimpan. Baris terakhir menghitung
+        banyaknya wilayah padat dengan menjumlahkan nilai logika.
+      interpretasi: >
+        Setelah mengolah data, hasilnya sering perlu disimpan. write.csv (R) dan .to_csv (pandas)
+        menulis data frame ke berkas; argumen row.names=FALSE / index=False mencegah kolom nomor baris
+        ikut tertulis. Di sini ditambahkan kolom baru (padat) berdasarkan syarat penduduk > 5 juta -
+        contoh membuat variabel turunan yang akan sering dipakai di modul manipulasi data.
+    - contoh: "Grafik pertama: pratinjau visualisasi"
+      kode_r: "demo <- read.csv(\"data/data_demo.csv\")\nbarplot(demo$akses_internet,\n        names.arg = demo$wilayah,\n        main = \"Akses Internet per Wilayah\",\n        col = \"#0B6FB4\", las = 2)"
+      judul_r: "Grafik batang sederhana di R"
+      eval: true
+      penjelasan: >
+        Data dibaca lebih dahulu, lalu barplot menggambar diagram batang dari kolom akses internet.
+        Argumen names.arg memberi label tiap batang dari kolom wilayah, main mengisi judul, col
+        menetapkan warna memakai kode heksadesimal palet BPS, dan las bernilai 2 memutar label sumbu
+        menjadi tegak agar tidak saling bertindihan.
+      interpretasi: >
+        R memiliki fungsi grafik bawaan: barplot menggambar diagram batang akses internet per wilayah.
+        Ini hanya pratinjau - visualisasi mendalam dengan ggplot2 (R) dan matplotlib/seaborn (Python)
+        dibahas tuntas di Modul 8-9. Yang penting di sini: membuktikan lingkungan grafik berfungsi dan
+        memberi gambaran hasil yang akan dicapai.
+    - contoh: "Membandingkan kolom dan operasi vektor"
+      kode_r: "demo <- read.csv(\"data/data_demo.csv\")\n# rasio pengeluaran terhadap rata-rata (operasi tervektor)\nrasio <- demo$pengeluaran / mean(demo$pengeluaran)\nround(rasio, 2)\n# wilayah di atas rata-rata\ndemo$wilayah[rasio > 1]"
+      judul_r: "Operasi vektor di R"
+      kode_py: "import pandas as pd\ndemo = pd.read_csv(\"data/data_demo.csv\")\nrasio = demo[\"pengeluaran\"] / demo[\"pengeluaran\"].mean()\nprint(rasio.round(2).tolist())\nprint(demo.loc[rasio > 1, \"wilayah\"].tolist())"
+      judul_py: "Operasi vektor di pandas"
+      eval: true
+      penjelasan: >
+        Rasio dihitung dengan membagi seluruh kolom pengeluaran oleh rata-ratanya sekaligus; inilah
+        operasi tervektor yang tidak memerlukan perulangan. Fungsi round membulatkan hasilnya menjadi
+        dua angka di belakang koma. Baris terakhir menyaring: di R syarat logika diletakkan di dalam
+        kurung siku pada vektor wilayah, sedangkan di pandas dipakai .loc yang menerima syarat baris
+        dan nama kolom sekaligus.
+      interpretasi: >
+        Operasi tervektor menghitung rasio seluruh kolom terhadap rata-ratanya dalam satu langkah,
+        tanpa perulangan - salah satu kekuatan utama R dan pandas untuk data. Penyaringan dengan
+        syarat logika (rasio > 1) memilih wilayah di atas rata-rata. Pola "hitung lalu saring" ini
+        adalah fondasi manipulasi data yang diperdalam di Modul 5-6.
+    - contoh: "Merangkai analisis sederhana lengkap"
+      kode_r: "demo <- read.csv(\"data/data_demo.csv\")\n# 1) ringkas\ncat(\"Jumlah wilayah:\", nrow(demo), \"\\n\")\ncat(\"Total penduduk:\", format(sum(demo$penduduk), big.mark=\".\"), \"\\n\")\n# 2) kategori\ndemo$kategori <- ifelse(demo$akses_internet >= 70, \"Tinggi\", \"Rendah\")\ntable(demo$kategori)\n# 3) rata-rata pengeluaran per kategori\ntapply(demo$pengeluaran, demo$kategori, mean)"
+      judul_r: "Analisis lengkap di R"
+      eval: true
+      penjelasan: >
+        Alurnya empat langkah dan diberi penanda nomor pada komentar. Langkah pertama meringkas dengan
+        nrow untuk banyaknya baris dan sum untuk total penduduk, lalu dicetak memakai cat dengan
+        pemisah ribuan. Langkah kedua membuat kolom kategori memakai ifelse yang bekerja pada seluruh
+        vektor sekaligus. Langkah ketiga menghitung frekuensi tiap kategori dengan table. Langkah
+        keempat memakai tapply untuk menghitung rata-rata pengeluaran pada tiap kategori.
+      interpretasi: >
+        Contoh ini merangkai beberapa keterampilan modul menjadi satu alur analisis nyata: membaca
+        data, meringkas (nrow, sum), membuat kategori dengan ifelse, menghitung frekuensi (table), dan
+        meringkas per kelompok (tapply). Meski memakai fungsi yang baru dikenalkan sekilas, alur
+        "baca - ringkas - kelompokkan - simpulkan" inilah pola kerja yang akan Anda ulangi sepanjang
+        mata kuliah. Setiap langkah akan diperdalam di modul-modul berikutnya.
+    - contoh: "Memeriksa dan memformat keluaran"
+      kode_r: "demo <- read.csv(\"data/data_demo.csv\")\n# format angka besar agar mudah dibaca\ntotal <- sum(demo$penduduk)\ncat(\"Total penduduk:\", format(total, big.mark = \".\", scientific = FALSE), \"\\n\")\n# format persentase\nrerata_akses <- mean(demo$akses_internet)\ncat(\"Rata-rata akses internet:\", sprintf(\"%.1f%%\", rerata_akses), \"\\n\")"
+      judul_r: "Format keluaran di R"
+      kode_py: "import pandas as pd\ndemo = pd.read_csv(\"data/data_demo.csv\")\ntotal = demo[\"penduduk\"].sum()\nprint(f\"Total penduduk: {total:,}\")           # pemisah ribuan\nrerata = demo[\"akses_internet\"].mean()\nprint(f\"Rata-rata akses internet: {rerata:.1f}%\")  # satu desimal"
+      judul_py: "Format keluaran di Python"
+      eval: true
+      penjelasan: >
+        Bagian pertama menjumlahkan penduduk lalu mencetaknya rapi: di R format dipakai dengan argumen
+        big.mark sebagai pemisah ribuan dan scientific bernilai FALSE agar tidak berubah menjadi notasi
+        ilmiah, sedangkan di Python f-string dengan penentu koma melakukan hal serupa. Bagian kedua
+        menghitung rata-rata akses internet lalu membatasinya menjadi satu angka di belakang koma,
+        memakai sprintf di R dan penentu titik satu f di Python.
+      interpretasi: >
+        Menyajikan angka dengan rapi penting dalam laporan resmi. R memakai format() dengan big.mark
+        untuk pemisah ribuan dan sprintf() untuk format terkendali; Python memakai f-string dengan
+        penentu format (mis. :, untuk ribuan, :.1f untuk satu desimal). Keluaran yang terformat baik
+        membuat laporan lebih profesional dan mudah dibaca - detail kecil yang membedakan laporan
+        matang dari sekadar cetakan mentah.
+    - "\\begin{kotakvariasi}\nUntuk membaca CSV, selain \\texttt{read.csv} (base R), tersedia \\texttt{readr::read\\_csv} yang lebih cepat dan rapi untuk data besar. Di Python, selain \\texttt{pandas.read\\_csv}, ada \\texttt{numpy.genfromtxt} untuk data numerik murni. Pilih sesuai kebutuhan: kemudahan, kecepatan, atau jenis data.\n\\end{kotakvariasi}"
+    - "\\begin{kotaksalah}\nKesalahan umum saat membaca data: (1) \\textbf{direktori kerja salah} sehingga berkas \"tidak ditemukan\" - periksa dengan \\texttt{getwd()} dan sesuaikan; (2) \\textbf{path salah tulis} atau pemisah folder keliru; (3) \\textbf{pemisah desimal/kolom berbeda} (koma vs titik) - gunakan argumen \\texttt{sep}/\\texttt{dec} yang sesuai.\n\\end{kotaksalah}"
+  latihan:
+    - "Kerjakan latihan berikut secara bertahap. **Tingkat Dasar** melengkapi kode; **Tingkat Menengah** menulis sendiri; **Tingkat Lanjut** memecahkan kasus kecil. Gunakan `data/data_demo.csv`."
+    - "#### Tingkat Dasar (melengkapi kode)"
+    - "\\latihan{Kalkulator dan objek di R}"
+    - "```{r eval=FALSE}\nhasil <- 10 * 5 + ____      # hitung 10*5+8\ntahun <- ____              # tetapkan objek bernilai 2025\nclass(tahun)\n```"
+    - "\\latihan{Kalkulator dan objek di Python}"
+    - "```{python eval=FALSE}\nhasil = 10 * 5 + ____       # hitung 10*5+8\ntahun = ____               # tetapkan objek bernilai 2025\nprint(type(tahun).__name__)\n```"
+    - "\\latihan{Membaca data dan ukuran (R)}"
+    - "```{r eval=FALSE}\nd <- read.csv(\"data/____\")   # nama berkas\ndim(d)\n```"
+    - "#### Tingkat Menengah (menulis sendiri)"
+    - "\\latihan{Ringkasan kolom}"
+    - "Tulis kode **di R dan di Python** untuk membaca `data_demo.csv`, lalu tampilkan ringkasan statistik (lima serangkai) kolom `pengeluaran`. Bandingkan keluaran kedua bahasa."
+    - "\\latihan{Rata-rata dua kolom}"
+    - "Hitung dan tampilkan rata-rata kolom `penduduk` dan `akses_internet` sekaligus, di salah satu bahasa pilihan Anda. Jelaskan langkahnya."
+    - "\\latihan{Eksplorasi mandiri}"
+    - "Baca `data_demo.csv`, lalu tampilkan: (a) nama semua kolom, (b) tipe tiap kolom, (c) tiga wilayah dengan pengeluaran tertinggi. Kerjakan di R atau Python."
+    - "\\latihan{Reproducibility}"
+    - "Buat lima bilangan acak dari 1 sampai 50 dengan `set.seed(123)`. Ulangi dengan seed sama dan buktikan hasilnya identik. Jelaskan mengapa hal ini penting untuk laporan resmi."
+    - "\\latihan{Membetulkan kode yang salah}"
+    - "Kode R berikut memuat beberapa kesalahan (nama fungsi salah, argumen keliru, path salah). Temukan dan perbaiki agar berjalan benar, lalu jelaskan tiap kesalahannya."
+    - "```{r eval=FALSE}\ndemo <- read.CSV(\"data_demo.csv\")   # 2 kesalahan di baris ini\nhead(demo, n)                         # kesalahan argumen\nmean(demo$pengeluran)                 # kesalahan nama kolom\n```"
+    - "```{python eval=FALSE}\nimport pandas\ndemo = pandas.read_csv(\"data/data_demo.csv\")\nprint(demo.Head(3))                   # kesalahan penulisan metode\nprint(demo[\"pengeluaran\"].Mean())    # kesalahan penulisan metode\n```"
+    - "**Keluaran yang benar.** Setelah diperbaiki, kode akan menghasilkan keluaran berikut. Gunakan ini untuk memverifikasi perbaikan Anda.\n\n```\n# R\n  wilayah penduduk pengeluaran akses_internet\n1    WilI  4587254        1012           59.1\n2    WilF  9085240        1433           43.2\n3    WilG  6492911         736           62.3\n\n[1] 1173.9\n\n# Python\n  wilayah  penduduk  pengeluaran  akses_internet\n0    WilI   4587254         1012            59.1\n1    WilF   9085240         1433            43.2\n2    WilG   6492911          736            62.3\n\n1173.9\n```"
+    - "#### Tingkat Lanjut (kasus kecil)"
+    - "\\latihan{Laporan mini reproducible}"
+    - "Buat berkas R Markdown (atau Jupyter Notebook) berjudul \"Eksplorasi Awal\" yang: (a) membaca `data_demo.csv`, (b) menampilkan lima baris pertama, (c) menghitung rata-rata `pengeluaran`, dan (d) memuat satu kalimat interpretasi. Render ke HTML/PDF dan pastikan berhasil."
+  penugasan:
+    - "\\begin{kotaktugas}\nSebagai calon pengolah data di lingkungan \\emph{official statistics}, Anda perlu memastikan lingkungan kerja siap dan mampu menghasilkan \\textbf{laporan reproducible}. Kerjakan studi kasus berikut memakai \\texttt{data\\_demo.csv} (\\emph{data simulasi wilayah}).\n\\end{kotaktugas}"
+    - "**Konteks.** Sebuah unit statistik menerima data ringkas 10 wilayah (jumlah penduduk, pengeluaran per kapita, dan akses internet). Anda diminta menyiapkan lingkungan dan menghasilkan laporan awal yang dapat direproduksi."
+    - "\\tugas{Verifikasi lingkungan}"
+    - "1. Tampilkan **versi R** dan **versi Python** pada mesin Anda dengan potongan kode yang sesuai. Sertakan tangkapan layar RStudio dan Jupyter Notebook. Jelaskan singkat fungsi tiap panel/sel yang tampak."
+    - "\\tugas{Operasi dasar di dua bahasa}"
+    - "2. Baca `data_demo.csv` di **R** dan di **Python**; tampilkan lima baris pertama dan ukuran data pada masing-masing."
+    - "3. Hitung **rata-rata** kolom `pengeluaran` dan **nilai tertinggi** `akses_internet` di kedua bahasa, lalu **bandingkan** hasilnya (seharusnya sama). Jika berbeda, telusuri penyebabnya."
+    - "\\tugas{Analisis sederhana}"
+    - "4. Identifikasi wilayah dengan **penduduk terbanyak** dan wilayah dengan **akses internet tertinggi**. Apakah keduanya wilayah yang sama? Tuliskan pengamatan Anda."
+    - "\\tugas{Laporan reproducible}"
+    - "5. Susun seluruh jawaban sebagai satu **laporan R Markdown** (atau Jupyter Notebook) berisi kode, keluaran, dan narasi; render ke **PDF atau HTML**."
+    - "6. Tuliskan **ringkasan (maksimal 300 kata)**: perbedaan dan persamaan R dan Python yang Anda amati, kendala yang ditemui saat pemasangan beserta solusinya, dan manfaat laporan reproducible untuk pekerjaan data resmi."
+  ringkasan:
+    - "\\begin{kotaktujuan}\n\\textbf{Daftar periksa penguasaan:}\n\\begin{itemize}\n\\item[$\\square$] Saya berhasil memasang R, RStudio, dan Python, serta memverifikasinya.\n\\item[$\\square$] Saya mengenali fungsi tiap panel RStudio dan sel Jupyter.\n\\item[$\\square$] Saya dapat menjalankan aritmatika, membuat objek, memasang/memuat paket, dan membaca data di R dan Python.\n\\item[$\\square$] Saya dapat mendiagnosis galat pemasangan yang umum.\n\\item[$\\square$] Saya memahami persamaan konsep dan perbedaan sintaks kedua bahasa.\n\\item[$\\square$] Saya dapat menyusun dan merender laporan reproducible.\n\\end{itemize}\n\\end{kotaktujuan}"
+    - "**Kartu Referensi Cepat.** Rangkuman perintah dasar yang dipakai di modul ini:"
+    - "\\begin{kotakrumus}\n\\begin{tabular}{@{}lll@{}}\n\\textbf{Tugas} & \\textbf{R} & \\textbf{Python}\\\\\nVersi & \\texttt{R.version.string} & \\texttt{sys.version}\\\\\nPenetapan & \\texttt{x <- 5} & \\texttt{x = 5}\\\\\nTipe objek & \\texttt{class(x)} & \\texttt{type(x)}\\\\\nMuat paket & \\texttt{library(pkg)} & \\texttt{import pkg}\\\\\nBaca CSV & \\texttt{read.csv(f)} & \\texttt{pd.read\\_csv(f)}\\\\\nLihat awal & \\texttt{head(d)} & \\texttt{d.head()}\\\\\nUkuran & \\texttt{dim(d)} & \\texttt{d.shape}\\\\\nRingkasan & \\texttt{summary(d)} & \\texttt{d.describe()}\\\\\nRata-rata & \\texttt{mean(x)} & \\texttt{x.mean()}\\\\\n\\end{tabular}\n\\end{kotakrumus}"
+    - "Modul ini menyiapkan fondasi seluruh mata kuliah: lingkungan terpasang dan terverifikasi, dua perangkat dikenali komponen demi komponen, galat umum dapat diatasi, dan laporan reproducible dikuasai. Prinsip yang dibawa ke modul berikutnya: **berpikir pada tataran konsep** dan **fasih berpindah antara R dan Python**. Pada Modul 2, kita mendalami tipe dan struktur data di kedua bahasa."
+  referensi:
+    - "Zhang, N. (2020). *A Tour of Data Science: Learn R and Python in Parallel*. Chapman and Hall/CRC. (Referensi utama pendekatan berpasangan.)"
+    - "Pramana, S., dkk. (2016). *Dasar-dasar Statistik menggunakan R*. In-Media. (Pengenalan R untuk statistika.)"
+    - "McKinney, W. (2017). *Python for Data Analysis*, 2nd ed. O'Reilly Media. (Referensi pandas dan lingkungan Python.)"
+    - "Xie, Y., Allaire, J. J., & Grolemund, G. (2018). *R Markdown: The Definitive Guide*. Chapman and Hall/CRC. (Laporan reproducible dengan R Markdown.)"
+    - "Wickham, H., & Grolemund, G. (2017). *R for Data Science*. O'Reilly Media. (Dasar alur kerja data di R; tersedia daring gratis.)"
+
+exercises:
+  - id: "L1.1"
+    points: 15
+    solution: "Tingkat Dasar: kalkulator dan objek. Isian: 8, 2025, data_demo.csv."
+    judul_r: "Solusi Tingkat Dasar (R)"
+    solusi_r: |
+      hasil <- 10 * 5 + 8; hasil     # 58
+      tahun <- 2025; class(tahun)    # numeric
+      d <- read.csv("data/data_demo.csv"); dim(d)
+    judul_py: "Solusi Tingkat Dasar (Python)"
+    solusi_py: |
+      hasil = 10 * 5 + 8; print(hasil)          # 58
+      tahun = 2025; print(type(tahun).__name__) # int
+    interpretasi: >
+      Objek tahun bertipe numeric di R dan int di Python. Gunakan 2025L di R bila ingin bilangan
+      bulat. Pembacaan data mengembalikan dimensi 10 x 4.
+  - id: "L1.2"
+    points: 25
+    solution: "Tingkat Menengah: ringkasan kolom dan rata-rata dua kolom di kedua bahasa."
+    judul_r: "Solusi Tingkat Menengah (R)"
+    solusi_r: |
+      d <- read.csv("data/data_demo.csv")
+      summary(d$pengeluaran)                    # lima serangkai
+      sapply(d[, c("penduduk","akses_internet")], mean)
+    judul_py: "Solusi Tingkat Menengah (Python)"
+    solusi_py: |
+      import pandas as pd
+      d = pd.read_csv("data/data_demo.csv")
+      print(d["pengeluaran"].describe())
+      print(d[["penduduk","akses_internet"]].mean())
+    interpretasi: >
+      summary/describe memberi ringkasan setara. Untuk beberapa kolom sekaligus, R memakai sapply
+      dan pandas memakai pemilihan kolom ganda lalu .mean(). Hasil rata-rata identik di kedua bahasa.
+  - id: "T1.1"
+    points: 60
+    solution: "Penugasan: verifikasi lingkungan, operasi dua bahasa, analisis, dan laporan reproducible."
+    judul_r: "Solusi Penugasan (R)"
+    solusi_r: |
+      demo <- read.csv("data/data_demo.csv")
+      head(demo, 5); dim(demo)
+      cat("Rata-rata pengeluaran:", round(mean(demo$pengeluaran), 1), "\n")
+      cat("Akses internet tertinggi:", max(demo$akses_internet), "\n")
+      demo$wilayah[which.max(demo$penduduk)]           # penduduk terbanyak
+      demo$wilayah[which.max(demo$akses_internet)]     # akses tertinggi
+    judul_py: "Solusi Penugasan (Python)"
+    solusi_py: |
+      import pandas as pd
+      demo = pd.read_csv("data/data_demo.csv")
+      print(demo.head(5)); print(demo.shape)
+      print("Rata-rata pengeluaran:", round(demo["pengeluaran"].mean(), 1))
+      print("Akses internet tertinggi:", demo["akses_internet"].max())
+      print(demo.loc[demo["penduduk"].idxmax(), "wilayah"])
+      print(demo.loc[demo["akses_internet"].idxmax(), "wilayah"])
+    interpretasi: >
+      Rata-rata pengeluaran dan nilai maksimum akses_internet identik di kedua bahasa. Identifikasi
+      wilayah dengan penduduk terbanyak (which.max/idxmax) dan akses tertinggi memungkinkan
+      pengecekan apakah keduanya wilayah sama. Laporan reproducible dinilai dari kode + keluaran +
+      narasi yang berhasil dirender. Data simulasi, bukan data resmi.
+
+  - id: "L1.D"
+    points: 10
+    solution: "Membetulkan kode: read.csv (bukan read.CSV), path data/, head(demo,3), nama kolom pengeluaran; Python .head()/.mean()."
+    judul_r: "Solusi Membetulkan Kode (R)"
+    solusi_r: |
+      # perbaikan: read.csv, path benar, argumen n=3, nama kolom benar
+      demo <- read.csv("data/data_demo.csv")
+      head(demo, 3)
+      mean(demo$pengeluaran)
+    judul_py: "Solusi Membetulkan Kode (Python)"
+    solusi_py: |
+      import pandas
+      demo = pandas.read_csv("data/data_demo.csv")
+      print(demo.head(3))              # head huruf kecil
+      print(demo["pengeluaran"].mean())  # mean huruf kecil
+    interpretasi: >
+      Kesalahan R: read.CSV harus read.csv (R peka huruf), path perlu "data/", head butuh angka
+      (bukan objek n tak terdefinisi), dan pengeluran salah eja menjadi pengeluaran. Kesalahan
+      Python: Head/Mean harus huruf kecil (head/mean); metode Python peka huruf.
+
+references:
+  - "Zhang, N. (2020). A Tour of Data Science: Learn R and Python in Parallel. Chapman and Hall/CRC."
+  - "Pramana, S., dkk. (2016). Dasar-dasar Statistik menggunakan R. In-Media."
+  - "McKinney, W. (2017). Python for Data Analysis, 2nd ed. O'Reilly Media."
+  - "Xie, Y., Allaire, J. J., & Grolemund, G. (2018). R Markdown: The Definitive Guide. Chapman and Hall/CRC."
+  - "Wickham, H., & Grolemund, G. (2017). R for Data Science. O'Reilly Media."

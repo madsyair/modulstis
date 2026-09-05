@@ -1,0 +1,694 @@
+---
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_sections: false
+    keep_tex: false
+    includes:
+      in_header: preamble_pedoman_lam.tex
+geometry: "left=2.6cm,right=2.4cm,top=3.0cm,bottom=2.4cm"
+fontsize: 11pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = FALSE, comment = "")
+```
+
+# Lampiran A — Rujukan Cepat Spesifikasi YAML {-}
+
+## Kunci Tingkat Atas {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{3.1cm}p{1.9cm}p{1.6cm}p{7.4cm}@{}}
+\textbf{Kunci} & \textbf{Tipe} & \textbf{Wajib} & \textbf{Keterangan}\\
+\texttt{number} & integer & ya & nomor modul; menentukan penomoran \texttt{N.x}\\
+\texttt{title} & teks & ya & judul lengkap modul\\
+\texttt{short\_code} & teks & tidak & potongan nama berkas keluaran\\
+\texttt{topic} & teks & tidak & judul ringkas untuk kepala halaman\\
+\texttt{pertemuan} & integer & tidak & pertemuan ke berapa pada RPS\\
+\texttt{sub\_cpmk} & teks & tidak & rumusan capaian pembelajaran\\
+\texttt{packages} & daftar & tidak & paket yang dipakai modul\\
+\texttt{contoh\_title} & teks & tidak & judul bagian Contoh\\
+\texttt{tambahan\_title} & teks & tidak & judul bagian Tambahan\\
+\texttt{course} & peta & tidak & identitas mata kuliah\\
+\texttt{datasets} & daftar & tidak & resep data simulasi\\
+\texttt{body} & peta & ya & isi kesebelas bagian\\
+\texttt{exercises} & daftar & tidak & solusi latihan dan penugasan\\
+\texttt{references} & daftar & tidak & daftar pustaka\\
+\end{tabular}
+\end{kotakinfo}
+
+## Blok `course` {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{3.4cm}p{2.6cm}p{8.0cm}@{}}
+\textbf{Kunci} & \textbf{Tipe} & \textbf{Keterangan}\\
+\texttt{matkul} & teks & nama mata kuliah\\
+\texttt{matkul\_besar} & teks & versi huruf kapital\\
+\texttt{kode} & teks & kode mata kuliah\\
+\texttt{semester} & teks & mis. \texttt{"3 (Ganjil)"}\\
+\texttt{prodi} & teks & nama program studi (bawaan D-IV Komputasi Statistik)\\
+\texttt{penyusun} & teks/daftar & satu atau beberapa nama\\
+\texttt{halaman\_awal} & integer & nomor halaman pertama modul\\
+\end{tabular}
+\end{kotakinfo}
+
+## Blok `datasets` {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{2.6cm}p{2.4cm}p{9.0cm}@{}}
+\textbf{Kunci} & \textbf{Tipe} & \textbf{Keterangan}\\
+\texttt{name} & teks & nama berkas tanpa akhiran; menjadi \texttt{data/nama.csv}\\
+\texttt{role} & teks & \texttt{contoh} | \texttt{latihan} | \texttt{penugasan}\\
+\texttt{recipe} & peta & resep pembangkitan (atau rujukan berkas nyata)\\
+\quad \texttt{kind} & teks & \texttt{tabular} | \texttt{mvn} | \texttt{grouped\_mvn} |
+      \texttt{categorical} | \texttt{latent\_class} | \texttt{file}\\
+\quad \texttt{"n"} & integer & banyaknya baris --- \textbf{harus berkutip}\\
+\quad \texttt{seed} & integer & kunci pembangkit acak\\
+\quad \texttt{columns} & peta & definisi tiap kolom\\
+\end{tabular}
+\end{kotakinfo}
+
+## Memakai Data Nyata: \texttt{kind: file} {-}
+
+Sejak versi 0.3.4, dataset tidak harus disimulasikan. Dengan \texttt{kind: file}, berkas data
+yang sudah ada dipakai \textbf{apa adanya} --- tanpa \texttt{seed}, tanpa pembangkitan.
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{2.6cm}p{2.4cm}p{9.0cm}@{}}
+\textbf{Kunci} & \textbf{Tipe} & \textbf{Keterangan}\\
+\texttt{path} & teks & letak berkas; relatif terhadap \textbf{berkas YAML}, bukan direktori kerja\\
+\texttt{columns} & daftar & (opsional) kolom yang dipakai sekaligus urutannya\\
+\texttt{rename} & peta & (opsional) \texttt{nama\_lama: nama\_baru}\\
+\texttt{"n"} & integer & (opsional) ambil $n$ baris pertama\\
+\texttt{na} & daftar & (opsional) penanda nilai hilang, mis. \texttt{["", "NA", "-"]}\\
+\end{tabular}
+\end{kotakinfo}
+
+Format yang didukung: \texttt{.csv}, \texttt{.csv2}, \texttt{.tsv}, \texttt{.txt}, dan
+\texttt{.rds}.
+
+```yaml
+datasets:
+  - name: sosek_kabkota
+    role: contoh
+    recipe:
+      kind: file
+      path: data_asli/sosek_2024.csv
+      columns: [kab, RLS, AHH, Sanitasi]
+      rename: {AHH: harapan_hidup}
+```
+
+Berkas dibaca, kolom dipilih dan diganti nama bila diminta, lalu disalin menjadi
+\texttt{data/sosek\_kabkota.csv} pada direktori modul \emph{dan} kunci --- persis seperti
+dataset simulasi, sehingga sisa modul tidak perlu berubah sama sekali.
+
+\begin{kotakperhatian}[Yang perlu diperhatikan]
+Data nyata membawa kewajiban yang tidak ada pada data simulasi: pastikan Anda berhak
+menyebarkannya, tidak ada satuan yang dapat diidentifikasi kembali, dan sumber serta tahun
+data dicantumkan pada bagian \emph{Alat dan Bahan}. Bila data tidak boleh disebarkan bersama
+modul, letakkan berkasnya di luar repositori dan biarkan \texttt{path} menunjuk ke sana ---
+\texttt{spec\$validate()} akan melaporkan bila berkasnya tidak ditemukan.
+\end{kotakperhatian}
+
+## Tipe Kolom {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{2.3cm}p{5.4cm}p{6.7cm}@{}}
+\textbf{Tipe} & \textbf{Argumen} & \textbf{Menghasilkan}\\
+\texttt{numeric} & \texttt{min}, \texttt{max}, \texttt{digits} & pecahan seragam\\
+\texttt{integer} & \texttt{min}, \texttt{max} & bilangan bulat\\
+\texttt{category} & \texttt{levels}, \texttt{probs} & kategori acak\\
+\texttt{balanced} & \texttt{levels}, \texttt{each} & kategori berimbang (faktorial)\\
+\end{tabular}
+\end{kotakinfo}
+
+## Kesebelas Bagian `body` {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{0.9cm}p{3.2cm}p{9.9cm}@{}}
+\textbf{N.1} & \texttt{deskripsi} & apa isi modul dan mengapa penting\\
+\textbf{N.2} & \texttt{tujuan} & capaian yang diharapkan\\
+\textbf{N.3} & \texttt{alat} & perangkat lunak, paket, berkas data\\
+\textbf{N.4} & \texttt{instruksi} & cara mengerjakan dan mengumpulkan\\
+\textbf{N.5} & \texttt{teori} & landasan ringkas beserta rumus\\
+\textbf{N.6} & \texttt{contoh} & contoh terpandu beserta kode\\
+\textbf{N.7} & \texttt{latihan} & latihan berjenjang\\
+\textbf{N.8} & \texttt{penugasan} & tugas terstruktur\\
+\textbf{N.9} & \texttt{tambahan} & \emph{opsional}; dilewati bila kosong\\
+\textbf{N.10} & \texttt{ringkasan} & daftar periksa dan kartu referensi\\
+\textbf{N.11} & \texttt{referensi} & diisi otomatis dari \texttt{references}\\
+\end{tabular}
+\end{kotakinfo}
+
+## Kunci pada Sebuah Contoh {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{2.7cm}p{2.0cm}p{9.3cm}@{}}
+\textbf{Kunci} & \textbf{Wajib} & \textbf{Keterangan}\\
+\texttt{contoh} & ya & judul; muncul sebagai \emph{Contoh N.x}\\
+\texttt{kode\_r} & salah satu & kode R\\
+\texttt{kode\_py} & salah satu & kode Python\\
+\texttt{judul\_r} & tidak & label kotak kode R\\
+\texttt{judul\_py} & tidak & label kotak kode Python\\
+\texttt{eval} & tidak & \texttt{true} menjalankan; \texttt{false} hanya menampilkan\\
+\texttt{penjelasan} & tidak & isi kotak \emph{Penjelasan Kode}\\
+\texttt{interpretasi} & tidak & isi kotak \emph{Interpretasi Output}\\
+\end{tabular}
+\end{kotakinfo}
+
+## Kunci pada Sebuah Solusi {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{2.7cm}p{11.6cm}@{}}
+\texttt{id} & penanda, mis. \texttt{"L11.1"} (latihan) atau \texttt{"T11.1"} (penugasan)\\
+\texttt{points} & bobot nilai\\
+\texttt{solution} & ringkasan satu kalimat\\
+\texttt{judul\_r} & label kotak kode solusi\\
+\texttt{solusi\_r} & kode solusi R\\
+\texttt{solusi\_py} & kode solusi Python\\
+\texttt{eval} & \texttt{false} bila solusi tidak dijalankan\\
+\texttt{interpretasi} & alasan di balik solusinya\\
+\end{tabular}
+\end{kotakinfo}
+
+\newpage
+
+# Lampiran B — Kartu Referensi LaTeX {-}
+
+## Empat Belas Kotak {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{3.6cm}p{2.0cm}p{8.6cm}@{}}
+\textbf{Lingkungan} & \textbf{Judul?} & \textbf{Judul bawaan / peran}\\
+\texttt{kotakperhatian} & ya & \emph{Perhatian}\\
+\texttt{kotaksalah} & ya & \emph{Kesalahan Umum}\\
+\texttt{kotaktips} & ya & \emph{Tips dan Praktik Baik}\\
+\texttt{kotakvariasi} & ya & \emph{Variasi dan Alternatif}\\
+\texttt{kotakcatatan} & ya & \emph{Catatan}\\
+\texttt{kotakinfo} & ya & tanpa judul bawaan\\
+\texttt{kotakpenjelasan} & ya & \emph{Penjelasan Kode} (otomatis)\\
+\texttt{kotakinterpretasi} & ya & \emph{Interpretasi Output} (otomatis)\\
+\texttt{kotakanatomi} & ya & pasangan \texttt{ui}--\texttt{server}\\
+\texttt{kotakrumus} & tidak & memuat rumus\\
+\texttt{kotaktujuan} & tidak & daftar periksa penguasaan\\
+\texttt{kotaktugas} & tidak & rumusan penugasan\\
+\texttt{kotakkunci} & tidak & butir kunci jawaban\\
+\texttt{kotakistilah} & tidak & daftar istilah\\
+\end{tabular}
+\end{kotakinfo}
+
+```yaml
+- "\\begin{kotaktips}[Judul Khusus]\nIsi kotak.\n\\end{kotaktips}"
+```
+
+## Perintah Penomoran {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{4.0cm}p{3.6cm}p{6.6cm}@{}}
+\textbf{Perintah} & \textbf{Hasil} & \textbf{Ditulis oleh}\\
+\texttt{\textbackslash contoh\{...\}} & \emph{Contoh N.x} & paket (otomatis)\\
+\texttt{\textbackslash kode\{...\}} & \emph{Kode N.x} & paket (otomatis)\\
+\texttt{\textbackslash latihan\{...\}} & \emph{Latihan N.x} & penyusun\\
+\texttt{\textbackslash tugas\{...\}} & \emph{Tugas N.x} & penyusun\\
+\end{tabular}
+\end{kotakinfo}
+
+## Empat Belas Warna {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{3.0cm}p{2.2cm}p{9.0cm}@{}}
+\textbf{Nama} & \textbf{Heks} & \textbf{Dipakai untuk}\\
+\texttt{bpsnavy} & 123A6B & judul, kepala halaman\\
+\texttt{bpsbiru} & 0B6FB4 & aksen utama, kotak info\\
+\texttt{bpsbirumuda} & 6FB3E0 & latar lembut\\
+\texttt{bpsoranye} & F58220 & penanda, kotak perhatian\\
+\texttt{bpshijau} & 00A651 & kunci jawaban, kotak langkah\\
+\texttt{abuteks} & 45505C & teks sekunder\\
+\texttt{codebg} & F4F7FB & latar kode R\\
+\texttt{codebgpy} & FFF8E8 & latar kode Python\\
+\texttt{pykuning} & E8A200 & aksen Python\\
+\texttt{outbg} & F6FBF7 & latar keluaran\\
+\texttt{padanA} & C2410C & padanan masukan (RShiny)\\
+\texttt{padanB} & 1D4ED8 & padanan keluaran\\
+\texttt{padanC} & 047857 & padanan keluaran kedua\\
+\texttt{merahsalah} & C0392B & penanda kekeliruan\\
+\end{tabular}
+\end{kotakinfo}
+
+## Simbol Matematika {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{3.6cm}p{1.6cm}p{3.6cm}p{1.6cm}p{2.4cm}@{}}
+\textbf{Perintah} & \textbf{Hasil} & \textbf{Perintah} & \textbf{Hasil} & \\
+\texttt{\textbackslash bar\{x\}} & $\bar{x}$ & \texttt{\textbackslash hat\{p\}} & $\hat{p}$ & \\
+\texttt{\textbackslash mu} & $\mu$ & \texttt{\textbackslash sigma} & $\sigma$ & \\
+\texttt{\textbackslash alpha} & $\alpha$ & \texttt{\textbackslash beta} & $\beta$ & \\
+\texttt{\textbackslash chi\^{}\{2\}} & $\chi^{2}$ & \texttt{\textbackslash eta\^{}\{2\}} & $\eta^{2}$ & \\
+\texttt{\textbackslash sum} & $\sum$ & \texttt{\textbackslash sqrt\{x\}} & $\sqrt{x}$ & \\
+\texttt{\textbackslash dfrac\{a\}\{b\}} & $\dfrac{a}{b}$ & \texttt{\textbackslash leq} & $\leq$ & \\
+\texttt{\textbackslash neq} & $\neq$ & \texttt{\textbackslash times} & $\times$ & \\
+\end{tabular}
+\end{kotakinfo}
+
+## Karakter yang Harus Diloloskan {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{2.4cm}p{3.0cm}p{9.0cm}@{}}
+\textbf{Karakter} & \textbf{Ditulis} & \textbf{Arti khusus}\\
+\_ & \texttt{\textbackslash\_} & penurunan\\
+\% & \texttt{\textbackslash\%} & awal komentar\\
+\$ & \texttt{\textbackslash\$} & mode matematika\\
+\& & \texttt{\textbackslash\&} & pemisah kolom\\
+\# & \texttt{\textbackslash\#} & argumen makro\\
+\end{tabular}
+\end{kotakinfo}
+
+Pada kunci `penjelasan` dan `interpretasi`, pelolosan dikerjakan otomatis oleh
+`latex_prose_safe()`.
+
+\newpage
+
+# Lampiran C — Rujukan API {-}
+
+Paket mengekspor **47 objek**: 19 kelas R6 dan 28 fungsi.
+
+## Fungsi yang Paling Sering Dipakai {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{5.0cm}p{9.4cm}@{}}
+\texttt{module\_spec\_from\_yaml(path)} & memuat spesifikasi dari berkas YAML\\
+\texttt{theme\_factory(palette)} & membuat objek tema\\
+\texttt{renderer\_factory(backend, theme)} & membuat objek perender\\
+\texttt{render\_module(spec, ...)} & merender satu modul\\
+\texttt{generate\_module\_data(spec, dir)} & membangkitkan data simulasi\\
+\texttt{render\_berlanjut(specs, dirs, ...)} & merender banyak modul berpenomoran berlanjut\\
+\texttt{sampul\_buku(...)} & membangkitkan sampul buku\\
+\texttt{gabung\_pdf(berkas, keluaran)} & menggabungkan PDF menjadi buku\\
+\texttt{pdf\_halaman(path)} & membaca jumlah halaman PDF\\
+\end{tabular}
+\end{kotakinfo}
+
+## Fungsi Pendukung {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{5.0cm}p{9.4cm}@{}}
+\texttt{module\_spec(...)} & membuat spesifikasi langsung dari R (tanpa YAML)\\
+\texttt{generate\_dataset(recipe)} & membangkitkan satu data.frame dari resep\\
+\texttt{default\_sections(...)} & daftar kesebelas bagian baku\\
+\texttt{section\_types()} & jenis bagian yang tersedia\\
+\texttt{make\_section(...)} & membuat objek bagian\\
+\texttt{bps\_palette()} & palet warna BPS\\
+\texttt{build\_logger(...)} & membuat pencatat proses\\
+\texttt{latex\_prose\_safe(x)} & meloloskan karakter khusus LaTeX\\
+\texttt{esc\_latex(x)}, \texttt{esc\_underscore(x)} & pelolosan versi ringkas\\
+\texttt{load\_glossary()}, \texttt{filter\_glossary()} & memuat dan menyaring daftar istilah\\
+\texttt{glossary\_latex()} & membangkitkan daftar istilah sebagai LaTeX\\
+\texttt{new\_module\_rmd()}, \texttt{new\_answerkey\_rmd()} & membuat kerangka Rmd kosong\\
+\texttt{addin\_new\_module()} dll. & pintasan RStudio Addins\\
+\end{tabular}
+\end{kotakinfo}
+
+## Kelas R6 {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{4.2cm}p{10.2cm}@{}}
+\textbf{Kelas} & \textbf{Peran}\\
+\texttt{ModuleSpec} & menyimpan seluruh isi spesifikasi; menyediakan \texttt{\$validate()}\\
+\texttt{ValidationReport} & hasil validasi: \texttt{\$ok} dan \texttt{\$messages}\\
+\texttt{Section} & induk seluruh jenis bagian\\
+\texttt{ExampleSection} & bagian Contoh dan Tambahan\\
+\texttt{ExerciseSection} & bagian Latihan\\
+\texttt{AssignmentSection} & bagian Penugasan\\
+\texttt{GlossarySection} & bagian daftar istilah\\
+\texttt{ContentBuilder} & induk pembangun dokumen\\
+\texttt{ModuleBuilder} & membangun dokumen modul\\
+\texttt{AnswerKeyBuilder} & membangun dokumen kunci jawaban\\
+\texttt{Document} & dokumen hasil bangunan\\
+\texttt{Renderer} & induk perender\\
+\texttt{BookdownRenderer} & perender berbasis bookdown/rmarkdown\\
+\texttt{QuartoRenderer} & perender berbasis Quarto\\
+\texttt{RenderContext} & konteks penomoran saat render\\
+\texttt{Artifact} & berkas hasil render\\
+\texttt{LatexTheme} & tema: warna, preamble, kotak, sampul\\
+\texttt{ModuleProject} & proyek berisi banyak modul\\
+\texttt{Logger} & pencatat proses\\
+\end{tabular}
+\end{kotakinfo}
+
+## Memperluas Paket {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{4.6cm}p{9.8cm}@{}}
+\textbf{Menambah jenis bagian} & turunkan \texttt{Section}, daftarkan pada
+\texttt{section\_types()}, tambahkan ke \texttt{default\_sections()}\\[3pt]
+\textbf{Menambah backend render} & turunkan \texttt{Renderer}, daftarkan pada
+\texttt{renderer\_factory()}\\[3pt]
+\textbf{Menambah tipe kolom data} & tambahkan cabang pada \texttt{generate\_dataset()} di
+\texttt{R/data-recipe.R}\\[3pt]
+\textbf{Menambah kotak} & tambahkan \texttt{\textbackslash newtcolorbox} pada
+\texttt{inst/templates/preamble.tex.tmpl}\\
+\end{tabular}
+\end{kotakinfo}
+
+Setiap perluasan sebaiknya disertai uji pada `tests/testthat/`.
+
+\newpage
+
+# Lampiran D — Pemecahan Masalah {-}
+
+## Galat Pemasangan {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{5.4cm}p{9.0cm}@{}}
+\textbf{Gejala} & \textbf{Tindakan}\\
+\texttt{xelatex not found} & pasang TinyTeX; jalankan ulang RStudio sesudahnya\\
+\texttt{File `tcolorbox.sty' not found} & \texttt{tinytex::tlmgr\_install("tcolorbox")}\\
+\texttt{font "Carlito" cannot be found} & pasang font Carlito, atau ganti
+\texttt{\textbackslash setmainfont} pada preamble\\
+\texttt{pdfunite: command not found} & pasang poppler-utils; hanya menghalangi buku gabungan\\
+\texttt{there is no package called 'R6'} & pasang dependensi paket\\
+Kata terpenggal keliru & pola pemenggalan Indonesia belum terpasang; lihat Bab 2\\
+\end{tabular}
+\end{kotakinfo}
+
+## Galat Render yang Sukar Ditelusuri {-}
+
+Tiga galat berikut memiliki ciri yang sama: pesannya tidak menunjuk penyebab sebenarnya,
+sehingga mudah menyesatkan.
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{5.4cm}p{9.0cm}@{}}
+\textbf{Gejala} & \textbf{Sebab dan tindakan}\\
+\texttt{Misplaced alignment tab character \&} & judul memuat \texttt{\&} yang belum
+diloloskan; sejak versi 0.3.1 paket meloloskannya sendiri\\
+\texttt{Missing \$ inserted} & ringkasan solusi memuat \texttt{\$} atau \texttt{\^{}} ---
+misalnya \texttt{obj\$kolom} atau \texttt{rho\^{}2}; sejak 0.3.1 diloloskan otomatis\\
+\texttt{could not find function "."} & sintaks \texttt{data.table} dipakai di dalam modul;
+sejak 0.3.1 paket menandai dirinya \emph{datatable aware}\\
+\texttt{Missing number, treated as zero} & penanda \texttt{@@HALAWAL@@} belum tergantikan;
+render melalui paket atau skrip \texttt{render\_ulang.R}, bukan memanggil \texttt{.Rmd} langsung\\
+\texttt{You may need to add \$ \$ around a certain inline R expression} & pesan ini
+\emph{tidak} menunjuk ekspresi R inline: judul label memuat \texttt{\^{}} atau
+\texttt{\textasciitilde{}} --- misalnya \texttt{\textbackslash kode\{Arah pembeda Sp\^{}\{-1\}\}};
+sejak 0.3.2 keempat label meloloskannya sendiri\\
+\end{tabular}
+\end{kotakinfo}
+
+\begin{kotaktips}[Menulis rumus pada judul label]
+Sejak versi 0.3.2, bagian judul yang diapit \texttt{\$...\$} dibiarkan apa adanya sehingga
+tercetak sebagai matematika, sedangkan di luarnya \texttt{\&}, \texttt{\_}, \texttt{\%},
+\texttt{\#}, \texttt{\^{}}, dan \texttt{\textasciitilde{}} diloloskan otomatis. Karena itu
+tulislah \texttt{\textbackslash kode\{Arah pembeda \$\textbackslash mathbf\{S\}\_p\^{}\{-1\}\$\}}
+--- bukan \texttt{Sp\^{}\{-1\}} telanjang, yang kini memang tidak lagi menghentikan kompilasi
+tetapi tercetak sebagai teks biasa.
+\end{kotaktips}
+
+\begin{kotakperhatian}[Peubah tertimpa saat merender berkelompok]
+Bila Anda menulis skrip yang merender banyak modul dalam satu perulangan, berikan
+\texttt{envir = new.env()} pada \texttt{rmarkdown::render()}. Tanpa itu, kode di dalam modul
+berjalan pada lingkungan pemanggil dan dapat menimpa peubah skrip Anda --- termasuk peubah
+perulangan. Gejalanya membingungkan: laporan menyebut modul yang keliru meskipun berkas yang
+dihasilkan sebenarnya benar.
+\end{kotakperhatian}
+
+## Galat Spesifikasi {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{5.4cm}p{9.0cm}@{}}
+\textbf{Gejala} & \textbf{Tindakan}\\
+Data selalu 100 baris & kunci \texttt{n} belum diberi tanda kutip; tulis \texttt{"n": 60}\\
+Galat pembacaan YAML & indentasi memakai tab; ganti dengan spasi\\
+Teks terpotong di titik dua & bungkus nilai dengan tanda kutip ganda\\
+Kode kehilangan baris & memakai \texttt{>} untuk kode; ganti dengan \texttt{|}\\
+\texttt{\$validate()\$ok} bernilai FALSE & baca \texttt{\$messages} --- seluruh kekeliruan
+dilaporkan sekaligus\\
+\end{tabular}
+\end{kotakinfo}
+
+## Galat Render {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{5.4cm}p{9.0cm}@{}}
+\textbf{Gejala} & \textbf{Tindakan}\\
+\texttt{Quitting from lines ...} & galat berasal dari chunk R; jalankan kodenya terpisah\\
+\texttt{Undefined control sequence} & perintah LaTeX salah ketik atau kotak belum
+didefinisikan\\
+\texttt{Missing \$ inserted} & karakter \texttt{\_} di luar mode matematika\\
+\texttt{Extra alignment tab} & jumlah \texttt{\&} melebihi kolom yang dideklarasikan\\
+\texttt{pgfkeys: I do not know the key} & kotak diberi argumen judul padahal tidak
+menerimanya\\
+\texttt{object 'x' not found} & contoh memakai peubah yang didefinisikan pada bagian yang
+dirender belakangan\\
+\end{tabular}
+\end{kotakinfo}
+
+## Galat Hasil {-}
+
+\begin{kotakinfo}
+\begin{tabular}{@{}p{5.4cm}p{9.0cm}@{}}
+\textbf{Gejala} & \textbf{Tindakan}\\
+Nomor halaman selalu mulai 1 & \texttt{\textbackslash setcounter\{page\}} diletakkan sebelum
+\texttt{\textbackslash end\{titlepage\}}\\
+Judul kotak tidak muncul & kotak itu tidak menerima argumen judul (lihat Lampiran B)\\
+\texttt{**tebal**} tercetak apa adanya & Markdown tidak berlaku di dalam kotak; pakai
+\texttt{\textbackslash textbf\{\}}\\
+Huruf grafik terlalu kecil & kecilkan \texttt{fig.width}, jangan besarkan
+\texttt{out.width}\\
+Angka tercetak \texttt{1.5e+06} & tambahkan \texttt{options(scipen = 999)}\\
+Bagian Tambahan tidak muncul & \texttt{body\$tambahan} kosong; bagian opsional memang
+dilewati\\
+Perubahan paket tak berpengaruh & versi lama terpasang menimpa sumber; pakai
+\texttt{pkgload::load\_all()}\\
+Urutan modul kacau di buku & \texttt{sort()} menempatkan \texttt{Modul\_10} sebelum
+\texttt{Modul\_2}; urutkan menurut nomor\\
+\end{tabular}
+\end{kotakinfo}
+
+## Urutan Penelusuran {-}
+
+\begin{kotaklangkah}[1]
+Jalankan \texttt{\$validate()}. Sebagian besar masalah tertangkap di sini.
+\end{kotaklangkah}
+
+\begin{kotaklangkah}[2]
+Tentukan asal galat: \texttt{Quitting from lines} menunjuk R; pesan berawalan tanda seru
+menunjuk LaTeX.
+\end{kotaklangkah}
+
+\begin{kotaklangkah}[3]
+Bila dari R --- jalankan kodenya di konsol secara terpisah.
+\end{kotaklangkah}
+
+\begin{kotaklangkah}[4]
+Bila dari LaTeX --- render dengan \texttt{keep\_tex = TRUE}, buka \texttt{.tex} pada baris
+yang disebutkan.
+\end{kotaklangkah}
+
+\begin{kotaklangkah}[5]
+Periksa versi paket yang termuat: \texttt{find.package("modulstis")}.
+\end{kotaklangkah}
+
+\newpage
+
+# Lampiran E — Studi Kasus: Mata Kuliah Baru {-}
+
+Lampiran ini menyusun satu mata kuliah baru dari nol: **Metode Survei Sampel**, tiga modul,
+lengkap sampai buku gabungan.
+
+## Menyiapkan Struktur {-}
+
+```{r}
+dir.create("survei/modul", recursive = TRUE)
+for (i in 1:3) dir.create(sprintf("survei/modul/Modul%02d", i))
+```
+
+```
+survei/
+  modul/
+    Modul01/  Modul02/  Modul03/
+  buku/
+  bangun.R
+```
+
+## Menulis Spesifikasi Pertama {-}
+
+```yaml
+# survei/modul/Modul01/modul-01-kerangka.yml
+number: 1
+title: "Kerangka Sampel dan Populasi Sasaran"
+short_code: "kerangka"
+topic: "Kerangka Sampel"
+pertemuan: 1
+sub_cpmk: >
+  Sub-CPMK 1: Mahasiswa mampu menjelaskan kerangka sampel dan
+  mengevaluasi mutunya.
+packages: [dplyr]
+
+course:
+  matkul: "Metode Survei Sampel"
+  matkul_besar: "METODE SURVEI SAMPEL"
+  kode: "K242320"
+  semester: "4 (Genap)"
+  prodi: "D-IV Statistika"
+  penyusun:
+    - "Nama Penyusun"
+
+datasets:
+  - name: data_kerangka
+    role: contoh
+    recipe:
+      kind: tabular
+      "n": 120
+      seed: 2025
+      columns:
+        kode_bs:  {type: integer, min: 1001, max: 1120}
+        wilayah:  {type: category, levels: [Perkotaan, Perdesaan], probs: [0.45, 0.55]}
+        rumah_tangga: {type: integer, min: 60, max: 180}
+
+body:
+  deskripsi:
+    - >
+      Modul ini membahas kerangka sampel: apa itu, bagaimana menilai
+      mutunya, dan akibat kekeliruan kerangka terhadap penduga.
+    - "\\begin{kotakperhatian}[Tentang data]\nBerkas data pada modul ini
+       adalah \\textbf{data simulasi}, bukan data resmi.\n\\end{kotakperhatian}"
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini, mahasiswa mampu:"
+    - "1. **Menjelaskan** perbedaan populasi sasaran dan kerangka sampel."
+    - "2. **Mengenali** cakupan lebih dan cakupan kurang."
+  alat:
+    - "- **R** (RStudio); paket `dplyr`."
+    - "- Berkas data: `data/data_kerangka.csv`."
+  instruksi:
+    - "**Sebelum praktikum:** siapkan direktori kerja dan berkas data."
+    - "**Selama praktikum:** kerjakan Contoh berurutan."
+  teori:
+    - "### Kaitan dengan Materi Sebelumnya"
+    - >
+      Modul ini memakai keterampilan manipulasi data untuk memeriksa
+      mutu kerangka.
+    - "### Populasi Sasaran dan Kerangka"
+    - >
+      Populasi sasaran adalah himpunan yang ingin disimpulkan, sedangkan
+      kerangka adalah daftar yang benar-benar tersedia.
+  contoh:
+    - contoh: "Memeriksa mutu kerangka"
+      kode_r: "kr <- read.csv(\"data/data_kerangka.csv\")\nstr(kr)\nsum(duplicated(kr$kode_bs))"
+      judul_r: "str dan duplicated"
+      eval: true
+      penjelasan: >
+        Data dibaca lalu strukturnya diperiksa. Fungsi duplicated menandai
+        kode yang muncul lebih dari sekali, dan sum menghitungnya.
+      interpretasi: >
+        Kode ganda menandakan cakupan lebih: satu unit berpeluang terpilih
+        dua kali, sehingga penduga menjadi berbias.
+  latihan:
+    - "#### Tingkat Dasar"
+    - "\\latihan{Memeriksa keunikan}"
+    - "```{r eval=FALSE}\nsum(____(kr$kode_bs))   # cacah kode ganda\n```"
+  penugasan:
+    - "\\begin{kotaktugas}\nEvaluasi mutu kerangka sampel.\n\\end{kotaktugas}"
+    - "\\tugas{Pemeriksaan}"
+    - "1. Periksa keunikan kode dan laporkan temuannya."
+  ringkasan:
+    - "\\begin{kotaktujuan}\n\\begin{itemize}
+       \n\\item[$\\square$] Saya dapat membedakan populasi sasaran dan kerangka.
+       \n\\end{itemize}\n\\end{kotaktujuan}"
+    - "Modul berikutnya membahas penarikan sampel acak sederhana."
+
+exercises:
+  - id: "L1.1"
+    points: 25
+    solution: "Memakai duplicated untuk mencacah kode ganda."
+    judul_r: "Solusi Tingkat Dasar (R)"
+    solusi_r: |
+      kr <- read.csv("data/data_kerangka.csv")
+      sum(duplicated(kr$kode_bs))
+    interpretasi: >
+      Fungsi duplicated mengembalikan nilai logika; sum menghitung yang bernilai benar.
+
+references:
+  - "Cochran, W. G. (1977). *Sampling Techniques* (3rd ed.). Wiley."
+```
+
+## Membangun Modul Pertama {-}
+
+```{r}
+library(modulstis)
+
+sp <- module_spec_from_yaml("survei/modul/Modul01/modul-01-kerangka.yml")
+sp$validate()$ok
+
+generate_module_data(sp, output_dir = "survei/modul/Modul01")
+
+th <- theme_factory()
+r  <- renderer_factory("bookdown", theme = th)
+r$render(ModuleBuilder$new(theme = th)$build(sp),    "survei/modul/Modul01")
+r$render(AnswerKeyBuilder$new(theme = th)$build(sp), "survei/modul/Modul01")
+```
+
+## Menambah Modul Berikutnya {-}
+
+Salin spesifikasi pertama sebagai kerangka, lalu ubah `number`, `title`, dan isinya. Blok
+`course` disalin apa adanya karena identitas mata kuliahnya sama.
+
+```{r}
+file.copy("survei/modul/Modul01/modul-01-kerangka.yml",
+          "survei/modul/Modul02/modul-02-srs.yml")
+```
+
+## Membangun Seluruh Mata Kuliah {-}
+
+```{r}
+dirs  <- list.dirs("survei/modul", recursive = FALSE)
+dirs  <- dirs[order(as.integer(sub(".*Modul(\\d+)", "\\1", basename(dirs))))]
+specs <- vapply(dirs, function(d) list.files(d, "\\.yml$", full.names = TRUE)[1],
+                character(1))
+
+for (i in seq_along(specs)) {
+  generate_module_data(module_spec_from_yaml(specs[i]), output_dir = dirs[i])
+}
+
+hasil_modul <- render_berlanjut(specs, dirs, jenis = "modul")
+hasil_kunci <- render_berlanjut(specs, dirs, jenis = "kunci")
+print(hasil_modul)
+```
+
+## Menyusun Buku {-}
+
+```{r}
+sampul <- sampul_buku(
+  judul1   = "METODE SURVEI",
+  judul2   = "SAMPEL",
+  kode     = "K242320",
+  semester = "4 (Genap)",
+  penyusun = "Nama Penyusun",
+  ringkas  = "3 Modul Praktikum - Berbasis R",
+  varian   = "modul"
+)
+cat(sampul, file = "survei/buku/sampul.tex")
+
+# setelah bagian awal dan akhir dirender:
+gabung_pdf(
+  c("survei/buku/bagian_awal.pdf",
+    file.path(dirs, list.files(dirs, "^Modul_.*\\.pdf$")),
+    "survei/buku/bagian_akhir.pdf"),
+  "survei/Buku_Metode_Survei_Sampel.pdf"
+)
+```
+
+## Daftar Periksa Penutup {-}
+
+\begin{kotaktujuan}
+\textbf{Mata kuliah baru siap dipakai bila:}
+\begin{itemize}
+\item[$\square$] Seluruh spesifikasi lolos \texttt{\$validate()}
+\item[$\square$] Setiap contoh memiliki Penjelasan Kode dan Interpretasi Output
+\item[$\square$] Setiap modul memuat penegasan status data simulasi
+\item[$\square$] Kunci jawaban dirender dari spesifikasi yang sama
+\item[$\square$] Penomoran halaman berlanjut pada buku gabungan
+\item[$\square$] Tidak ada pesan galat yang tercetak di dalam PDF
+\item[$\square$] Seluruh sumber tersimpan di kendali versi
+\end{itemize}
+\end{kotaktujuan}

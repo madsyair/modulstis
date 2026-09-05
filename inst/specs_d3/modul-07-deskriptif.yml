@@ -1,0 +1,656 @@
+number: 7
+title: "Statistik Deskriptif dan Eksplorasi Data"
+short_code: "deskriptif"
+topic: "Statistik Deskriptif & Eksplorasi Data"
+pertemuan: 7
+sub_cpmk: >
+  Sub-CPMK 7: Mahasiswa mampu menjelaskan, menampilkan, dan menerapkan statistik deskriptif,
+  melakukan eksplorasi data secara grafis, serta menghitung dan menggambar kurva sebaran
+  peluang tertentu dengan R.
+packages: [dplyr]
+contoh_title: "Contoh Praktikum dengan R"
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  ta: "2025/2026"
+  semester: "3 (Ganjil)"
+  prodi: "D-III Statistika"
+  penyusun:
+    - "Achmad Syahrul Choir"
+    - "Rudi Salam"
+    - "Christiana Anggraeni Putri"
+
+datasets:
+  - name: data_rumahtangga
+    role: contoh
+    recipe:
+      kind: tabular
+      "n": 60
+      seed: 2026
+      columns:
+        wilayah: {type: category, levels: [Perkotaan, Perdesaan], probs: [0.45, 0.55]}
+        provinsi: {type: category, levels: [Provinsi A, Provinsi B, Provinsi C], probs: [0.4, 0.35, 0.25]}
+        pengeluaran: {type: numeric, min: 500, max: 5000, digits: 1}
+        pendapatan: {type: numeric, min: 800, max: 7000, digits: 1}
+        umur_krt: {type: integer, min: 25, max: 70}
+        lama_sekolah: {type: integer, min: 0, max: 16}
+        art: {type: integer, min: 1, max: 8}
+
+body:
+  deskripsi:
+    - >
+      Modul ini membahas langkah yang selalu mendahului analisis inferensia: mengenali data lewat
+      ringkasan angka dan gambar. Statistik deskriptif memampatkan ratusan amatan menjadi beberapa
+      ukuran yang bermakna, sedangkan eksplorasi grafis menampakkan pola, bentuk sebaran, dan
+      keganjilan yang tidak terlihat dari angka ringkasan saja. Keduanya saling melengkapi dan sama
+      pentingnya.
+    - >
+      Bagian kedua modul memperkenalkan \textbf{sebaran peluang} beserta cara menghitung dan
+      menggambarnya di R. Pemahaman ini menjadi jembatan menuju modul-modul inferensia (Modul 11
+      sampai 14): uji hipotesis dan pendugaan selang seluruhnya bersandar pada sebaran normal,
+      \emph{t}, dan khi-kuadrat yang dikenalkan di sini.
+    - >
+      Materi dibahas menyeluruh dari dasar hingga lanjut: ukuran pemusatan, penyebaran, posisi, dan
+      bentuk sebaran; pemilihan ukuran yang tepat untuk data menceng; eksplorasi grafis dengan
+      histogram, diagram kotak-garis, diagram dahan-daun, dan diagram pencar; pendeteksian pencilan;
+      hubungan antar-peubah lewat korelasi; serta keluarga fungsi \texttt{d}, \texttt{p}, \texttt{q},
+      dan \texttt{r} untuk enam sebaran peluang yang paling sering dipakai.
+    - "\\begin{kotakperhatian}[Tentang data]\nBerkas data pada modul ini adalah \\textbf{data simulasi} (\\texttt{set.seed(2026)}), \\textbf{bukan data nyata} dan \\textbf{bukan data resmi} instansi mana pun. Nilai pengeluaran dan pendapatan dinyatakan dalam ribu rupiah per bulan.\n\\end{kotakperhatian}"
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:"
+    - "1. **Menghitung** ukuran pemusatan, penyebaran, posisi, dan bentuk sebaran, serta **memilih** ukuran yang tepat sesuai bentuk data."
+    - "2. **Menyusun** ringkasan deskriptif per kelompok dan menyajikannya sebagai tabel."
+    - "3. **Membuat** dan **membaca** histogram, diagram kotak-garis, diagram dahan-daun, dan diagram pencar."
+    - "4. **Mendeteksi** pencilan dengan aturan simpangan kuartil serta menafsirkannya secara hati-hati."
+    - "5. **Mengukur** keeratan hubungan antar-peubah dengan korelasi dan menyadari batasannya."
+    - "6. **Menggunakan** keluarga fungsi `d`, `p`, `q`, `r` untuk sebaran uniform, binomial, Poisson, normal, *t*, dan khi-kuadrat."
+    - "7. **Menggambar** kurva sebaran peluang dan menghitung luas di bawah kurva."
+  alat:
+    - "Perangkat dan bahan yang diperlukan:"
+    - "- **R** (RStudio); modul ini fokus pada R sesuai RPS."
+    - "- Paket: `dplyr` (untuk ringkasan per kelompok; grafik memakai fungsi bawaan R)."
+    - "- Berkas data: `data/data_rumahtangga.csv`."
+  instruksi:
+    - "Ikuti tahapan berikut:"
+    - "**Sebelum praktikum:** siapkan direktori kerja; letakkan `data_rumahtangga.csv` di subfolder `data/`."
+    - "**Selama praktikum:** kerjakan Contoh berurutan; untuk setiap grafik, biasakan menuliskan **apa yang Anda lihat** sebelum membaca interpretasi yang disediakan; bandingkan ringkasan angka dengan gambarnya."
+    - "**Pembagian kerja:** Contoh dan Latihan dikerjakan selama sesi praktikum di kelas; **Penugasan dikerjakan sebagai tugas terstruktur di luar sesi**.\n\n**Pengumpulan:** susun laporan R Markdown, render ke PDF/HTML, dan kumpulkan via Google Classroom sesuai tenggat yang ditetapkan dosen."
+  teori:
+    - "### Kaitan dengan Materi Sebelumnya"
+    - >
+      Hampir seluruh keterampilan yang sudah dibangun terpakai di sini. Pemahaman tipe dan struktur data
+      datang dari Modul 2; kemampuan menulis fungsi sendiri - yang kini dipakai menghitung modus serta
+      ukuran bentuk - datang dari Modul 3; sedangkan peringkasan per kelompok dengan \texttt{dplyr}
+      datang dari Modul 5. Kebaruannya justru terletak pada \emph{penafsiran}: angka yang dihitung kini
+      dibaca sebagai ciri sebaran data.
+    - >
+      Bagi modul-modul sesudahnya, bagian ini berperan ganda. Sisi eksplorasi grafisnya dilanjutkan Modul
+      9 dengan \texttt{ggplot2} dan Modul 10 dengan \texttt{seaborn}, yang menawarkan tata grafik lebih
+      canggih. Sementara sisi sebaran peluangnya menjadi tumpuan Modul 11 sampai 14, sebab tiap uji
+      hipotesis bersandar pada sebaran penarikan contoh yang diperkenalkan sekarang.
+    - "### Ukuran Pemusatan, Penyebaran, Posisi, dan Bentuk"
+    - >
+      Empat kelompok ukuran menjawab empat pertanyaan berbeda. \textbf{Pemusatan} menunjuk letak pusat
+      data melalui rata-rata (\texttt{mean}), median (\texttt{median}), dan modus. \textbf{Penyebaran}
+      mengukur besar kecilnya keragaman lewat jangkauan, simpangan kuartil (IQR), ragam (\texttt{var}),
+      simpangan baku (\texttt{sd}), serta koefisien variasi. \textbf{Posisi} menetapkan kedudukan suatu
+      amatan memakai kuartil dan persentil (\texttt{quantile}). Terakhir, \textbf{bentuk} memerikan rupa
+      sebarannya melalui kemencengan (\emph{skewness}) dan keruncingan (\emph{kurtosis}).
+    - "\\begin{kotakrumus}\n\\textbf{Rumus pokok.}\\\\[3pt]\nRagam contoh:\\quad $s^{2} = \\dfrac{1}{n-1}\\sum_{i=1}^{n}(x_i - \\bar{x})^{2}$\\\\[5pt]\nSimpangan baku:\\quad $s = \\sqrt{s^{2}}$\\\\[5pt]\nKoefisien variasi:\\quad $CV = \\dfrac{s}{\\bar{x}} \\times 100$\\\\[5pt]\nSimpangan kuartil:\\quad $IQR = Q_3 - Q_1$\\\\[5pt]\nSkor baku:\\quad $z = \\dfrac{x - \\bar{x}}{s}$\n\\end{kotakrumus}"
+    - >
+      \textbf{Memilih ukuran yang sesuai.} Nilai ekstrem sangat memengaruhi rata-rata tetapi hampir tak
+      menyentuh median. Pada data yang menceng - pengeluaran maupun pendapatan umumnya menceng ke kanan -
+      median lebih mewakili keadaan kebanyakan orang. Itulah sebabnya publikasi statistik resmi kerap
+      menyajikan keduanya sekaligus; bahkan selisih antara rata-rata dan median saja sudah memberi
+      petunjuk ke arah mana sebaran itu menceng.
+    - "\\begin{kotaksalah}[Rata-rata pada data menceng]\nMelaporkan rata-rata saja untuk peubah yang menceng dapat menyesatkan: beberapa rumah tangga berpengeluaran sangat tinggi akan menarik rata-rata jauh di atas nilai yang dialami sebagian besar rumah tangga. Selalu periksa histogram atau bandingkan rata-rata dengan median lebih dahulu; bila keduanya berbeda jauh, sajikan median dan sertakan ukuran penyebarannya.\n\\end{kotaksalah}"
+    - "### Eksplorasi Grafis"
+    - >
+      Empat jenis gambar melayani keperluan berbeda. \textbf{Histogram} memperlihatkan rupa sebaran
+      sebuah peubah numerik, apakah setangkup, menceng, atau bermodus lebih dari satu. \textbf{Diagram
+      kotak-garis} (\emph{boxplot}) memadatkan lima serangkai sambil menandai pencilan, sehingga unggul
+      untuk menjajarkan beberapa kelompok sekaligus. \textbf{Diagram dahan-daun} (\emph{stem and leaf})
+      menampakkan bentuk sebaran tanpa membuang nilai aslinya, sesuai untuk data berukuran kecil. Adapun
+      \textbf{diagram pencar} (\emph{scatter plot}) menyingkap pola hubungan antara dua peubah numerik.
+    - "\\begin{kotaksalah}[Lebar selang histogram]\nBentuk histogram sangat bergantung pada banyaknya selang. Selang terlalu sedikit menyembunyikan pola, sedangkan terlalu banyak menampilkan riak acak yang bukan ciri sebenarnya. Cobalah beberapa nilai \\texttt{breaks} sebelum menyimpulkan bentuk sebaran, dan jangan pernah menyimpulkan dari satu histogram saja.\n\\end{kotaksalah}"
+    - >
+      \textbf{Cara membaca diagram kotak-garis.} Badan kotaknya terbentang dari kuartil pertama sampai
+      kuartil ketiga, sementara garis tebal di dalamnya menunjuk median. Kumisnya menjulur paling jauh
+      sepanjang $1{,}5 \times IQR$ terhitung dari tepi kotak; titik yang jatuh di luar batas itu ditandai
+      sebagai pencilan.
+    - "\\begin{kotaktips}\nPencilan yang terdeteksi secara statistik belum tentu salah. Ia bisa berupa galat pencatatan, tetapi bisa pula amatan sah yang memang ekstrem. Jangan pernah membuang pencilan hanya karena aturan kuartil menandainya; periksa dahulu asal-usulnya dan laporkan keputusan yang Anda ambil beserta alasannya.\n\\end{kotaktips}"
+    - "### Sebaran Peluang dan Keluarga Fungsi d, p, q, r"
+    - >
+      Untuk tiap sebaran, R menyediakan empat fungsi yang dibedakan huruf pertamanya. Penamaannya begitu
+      taat asas sehingga satu pola saja sudah cukup dihafalkan untuk seluruh sebaran.
+    - "\\begin{kotakinfo}[Empat awalan fungsi sebaran]\n\\begin{tabular}{@{}lll@{}}\n\\textbf{Awalan} & \\textbf{Menghasilkan} & \\textbf{Contoh}\\\\\n\\texttt{d} & fungsi kepekatan/peluang & \\texttt{dnorm(0)}\\\\\n\\texttt{p} & peluang kumulatif & \\texttt{pnorm(1.96)}\\\\\n\\texttt{q} & kuantil (kebalikan \\texttt{p}) & \\texttt{qnorm(0.975)}\\\\\n\\texttt{r} & bangkitan acak & \\texttt{rnorm(10)}\\\\\n\\end{tabular}\\\\[4pt]\nNama sebaran: \\texttt{unif}, \\texttt{binom}, \\texttt{pois}, \\texttt{norm}, \\texttt{t}, \\texttt{chisq}.\n\\end{kotakinfo}"
+    - >
+      \textbf{Perbedaan diskret dan kontinu.} Pada sebaran diskret semacam binomial dan Poisson,
+      \texttt{d} mengembalikan peluang bahwa suatu nilai terjadi persis. Sebaliknya pada sebaran kontinu
+      seperti uniform, normal, \emph{t}, dan khi-kuadrat, \texttt{d} mengembalikan \emph{kepekatan},
+      bukan peluang - sebab peluang sebuah titik tunggal pada sebaran kontinu niscaya nol. Peluang di sana
+      selalu berupa luas di bawah kurva sepanjang suatu selang, dan besaran itulah yang dihitung
+      \texttt{p}.
+    - "\\begin{kotaksalah}[Salah memilih awalan]\nKesalahan yang sangat sering: memakai \\texttt{dnorm} untuk mencari peluang. \\texttt{dnorm(1.96)} memberi tinggi kurva, bukan peluang. Yang dicari hampir selalu \\texttt{pnorm(1.96)} untuk peluang kumulatif, atau \\texttt{qnorm(0.975)} bila yang dicari nilai kritis dari peluang yang diketahui.\n\\end{kotaksalah}"
+  contoh:
+    - contoh: "Ringkasan cepat seluruh peubah"
+      kode_r: "rt <- read.csv(\"data/data_rumahtangga.csv\")\nstr(rt)\nsummary(rt[, c(\"pengeluaran\", \"pendapatan\", \"umur_krt\", \"lama_sekolah\")])"
+      judul_r: "str dan summary"
+      eval: true
+      penjelasan: >
+        Data dibaca lebih dahulu. Fungsi str menampilkan struktur data secara memanjang ke bawah: jenis
+        objek, ukuran, serta tipe dan cuplikan nilai tiap kolom. Fungsi summary diberi subset kolom
+        numerik yang dipilih dengan kurung siku berisi vektor nama kolom setelah koma, sehingga hanya
+        keempat kolom itu yang diringkas.
+      interpretasi: >
+        str menampilkan struktur dan tipe tiap kolom, sedangkan summary memberi lima serangkai beserta
+        rata-rata untuk tiap peubah numerik sekaligus. Ini langkah pertama yang selalu dilakukan.
+        Bandingkan rata-rata dan median tiap peubah: bila keduanya berbeda cukup jauh, itu petunjuk
+        awal bahwa sebarannya menceng dan perlu diperiksa dengan histogram.
+    - contoh: "Ukuran pemusatan termasuk modus"
+      kode_r: "peng <- rt$pengeluaran\nmean(peng)\nmedian(peng)\n# R tidak punya fungsi modus bawaan; buat sendiri (keterampilan Modul 3)\nmodus <- function(x) {\n  tab <- table(x)\n  as.numeric(names(tab)[which.max(tab)])\n}\nmodus(rt$art)          # modus banyaknya anggota rumah tangga\nmean(peng) - median(peng)   # selisih sebagai petunjuk kemencengan"
+      judul_r: "mean, median, dan modus buatan"
+      eval: true
+      penjelasan: >
+        Kolom pengeluaran disimpan ke peubah agar tidak ditulis berulang. Rata-rata dan median dihitung
+        dengan fungsi bawaan. Karena R tidak menyediakan fungsi modus, fungsi dibuat sendiri: table
+        menghitung frekuensi tiap nilai, which.max mencari posisi frekuensi terbesar, names mengambil
+        nilainya yang berupa teks, lalu as.numeric mengubahnya kembali menjadi angka. Baris terakhir
+        menghitung selisih rata-rata dan median sebagai petunjuk arah kemencengan.
+      interpretasi: >
+        Rata-rata dan median dihitung dengan fungsi bawaan. R tidak menyediakan fungsi modus sehingga
+        kita membuatnya sendiri memakai table dan which.max - penerapan langsung keterampilan menulis
+        fungsi dari Modul 3. Modus paling bermakna untuk peubah diskret seperti banyaknya anggota
+        rumah tangga. Selisih rata-rata dikurangi median yang bernilai positif menandakan kemencengan
+        ke kanan, dan sebaliknya.
+    - contoh: "Ukuran penyebaran"
+      kode_r: "range(peng)                       # nilai terkecil dan terbesar\ndiff(range(peng))                # jangkauan\nvar(peng)                        # ragam\nsd(peng)                         # simpangan baku\nIQR(peng)                        # simpangan kuartil\nround(100 * sd(peng) / mean(peng), 2)   # koefisien variasi"
+      judul_r: "range, var, sd, IQR, CV"
+      eval: true
+      penjelasan: >
+        Fungsi range mengembalikan dua nilai, yaitu terkecil dan terbesar; diff menghitung selisih
+        keduanya sehingga menghasilkan jangkauan. Fungsi var dan sd menghitung ragam dan simpangan baku
+        dengan pembagi n dikurangi satu. Fungsi IQR menghitung selisih kuartil ketiga dan pertama. Baris
+        terakhir menghitung koefisien variasi secara manual, yaitu simpangan baku dibagi rata-rata lalu
+        dikali seratus.
+      interpretasi: >
+        Jangkauan hanya memakai dua nilai ekstrem sehingga sangat peka terhadap pencilan. Ragam dan
+        simpangan baku mengukur penyebaran terhadap rata-rata; simpangan baku lebih mudah ditafsirkan
+        karena satuannya sama dengan data. IQR mengukur rentang setengah data di tengah sehingga tahan
+        terhadap pencilan. Koefisien variasi menyatakan penyebaran relatif terhadap rata-rata sehingga
+        dapat dipakai membandingkan peubah dengan satuan berbeda.
+    - contoh: "Kuartil dan persentil"
+      kode_r: "quantile(peng)                                  # kuartil (0, 25, 50, 75, 100)\nquantile(peng, probs = c(0.1, 0.5, 0.9))        # persentil tertentu\nfivenum(peng)                                   # lima serangkai Tukey\n# posisi relatif satu amatan\nz <- (peng[1] - mean(peng)) / sd(peng)\nround(z, 2)"
+      judul_r: "quantile, fivenum, skor baku"
+      eval: true
+      penjelasan: >
+        Fungsi quantile tanpa argumen tambahan mengembalikan lima kuartil baku. Dengan argumen probs,
+        persentil yang diinginkan dapat ditentukan sendiri sebagai vektor peluang. Fungsi fivenum
+        memberi lima serangkai versi Tukey yang dipakai diagram kotak-garis. Dua baris terakhir
+        menghitung skor baku satu amatan, yaitu selisihnya terhadap rata-rata dibagi simpangan baku.
+      interpretasi: >
+        quantile tanpa argumen memberi kelima kuartil, dan dengan argumen probs memberi persentil yang
+        diminta - misalnya persentil ke-10 dan ke-90 yang sering dipakai untuk menggambarkan kelompok
+        terbawah dan teratas. Skor baku menyatakan berapa simpangan baku suatu amatan berjarak dari
+        rata-rata, sehingga amatan dari peubah berbeda dapat dibandingkan posisinya.
+    - contoh: "Ukuran bentuk: kemencengan dan keruncingan"
+      kode_r: "kemencengan <- function(x) {\n  n <- length(x); m <- mean(x); s <- sd(x)\n  sum((x - m)^3) / (n * s^3)\n}\nkeruncingan <- function(x) {\n  n <- length(x); m <- mean(x); s <- sd(x)\n  sum((x - m)^4) / (n * s^4) - 3      # kelebihan keruncingan\n}\nround(kemencengan(peng), 3)\nround(keruncingan(peng), 3)"
+      judul_r: "skewness dan kurtosis buatan"
+      eval: true
+      penjelasan: >
+        Kedua fungsi dibuat sendiri agar rumusnya terlihat jelas. Di dalamnya, banyaknya amatan,
+        rata-rata, dan simpangan baku dihitung lebih dahulu. Kemencengan menjumlahkan pangkat tiga
+        simpangan tiap amatan lalu dibagi n dikali pangkat tiga simpangan baku. Keruncingan memakai
+        pangkat empat dengan pola serupa, lalu dikurangi tiga agar menghasilkan kelebihan keruncingan
+        yang bernilai nol untuk sebaran normal.
+      interpretasi: >
+        Kemencengan bertanda positif berarti ekor sebaran memanjang ke kanan, negatif berarti ke kiri,
+        dan mendekati nol berarti hampir setangkup. Kelebihan keruncingan bertanda positif menandakan
+        puncak lebih runcing dan ekor lebih tebal daripada sebaran normal. Kedua ukuran ini dihitung
+        dari momen pusat, dan menuliskannya sendiri membuat rumusnya lebih mudah dipahami daripada
+        sekadar memanggil fungsi paket.
+    - contoh: "Ringkasan deskriptif per kelompok"
+      kode_r: "suppressPackageStartupMessages(library(dplyr))\nrt |>\n  group_by(wilayah) |>\n  summarise(n = n(),\n            rata = round(mean(pengeluaran), 1),\n            median = round(median(pengeluaran), 1),\n            sd = round(sd(pengeluaran), 1),\n            cv = round(100 * sd(pengeluaran) / mean(pengeluaran), 1),\n            .groups = \"drop\")"
+      judul_r: "tabel deskriptif dengan dplyr"
+      eval: true
+      penjelasan: >
+        Paket dplyr dimuat lebih dahulu. Data dikelompokkan menurut wilayah, lalu summarise menghitung
+        lima ringkasan sekaligus dengan nama kolom yang ditentukan sendiri. Koefisien variasi dihitung
+        langsung di dalamnya. Argumen .groups bernilai drop menutup pengelompokan. Inilah penerapan
+        langsung keterampilan Modul 5 untuk keperluan penyajian deskriptif.
+      interpretasi: >
+        Inilah bentuk tabel yang lazim dijumpai dalam publikasi statistik resmi: ringkasan beberapa
+        ukuran sekaligus, dipecah menurut kelompok. Keterampilan dplyr dari Modul 5 dipakai langsung di
+        sini. Perhatikan koefisien variasi kedua wilayah untuk membandingkan keragaman relatifnya,
+        bukan sekadar membandingkan simpangan bakunya.
+    - contoh: "Histogram dan pengaruh banyaknya selang"
+      kode_r: "par(mfrow = c(1, 2))\nhist(peng, breaks = 6, col = \"#0B6FB4\", border = \"white\",\n     main = \"6 selang\", xlab = \"Pengeluaran (ribu Rp)\")\nhist(peng, breaks = 20, col = \"#F58220\", border = \"white\",\n     main = \"20 selang\", xlab = \"Pengeluaran (ribu Rp)\")\npar(mfrow = c(1, 1))"
+      judul_r: "hist dengan breaks berbeda"
+      eval: true
+      penjelasan: >
+        Fungsi par dengan argumen mfrow menata daerah gambar menjadi satu baris dua kolom, sehingga dua
+        grafik berikutnya tampil berdampingan. Kedua histogram memakai data yang sama tetapi argumen
+        breaks berbeda, yaitu enam dan dua puluh selang. Argumen col menetapkan warna isian dan border
+        warna garis tepi. Baris terakhir mengembalikan penataan gambar ke keadaan semula agar grafik
+        berikutnya tidak ikut terbagi.
+      interpretasi: >
+        Kedua histogram menggambarkan data yang sama persis, tetapi kesannya berbeda. Dengan enam
+        selang bentuk umumnya terlihat jelas namun detailnya hilang; dengan dua puluh selang muncul
+        banyak riak yang sebagian hanya kebetulan acak. Inilah alasan mengapa banyaknya selang harus
+        dicoba beberapa nilai sebelum menyimpulkan bentuk sebaran. Fungsi par dengan mfrow menata dua
+        grafik berdampingan.
+    - contoh: "Histogram dengan kurva kepekatan"
+      kode_r: "hist(peng, breaks = 10, freq = FALSE, col = \"grey90\", border = \"white\",\n     main = \"Sebaran Pengeluaran\", xlab = \"Pengeluaran (ribu Rp)\")\nlines(density(peng), col = \"#123A6B\", lwd = 2)      # kurva kepekatan\nabline(v = mean(peng), col = \"#F58220\", lwd = 2, lty = 2)\nabline(v = median(peng), col = \"#00A651\", lwd = 2, lty = 3)\nlegend(\"topright\", c(\"kepekatan\", \"rata-rata\", \"median\"),\n       col = c(\"#123A6B\", \"#F58220\", \"#00A651\"), lwd = 2, lty = c(1, 2, 3), bty = \"n\")"
+      judul_r: "hist + density + garis penanda"
+      eval: true
+      penjelasan: >
+        Argumen freq bernilai FALSE mengubah sumbu tegak dari frekuensi menjadi kepekatan, sehingga
+        skalanya sepadan dengan kurva yang akan ditumpangkan. Fungsi lines menambahkan kurva kepekatan
+        hasil density ke gambar yang sudah ada. Dua pemanggilan abline menggambar garis tegak pada posisi
+        rata-rata dan median dengan jenis garis berbeda. Fungsi legend menambahkan keterangan; argumen
+        bty bernilai n menghilangkan kotak di sekelilingnya.
+      interpretasi: >
+        Argumen freq bernilai FALSE mengubah sumbu tegak menjadi kepekatan sehingga histogram dapat
+        ditumpangi kurva kepekatan yang memperhalus bentuk sebaran. Garis putus-putus menandai
+        rata-rata dan median; jarak antara keduanya memperlihatkan kemencengan secara kasatmata.
+        Menambahkan legenda membuat grafik dapat berdiri sendiri tanpa penjelasan tambahan.
+    - contoh: "Diagram kotak-garis dan perbandingan kelompok"
+      kode_r: "par(mfrow = c(1, 2))\nboxplot(peng, col = \"#0B6FB4\", main = \"Seluruh data\",\n        ylab = \"Pengeluaran (ribu Rp)\")\nboxplot(pengeluaran ~ wilayah, data = rt, col = c(\"#0B6FB4\", \"#F58220\"),\n        main = \"Menurut wilayah\", xlab = \"\", ylab = \"Pengeluaran (ribu Rp)\")\npar(mfrow = c(1, 1))"
+      judul_r: "boxplot tunggal dan per kelompok"
+      eval: true
+      penjelasan: >
+        Gambar dibagi dua secara berdampingan. Diagram pertama menerima satu vektor sehingga menghasilkan
+        satu kotak. Diagram kedua memakai bentuk rumus dengan tanda tilde, yang dibaca sebagai pengeluaran
+        menurut wilayah, disertai argumen data yang menyebut sumber datanya. Bentuk rumus inilah yang
+        membuat kedua kelompok tampil berdampingan dan mudah dibandingkan.
+      interpretasi: >
+        Diagram kotak-garis meringkas lima serangkai dalam satu gambar. Bentuk rumus dengan tanda tilde
+        membaca pengeluaran menurut wilayah sehingga kedua kelompok tampil berdampingan dan mudah
+        dibandingkan: perhatikan posisi median, lebar kotak sebagai gambaran keragaman, dan ada tidaknya
+        titik pencilan. Perbandingan berdampingan seperti ini jauh lebih informatif daripada dua tabel
+        terpisah.
+    - contoh: "Mendeteksi pencilan dengan aturan kuartil"
+      kode_r: "q <- quantile(peng, c(0.25, 0.75))\niqr <- IQR(peng)\nbatas_bawah <- q[1] - 1.5 * iqr\nbatas_atas  <- q[2] + 1.5 * iqr\nround(c(bawah = batas_bawah, atas = batas_atas), 1)\npencilan <- peng[peng < batas_bawah | peng > batas_atas]\nlength(pencilan)\nif (length(pencilan) > 0) round(pencilan, 1) else \"tidak ada pencilan\""
+      judul_r: "aturan 1.5 x IQR"
+      eval: true
+      penjelasan: >
+        Kuartil pertama dan ketiga diambil dengan quantile, lalu simpangan kuartil dihitung dengan IQR.
+        Batas bawah dan atas ditetapkan sejauh satu setengah kali simpangan kuartil dari tepi kotak.
+        Amatan di luar batas disaring dengan syarat gabungan memakai logika ATAU. Baris terakhir memakai
+        if else untuk menampilkan pesan bila ternyata tidak ada pencilan, agar keluarannya tetap informatif.
+      interpretasi: >
+        Aturan yang dipakai diagram kotak-garis dihitung ulang secara eksplisit di sini agar
+        mekanismenya jelas: batas ditetapkan sejauh satu setengah kali simpangan kuartil dari tepi
+        kotak, lalu amatan di luar batas ditandai sebagai pencilan. Hasilnya harus sesuai dengan titik
+        yang tampak pada diagram kotak-garis sebelumnya. Ingat kembali catatan di teori: penandaan ini
+        adalah isyarat untuk diperiksa, bukan perintah untuk dibuang.
+    - contoh: "Diagram dahan-daun"
+      kode_r: "stem(rt$umur_krt)"
+      judul_r: "stem and leaf"
+      eval: true
+      penjelasan: >
+        Fungsi stem menerima satu vektor numerik dan langsung mencetak diagram dahan-daun ke konsol,
+        tanpa menghasilkan gambar. Angka di kiri garis tegak adalah dahan yang mewakili puluhan, dan
+        angka di kanannya adalah daun yang mewakili satuan tiap amatan.
+      interpretasi: >
+        Diagram dahan-daun menampilkan bentuk sebaran sekaligus mempertahankan nilai aslinya: angka di
+        kiri garis tegak adalah dahan (puluhan) dan angka di kanannya adalah daun (satuan). Bila
+        dimiringkan sembilan puluh derajat, bentuknya menyerupai histogram. Kelebihannya adalah kita
+        masih dapat membaca nilai tiap amatan, sehingga sangat cocok untuk data berukuran kecil seperti
+        contoh ini.
+    - contoh: "Diagram pencar dan garis kecenderungan"
+      kode_r: "plot(rt$pendapatan, rt$pengeluaran,\n     pch = 19, col = \"#0B6FB4\",\n     main = \"Pengeluaran terhadap Pendapatan\",\n     xlab = \"Pendapatan (ribu Rp)\", ylab = \"Pengeluaran (ribu Rp)\")\nabline(lm(pengeluaran ~ pendapatan, data = rt), col = \"#F58220\", lwd = 2)\nround(cor(rt$pendapatan, rt$pengeluaran), 3)"
+      judul_r: "plot + garis kecenderungan"
+      eval: true
+      penjelasan: >
+        Fungsi plot menerima dua vektor sebagai sumbu mendatar dan tegak. Argumen pch menentukan bentuk
+        titik, di sini bulat pejal. Fungsi abline menerima objek hasil lm, yaitu model regresi linear
+        sederhana yang ditulis dalam bentuk rumus, lalu menggambar garisnya pada gambar yang sudah ada.
+        Baris terakhir menghitung korelasi kedua peubah sebagai pelengkap angka.
+      interpretasi: >
+        Diagram pencar menampakkan pola hubungan dua peubah numerik: arah, keeratan, bentuk, serta
+        amatan yang menyimpang. Garis lurus yang ditambahkan berasal dari regresi sederhana dan
+        menunjukkan kecenderungan umum; regresi sendiri dibahas tuntas di Modul 14. Nilai korelasi
+        melengkapi gambar dengan satu angka ringkas. Karena data ini simulasi dengan nilai acak
+        independen, korelasinya wajar bila mendekati nol.
+    - contoh: "Matriks diagram pencar dan matriks korelasi"
+      kode_r: "num <- rt[, c(\"pengeluaran\", \"pendapatan\", \"umur_krt\", \"lama_sekolah\")]\npairs(num, pch = 19, col = \"#0B6FB4\", main = \"Matriks Diagram Pencar\")\nround(cor(num), 3)"
+      judul_r: "pairs dan cor"
+      eval: true
+      penjelasan: >
+        Subset berisi empat kolom numerik dibuat lebih dahulu. Fungsi pairs menerima data frame dan
+        menggambar seluruh pasangan kolom sebagai matriks diagram pencar. Fungsi cor pada data frame
+        menghasilkan matriks korelasi antar seluruh kolomnya, lalu dibulatkan agar mudah dibaca.
+      interpretasi: >
+        Matriks diagram pencar menampilkan seluruh pasangan peubah numerik sekaligus sehingga pola
+        hubungan dapat dipindai cepat. Matriks korelasi memberi ringkasan angkanya. Perlu diingat dua
+        hal: korelasi hanya mengukur keeratan hubungan yang bersifat lurus, dan korelasi bukan bukti
+        sebab-akibat. Selalu lihat gambarnya, karena pola melengkung dapat menghasilkan korelasi
+        mendekati nol meski hubungannya sebenarnya kuat.
+    - contoh: "Sebaran uniform dan keluarga d, p, q, r"
+      kode_r: "dunif(3, min = 0, max = 10)        # kepekatan\npunif(3, min = 0, max = 10)        # peluang X kurang dari 3\nqunif(0.3, min = 0, max = 10)      # kuantil ke-0,3\nset.seed(2026); round(runif(5, 0, 10), 2)   # lima nilai acak\ncurve(dunif(x, 0, 10), from = -2, to = 12, n = 1000,\n      col = \"#0B6FB4\", lwd = 2, ylab = \"kepekatan\",\n      main = \"Sebaran Uniform(0, 10)\")"
+      judul_r: "dunif, punif, qunif, runif"
+      eval: true
+      penjelasan: >
+        Keempat awalan diperagakan pada sebaran yang sama. Awalan d memberi kepekatan pada suatu titik,
+        p memberi peluang kumulatif hingga titik itu, dan q bekerja sebaliknya dengan menerima peluang
+        lalu mengembalikan kuantil. Awalan r membangkitkan nilai acak, didahului set.seed agar hasilnya
+        dapat diulang. Fungsi curve menggambar kurva fungsi dari batas bawah sampai atas; argumen n
+        memperbanyak titik hitung agar bentuk kotaknya tajam.
+      interpretasi: >
+        Keempat awalan diperkenalkan sekaligus pada sebaran paling sederhana. Kepekatan uniform bernilai
+        tetap di sepanjang selangnya, sehingga peluang kumulatif hingga 3 pada selang 0 sampai 10
+        bernilai 0,3 - sepertiga selang. Perhatikan bahwa qunif adalah kebalikan punif: memasukkan
+        peluang menghasilkan kuantil. Pola penamaan ini berlaku sama untuk seluruh sebaran berikutnya.
+    - contoh: "Sebaran binomial"
+      kode_r: "# X ~ Binomial(n = 10, p = 0.3)\ndbinom(3, size = 10, prob = 0.3)      # peluang tepat 3 sukses\npbinom(3, size = 10, prob = 0.3)      # peluang paling banyak 3 sukses\nqbinom(0.5, size = 10, prob = 0.3)    # median\nx <- 0:10\nbarplot(dbinom(x, 10, 0.3), names.arg = x, col = \"#0B6FB4\",\n        main = \"Binomial(10 ; 0,3)\", xlab = \"banyaknya sukses\", ylab = \"peluang\")"
+      judul_r: "dbinom, pbinom, qbinom"
+      eval: true
+      penjelasan: >
+        Parameter sebaran ditulis sebagai argumen size untuk banyaknya percobaan dan prob untuk peluang
+        sukses. Fungsi dbinom memberi peluang tepat suatu nilai karena sebarannya diskret. Fungsi pbinom
+        menjumlahkan peluang hingga nilai tersebut, dan qbinom mencari nilai yang peluang kumulatifnya
+        mencapai angka tertentu. Penggambaran memakai barplot, bukan curve, karena peubahnya hanya
+        bernilai bilangan bulat; argumen names.arg memberi label tiap batang.
+      interpretasi: >
+        Pada sebaran diskret, dbinom memberi peluang tepat suatu nilai terjadi - berbeda dari sebaran
+        kontinu. pbinom menjumlahkan peluang hingga nilai tersebut. Diagram batang dipakai, bukan kurva,
+        karena peubahnya hanya bernilai bilangan bulat. Perhatikan bentuknya yang menceng ke kanan
+        karena peluang sukses lebih kecil dari setengah.
+    - contoh: "Sebaran Poisson"
+      kode_r: "# X ~ Poisson(lambda = 4)\ndpois(2, lambda = 4)          # peluang tepat 2 kejadian\nppois(2, lambda = 4)          # peluang paling banyak 2 kejadian\n1 - ppois(6, lambda = 4)      # peluang lebih dari 6 kejadian\nx <- 0:12\nbarplot(dpois(x, 4), names.arg = x, col = \"#00A651\",\n        main = \"Poisson(4)\", xlab = \"banyaknya kejadian\", ylab = \"peluang\")"
+      judul_r: "dpois dan ppois"
+      eval: true
+      penjelasan: >
+        Sebaran Poisson hanya memiliki satu parameter, yaitu lambda. Fungsi dpois memberi peluang tepat
+        suatu banyaknya kejadian, dan ppois memberi peluang kumulatifnya. Baris ketiga memperlihatkan cara
+        menghitung peluang di ekor kanan, yaitu satu dikurangi peluang kumulatif. Diagram batang digambar
+        untuk nilai nol sampai dua belas.
+      interpretasi: >
+        Sebaran Poisson memodelkan banyaknya kejadian pada selang waktu atau ruang tertentu, misalnya
+        banyaknya kunjungan per jam. Perhatikan cara menghitung peluang di ekor kanan: satu dikurangi
+        peluang kumulatif. Nilai lambda sekaligus menjadi rata-rata dan ragamnya, dan bentuknya makin
+        setangkup seiring membesarnya lambda.
+    - contoh: "Sebaran normal dan luas di bawah kurva"
+      kode_r: "dnorm(0)                    # tinggi kurva di titik 0, BUKAN peluang\npnorm(1.96)                 # peluang Z kurang dari 1,96\npnorm(1.96) - pnorm(-1.96)  # peluang di antara -1,96 dan 1,96\nqnorm(0.975)                # nilai kritis untuk luas 0,975\ncurve(dnorm(x), from = -4, to = 4, col = \"#123A6B\", lwd = 2,\n      main = \"Normal Baku dengan Luas 95 Persen\", ylab = \"kepekatan\")\nxs <- seq(-1.96, 1.96, length.out = 200)\npolygon(c(-1.96, xs, 1.96), c(0, dnorm(xs), 0), col = \"#0B6FB460\", border = NA)\nabline(v = c(-1.96, 1.96), col = \"#F58220\", lty = 2)"
+      judul_r: "dnorm, pnorm, qnorm, dan arsiran"
+      eval: true
+      penjelasan: >
+        Empat baris pertama menegaskan perbedaan awalan: dnorm memberi tinggi kurva, pnorm memberi luas di
+        sebelah kiri, selisih dua pnorm memberi luas di antara dua nilai, dan qnorm mengubah luas menjadi
+        nilai kritis. Bagian penggambaran memakai curve untuk kurva normal baku. Arsiran dibuat dengan
+        polygon yang menerima rangkaian titik pembentuk daerah: dimulai dari batas kiri di sumbu nol,
+        menyusuri kurva, lalu turun ke batas kanan. Dua garis tegak menandai batasnya.
+      interpretasi: >
+        Contoh ini menegaskan perbedaan yang paling sering keliru. dnorm memberi tinggi kurva, bukan
+        peluang. Peluang selalu berupa luas: pnorm memberi luas di sebelah kiri suatu nilai, dan selisih
+        dua pnorm memberi luas di antara dua nilai - di sini menghasilkan sekitar 0,95. qnorm bekerja
+        sebaliknya, mengubah luas menjadi nilai kritis, dan angka 1,96 inilah yang nanti muncul terus
+        dalam pendugaan selang pada Modul 11.
+    - contoh: "Sebaran t dibandingkan sebaran normal"
+      kode_r: "curve(dnorm(x), from = -4, to = 4, col = \"#123A6B\", lwd = 2,\n      ylab = \"kepekatan\", main = \"Normal Baku dan Sebaran t\")\ncurve(dt(x, df = 3), add = TRUE, col = \"#F58220\", lwd = 2, lty = 2)\ncurve(dt(x, df = 30), add = TRUE, col = \"#00A651\", lwd = 2, lty = 3)\nlegend(\"topright\", c(\"Normal\", \"t (db = 3)\", \"t (db = 30)\"),\n       col = c(\"#123A6B\", \"#F58220\", \"#00A651\"), lwd = 2, lty = 1:3, bty = \"n\")\nround(c(qt(0.975, 3), qt(0.975, 30), qnorm(0.975)), 3)"
+      judul_r: "dt dan qt dibandingkan normal"
+      eval: true
+      penjelasan: >
+        Kurva pertama digambar dengan curve, lalu dua kurva berikutnya ditambahkan ke gambar yang sama
+        memakai argumen add bernilai TRUE. Sebaran t memerlukan argumen df, yaitu derajat bebas. Jenis
+        garis dibedakan dengan lty agar terbaca meski dicetak hitam putih, dan legend menjelaskan
+        ketiganya. Baris terakhir membandingkan nilai kritis ketiganya dalam satu vektor bernama.
+      interpretasi: >
+        Sebaran t berekor lebih tebal daripada normal, dan makin besar derajat bebasnya makin mendekati
+        normal. Perbandingan nilai kritis di baris terakhir memperlihatkannya dengan angka: pada derajat
+        bebas 3 nilainya jauh lebih besar, pada derajat bebas 30 sudah hampir sama dengan 1,96. Inilah
+        alasan sebaran t dipakai untuk contoh berukuran kecil ketika ragam populasi tidak diketahui -
+        konsep yang dipakai langsung pada uji t di Modul 11.
+    - contoh: "Sebaran khi-kuadrat"
+      kode_r: "curve(dchisq(x, df = 3), from = 0, to = 20, col = \"#0B6FB4\", lwd = 2,\n      ylab = \"kepekatan\", main = \"Sebaran Khi-Kuadrat\")\ncurve(dchisq(x, df = 8), add = TRUE, col = \"#F58220\", lwd = 2, lty = 2)\nlegend(\"topright\", c(\"db = 3\", \"db = 8\"),\n       col = c(\"#0B6FB4\", \"#F58220\"), lwd = 2, lty = 1:2, bty = \"n\")\nround(qchisq(0.95, df = 3), 3)       # nilai kritis\nround(1 - pchisq(7.81, df = 3), 4)   # peluang di ekor kanan"
+      judul_r: "dchisq, qchisq, pchisq"
+      eval: true
+      penjelasan: >
+        Dua kurva khi-kuadrat dengan derajat bebas berbeda digambar bertumpuk, dimulai dari nol karena
+        sebaran ini tidak bernilai negatif. Baris berikutnya memakai qchisq untuk mencari nilai kritis
+        pada peluang kumulatif 0,95. Baris terakhir memeriksa kebalikannya dengan pchisq: luas di sebelah
+        kanan nilai tersebut dihitung sebagai satu dikurangi peluang kumulatif, dan hasilnya memang
+        mendekati 0,05.
+      interpretasi: >
+        Sebaran khi-kuadrat hanya bernilai tak negatif dan menceng ke kanan, dengan kemencengan yang
+        berkurang seiring bertambahnya derajat bebas. Nilai kritis pada taraf lima persen dengan derajat
+        bebas 3 adalah sekitar 7,81; perhitungan terakhir memastikannya dengan menunjukkan bahwa luas di
+        sebelah kanan 7,81 memang sekitar 0,05. Sebaran ini dipakai pada uji kesesuaian dan uji ragam di
+        Modul 12.
+    - contoh: "Studi kasus: eksplorasi lengkap satu peubah"
+      kode_r: "x <- rt$pendapatan\n# 1) ringkasan angka\nringkasan <- c(n = length(x), rata = mean(x), median = median(x),\n               sd = sd(x), iqr = IQR(x), miring = kemencengan(x))\nprint(round(ringkasan, 2))\n# 2) tampilan grafis berdampingan\npar(mfrow = c(1, 2))\nhist(x, breaks = 10, col = \"#0B6FB4\", border = \"white\",\n     main = \"Histogram\", xlab = \"Pendapatan (ribu Rp)\")\nboxplot(x, col = \"#F58220\", main = \"Kotak-garis\", ylab = \"Pendapatan (ribu Rp)\")\npar(mfrow = c(1, 1))\n# 3) kesesuaian dengan sebaran normal\nqqnorm(x, pch = 19, col = \"#0B6FB4\"); qqline(x, col = \"#F58220\", lwd = 2)"
+      judul_r: "alur eksplorasi baku"
+      eval: true
+      penjelasan: >
+        Alurnya tiga langkah dan diberi penanda nomor pada komentar. Langkah pertama menyusun ringkasan
+        angka sebagai satu vektor bernama, memanfaatkan fungsi kemencengan yang dibuat pada contoh
+        sebelumnya. Langkah kedua menampilkan histogram dan diagram kotak-garis berdampingan. Langkah
+        ketiga memakai qqnorm yang menggambar kuantil data terhadap kuantil normal, lalu qqline
+        menambahkan garis acuannya.
+      interpretasi: >
+        Studi kasus ini merangkai alur eksplorasi yang seharusnya menjadi kebiasaan: mulai dari
+        ringkasan angka, lanjut ke tampilan grafis, lalu periksa kesesuaian dengan sebaran teoretis.
+        Diagram kuantil-kuantil membandingkan kuantil data dengan kuantil normal; bila titik-titiknya
+        mengikuti garis lurus, sebaran data mendekati normal. Karena data ini dibangkitkan dari sebaran
+        uniform, titik-titiknya wajar bila menyimpang dari garis di kedua ujung - justru inilah cara
+        membaca diagram tersebut.
+  latihan:
+    - "Kerjakan bertahap. **Dasar** melengkapi kode; **Menengah** menulis sendiri dan membetulkan kode; **Lanjut** memecahkan kasus. Gunakan `data/data_rumahtangga.csv`."
+    - "#### Tingkat Dasar (melengkapi kode)"
+    - "\\latihan{Ukuran pemusatan dan penyebaran}"
+    - "```{r eval=FALSE}\nrt <- read.csv(\"data/data_rumahtangga.csv\")\n____(rt$pengeluaran)         # rata-rata\n____(rt$pengeluaran)         # median\n____(rt$pendapatan)          # simpangan baku\n____(rt$pendapatan)          # simpangan kuartil\n```"
+    - "\\latihan{Histogram dan kotak-garis}"
+    - "```{r eval=FALSE}\nhist(rt$lama_sekolah, breaks = ____, col = \"#0B6FB4\",   # coba 10 selang\n     main = \"Lama Sekolah\", xlab = \"lama sekolah (tahun)\")\nboxplot(pendapatan ~ ____, data = rt)   # bandingkan menurut wilayah\n```"
+    - "\\latihan{Sebaran peluang}"
+    - "```{r eval=FALSE}\n____(1.960)             # peluang Z kurang dari 1,960\n____(0.975)             # nilai z dengan luas kiri 0,975\n____(2, size = 8, prob = 0.25)   # peluang tepat 2 sukses\n```"
+    - "#### Tingkat Menengah (menulis sendiri)"
+    - "\\latihan{Tabel deskriptif per kelompok}"
+    - "Susun tabel ringkasan `pendapatan` menurut `provinsi` yang memuat: banyaknya amatan, rata-rata, median, simpangan baku, dan koefisien variasi. Gunakan `dplyr`. Provinsi mana yang keragaman relatifnya paling besar? Jelaskan mengapa koefisien variasi lebih tepat dipakai di sini daripada simpangan baku."
+    - "\\latihan{Deteksi pencilan dan penyajian}"
+    - "Untuk peubah `pengeluaran`, hitung batas pencilan dengan aturan simpangan kuartil, tampilkan amatan yang melewati batas (bila ada), lalu buat diagram kotak-garis yang memisahkan `wilayah`. Tuliskan apakah pencilan tersebut sebaiknya dipertahankan atau dibuang beserta alasannya."
+    - "\\latihan{Membetulkan kode yang salah}"
+    - "Kode berikut memuat beberapa kesalahan (salah awalan fungsi sebaran, argumen tertukar, dan salah fungsi ringkasan). Temukan dan perbaiki, lalu jelaskan tiap kesalahannya."
+    - "```{r eval=FALSE}\nrt <- read.csv(\"data/data_rumahtangga.csv\")\n\naverage(rt$pengeluaran)          # nama fungsi rata-rata salah\n\ndnorm(1.96)                      # ingin PELUANG Z < 1,96, bukan tinggi kurva\n\nqnorm(1.96)                      # ingin nilai kritis untuk luas 0,975\n\ndbinom(0.5, size = 10, prob = 3) # argumen tertukar: ingin P(X = 3) pada p = 0,5\n\nboxplot(rt$wilayah ~ rt$pengeluaran)  # arah rumus terbalik\n```"
+    - "**Keluaran yang benar.** Setelah diperbaiki, kode akan menghasilkan keluaran berikut (diagram kotak-garis muncul sebagai gambar). Gunakan ini untuk memverifikasi perbaikan Anda.\n\n```\n# 1) rata-rata pengeluaran\n[1] 2546.04\n\n# 2) peluang Z kurang dari 1,96\n[1] 0.9750021\n\n# 3) nilai kritis untuk luas 0,975\n[1] 1.959964\n\n# 4) peluang tepat 3 sukses dari 10 percobaan, p = 0,5\n[1] 0.1171875\n```"
+    - "#### Tingkat Lanjut (kasus kecil)"
+    - "\\latihan{Perbandingan sebaran dan nilai kritis}"
+    - "Buat satu gambar yang memuat kurva sebaran normal baku bersama sebaran *t* dengan derajat bebas 5, 15, dan 40. Tambahkan legenda. Kemudian susun tabel kecil berisi nilai kritis dua arah pada taraf lima persen untuk ketiga derajat bebas tersebut beserta nilai dari sebaran normal. Jelaskan pola yang Anda amati dan kaitkan dengan alasan penggunaan sebaran *t* pada contoh berukuran kecil."
+  penugasan:
+    - "\\begin{kotaktugas}\nSebagai calon pengolah data \\emph{official statistics}, susun laporan eksplorasi data rumah tangga dari \\texttt{data\\_rumahtangga.csv} (\\emph{data simulasi}) yang memadukan ringkasan angka dan tampilan grafis.\n\\end{kotaktugas}"
+    - "**Konteks.** Seorang petugas pengolah data di kantor statistik daerah memegang data 60 rumah tangga dari tiga provinsi, memuat pengeluaran dan pendapatan bulanan (ribu rupiah), umur kepala rumah tangga, lama sekolah, dan banyaknya anggota rumah tangga. Anda diminta menyusun profil deskriptifnya."
+    - "\\tugas{Ringkasan deskriptif}"
+    - "1. Untuk `pengeluaran`, `pendapatan`, dan `lama_sekolah`, hitung ukuran pemusatan (rata-rata, median, modus), penyebaran (simpangan baku, IQR, koefisien variasi), dan bentuk (kemencengan). Sajikan sebagai satu tabel."
+    - "2. Untuk setiap peubah, tentukan apakah rata-rata atau median yang lebih tepat dilaporkan. **Jelaskan alasannya** dengan merujuk pada nilai kemencengan dan bentuk histogramnya."
+    - "\\tugas{Eksplorasi grafis}"
+    - "3. Buat histogram (dengan kurva kepekatan) dan diagram kotak-garis untuk `pendapatan`, dipisahkan menurut `wilayah`. Tuliskan tiga hal yang Anda amati."
+    - "4. Buat diagram pencar `pengeluaran` terhadap `pendapatan` beserta garis kecenderungan, dan hitung korelasinya. Tafsirkan hasilnya, termasuk **peringatan bahwa korelasi bukan sebab-akibat**."
+    - "5. Deteksi pencilan pada `pendapatan` dengan aturan simpangan kuartil. Laporkan berapa banyak, dan putuskan penanganannya beserta alasan."
+    - "\\tugas{Sebaran peluang}"
+    - "6. Misalkan banyaknya rumah tangga yang mengakses layanan tertentu mengikuti sebaran Binomial dengan 15 percobaan dan peluang sukses 0,4. Hitung peluang tepat 6 sukses, paling banyak 6 sukses, dan lebih dari 8 sukses. Gambarkan diagram batang peluangnya."
+    - "7. Misalkan pengeluaran menyebar Normal dengan rata-rata dan simpangan baku sama dengan yang Anda hitung pada nomor 1. Hitung peluang sebuah rumah tangga berpengeluaran di atas 3000, dan tentukan nilai pengeluaran yang membatasi 10 persen teratas. Gambarkan kurvanya dengan daerah yang diarsir."
+    - "\\tugas{Laporan}"
+    - "8. Susun laporan R Markdown berisi kode, keluaran, grafik, dan interpretasi. Tutup dengan **ringkasan (maksimal 300 kata)** yang menjawab: bagaimana profil pengeluaran rumah tangga secara umum, apakah terdapat perbedaan mencolok antarwilayah, dan keterbatasan apa yang perlu diingat mengingat data ini simulasi."
+  ringkasan:
+    - "\\begin{kotaktujuan}\n\\textbf{Daftar periksa penguasaan:}\n\\begin{itemize}\n\\item[$\\square$] Saya dapat menghitung ukuran pemusatan, penyebaran, posisi, dan bentuk sebaran.\n\\item[$\\square$] Saya dapat memilih antara rata-rata dan median sesuai bentuk sebaran.\n\\item[$\\square$] Saya dapat membuat dan membaca histogram, kotak-garis, dahan-daun, dan diagram pencar.\n\\item[$\\square$] Saya dapat mendeteksi pencilan dengan aturan simpangan kuartil dan menyikapinya dengan hati-hati.\n\\item[$\\square$] Saya memahami bahwa korelasi mengukur hubungan lurus dan bukan sebab-akibat.\n\\item[$\\square$] Saya dapat membedakan awalan \\texttt{d}, \\texttt{p}, \\texttt{q}, dan \\texttt{r}.\n\\item[$\\square$] Saya dapat menghitung peluang dan nilai kritis untuk enam sebaran yang dibahas.\n\\item[$\\square$] Saya dapat menggambar kurva sebaran dan mengarsir daerah peluangnya.\n\\end{itemize}\n\\end{kotaktujuan}"
+    - "**Kartu Referensi Cepat.** Perintah deskriptif dan sebaran:"
+    - "\\begin{kotakrumus}\n\\begin{tabular}{@{}ll@{}}\n\\textbf{Tugas} & \\textbf{Perintah R}\\\\\nRingkasan cepat & \\texttt{summary(df)}\\\\\nPemusatan & \\texttt{mean()}, \\texttt{median()}\\\\\nPenyebaran & \\texttt{var()}, \\texttt{sd()}, \\texttt{IQR()}, \\texttt{range()}\\\\\nPosisi & \\texttt{quantile()}, \\texttt{fivenum()}\\\\\nHistogram & \\texttt{hist(x, breaks =)}\\\\\nKepekatan & \\texttt{lines(density(x))}\\\\\nKotak-garis & \\texttt{boxplot(y \\textasciitilde{} g, data =)}\\\\\nDahan-daun & \\texttt{stem(x)}\\\\\nPencar & \\texttt{plot(x, y)} + \\texttt{abline(lm(...))}\\\\\nMatriks pencar & \\texttt{pairs(df)}\\\\\nKorelasi & \\texttt{cor(x, y)}\\\\\nKuantil-kuantil & \\texttt{qqnorm(x)}, \\texttt{qqline(x)}\\\\\nKurva & \\texttt{curve(dnorm(x), from =, to =)}\\\\\nKepekatan/peluang & \\texttt{dnorm}, \\texttt{dbinom}, \\texttt{dpois}\\\\\nPeluang kumulatif & \\texttt{pnorm}, \\texttt{pbinom}, \\texttt{ppois}\\\\\nKuantil & \\texttt{qnorm}, \\texttt{qt}, \\texttt{qchisq}\\\\\nBangkitan acak & \\texttt{rnorm}, \\texttt{runif}, \\texttt{rbinom}\\\\\n\\end{tabular}\n\\end{kotakrumus}"
+    - "Modul ini melengkapi dua keterampilan yang saling menopang: meringkas data dengan angka dan menampakkannya dengan gambar, serta menghitung peluang dari sebaran teoretis. Prinsip penting yang perlu dibawa terus: jangan pernah menyimpulkan bentuk sebaran hanya dari satu ukuran atau satu gambar, dan bedakan dengan tegas antara kepekatan (`d`), peluang kumulatif (`p`), dan kuantil (`q`). Modul 8 dan 9 memperdalam sisi penyajian, sedangkan Modul 11 sampai 14 memakai sebaran peluang di sini untuk inferensia."
+  referensi:
+    - "Walpole, R. E., Myers, R. H., Myers, S. L., & Ye, K. (2016). *Probability and Statistics for Engineers and Scientists*, 9th ed. Pearson. (Ukuran deskriptif dan sebaran peluang.)"
+    - "Pramana, S., dkk. (2016). *Dasar-dasar Statistik menggunakan R*. In-Media. (Statistik deskriptif dan grafik dengan R.)"
+    - "Tukey, J. W. (1977). *Exploratory Data Analysis*. Addison-Wesley. (Sumber asli diagram kotak-garis dan dahan-daun.)"
+    - "Verzani, J. (2014). *Using R for Introductory Statistics*, 2nd ed. Chapman and Hall/CRC. (Eksplorasi data dan sebaran peluang di R.)"
+
+exercises:
+  - id: "L7.1"
+    points: 15
+    solution: "Tingkat Dasar: mean, median, sd, IQR; hist breaks 8; boxplot rumus; pnorm, qnorm, dbinom."
+    judul_r: "Solusi Tingkat Dasar (R)"
+    solusi_r: |
+      rt <- read.csv("data/data_rumahtangga.csv")
+      mean(rt$pengeluaran)
+      median(rt$pengeluaran)
+      sd(rt$pengeluaran)
+      IQR(rt$pendapatan)
+
+      hist(rt$lama_sekolah, breaks = 8, col = "#0B6FB4",
+           main = "Umur KRT", xlab = "umur (tahun)")
+      boxplot(pendapatan ~ wilayah, data = rt)
+
+      pnorm(1.960)                   # peluang Z < 1,645
+      qnorm(0.975)                    # nilai z dengan luas kiri 0,95
+      dbinom(2, size = 8, prob = 0.25)   # peluang tepat 2 sukses
+    interpretasi: >
+      Empat fungsi ringkasan dasar dipakai sesuai perannya. Pada boxplot, bentuk rumus ditulis sebagai
+      peubah numerik menurut peubah pengelompok. Untuk sebaran, pnorm memberi peluang kumulatif dan
+      qnorm memberi kuantil - perhatikan bahwa keduanya saling berkebalikan sehingga qnorm dari hasil
+      pnorm akan mengembalikan nilai semula.
+  - id: "L7.2"
+    points: 25
+    solution: "Tingkat Menengah dan Lanjut: tabel deskriptif per provinsi, deteksi pencilan, serta perbandingan sebaran t dan normal."
+    judul_r: "Solusi Menengah dan Lanjut (R)"
+    solusi_r: |
+      suppressPackageStartupMessages(library(dplyr))
+      rt <- read.csv("data/data_rumahtangga.csv")
+
+      # Tabel deskriptif per provinsi
+      rt |>
+        group_by(provinsi) |>
+        summarise(n = n(),
+                  rata = round(mean(pendapatan), 1),
+                  median = round(median(pendapatan), 1),
+                  sd = round(sd(pendapatan), 1),
+                  cv = round(100 * sd(pendapatan) / mean(pendapatan), 1),
+                  .groups = "drop") |>
+        arrange(desc(cv))
+
+      # Deteksi pencilan pengeluaran
+      x <- rt$pengeluaran
+      q <- quantile(x, c(0.25, 0.75)); iqr <- IQR(x)
+      batas <- c(bawah = q[1] - 1.5 * iqr, atas = q[2] + 1.5 * iqr)
+      print(round(batas, 1))
+      pencilan <- x[x < batas[1] | x > batas[2]]
+      print(if (length(pencilan) > 0) round(pencilan, 1) else "tidak ada pencilan")
+      boxplot(pengeluaran ~ wilayah, data = rt,
+              col = c("#0B6FB4", "#F58220"), ylab = "Pengeluaran (ribu Rp)")
+
+      # Perbandingan sebaran t dan normal
+      curve(dnorm(x), from = -4, to = 4, col = "#123A6B", lwd = 2,
+            ylab = "kepekatan", main = "Normal dan Sebaran t")
+      curve(dt(x, 5),  add = TRUE, col = "#F58220", lwd = 2, lty = 2)
+      curve(dt(x, 15), add = TRUE, col = "#00A651", lwd = 2, lty = 3)
+      curve(dt(x, 40), add = TRUE, col = "#7A5195", lwd = 2, lty = 4)
+      legend("topright", c("Normal", "t db=5", "t db=15", "t db=40"),
+             col = c("#123A6B", "#F58220", "#00A651", "#7A5195"),
+             lwd = 2, lty = 1:4, bty = "n")
+      round(c(db5 = qt(0.975, 5), db15 = qt(0.975, 15),
+              db40 = qt(0.975, 40), normal = qnorm(0.975)), 3)
+    interpretasi: >
+      Koefisien variasi dipakai karena rata-rata tiap provinsi berbeda sehingga simpangan baku tidak
+      langsung sebanding; koefisien variasi menyatakan keragaman relatif terhadap rata-ratanya. Deteksi
+      pencilan mengikuti aturan yang sama dengan yang dipakai diagram kotak-garis sehingga hasil
+      keduanya dapat saling diperiksa. Pada perbandingan sebaran, nilai kritis mengecil dan mendekati
+      1,96 seiring bertambahnya derajat bebas - inilah alasan sebaran t dipakai pada contoh kecil, dan
+      mengapa untuk contoh besar hasilnya hampir sama dengan sebaran normal.
+  - id: "L7.D"
+    points: 10
+    solution: "Membetulkan kode: mean bukan average, pnorm bukan dnorm, qnorm dengan peluang, argumen dbinom, dan arah rumus boxplot."
+    judul_r: "Solusi Membetulkan Kode (R)"
+    solusi_r: |
+      rt <- read.csv("data/data_rumahtangga.csv")
+
+      # 1) nama fungsi rata-rata di R adalah mean
+      mean(rt$pengeluaran)
+
+      # 2) peluang memakai awalan p, bukan d
+      pnorm(1.96)
+
+      # 3) qnorm menerima PELUANG, bukan nilai z
+      qnorm(0.975)
+
+      # 4) urutan argumen dbinom: x, size, prob
+      dbinom(3, size = 10, prob = 0.5)
+
+      # 5) rumus boxplot: numerik ~ pengelompok
+      boxplot(pengeluaran ~ wilayah, data = rt)
+    interpretasi: >
+      Lima kesalahan diperbaiki. Fungsi rata-rata di R bernama mean. Awalan d memberi kepekatan
+      sedangkan peluang kumulatif memakai p, sehingga peluang Z kurang dari 1,96 dihitung dengan pnorm.
+      Fungsi qnorm bekerja terbalik dan menerima peluang antara nol dan satu, sehingga memasukkan 1,96
+      tidak sah. Pada dbinom urutan argumennya adalah nilai, banyaknya percobaan, lalu peluang sukses.
+      Terakhir, rumus pada boxplot harus menempatkan peubah numerik di sebelah kiri tilde dan peubah
+      pengelompok di sebelah kanan.
+  - id: "T7.1"
+    points: 50
+    solution: "Penugasan: tabel deskriptif lengkap, pemilihan ukuran, eksplorasi grafis, pencilan, sebaran binomial dan normal, serta laporan."
+    judul_r: "Solusi Penugasan (R)"
+    solusi_r: |
+      suppressPackageStartupMessages(library(dplyr))
+      rt <- read.csv("data/data_rumahtangga.csv")
+
+      modus <- function(x) { tb <- table(x); as.numeric(names(tb)[which.max(tb)]) }
+      kemencengan <- function(x) {
+        n <- length(x); m <- mean(x); s <- sd(x); sum((x - m)^3) / (n * s^3) }
+
+      # 1) tabel deskriptif tiga peubah
+      peubah <- c("pengeluaran", "pendapatan", "lama_sekolah")
+      tabel <- t(sapply(peubah, function(v) {
+        x <- rt[[v]]
+        c(rata = mean(x), median = median(x), modus = modus(x),
+          sd = sd(x), iqr = IQR(x),
+          cv = 100 * sd(x) / mean(x), miring = kemencengan(x))
+      }))
+      print(round(tabel, 2))
+
+      # 3) eksplorasi grafis pengeluaran menurut wilayah
+      par(mfrow = c(1, 2))
+      hist(rt$pengeluaran, breaks = 10, freq = FALSE, col = "grey90",
+           border = "white", main = "Pengeluaran", xlab = "ribu Rp")
+      lines(density(rt$pengeluaran), col = "#123A6B", lwd = 2)
+      boxplot(pengeluaran ~ wilayah, data = rt,
+              col = c("#0B6FB4", "#F58220"), ylab = "ribu Rp")
+      par(mfrow = c(1, 1))
+
+      # 4) diagram pencar dan korelasi
+      plot(rt$pendapatan, rt$pengeluaran, pch = 19, col = "#0B6FB4",
+           xlab = "Pendapatan (ribu Rp)", ylab = "Pengeluaran (ribu Rp)")
+      abline(lm(pengeluaran ~ pendapatan, data = rt), col = "#F58220", lwd = 2)
+      round(cor(rt$pendapatan, rt$pengeluaran), 3)
+
+      # 5) pencilan
+      x <- rt$pengeluaran; q <- quantile(x, c(.25,.75)); iqr <- IQR(x)
+      pencilan <- x[x < q[1] - 1.5*iqr | x > q[2] + 1.5*iqr]
+      length(pencilan)
+
+      # 6) binomial(15 ; 0,4)
+      c(tepat6 = dbinom(6, 15, 0.4),
+        maks6  = pbinom(6, 15, 0.4),
+        lebih8 = 1 - pbinom(8, 15, 0.4)) |> round(4)
+      barplot(dbinom(0:15, 15, 0.4), names.arg = 0:15, col = "#0B6FB4",
+              xlab = "banyaknya sukses", ylab = "peluang")
+
+      # 7) normal dengan parameter dari data
+      m <- mean(rt$pengeluaran); s <- sd(rt$pengeluaran)
+      c(atas3000 = 1 - pnorm(3000, m, s), batas10persen = qnorm(0.90, m, s)) |> round(3)
+      curve(dnorm(x, m, s), from = m - 4*s, to = m + 4*s,
+            col = "#123A6B", lwd = 2, ylab = "kepekatan")
+      xs <- seq(3000, m + 4*s, length.out = 200)
+      polygon(c(3000, xs, m + 4*s), c(0, dnorm(xs, m, s), 0),
+              col = "#F5822060", border = NA)
+    interpretasi: >
+      Tabel deskriptif disusun sekaligus untuk ketiga peubah memakai sapply, penerapan langsung
+      keterampilan Modul 3. Pemilihan antara rata-rata dan median didasarkan pada nilai kemencengan:
+      makin jauh dari nol, makin kuat alasan melaporkan median. Bagian grafis memadukan histogram
+      berkurva kepekatan dengan diagram kotak-garis per wilayah. Untuk sebaran binomial, peluang di ekor
+      kanan dihitung sebagai satu dikurangi peluang kumulatif. Pada bagian normal, parameter diambil
+      dari data lalu daerah peluang diarsir dengan polygon. Perlu ditegaskan dalam laporan bahwa seluruh
+      angka berasal dari data simulasi sehingga tidak menggambarkan keadaan sebenarnya, dan bahwa
+      korelasi yang diperoleh tidak boleh ditafsirkan sebagai hubungan sebab-akibat.
+
+references:
+  - "Walpole, R. E., Myers, R. H., Myers, S. L., & Ye, K. (2016). Probability and Statistics for Engineers and Scientists, 9th ed. Pearson."
+  - "Pramana, S., dkk. (2016). Dasar-dasar Statistik menggunakan R. In-Media."
+  - "Tukey, J. W. (1977). Exploratory Data Analysis. Addison-Wesley."
+  - "Verzani, J. (2014). Using R for Introductory Statistics, 2nd ed. Chapman and Hall/CRC."

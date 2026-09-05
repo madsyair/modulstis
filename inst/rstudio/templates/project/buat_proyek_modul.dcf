@@ -1,0 +1,44 @@
+Binding: buat_proyek_modul
+Title: Proyek Modul Praktikum (modulstis)
+Subtitle: Kerangka mata kuliah bergaya BPS/STIS
+Caption: Menyiapkan folder proyek berisi spesifikasi contoh, skrip render, dan berkas pendukung
+OpenFiles: README.md, render_modul.R
+
+Parameter: matkul
+Widget: TextInput
+Label: Nama mata kuliah
+Default: Nama Mata Kuliah
+Position: left
+
+Parameter: kode
+Widget: TextInput
+Label: Kode mata kuliah
+Default: K000000
+Position: right
+
+Parameter: prodi
+Widget: TextInput
+Label: Program studi
+Default: D-IV Komputasi Statistik
+Position: left
+
+Parameter: semester
+Widget: TextInput
+Label: Semester
+Default: 6 (Genap)
+Position: right
+
+Parameter: penyusun
+Widget: TextInput
+Label: Penyusun
+Default: Nama Penyusun
+
+Parameter: n_modul
+Widget: TextInput
+Label: Banyaknya modul
+Default: 14
+
+Parameter: contoh_spec
+Widget: CheckboxInput
+Label: Sertakan spesifikasi contoh yang siap dirender
+Default: On

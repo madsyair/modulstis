@@ -1,0 +1,668 @@
+number: 9
+title: "Visualisasi Data dengan ggplot2"
+short_code: "ggplot2"
+topic: "Visualisasi Data (ggplot2)"
+pertemuan: 9
+sub_cpmk: >
+  Sub-CPMK 9: Mahasiswa mampu membuat visualisasi data dengan ggplot2 menggunakan struktur
+  grammar of graphics, meliputi geometric object, aesthetic mapping, faceting, dan position
+  adjustments.
+packages: [ggplot2, dplyr]
+contoh_title: "Contoh Praktikum dengan R"
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  ta: "2025/2026"
+  semester: "3 (Ganjil)"
+  prodi: "D-IV Statistika"
+  penyusun:
+    - "Achmad Syahrul Choir"
+    - "Rudi Salam"
+    - "Christiana Anggraeni Putri"
+
+datasets:
+  - name: data_rumahtangga
+    role: contoh
+    recipe:
+      kind: tabular
+      "n": 60
+      seed: 2025
+      columns:
+        wilayah: {type: category, levels: [Perkotaan, Perdesaan], probs: [0.45, 0.55]}
+        provinsi: {type: category, levels: [Provinsi A, Provinsi B, Provinsi C], probs: [0.4, 0.35, 0.25]}
+        pengeluaran: {type: numeric, min: 500, max: 5000, digits: 1}
+        pendapatan: {type: numeric, min: 800, max: 7000, digits: 1}
+        umur_krt: {type: integer, min: 25, max: 70}
+        lama_sekolah: {type: integer, min: 0, max: 16}
+        art: {type: integer, min: 1, max: 8}
+
+body:
+  deskripsi:
+    - >
+      Modul ini membahas \texttt{ggplot2}, pustaka visualisasi yang paling banyak dipakai di R.
+      Pada Modul 7 kita telah membuat histogram, diagram kotak-garis, dan diagram pencar memakai
+      fungsi grafik bawaan R. Modul ini mengerjakan hal yang sama - dan jauh lebih banyak - dengan
+      kerangka berpikir yang berbeda dan lebih sistematis.
+    - >
+      Gagasan intinya adalah \emph{grammar of graphics}: sebuah grafik dipandang sebagai susunan
+      lapisan yang dibangun dari komponen-komponen baku. Alih-alih menghafal nama fungsi untuk tiap
+      jenis grafik, kita menyusunnya dari unsur yang sama: data, pemetaan peubah ke unsur visual,
+      bentuk geometris, penyesuaian posisi, pemisahan panel, skala, dan tema. Sekali kerangka ini
+      dipahami, membuat grafik jenis baru menjadi mudah karena polanya selalu sama.
+    - >
+      Agar perbandingannya langsung terasa, modul ini memakai \textbf{berkas data yang sama persis}
+      dengan Modul 7. Anda dapat menjalankan contoh di sini lalu membandingkannya dengan grafik base
+      R pada modul sebelumnya untuk melihat perbedaan cara kerja sekaligus hasilnya.
+    - >
+      Materi dibahas dari dasar hingga lanjut: struktur dasar dan operator penjumlahan lapisan;
+      pemetaan estetika beserta perbedaan penting antara memetakan dan menetapkan; katalog objek
+      geometris; transformasi statistik yang berjalan diam-diam; penyesuaian posisi; pemisahan panel;
+      pengaturan skala dan warna; tema dan pelabelan untuk keperluan publikasi; anotasi; serta
+      penyimpanan berkas grafik.
+    - "\\begin{kotakperhatian}[Tentang data]\nBerkas data pada modul ini adalah \\textbf{data simulasi} (\\texttt{set.seed(2025)}), \\textbf{bukan data nyata} dan \\textbf{bukan data resmi} instansi mana pun. Berkas ini identik dengan yang dipakai pada Modul 7 agar hasil kedua pendekatan dapat dibandingkan.\n\\end{kotakperhatian}"
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:"
+    - "1. **Menjelaskan** gagasan *grammar of graphics* dan komponen penyusun sebuah grafik `ggplot2`."
+    - "2. **Menyusun** grafik dari struktur dasar `ggplot(data, aes(...)) + geom_*()`."
+    - "3. **Membedakan** pemetaan estetika di dalam `aes()` dari penetapan nilai tetap di luarnya."
+    - "4. **Memilih** objek geometris yang sesuai dengan jenis peubah dan pesan yang ingin disampaikan."
+    - "5. **Menggunakan** *position adjustments* (`stack`, `dodge`, `fill`, `jitter`) dengan tepat."
+    - "6. **Memisahkan** grafik menjadi panel dengan `facet_wrap` dan `facet_grid`."
+    - "7. **Mengatur** skala, warna, label, dan tema sehingga grafik layak dipublikasikan, serta menyimpannya dengan `ggsave`."
+  alat:
+    - "Perangkat dan bahan yang diperlukan:"
+    - "- **R** (RStudio); modul ini fokus pada R."
+    - "- Paket: `ggplot2` dan `dplyr` (pasang dengan `install.packages(c(\"ggplot2\",\"dplyr\"))`)."
+    - "- Berkas data: `data/data_rumahtangga.csv` (identik dengan Modul 7)."
+  instruksi:
+    - "Ikuti tahapan berikut:"
+    - "**Sebelum praktikum:** siapkan direktori kerja; letakkan `data_rumahtangga.csv` di subfolder `data/`; pastikan `ggplot2` sudah terpasang."
+    - "**Selama praktikum:** kerjakan Contoh berurutan; untuk tiap grafik, **bandingkan dengan versi base R pada Modul 7** bila ada padanannya; biasakan menuliskan apa yang Anda lihat sebelum membaca interpretasi; coba ubah satu komponen (misalnya ganti `geom` atau tambah `facet`) dan amati akibatnya."
+    - "**Pembagian kerja:** Contoh dan Latihan dikerjakan selama sesi praktikum di kelas; **Penugasan dikerjakan sebagai tugas terstruktur di luar sesi**.\n\n**Pengumpulan:** susun laporan R Markdown, render ke PDF/HTML, dan kumpulkan via Google Classroom sesuai tenggat yang ditetapkan dosen."
+  teori:
+    - "### Kaitan dengan Materi Sebelumnya"
+    - >
+      Modul 7 memperkenalkan grafik bawaan R: \texttt{hist}, \texttt{boxplot}, \texttt{plot}. Setiap
+      jenis grafik punya fungsi dan argumennya sendiri, sehingga menambah unsur baru - misalnya warna
+      menurut kelompok atau memisahkan panel - sering menuntut kode tambahan yang cukup panjang.
+      \texttt{ggplot2} menawarkan pendekatan berbeda: satu kerangka untuk semua jenis grafik.
+    - >
+      Modul ini juga memakai \texttt{dplyr} dari Modul 5. Dalam praktik, penyiapan data dan
+      pembuatan grafik hampir selalu berjalan beriringan: data disaring dan diringkas lebih dahulu,
+      barulah hasilnya digambarkan. Keterampilan Modul 5 dan modul ini karena itu saling melengkapi.
+    - "### Grammar of Graphics"
+    - >
+      Gagasan \emph{grammar of graphics} memandang grafik sebagai susunan komponen baku. Sama seperti
+      kalimat yang tersusun dari subjek, predikat, dan objek, grafik tersusun dari data, pemetaan,
+      bentuk geometris, dan seterusnya. Tidak semua komponen wajib ditulis - sebagian memiliki nilai
+      bawaan yang masuk akal.
+    - "\\begin{kotakinfo}[Komponen penyusun grafik]\n\\begin{tabular}{@{}lll@{}}\n\\textbf{Komponen} & \\textbf{Perintah} & \\textbf{Peran}\\\\\nData & \\texttt{ggplot(data)} & sumber angka\\\\\nAesthetic & \\texttt{aes()} & peubah ke unsur visual\\\\\nGeometry & \\texttt{geom\\_*()} & bentuk yang digambar\\\\\nStatistic & \\texttt{stat\\_*()} & ringkasan otomatis\\\\\nPosition & \\texttt{position =} & penataan objek bertumpuk\\\\\nFacet & \\texttt{facet\\_*()} & pemisahan panel\\\\\nScale & \\texttt{scale\\_*()} & sumbu, warna, ukuran\\\\\nCoordinate & \\texttt{coord\\_*()} & sistem koordinat\\\\\nTheme & \\texttt{theme\\_*()} & tampilan non-data\\\\\n\\end{tabular}\n\\end{kotakinfo}"
+    - >
+      \textbf{Struktur dasar.} Sebuah grafik dimulai dari \texttt{ggplot()} yang menerima data dan
+      pemetaan, lalu lapisan-lapisan ditambahkan dengan operator penjumlahan. Setiap lapisan
+      menggambar sesuatu di atas lapisan sebelumnya, sehingga urutan penulisan menentukan urutan
+      penggambaran.
+    - "\\begin{kotakrumus}\n\\textbf{Kerangka dasar:}\\\\[3pt]\n\\texttt{ggplot(data, aes(x = peubah1, y = peubah2)) +}\\\\\n\\quad \\texttt{geom\\_point() +}\\\\\n\\quad \\texttt{facet\\_wrap(\\textasciitilde{} kelompok) +}\\\\\n\\quad \\texttt{labs(title = \"Judul\", x = \"Sumbu X\", y = \"Sumbu Y\") +}\\\\\n\\quad \\texttt{theme\\_minimal()}\n\\end{kotakrumus}"
+    - "\\begin{kotaksalah}[Letak tanda tambah]\nOperator penjumlahan harus berada di \\textbf{akhir baris}, bukan di awal baris berikutnya. Menulis tanda tambah di awal baris membuat R menganggap perintah sudah selesai pada baris sebelumnya, sehingga muncul galat atau grafik tampil tanpa lapisan tambahan. Ini kesalahan paling sering terjadi saat menyalin kode.\n\\end{kotaksalah}"
+    - "### Aesthetic Mapping"
+    - >
+      \emph{Aesthetic mapping} menghubungkan peubah dalam data dengan unsur visual: posisi
+      (\texttt{x}, \texttt{y}), warna garis atau titik (\texttt{colour}), warna isian
+      (\texttt{fill}), ukuran (\texttt{size}), bentuk (\texttt{shape}), dan tingkat kepekatan
+      (\texttt{alpha}).
+    - >
+      \textbf{Perbedaan yang menentukan.} Menuliskan unsur visual \emph{di dalam} \texttt{aes()}
+      berarti memetakannya dari peubah - nilainya berbeda-beda mengikuti data, dan legenda dibuat
+      otomatis. Menuliskannya \emph{di luar} \texttt{aes()} berarti menetapkan satu nilai tetap untuk
+      seluruh amatan, tanpa legenda.
+    - "\\begin{kotaksalah}[Warna di dalam atau di luar aes]\nMenulis \\texttt{aes(colour = \"biru\")} tidak membuat titik berwarna biru. R menganggap teks \\texttt{\"biru\"} sebagai peubah baru berisi satu kategori, sehingga muncul legenda aneh bertuliskan \\emph{biru} dengan warna bawaan merah muda. Untuk menetapkan warna tetap, tulislah di luar \\texttt{aes}, yaitu \\texttt{geom\\_point(colour = \"blue\")}.\n\\end{kotaksalah}"
+    - "### Objek Geometris dan Transformasi Statistik"
+    - >
+      Tiap \texttt{geom} menggambar bentuk tertentu dan cocok untuk jenis data tertentu:
+      \texttt{geom\_point} untuk dua peubah numerik, \texttt{geom\_line} untuk kecenderungan berurutan,
+      \texttt{geom\_histogram} dan \texttt{geom\_density} untuk sebaran satu peubah numerik,
+      \texttt{geom\_boxplot} dan \texttt{geom\_violin} untuk membandingkan sebaran antar-kelompok,
+      serta \texttt{geom\_bar} dan \texttt{geom\_col} untuk peubah kategori.
+    - >
+      \textbf{Transformasi statistik yang tersembunyi.} Beberapa \texttt{geom} menghitung sesuatu
+      sebelum menggambar. \texttt{geom\_histogram} mencacah amatan ke dalam selang, dan
+      \texttt{geom\_bar} mencacah banyaknya baris tiap kategori. Karena itu keduanya hanya memerlukan
+      \texttt{x}. Bila nilai yang akan digambar sudah tersedia di data, gunakan \texttt{geom\_col}
+      yang memerlukan \texttt{x} dan \texttt{y}.
+    - "\\begin{kotaksalah}[geom\\_bar atau geom\\_col]\n\\texttt{geom\\_bar} mencacah sendiri sehingga memberinya \\texttt{y} menimbulkan galat. Bila data Anda sudah berisi angka yang siap digambar - misalnya hasil \\texttt{summarise} - gunakan \\texttt{geom\\_col}. Alternatifnya, \\texttt{geom\\_bar(stat = \"identity\")} berperilaku sama dengan \\texttt{geom\\_col}.\n\\end{kotaksalah}"
+    - "### Position Adjustments"
+    - >
+      Ketika beberapa objek menempati posisi yang sama, penyesuaian posisi menentukan penataannya.
+      \texttt{stack} menumpuk (bawaan untuk batang), \texttt{dodge} menjajarkan berdampingan,
+      \texttt{fill} menumpuk hingga tinggi seragam sehingga menampilkan proporsi, dan \texttt{jitter}
+      menggeser titik sedikit secara acak agar tidak saling menutupi.
+    - "\\begin{kotaktips}\nPilih penyesuaian posisi sesuai pertanyaan yang ingin dijawab. Gunakan \\texttt{stack} bila yang penting adalah totalnya, \\texttt{dodge} bila ingin membandingkan besaran antar-kategori, dan \\texttt{fill} bila yang dibandingkan adalah komposisi atau proporsinya.\n\\end{kotaktips}"
+    - "### Faceting"
+    - >
+      \emph{Faceting} memecah satu grafik menjadi beberapa panel kecil menurut peubah kategori,
+      dengan skala yang sama sehingga panel dapat dibandingkan secara adil.
+      \texttt{facet\_wrap(\textasciitilde{} a)} memecah menurut satu peubah dan menyusunnya berbaris,
+      sedangkan \texttt{facet\_grid(a \textasciitilde{} b)} membentuk kisi menurut dua peubah.
+    - "### Skala, Tema, dan Praktik Baik Publikasi"
+    - >
+      Fungsi \texttt{scale\_*} mengatur bagaimana nilai data diterjemahkan menjadi tampilan: rentang
+      sumbu, format angka, dan warna. Fungsi \texttt{labs} mengisi judul dan nama sumbu, sedangkan
+      \texttt{theme\_*} mengatur seluruh unsur non-data. Grafik yang layak publikasi selalu memiliki
+      judul yang bermakna, nama sumbu beserta satuannya, dan keterangan sumber data.
+    - "\\begin{kotakvariasi}\nEkosistem \\texttt{ggplot2} sangat luas: \\texttt{patchwork} menggabungkan beberapa grafik dalam satu gambar, \\texttt{scales} mengatur format angka seperti pemisah ribuan, \\texttt{ggrepel} merapikan label yang bertumpuk, dan \\texttt{plotly} mengubah grafik menjadi interaktif. Semuanya memakai kerangka yang sama sehingga dipelajari setelah dasar-dasar di modul ini dikuasai. Grafik \\texttt{ggplot2} juga dapat langsung dipakai di dalam aplikasi Shiny (Modul 8).\n\\end{kotakvariasi}"
+  contoh:
+    - contoh: "Struktur dasar dan lapisan"
+      kode_r: "suppressPackageStartupMessages(library(ggplot2))\nrt <- read.csv(\"data/data_rumahtangga.csv\")\n\np <- ggplot(rt, aes(x = pendapatan, y = pengeluaran)) +\n  geom_point()\np\n# grafik adalah OBJEK yang dapat diperiksa\nclass(p)\nlength(p$layers)"
+      judul_r: "ggplot + aes + geom"
+      eval: true
+      penjelasan: >
+        Fungsi ggplot menerima dua hal: data dan pemetaan estetika yang ditulis di dalam aes. Pemanggilan
+        ini sendiri belum menggambar apa pun; ia hanya menyiapkan kanvas beserta sumbunya. Lapisan
+        geom_point yang ditambahkan dengan tanda tambah itulah yang menggambar titik. Hasilnya disimpan ke
+        peubah p, lalu dicetak. Dua baris terakhir memeriksa objeknya: class menunjukkan jenisnya, dan
+        p dolar layers menghitung banyaknya lapisan.
+      interpretasi: >
+        Tiga unsur wajib tampak jelas: data, pemetaan di dalam aes, dan satu lapisan geometris. Yang
+        khas dari ggplot2 adalah grafik berupa objek yang dapat disimpan ke dalam peubah, diperiksa,
+        bahkan ditambah lapisan belakangan. Pemeriksaan kelas dan banyaknya lapisan berguna untuk
+        memastikan kode Anda benar, dan dipakai pada latihan membetulkan kode di modul ini.
+    - contoh: "Menambah lapisan pada objek yang sudah ada"
+      kode_r: "p + geom_smooth(method = \"lm\", se = FALSE, colour = \"#F58220\")"
+      judul_r: "menumpuk lapisan"
+      eval: true
+      penjelasan: >
+        Objek p yang sudah ada ditambah satu lapisan lagi tanpa menulis ulang seluruh perintah. Fungsi
+        geom_smooth menggambar garis kecenderungan; argumen method bernilai lm memilih regresi linear,
+        dan se bernilai FALSE menghilangkan pita selang kepercayaan. Warna ditulis di luar aes karena
+        yang diinginkan satu warna tetap, bukan pemetaan dari peubah.
+      interpretasi: >
+        Objek p yang sudah dibuat sebelumnya ditambah satu lapisan garis kecenderungan tanpa perlu
+        menulis ulang seluruh perintah. Inilah keunggulan pendekatan berlapis: grafik dibangun
+        bertahap. Argumen se bernilai FALSE menghilangkan pita selang kepercayaan, dan warna ditulis
+        di luar aes karena kita menetapkan satu warna tetap, bukan memetakannya dari peubah.
+    - contoh: "Memetakan peubah ke warna dan bentuk"
+      kode_r: "ggplot(rt, aes(x = pendapatan, y = pengeluaran,\n               colour = wilayah, shape = wilayah)) +\n  geom_point(size = 2.5) +\n  labs(title = \"Pengeluaran menurut Pendapatan\",\n       x = \"Pendapatan (ribu Rp)\", y = \"Pengeluaran (ribu Rp)\",\n       colour = \"Wilayah\", shape = \"Wilayah\") +\n  theme_minimal()"
+      judul_r: "aes colour dan shape"
+      eval: true
+      penjelasan: >
+        Peubah wilayah dipetakan sekaligus ke dua estetika, yaitu colour dan shape, sehingga kedua
+        kelompok dibedakan oleh warna dan bentuk titik. Karena pemetaan dilakukan di dalam aes, legenda
+        dibuat otomatis. Argumen size ditulis di luar aes karena nilainya tetap. Fungsi labs mengisi
+        judul, nama kedua sumbu, dan nama legenda; nama legenda ditulis untuk colour dan shape agar
+        keduanya menyatu menjadi satu legenda.
+      interpretasi: >
+        Peubah wilayah dipetakan sekaligus ke warna dan bentuk titik, sehingga kedua kelompok dapat
+        dibedakan bahkan bila grafik dicetak hitam putih. Legenda dibuat otomatis karena pemetaan
+        dilakukan di dalam aes. Perhatikan bahwa ukuran titik ditulis di luar aes karena nilainya tetap
+        untuk semua amatan. Fungsi labs mengisi judul serta nama legenda agar grafik dapat berdiri
+        sendiri.
+    - contoh: "Memetakan dibandingkan menetapkan"
+      kode_r: "library(patchwork)\nsalah <- ggplot(rt, aes(pendapatan, pengeluaran, colour = \"blue\")) +\n  geom_point() + labs(title = \"aes(colour = 'blue') - KELIRU\") +\n  theme_minimal(base_size = 9)\nbenar <- ggplot(rt, aes(pendapatan, pengeluaran)) +\n  geom_point(colour = \"blue\") + labs(title = \"geom_point(colour) - BENAR\") +\n  theme_minimal(base_size = 9)\nsalah + benar"
+      judul_r: "jebakan warna di dalam aes"
+      eval: true
+      penjelasan: >
+        Paket patchwork dimuat agar dua grafik dapat digabung dengan tanda tambah. Grafik pertama sengaja
+        menuliskan colour di dalam aes dengan nilai berupa teks, sehingga ggplot2 memperlakukannya sebagai
+        peubah baru berisi satu kategori. Grafik kedua menuliskan colour di dalam geom_point, di luar aes,
+        sehingga menjadi penetapan nilai tetap. Argumen base_size pada tema memperkecil huruf agar kedua
+        panel muat berdampingan.
+      interpretasi: >
+        Perbandingan berdampingan memperlihatkan jebakan yang dibahas di teori. Pada panel kiri, teks
+        biru dianggap sebagai peubah baru berisi satu kategori sehingga muncul legenda bertuliskan blue
+        dengan warna bawaan merah muda - sama sekali bukan biru. Pada panel kanan, warna ditetapkan di
+        luar aes sehingga titik benar-benar biru dan tanpa legenda. Aturannya sederhana: di dalam aes
+        untuk peubah, di luar aes untuk nilai tetap.
+    - contoh: "Histogram dan kurva kepekatan"
+      kode_r: "ggplot(rt, aes(x = pengeluaran)) +\n  geom_histogram(aes(y = after_stat(density)), bins = 12,\n                 fill = \"#0B6FB4\", colour = \"white\") +\n  geom_density(colour = \"#123A6B\", linewidth = 1) +\n  labs(title = \"Sebaran Pengeluaran Rumah Tangga\",\n       x = \"Pengeluaran (ribu Rp)\", y = \"Kepekatan\",\n       caption = \"Sumber: data simulasi\") +\n  theme_minimal()"
+      judul_r: "geom_histogram + geom_density"
+      eval: true
+      penjelasan: >
+        Hanya x yang dipetakan karena histogram menghitung sendiri frekuensinya. Di dalam geom_histogram
+        terdapat aes tambahan yang memetakan sumbu tegak ke hasil perhitungan internal lewat after_stat,
+        yaitu kepekatan, agar skalanya sepadan dengan kurva yang ditumpangkan. Argumen bins mengatur
+        banyaknya selang. Lapisan geom_density menambahkan kurva kepekatan. Fungsi labs menyertakan
+        caption sebagai keterangan sumber.
+      interpretasi: >
+        Bandingkan dengan histogram base R pada Modul 7: hasilnya serupa, tetapi di sini kedua lapisan
+        cukup dijumlahkan. Fungsi after\_stat mengambil hasil perhitungan internal, yaitu kepekatan,
+        agar skalanya sepadan dengan kurva kepekatan. Argumen bins mengatur banyaknya selang - ingat
+        kembali peringatan Modul 7 bahwa bentuk histogram bergantung pada pilihan ini. Bagian caption
+        mencantumkan sumber data, kebiasaan yang penting dalam publikasi.
+    - contoh: "Diagram kotak-garis dan biola"
+      kode_r: "ggplot(rt, aes(x = wilayah, y = pengeluaran, fill = wilayah)) +\n  geom_violin(alpha = 0.4, colour = NA) +\n  geom_boxplot(width = 0.18, fill = \"white\") +\n  scale_fill_manual(values = c(\"Perkotaan\" = \"#0B6FB4\",\n                               \"Perdesaan\" = \"#F58220\")) +\n  labs(title = \"Pengeluaran menurut Wilayah\",\n       x = NULL, y = \"Pengeluaran (ribu Rp)\") +\n  theme_minimal() + theme(legend.position = \"none\")"
+      judul_r: "geom_violin + geom_boxplot"
+      eval: true
+      penjelasan: >
+        Dua lapisan ditumpuk, dan urutannya menentukan mana yang tergambar lebih dahulu. Diagram biola
+        digambar lebih dahulu dengan alpha yang membuatnya tembus pandang dan colour bernilai NA agar
+        tanpa garis tepi. Diagram kotak-garis digambar di atasnya dengan lebar dikecilkan lewat argumen
+        width. Fungsi scale_fill_manual menetapkan warna tiap kategori secara eksplisit lewat vektor
+        bernama, dan legenda dimatikan lewat theme karena informasinya sudah ada di sumbu mendatar.
+      interpretasi: >
+        Dua lapisan digabungkan: diagram biola menampilkan bentuk sebaran secara utuh, sedangkan
+        diagram kotak-garis di atasnya meringkas lima serangkai. Urutan penulisan penting - biola
+        digambar lebih dahulu agar tidak menutupi kotak. Warna diatur manual memakai palet BPS lewat
+        scale\_fill\_manual, dan legenda dimatikan karena informasinya sudah ada di sumbu mendatar.
+    - contoh: "geom_bar mencacah sendiri"
+      kode_r: "ggplot(rt, aes(x = provinsi, fill = wilayah)) +\n  geom_bar() +\n  scale_fill_manual(values = c(\"Perkotaan\" = \"#0B6FB4\",\n                               \"Perdesaan\" = \"#F58220\")) +\n  labs(title = \"Banyaknya Rumah Tangga Contoh\",\n       x = NULL, y = \"Banyaknya rumah tangga\", fill = \"Wilayah\") +\n  theme_minimal()"
+      judul_r: "geom_bar (stat count)"
+      eval: true
+      penjelasan: >
+        Perhatikan bahwa hanya x dan fill yang dipetakan, tanpa y sama sekali. Fungsi geom_bar melakukan
+        transformasi statistik berupa pencacahan sehingga tinggi batang dihitung sendiri dari banyaknya
+        baris tiap kategori. Pemetaan fill ke wilayah membagi tiap batang menurut wilayah, dengan
+        penataan bertumpuk sebagai bawaan.
+      interpretasi: >
+        Perhatikan bahwa hanya x yang dipetakan, tanpa y. geom\_bar menghitung sendiri banyaknya baris
+        tiap kategori - inilah transformasi statistik yang berjalan diam-diam. Pemetaan fill ke wilayah
+        membuat tiap batang terbagi menurut wilayah dengan penataan bertumpuk sebagai bawaan.
+    - contoh: "geom_col untuk nilai yang sudah dihitung"
+      kode_r: "suppressPackageStartupMessages(library(dplyr))\nringkas <- rt |>\n  group_by(provinsi) |>\n  summarise(rata_pengeluaran = mean(pengeluaran), .groups = \"drop\")\nringkas\nggplot(ringkas, aes(x = reorder(provinsi, -rata_pengeluaran),\n                    y = rata_pengeluaran)) +\n  geom_col(fill = \"#0B6FB4\") +\n  geom_text(aes(label = round(rata_pengeluaran, 0)), vjust = -0.4, size = 3.5) +\n  labs(title = \"Rata-rata Pengeluaran per Provinsi\",\n       x = NULL, y = \"Rata-rata (ribu Rp)\") +\n  theme_minimal()"
+      judul_r: "dplyr + geom_col + geom_text"
+      eval: true
+      penjelasan: >
+        Data diringkas lebih dahulu dengan dplyr sehingga nilainya siap digambar; karena itu dipakai
+        geom_col, bukan geom_bar. Di dalam aes, fungsi reorder mengurutkan kategori menurut nilainya, dan
+        tanda minus membuat urutannya menurun. Lapisan geom_text memetakan label dari nilai yang sudah
+        dibulatkan; argumen vjust bernilai negatif menggeser label sedikit ke atas batang.
+      interpretasi: >
+        Inilah alur kerja yang paling lazim: ringkas data dengan dplyr, lalu gambarkan hasilnya dengan
+        geom\_col karena nilainya sudah tersedia. Fungsi reorder mengurutkan batang menurut besarnya
+        sehingga grafik lebih mudah dibaca - tanda minus membuatnya menurun. Lapisan geom\_text
+        menambahkan label angka di atas tiap batang, kebiasaan yang lazim pada publikasi statistik.
+    - contoh: "Position adjustments: stack, dodge, dan fill"
+      kode_r: "library(patchwork)\ndasar <- ggplot(rt, aes(x = provinsi, fill = wilayah)) +\n  scale_fill_manual(values = c(\"Perkotaan\" = \"#0B6FB4\",\n                               \"Perdesaan\" = \"#F58220\")) +\n  theme_minimal(base_size = 8) + theme(legend.position = \"bottom\") +\n  labs(x = NULL, y = NULL, fill = NULL)\n(dasar + geom_bar(position = \"stack\") + ggtitle(\"stack\")) +\n(dasar + geom_bar(position = \"dodge\") + ggtitle(\"dodge\")) +\n(dasar + geom_bar(position = \"fill\")  + ggtitle(\"fill\"))"
+      judul_r: "tiga penyesuaian posisi berdampingan"
+      eval: true
+      penjelasan: >
+        Sebuah objek dasar dibuat lebih dahulu berisi seluruh unsur yang sama, agar ketiga panel benar-benar
+        hanya berbeda pada penyesuaian posisinya. Objek itu kemudian ditambah geom_bar dengan argumen
+        position yang berbeda dan judul masing-masing, lalu ketiganya digabung berdampingan dengan tanda
+        tambah dari patchwork. Tiap bagian dibungkus tanda kurung agar penambahan lapisan tidak tertukar
+        dengan penggabungan panel.
+      interpretasi: >
+        Ketiga panel memakai data yang sama persis, hanya penyesuaian posisinya berbeda, dan pesan yang
+        tersampaikan pun berbeda. Panel stack menekankan total tiap provinsi; panel dodge memudahkan
+        perbandingan banyaknya rumah tangga antar-wilayah; panel fill menyeragamkan tinggi batang
+        sehingga yang terbaca adalah proporsi, bukan jumlah. Memilih penyesuaian posisi adalah keputusan
+        penyajian, bukan sekadar selera tampilan.
+    - contoh: "Position jitter untuk titik bertumpuk"
+      kode_r: "library(patchwork)\na <- ggplot(rt, aes(x = wilayah, y = art)) + geom_point(colour = \"#0B6FB4\") +\n  labs(title = \"Tanpa jitter\", x = NULL, y = \"Anggota RT\") + theme_minimal(base_size = 9)\nb <- ggplot(rt, aes(x = wilayah, y = art)) +\n  geom_jitter(width = 0.15, height = 0.15, colour = \"#0B6FB4\", alpha = 0.7) +\n  labs(title = \"Dengan jitter\", x = NULL, y = \"Anggota RT\") + theme_minimal(base_size = 9)\na + b"
+      judul_r: "geom_point dibandingkan geom_jitter"
+      eval: true
+      penjelasan: >
+        Dua grafik dibuat dari data yang sama. Grafik pertama memakai geom_point biasa sehingga amatan
+        bernilai sama saling menutupi. Grafik kedua memakai geom_jitter yang menggeser tiap titik sedikit
+        secara acak; besar pergeseran diatur lewat argumen width dan height, dan alpha membuat titik
+        tembus pandang agar tumpukan makin terlihat. Keduanya digabung berdampingan dengan patchwork.
+      interpretasi: >
+        Banyaknya anggota rumah tangga bernilai bilangan bulat sehingga banyak amatan menempati titik
+        yang sama persis dan saling menutupi - pada panel kiri kita tidak dapat mengetahui berapa
+        amatan yang bertumpuk. Jitter menggeser tiap titik sedikit secara acak sehingga kepadatannya
+        terlihat. Perhatikan bahwa jitter sengaja mengubah posisi tampilan, jadi gunakan hanya untuk
+        peubah diskret dan sebutkan dalam keterangan gambar bila diperlukan.
+    - contoh: "Faceting dengan facet_wrap"
+      kode_r: "ggplot(rt, aes(x = pendapatan, y = pengeluaran, colour = wilayah)) +\n  geom_point(alpha = 0.8) +\n  facet_wrap(~ provinsi) +\n  scale_colour_manual(values = c(\"Perkotaan\" = \"#0B6FB4\",\n                                 \"Perdesaan\" = \"#F58220\")) +\n  labs(title = \"Pengeluaran dan Pendapatan menurut Provinsi\",\n       x = \"Pendapatan (ribu Rp)\", y = \"Pengeluaran (ribu Rp)\",\n       colour = \"Wilayah\") +\n  theme_minimal() + theme(legend.position = \"bottom\")"
+      judul_r: "facet_wrap satu peubah"
+      eval: true
+      penjelasan: >
+        Grafik pencar dibuat seperti biasa dengan pemetaan warna dari wilayah. Satu baris facet_wrap
+        ditambahkan dengan argumen berupa rumus yang diawali tanda tilde, sehingga grafik terbagi menjadi
+        satu panel untuk tiap provinsi dengan skala sumbu yang seragam. Legenda dipindahkan ke bawah lewat
+        theme agar tidak memakan lebar panel.
+      interpretasi: >
+        facet_wrap memecah grafik menjadi satu panel untuk tiap provinsi. Karena seluruh panel memakai
+        skala sumbu yang sama, perbandingan antar-panel menjadi adil - inilah alasan pemisahan panel
+        lebih baik daripada membuat tiga grafik terpisah secara manual. Perhatikan bahwa cukup satu
+        baris ditambahkan untuk mengubah satu grafik menjadi tiga panel.
+    - contoh: "Faceting dua peubah dengan facet_grid"
+      kode_r: "ggplot(rt, aes(x = pengeluaran)) +\n  geom_histogram(bins = 8, fill = \"#0B6FB4\", colour = \"white\") +\n  facet_grid(wilayah ~ provinsi) +\n  labs(title = \"Sebaran Pengeluaran menurut Wilayah dan Provinsi\",\n       x = \"Pengeluaran (ribu Rp)\", y = \"Frekuensi\") +\n  theme_minimal(base_size = 9)"
+      judul_r: "facet_grid dua peubah"
+      eval: true
+      penjelasan: >
+        Berbeda dari facet_wrap, fungsi facet_grid menerima rumus dengan peubah di kedua sisi tilde.
+        Peubah di sebelah kiri menentukan baris panel dan yang di kanan menentukan kolom, sehingga
+        terbentuk kisi. Argumen base_size pada tema diperkecil karena panelnya banyak dan masing-masing
+        menjadi sempit.
+      interpretasi: >
+        facet_grid membentuk kisi panel: baris menurut wilayah dan kolom menurut provinsi, sesuai
+        rumus yang ditulis. Susunan ini memudahkan pembacaan dua arah sekaligus - menyusuri baris untuk
+        membandingkan provinsi, dan menyusuri kolom untuk membandingkan wilayah. Perhatikan bahwa
+        sebagian panel memuat sedikit amatan; pada data nyata, panel dengan amatan sangat sedikit perlu
+        disikapi hati-hati.
+    - contoh: "Mengatur skala dan format angka"
+      kode_r: "ggplot(rt, aes(x = lama_sekolah, y = pengeluaran)) +\n  geom_point(colour = \"#0B6FB4\", alpha = 0.8) +\n  scale_x_continuous(breaks = seq(0, 16, by = 4), limits = c(0, 16)) +\n  scale_y_continuous(labels = function(x) format(x, big.mark = \".\")) +\n  labs(title = \"Pengeluaran menurut Lama Sekolah\",\n       x = \"Lama sekolah (tahun)\", y = \"Pengeluaran (ribu Rp)\") +\n  theme_minimal()"
+      judul_r: "scale_x_continuous dan format sumbu"
+      eval: true
+      penjelasan: >
+        Dua fungsi scale dipakai untuk mengendalikan sumbu. Pada sumbu mendatar, argumen breaks
+        menentukan letak penanda memakai seq dengan langkah empat, dan limits menetapkan rentangnya. Pada
+        sumbu tegak, argumen labels menerima sebuah fungsi yang mengubah tampilan angka; di sini format
+        dengan big.mark menyisipkan pemisah ribuan.
+      interpretasi: >
+        Fungsi scale mengendalikan penerjemahan nilai data menjadi tampilan. Di sini letak penanda
+        sumbu mendatar diatur setiap empat tahun dan rentangnya ditetapkan, sedangkan sumbu tegak
+        diberi pemisah ribuan agar angka besar mudah dibaca. Penyesuaian kecil seperti ini sangat
+        memengaruhi keterbacaan grafik dalam publikasi.
+    - contoh: "Anotasi: garis penanda dan teks"
+      kode_r: "rata <- mean(rt$pengeluaran)\nggplot(rt, aes(x = pendapatan, y = pengeluaran)) +\n  geom_point(colour = \"#0B6FB4\", alpha = 0.8) +\n  geom_hline(yintercept = rata, colour = \"#F58220\",\n             linetype = \"dashed\", linewidth = 1) +\n  annotate(\"text\", x = max(rt$pendapatan) * 0.75, y = rata + 250,\n           label = paste(\"Rata-rata =\", round(rata)), colour = \"#F58220\", size = 3.5) +\n  labs(title = \"Pengeluaran dengan Garis Rata-rata\",\n       x = \"Pendapatan (ribu Rp)\", y = \"Pengeluaran (ribu Rp)\") +\n  theme_minimal()"
+      judul_r: "geom_hline dan annotate"
+      eval: true
+      penjelasan: >
+        Nilai rata-rata dihitung lebih dahulu ke dalam peubah. Fungsi geom_hline menggambar garis mendatar
+        pada posisi yang ditentukan argumen yintercept, dengan jenis garis putus-putus lewat linetype.
+        Fungsi annotate menggambar satu unsur tunggal yang tidak berasal dari data, sehingga tidak
+        memerlukan aes dan tidak tergambar berulang; posisinya ditentukan lewat x dan y, dan isinya lewat
+        label.
+      interpretasi: >
+        Anotasi membantu pembaca menangkap pesan utama tanpa harus menafsirkan sendiri. Garis mendatar
+        menandai rata-rata, dan teks menjelaskan maknanya. Perhatikan perbedaan annotate dengan geom:
+        annotate menggambar satu unsur tunggal yang tidak berasal dari data, sehingga tidak perlu
+        pemetaan aes dan tidak akan tergambar berulang kali.
+    - contoh: "Tema dan penyesuaian tampilan"
+      kode_r: "library(patchwork)\ndasar <- ggplot(rt, aes(wilayah, pengeluaran, fill = wilayah)) +\n  geom_boxplot() +\n  scale_fill_manual(values = c(\"Perkotaan\" = \"#0B6FB4\", \"Perdesaan\" = \"#F58220\")) +\n  labs(x = NULL, y = NULL)\n(dasar + theme_gray(base_size = 8) + ggtitle(\"theme_gray (bawaan)\") +\n   theme(legend.position = \"none\")) +\n(dasar + theme_minimal(base_size = 8) + ggtitle(\"theme_minimal\") +\n   theme(legend.position = \"none\")) +\n(dasar + theme_classic(base_size = 8) + ggtitle(\"theme_classic\") +\n   theme(legend.position = \"none\"))"
+      judul_r: "tiga tema berdampingan"
+      eval: true
+      penjelasan: >
+        Sebuah objek dasar berisi diagram kotak-garis dibuat lebih dahulu tanpa tema. Objek itu kemudian
+        ditambah tiga tema berbeda beserta judul masing-masing, lalu digabung berdampingan. Pada tiap
+        panel, legenda dimatikan lewat theme yang dipanggil setelah tema baku, karena penyesuaian yang
+        ditulis belakangan akan menimpa yang sebelumnya.
+      interpretasi: >
+        Tema mengatur seluruh unsur non-data: latar, garis kisi, dan huruf. Tema bawaan berlatar abu-abu
+        cocok untuk eksplorasi, sedangkan tema minimal dan klasik lebih sesuai untuk publikasi cetak
+        karena latarnya bersih dan hemat tinta. Fungsi theme juga dapat dipakai untuk penyesuaian
+        satuan, misalnya memindahkan atau menghilangkan legenda seperti pada contoh ini.
+    - contoh: "Grafik siap publikasi"
+      kode_r: "suppressPackageStartupMessages(library(dplyr))\nringkas <- rt |>\n  group_by(provinsi, wilayah) |>\n  summarise(rata = mean(pengeluaran), .groups = \"drop\")\n\ng <- ggplot(ringkas, aes(x = provinsi, y = rata, fill = wilayah)) +\n  geom_col(position = \"dodge\", width = 0.7) +\n  geom_text(aes(label = round(rata)), position = position_dodge(width = 0.7),\n            vjust = -0.4, size = 3) +\n  scale_fill_manual(values = c(\"Perkotaan\" = \"#0B6FB4\",\n                               \"Perdesaan\" = \"#F58220\")) +\n  scale_y_continuous(expand = expansion(mult = c(0, 0.12))) +\n  labs(title = \"Rata-rata Pengeluaran Rumah Tangga\",\n       subtitle = \"Menurut provinsi dan wilayah\",\n       x = NULL, y = \"Rata-rata pengeluaran (ribu Rp)\",\n       fill = \"Wilayah\",\n       caption = \"Sumber: data simulasi, bukan data resmi\") +\n  theme_minimal(base_size = 11) +\n  theme(legend.position = \"bottom\",\n        plot.title = element_text(face = \"bold\"),\n        panel.grid.major.x = element_blank())\ng"
+      judul_r: "grafik lengkap untuk publikasi"
+      eval: true
+      penjelasan: >
+        Data diringkas lebih dahulu menurut dua peubah. Lapisan geom_col dengan position dodge
+        menjajarkan batang, dan geom_text memakai position_dodge dengan lebar yang sama agar label
+        sejajar dengan batangnya. Fungsi scale_y_continuous dengan expansion menambah ruang di atas batang
+        agar label tidak terpotong. Fungsi labs mengisi judul, anak judul, sumbu, legenda, dan keterangan
+        sumber. Fungsi theme di baris terakhir memindahkan legenda, menebalkan judul, dan menghapus garis
+        kisi tegak.
+      interpretasi: >
+        Grafik ini merangkai hampir seluruh komponen modul: peringkasan dengan dplyr, geom\_col dengan
+        penataan berdampingan, label angka yang ikut digeser agar sejajar batangnya, palet warna BPS,
+        pengaturan ruang sumbu agar label tidak terpotong, judul beserta anak judul, keterangan sumber,
+        dan penyesuaian tema. Perhatikan bahwa keterangan sumber secara tegas menyebut data simulasi -
+        praktik yang wajib dijaga agar pembaca tidak keliru menganggapnya angka resmi.
+    - contoh: "Menyimpan grafik dengan ggsave"
+      kode_r: "# menyimpan objek grafik ke berkas\nggsave(\"grafik_pengeluaran.png\", plot = g,\n       width = 18, height = 11, units = \"cm\", dpi = 300)\nfile.exists(\"grafik_pengeluaran.png\")\nround(file.size(\"grafik_pengeluaran.png\") / 1024, 1)   # ukuran berkas (KB)\nfile.remove(\"grafik_pengeluaran.png\")                  # bersihkan kembali"
+      judul_r: "ggsave"
+      eval: true
+      penjelasan: >
+        Fungsi ggsave menerima nama berkas dan objek grafik yang akan disimpan. Ukuran ditentukan lewat
+        width dan height dengan satuan yang disebut pada argumen units, sedangkan dpi menentukan
+        resolusinya. Format berkas ditentukan otomatis dari akhiran namanya. Tiga baris terakhir
+        memeriksa keberadaan berkas, menghitung ukurannya dalam kilobita, lalu menghapusnya kembali agar
+        direktori tetap bersih.
+      interpretasi: >
+        ggsave menyimpan objek grafik ke berkas dengan ukuran dan resolusi yang ditentukan. Menyebutkan
+        satuan dalam sentimeter memudahkan penyesuaian dengan lebar kolom naskah, sedangkan resolusi 300
+        titik per inci adalah standar umum untuk cetak. Format ditentukan otomatis dari akhiran nama
+        berkas, sehingga mengganti png menjadi pdf akan menghasilkan berkas vektor yang tetap tajam saat
+        diperbesar.
+  latihan:
+    - "Kerjakan bertahap. **Dasar** melengkapi kode; **Menengah** menulis sendiri dan membetulkan kode; **Lanjut** membuat grafik publikasi. Gunakan `data/data_rumahtangga.csv`."
+    - "#### Tingkat Dasar (melengkapi kode)"
+    - "\\latihan{Struktur dasar}"
+    - "```{r eval=FALSE}\nlibrary(ggplot2)\nrt <- read.csv(\"data/data_rumahtangga.csv\")\nggplot(rt, ____(x = pendapatan, y = pengeluaran)) +   # fungsi pemetaan\n  ____()                                              # geom untuk diagram pencar\n```"
+    - "\\latihan{Histogram dan warna}"
+    - "```{r eval=FALSE}\nggplot(rt, aes(x = umur_krt)) +\n  geom_histogram(bins = ____, fill = \"#0B6FB4\", colour = \"white\")   # 10 selang\n```"
+    - "\\latihan{Faceting}"
+    - "```{r eval=FALSE}\nggplot(rt, aes(x = pengeluaran)) +\n  geom_histogram(bins = 8) +\n  ____(~ wilayah)          # pisahkan panel menurut wilayah\n```"
+    - "#### Tingkat Menengah (menulis sendiri)"
+    - "\\latihan{Diagram kotak-garis berwarna}"
+    - "Buat diagram kotak-garis `pendapatan` menurut `provinsi`, dengan warna isian dipetakan dari `provinsi`. Gunakan `scale_fill_manual` dengan tiga warna pilihan Anda, beri judul dan nama sumbu yang lengkap, serta gunakan `theme_minimal()`. Matikan legenda dan jelaskan mengapa legenda tidak diperlukan di sini."
+    - "\\latihan{Ringkas lalu gambarkan}"
+    - "Dengan `dplyr`, hitung rata-rata `lama_sekolah` menurut `provinsi` dan `wilayah`. Gambarkan hasilnya sebagai diagram batang berdampingan (`position = \"dodge\"`) memakai `geom_col`, lengkap dengan label angka di atas tiap batang. Jelaskan mengapa di sini dipakai `geom_col` dan bukan `geom_bar`."
+    - "\\latihan{Membetulkan kode yang salah}"
+    - "Kode berikut memuat beberapa kesalahan (letak tanda tambah, warna di dalam `aes`, `geom_bar` diberi `y`, dan rumus faceting tanpa tilde). Temukan dan perbaiki, lalu jelaskan tiap kesalahannya."
+    - "```{r eval=FALSE}\nlibrary(ggplot2)\nrt <- read.csv(\"data/data_rumahtangga.csv\")\n\n# (a) letak tanda tambah\np <- ggplot(rt, aes(pendapatan, pengeluaran))\n  + geom_point()\n\n# (b) warna ditetapkan di tempat yang salah\nggplot(rt, aes(pendapatan, pengeluaran, colour = \"darkgreen\")) +\n  geom_point()\n\n# (c) geom_bar diberi y padahal mencacah sendiri\nggplot(rt, aes(x = provinsi, y = pengeluaran)) +\n  geom_bar()\n\n# (d) rumus faceting tanpa tilde\nggplot(rt, aes(pengeluaran)) +\n  geom_histogram(bins = 8) +\n  facet_wrap(wilayah)\n```"
+    - "**Keluaran yang benar.** Setelah diperbaiki, keempat bagian menghasilkan grafik tanpa galat. Karena keluarannya berupa gambar, verifikasilah objeknya dengan potongan berikut:\n\n```\n> p <- ggplot(rt, aes(pendapatan, pengeluaran)) + geom_point()\n> class(p)\n[1] \"gg\"     \"ggplot\"\n\n> length(p$layers)\n[1] 1\n\n> # (c) setelah diperbaiki menjadi geom_col dengan data ringkasan:\n> length(pc$layers)\n[1] 1\n```\n\nSecara visual: (a) diagram pencar tampil; (b) seluruh titik benar-benar berwarna hijau tua **tanpa legenda**; (c) batang menampilkan nilai yang diminta tanpa pesan galat; (d) histogram terbagi menjadi dua panel `Perkotaan` dan `Perdesaan`."
+    - "#### Tingkat Lanjut (kasus kecil)"
+    - "\\latihan{Grafik siap publikasi}"
+    - "Buat satu grafik yang layak dimuat dalam publikasi, memuat **seluruh** unsur berikut: (a) data hasil peringkasan `dplyr`; (b) `geom_col` dengan `position = \"dodge\"`; (c) label angka pada tiap batang; (d) palet warna BPS lewat `scale_fill_manual`; (e) `labs` lengkap dengan judul, anak judul, nama sumbu bersatuan, dan keterangan sumber yang menyebut data simulasi; (f) `theme_minimal()` dengan legenda di bawah. Simpan hasilnya sebagai berkas PNG berukuran 18 x 11 cm resolusi 300 dpi memakai `ggsave`, lalu sertakan gambarnya dalam laporan."
+  penugasan:
+    - "\\begin{kotaktugas}\nSebagai calon penyaji \\emph{official statistics}, susun satu set visualisasi dari \\texttt{data\\_rumahtangga.csv} (\\emph{data simulasi}) yang siap dimuat dalam publikasi, seluruhnya menggunakan \\texttt{ggplot2}.\n\\end{kotaktugas}"
+    - "**Konteks.** Unit publikasi memerlukan lampiran grafik untuk laporan profil rumah tangga. Data yang tersedia sama dengan yang dipakai pada Modul 7, sehingga Anda dapat membandingkan hasilnya dengan grafik base R yang dahulu Anda buat."
+    - "\\tugas{Grafik sebaran}"
+    - "1. Buat histogram `pengeluaran` yang ditumpangi kurva kepekatan, dipisahkan menjadi panel menurut `wilayah`. Tuliskan tiga hal yang Anda amati."
+    - "2. Buat diagram kotak-garis `pendapatan` menurut `provinsi` dengan warna dipetakan dari `wilayah` dan penataan berdampingan. Jelaskan pola yang terlihat."
+    - "\\tugas{Grafik hubungan}"
+    - "3. Buat diagram pencar `pengeluaran` terhadap `pendapatan`, dengan warna dipetakan dari `wilayah` dan garis kecenderungan (`geom_smooth(method = \"lm\")`) untuk tiap wilayah. Tafsirkan hasilnya, disertai **peringatan bahwa korelasi bukan sebab-akibat**."
+    - "4. Ulangi grafik nomor 3 dengan `facet_wrap` menurut `provinsi`. Bandingkan mana yang lebih informatif dan jelaskan alasannya."
+    - "\\tugas{Grafik ringkasan}"
+    - "5. Dengan `dplyr`, hitung rata-rata `pengeluaran` dan `pendapatan` menurut `provinsi` dan `wilayah`. Gambarkan sebagai diagram batang berdampingan lengkap dengan label angka."
+    - "6. Buat **satu** grafik yang sama dengan nomor 5 tetapi memakai `position = \"fill\"`. Jelaskan pertanyaan berbeda apa yang dijawab kedua versi tersebut."
+    - "\\tugas{Penyajian dan laporan}"
+    - "7. Pilih **satu** grafik terbaik Anda, sempurnakan hingga siap publikasi (judul, anak judul, satuan, keterangan sumber, tema bersih), lalu simpan dengan `ggsave` pada ukuran 18 x 11 cm resolusi 300 dpi."
+    - "8. Susun laporan R Markdown berisi seluruh grafik beserta kode dan interpretasinya. Tutup dengan **ringkasan (maksimal 300 kata)** yang membandingkan pengalaman memakai `ggplot2` dengan grafik base R pada Modul 7: apa yang menjadi lebih mudah, apa yang menjadi lebih rumit, dan kapan Anda akan memilih masing-masing."
+  ringkasan:
+    - "\\begin{kotaktujuan}\n\\textbf{Daftar periksa penguasaan:}\n\\begin{itemize}\n\\item[$\\square$] Saya dapat menjelaskan komponen \\emph{grammar of graphics}.\n\\item[$\\square$] Saya dapat menyusun grafik dari \\texttt{ggplot} + \\texttt{aes} + \\texttt{geom} dan menambah lapisan.\n\\item[$\\square$] Saya dapat membedakan pemetaan di dalam \\texttt{aes} dari penetapan nilai tetap di luarnya.\n\\item[$\\square$] Saya dapat memilih \\texttt{geom} yang sesuai, termasuk membedakan \\texttt{geom\\_bar} dan \\texttt{geom\\_col}.\n\\item[$\\square$] Saya dapat memakai \\texttt{stack}, \\texttt{dodge}, \\texttt{fill}, dan \\texttt{jitter} sesuai keperluan.\n\\item[$\\square$] Saya dapat memisahkan panel dengan \\texttt{facet\\_wrap} dan \\texttt{facet\\_grid}.\n\\item[$\\square$] Saya dapat mengatur skala, warna, label, dan tema untuk keperluan publikasi.\n\\item[$\\square$] Saya dapat menyimpan grafik dengan \\texttt{ggsave} pada ukuran dan resolusi yang tepat.\n\\end{itemize}\n\\end{kotaktujuan}"
+    - "**Kartu Referensi Cepat.** Komponen `ggplot2`:"
+    - "\\begin{kotakrumus}\n\\begin{tabular}{@{}ll@{}}\n\\textbf{Keperluan} & \\textbf{Perintah}\\\\\nKerangka & \\texttt{ggplot(data, aes(...)) + geom\\_*()}\\\\\nPencar & \\texttt{geom\\_point()}, \\texttt{geom\\_jitter()}\\\\\nGaris & \\texttt{geom\\_line()}, \\texttt{geom\\_smooth()}\\\\\nSebaran & \\texttt{geom\\_histogram()}, \\texttt{geom\\_density()}\\\\\nKelompok & \\texttt{geom\\_boxplot()}, \\texttt{geom\\_violin()}\\\\\nBatang (cacah) & \\texttt{geom\\_bar()}\\\\\nBatang (nilai) & \\texttt{geom\\_col()}\\\\\nLabel data & \\texttt{geom\\_text()}\\\\\nGaris penanda & \\texttt{geom\\_hline()}, \\texttt{geom\\_vline()}\\\\\nAnotasi & \\texttt{annotate()}\\\\\nPosisi & \\texttt{position = \"stack\"/\"dodge\"/\"fill\"}\\\\\nPanel & \\texttt{facet\\_wrap(\\textasciitilde{} a)}, \\texttt{facet\\_grid(a \\textasciitilde{} b)}\\\\\nWarna manual & \\texttt{scale\\_fill\\_manual(values =)}\\\\\nSumbu & \\texttt{scale\\_x\\_continuous(breaks =, limits =)}\\\\\nLabel & \\texttt{labs(title =, x =, y =, caption =)}\\\\\nTema & \\texttt{theme\\_minimal()}, \\texttt{theme()}\\\\\nSimpan & \\texttt{ggsave(\"berkas.png\", width =, dpi =)}\\\\\n\\end{tabular}\n\\end{kotakrumus}"
+    - "Modul ini mengganti cara berpikir tentang grafik: bukan menghafal fungsi per jenis grafik, melainkan menyusun lapisan dari komponen baku. Prinsip penting yang perlu dibawa: petakan peubah di dalam `aes` dan tetapkan nilai tetap di luarnya; pilih `geom` sesuai jenis peubah; pilih penyesuaian posisi sesuai pertanyaan yang ingin dijawab; dan lengkapi setiap grafik publikasi dengan judul, satuan, serta keterangan sumber. Modul 10 mempelajari padanannya di Python dengan `matplotlib` dan `seaborn`."
+  referensi:
+    - "Wickham, H. (2016). *ggplot2: Elegant Graphics for Data Analysis*, 2nd ed. Springer. (Rujukan utama; tersedia daring gratis di ggplot2-book.org.)"
+    - "Wickham, H., Cetinkaya-Rundel, M., & Grolemund, G. (2023). *R for Data Science*, 2nd ed. O'Reilly Media. (Bab visualisasi data.)"
+    - "Healy, K. (2018). *Data Visualization: A Practical Introduction*. Princeton University Press. (Prinsip penyajian data yang baik; tersedia daring gratis.)"
+    - "Tufte, E. R. (2001). *The Visual Display of Quantitative Information*, 2nd ed. Graphics Press. (Klasik mengenai prinsip grafik statistik.)"
+
+exercises:
+  - id: "L9.1"
+    points: 15
+    solution: "Tingkat Dasar: aes, geom_point, bins 10, facet_wrap."
+    judul_r: "Solusi Tingkat Dasar (R)"
+    solusi_r: |
+      library(ggplot2)
+      rt <- read.csv("data/data_rumahtangga.csv")
+
+      # 1) struktur dasar
+      ggplot(rt, aes(x = pendapatan, y = pengeluaran)) +
+        geom_point()
+
+      # 2) histogram dengan 10 selang
+      ggplot(rt, aes(x = umur_krt)) +
+        geom_histogram(bins = 10, fill = "#0B6FB4", colour = "white")
+
+      # 3) faceting menurut wilayah
+      ggplot(rt, aes(x = pengeluaran)) +
+        geom_histogram(bins = 8) +
+        facet_wrap(~ wilayah)
+    interpretasi: >
+      Fungsi aes memetakan peubah ke sumbu, dan geom\_point menggambar diagram pencar. Argumen bins
+      menentukan banyaknya selang histogram. Fungsi facet\_wrap memerlukan rumus yang diawali tilde
+      sehingga ditulis dengan tilde diikuti nama peubah pengelompok.
+  - id: "L9.2"
+    points: 25
+    solution: "Tingkat Menengah dan Lanjut: boxplot berwarna, ringkas lalu geom_col dodge berlabel, dan grafik siap publikasi."
+    judul_r: "Solusi Menengah dan Lanjut (R)"
+    solusi_r: |
+      suppressPackageStartupMessages({library(ggplot2); library(dplyr)})
+      rt <- read.csv("data/data_rumahtangga.csv")
+
+      # ---- Diagram kotak-garis berwarna ----
+      ggplot(rt, aes(x = provinsi, y = pendapatan, fill = provinsi)) +
+        geom_boxplot() +
+        scale_fill_manual(values = c("Provinsi A" = "#0B6FB4",
+                                     "Provinsi B" = "#F58220",
+                                     "Provinsi C" = "#00A651")) +
+        labs(title = "Pendapatan Rumah Tangga menurut Provinsi",
+             x = NULL, y = "Pendapatan (ribu Rp)",
+             caption = "Sumber: data simulasi") +
+        theme_minimal() +
+        theme(legend.position = "none")
+      # Legenda tidak diperlukan karena nama provinsi sudah tertulis di sumbu mendatar,
+      # sehingga legenda hanya mengulang informasi yang sama.
+
+      # ---- Ringkas lalu gambarkan ----
+      ringkas <- rt |>
+        group_by(provinsi, wilayah) |>
+        summarise(rata_sekolah = mean(lama_sekolah), .groups = "drop")
+
+      ggplot(ringkas, aes(x = provinsi, y = rata_sekolah, fill = wilayah)) +
+        geom_col(position = "dodge", width = 0.7) +
+        geom_text(aes(label = round(rata_sekolah, 1)),
+                  position = position_dodge(width = 0.7), vjust = -0.4, size = 3) +
+        scale_fill_manual(values = c("Perkotaan" = "#0B6FB4",
+                                     "Perdesaan" = "#F58220")) +
+        scale_y_continuous(expand = expansion(mult = c(0, 0.12))) +
+        labs(title = "Rata-rata Lama Sekolah", x = NULL,
+             y = "Rata-rata lama sekolah (tahun)", fill = "Wilayah") +
+        theme_minimal() + theme(legend.position = "bottom")
+      # geom_col dipakai karena nilainya SUDAH dihitung oleh summarise;
+      # geom_bar akan mencoba mencacah sendiri sehingga tidak sesuai.
+
+      # ---- Grafik siap publikasi + ggsave ----
+      g <- ggplot(ringkas, aes(x = provinsi, y = rata_sekolah, fill = wilayah)) +
+        geom_col(position = "dodge", width = 0.7) +
+        geom_text(aes(label = round(rata_sekolah, 1)),
+                  position = position_dodge(width = 0.7), vjust = -0.4, size = 3) +
+        scale_fill_manual(values = c("Perkotaan" = "#0B6FB4",
+                                     "Perdesaan" = "#F58220")) +
+        scale_y_continuous(expand = expansion(mult = c(0, 0.12))) +
+        labs(title = "Rata-rata Lama Sekolah Rumah Tangga",
+             subtitle = "Menurut provinsi dan wilayah",
+             x = NULL, y = "Rata-rata (tahun)", fill = "Wilayah",
+             caption = "Sumber: data simulasi, bukan data resmi") +
+        theme_minimal(base_size = 11) +
+        theme(legend.position = "bottom",
+              plot.title = element_text(face = "bold"),
+              panel.grid.major.x = element_blank())
+      ggsave("grafik_lama_sekolah.png", g, width = 18, height = 11,
+             units = "cm", dpi = 300)
+    interpretasi: >
+      Pada diagram kotak-garis, legenda dimatikan karena nama kelompok sudah tampil di sumbu sehingga
+      legenda hanya mengulang. Pada bagian kedua, dipakai geom\_col karena nilainya sudah dihitung
+      summarise; label angka perlu diberi position\_dodge dengan lebar yang sama agar sejajar dengan
+      batangnya. Pengaturan expand pada sumbu tegak menyediakan ruang di atas batang agar label tidak
+      terpotong. Grafik publikasi dilengkapi anak judul dan keterangan sumber yang menegaskan bahwa
+      data adalah simulasi.
+  - id: "L9.D"
+    points: 10
+    solution: "Membetulkan kode: letak tanda tambah, warna di luar aes, geom_col dengan data ringkasan, dan tilde pada facet_wrap."
+    judul_r: "Solusi Membetulkan Kode (R)"
+    solusi_r: |
+      suppressPackageStartupMessages({library(ggplot2); library(dplyr)})
+      rt <- read.csv("data/data_rumahtangga.csv")
+
+      # (a) tanda tambah harus di AKHIR baris, bukan awal baris berikutnya
+      p <- ggplot(rt, aes(pendapatan, pengeluaran)) +
+        geom_point()
+      class(p)              # "gg" "ggplot"
+      length(p$layers)      # 1
+
+      # (b) warna tetap ditulis DI LUAR aes
+      ggplot(rt, aes(pendapatan, pengeluaran)) +
+        geom_point(colour = "darkgreen")
+
+      # (c) geom_bar mencacah sendiri; untuk menggambar nilai, ringkas dulu lalu geom_col
+      ringkas <- rt |>
+        group_by(provinsi) |>
+        summarise(rata = mean(pengeluaran), .groups = "drop")
+      pc <- ggplot(ringkas, aes(x = provinsi, y = rata)) +
+        geom_col(fill = "#0B6FB4")
+      length(pc$layers)     # 1
+      # alternatif tanpa meringkas: geom_bar(stat = "summary", fun = "mean")
+
+      # (d) rumus faceting diawali tilde
+      ggplot(rt, aes(pengeluaran)) +
+        geom_histogram(bins = 8) +
+        facet_wrap(~ wilayah)
+    interpretasi: >
+      Empat kesalahan diperbaiki. Pertama, tanda tambah di awal baris membuat R menganggap perintah
+      selesai pada baris sebelumnya sehingga lapisan tidak tergabung. Kedua, warna yang ditulis di dalam
+      aes dianggap sebagai peubah sehingga memunculkan legenda keliru; warna tetap harus ditulis di luar
+      aes. Ketiga, geom\_bar melakukan pencacahan sendiri sehingga tidak menerima y; bila ingin
+      menggambar nilai, ringkas data lebih dahulu lalu gunakan geom\_col. Keempat, argumen facet\_wrap
+      berupa rumus sehingga wajib diawali tilde.
+  - id: "T9.1"
+    points: 50
+    solution: "Penugasan: set visualisasi lengkap - sebaran, hubungan, ringkasan, dan grafik publikasi."
+    judul_r: "Solusi Penugasan (R)"
+    solusi_r: |
+      suppressPackageStartupMessages({library(ggplot2); library(dplyr)})
+      rt <- read.csv("data/data_rumahtangga.csv")
+      warna <- c("Perkotaan" = "#0B6FB4", "Perdesaan" = "#F58220")
+
+      # 1) histogram + kepekatan, panel menurut wilayah
+      ggplot(rt, aes(x = pengeluaran)) +
+        geom_histogram(aes(y = after_stat(density)), bins = 10,
+                       fill = "#0B6FB4", colour = "white") +
+        geom_density(colour = "#123A6B", linewidth = 1) +
+        facet_wrap(~ wilayah) +
+        labs(title = "Sebaran Pengeluaran menurut Wilayah",
+             x = "Pengeluaran (ribu Rp)", y = "Kepekatan",
+             caption = "Sumber: data simulasi") +
+        theme_minimal()
+
+      # 2) kotak-garis pendapatan per provinsi, warna wilayah, dodge
+      ggplot(rt, aes(x = provinsi, y = pendapatan, fill = wilayah)) +
+        geom_boxplot(position = position_dodge(width = 0.8)) +
+        scale_fill_manual(values = warna) +
+        labs(title = "Pendapatan menurut Provinsi dan Wilayah",
+             x = NULL, y = "Pendapatan (ribu Rp)", fill = "Wilayah") +
+        theme_minimal() + theme(legend.position = "bottom")
+
+      # 3) pencar + garis kecenderungan per wilayah
+      ggplot(rt, aes(x = pendapatan, y = pengeluaran, colour = wilayah)) +
+        geom_point(alpha = 0.8) +
+        geom_smooth(method = "lm", se = FALSE) +
+        scale_colour_manual(values = warna) +
+        labs(title = "Pengeluaran terhadap Pendapatan",
+             x = "Pendapatan (ribu Rp)", y = "Pengeluaran (ribu Rp)",
+             colour = "Wilayah") +
+        theme_minimal()
+
+      # 4) versi dengan facet menurut provinsi
+      ggplot(rt, aes(x = pendapatan, y = pengeluaran, colour = wilayah)) +
+        geom_point(alpha = 0.8) +
+        geom_smooth(method = "lm", se = FALSE) +
+        facet_wrap(~ provinsi) +
+        scale_colour_manual(values = warna) +
+        labs(x = "Pendapatan (ribu Rp)", y = "Pengeluaran (ribu Rp)") +
+        theme_minimal() + theme(legend.position = "bottom")
+
+      # 5) ringkasan lalu batang berdampingan
+      ringkas <- rt |>
+        group_by(provinsi, wilayah) |>
+        summarise(pengeluaran = mean(pengeluaran),
+                  pendapatan  = mean(pendapatan), .groups = "drop")
+      ggplot(ringkas, aes(provinsi, pengeluaran, fill = wilayah)) +
+        geom_col(position = "dodge", width = 0.7) +
+        geom_text(aes(label = round(pengeluaran)),
+                  position = position_dodge(width = 0.7), vjust = -0.4, size = 3) +
+        scale_fill_manual(values = warna) +
+        scale_y_continuous(expand = expansion(mult = c(0, 0.12))) +
+        labs(title = "Rata-rata Pengeluaran", x = NULL,
+             y = "Rata-rata (ribu Rp)", fill = "Wilayah") +
+        theme_minimal() + theme(legend.position = "bottom")
+
+      # 6) versi proporsi
+      ggplot(ringkas, aes(provinsi, pengeluaran, fill = wilayah)) +
+        geom_col(position = "fill", width = 0.7) +
+        scale_fill_manual(values = warna) +
+        labs(title = "Komposisi Rata-rata Pengeluaran", x = NULL,
+             y = "Proporsi", fill = "Wilayah") +
+        theme_minimal() + theme(legend.position = "bottom")
+    interpretasi: >
+      Set visualisasi ini menjawab pertanyaan yang berbeda-beda. Nomor 1 menampilkan bentuk sebaran per
+      wilayah; nomor 2 membandingkan pemusatan dan keragaman antar-kelompok; nomor 3 dan 4 menampakkan
+      pola hubungan, dengan versi berpanel memudahkan pembandingan antar-provinsi meski tiap panel berisi
+      lebih sedikit amatan. Nomor 5 menekankan besaran sedangkan nomor 6 dengan penataan fill menekankan
+      komposisi - keduanya memakai data sama tetapi menjawab pertanyaan berbeda. Karena data merupakan
+      simulasi dengan nilai acak yang saling bebas, pola hubungan yang muncul wajar bila lemah, dan
+      dalam laporan hal ini harus dinyatakan secara jujur beserta peringatan bahwa korelasi bukan bukti
+      sebab-akibat.
+
+references:
+  - "Wickham, H. (2016). ggplot2: Elegant Graphics for Data Analysis, 2nd ed. Springer."
+  - "Wickham, H., Cetinkaya-Rundel, M., & Grolemund, G. (2023). R for Data Science, 2nd ed. O'Reilly Media."
+  - "Healy, K. (2018). Data Visualization: A Practical Introduction. Princeton University Press."
+  - "Tufte, E. R. (2001). The Visual Display of Quantitative Information, 2nd ed. Graphics Press."

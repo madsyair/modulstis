@@ -1,0 +1,255 @@
+# Bank istilah Analisis Peubah Ganda (Bahasa Indonesia)
+# Field per istilah:
+#   istilah   : bentuk baku yang dianjurkan
+#   inggris   : padanan Inggris
+#   definisi  : penjelasan ringkas sesuai teori
+#   kbbi      : (opsional) catatan bila istilah ini baku menurut KBBI/glosarium
+#               namun masih jarang dipakai umum, beserta bentuk yang lazim dipakai.
+#   topik     : (opsional) modul/topik terkait
+istilah:
+  - istilah: "peubah"
+    inggris: "variable"
+    definisi: "Ciri yang nilainya dapat berbeda antarobjek pengamatan."
+    kbbi: "Bentuk baku KBBI untuk 'variable'; dalam percakapan umum sering dipakai 'variabel'."
+    topik: "umum"
+
+  - istilah: "peubah ganda"
+    inggris: "multivariate"
+    definisi: "Melibatkan beberapa peubah sekaligus yang dianalisis serentak."
+    kbbi: "Padanan baku untuk 'multivariat'; keduanya sama-sama diterima."
+    topik: "umum"
+
+  - istilah: "ragam"
+    inggris: "variance"
+    definisi: "Ukuran keragaman nilai suatu peubah terhadap nilai tengahnya."
+    kbbi: "Istilah baku glosarium untuk 'variance'; umum memakai 'varians'."
+    topik: "umum"
+
+  - istilah: "peragam"
+    inggris: "covariance"
+    definisi: "Ukuran keterkaitan linear antara dua peubah."
+    kbbi: "Istilah baku untuk 'covariance'; jarang dipakai, umum memakai 'kovarians'."
+    topik: "umum"
+
+  - istilah: "matriks ragam-peragam"
+    inggris: "variance-covariance matrix"
+    definisi: "Matriks yang memuat ragam pada diagonal dan peragam di luar diagonal."
+    kbbi: "Padanan baku untuk 'covariance matrix'; umum: 'matriks kovarians'."
+    topik: "umum"
+
+  - istilah: "nilai tengah"
+    inggris: "mean"
+    definisi: "Rata-rata aritmetika sekumpulan nilai; pusat sebaran data."
+    topik: "umum"
+
+  - istilah: "vektor nilai tengah"
+    inggris: "mean vector"
+    definisi: "Vektor berisi nilai tengah tiap peubah pada data peubah ganda."
+    topik: "umum"
+
+  - istilah: "simpangan baku"
+    inggris: "standard deviation"
+    definisi: "Akar dari ragam; ukuran sebaran dalam satuan asli peubah."
+    topik: "umum"
+
+  - istilah: "sebaran"
+    inggris: "distribution"
+    definisi: "Pola peluang nilai-nilai suatu peubah acak."
+    kbbi: "Padanan baku untuk 'distribution'; umum juga 'distribusi'."
+    topik: "umum"
+
+  - istilah: "sebaran normal ganda"
+    inggris: "multivariate normal distribution"
+    definisi: "Perumuman sebaran normal untuk beberapa peubah sekaligus."
+    topik: "Modul 2"
+
+  - istilah: "cuplikan"
+    inggris: "sample"
+    definisi: "Sebagian anggota populasi yang diamati untuk menarik simpulan."
+    kbbi: "Bentuk baku untuk 'sample'; umum memakai 'sampel' atau 'contoh'."
+    topik: "umum"
+
+  - istilah: "penarikan cuplikan acak"
+    inggris: "random sampling"
+    definisi: "Pemilihan anggota populasi secara acak agar mewakili populasi."
+    kbbi: "Padanan baku 'random sampling'; umum: 'pengambilan sampel acak'."
+    topik: "Modul 2"
+
+  - istilah: "amatan"
+    inggris: "observation"
+    definisi: "Satu objek/baris data beserta nilai-nilai peubahnya."
+    kbbi: "Bentuk baku untuk 'observation'; umum memakai 'observasi'."
+    topik: "umum"
+
+  - istilah: "galat"
+    inggris: "error"
+    definisi: "Selisih antara nilai amatan dan nilai dugaan/harapan model."
+    kbbi: "Istilah baku KBBI untuk 'error'; umum memakai 'eror' atau 'kesalahan'."
+    topik: "umum"
+
+  - istilah: "pencilan"
+    inggris: "outlier"
+    definisi: "Amatan yang menyimpang jauh dari pola umum data."
+    kbbi: "Istilah baku untuk 'outlier'; jarang dipakai, umum memakai 'outlier'."
+    topik: "umum"
+
+  - istilah: "nilai ciri"
+    inggris: "eigenvalue"
+    definisi: "Skalar yang menyatakan besar keragaman pada arah vektor ciri."
+    kbbi: "Padanan baku (akar ciri) untuk 'eigenvalue'; umum memakai 'nilai eigen'."
+    topik: "Modul 8"
+
+  - istilah: "vektor ciri"
+    inggris: "eigenvector"
+    definisi: "Vektor arah yang tidak berubah arahnya oleh transformasi matriks."
+    kbbi: "Padanan baku untuk 'eigenvector'; umum memakai 'vektor eigen'."
+    topik: "Modul 8"
+
+  - istilah: "pembakuan"
+    inggris: "standardization"
+    definisi: "Mengubah peubah agar bernilai tengah 0 dan ragam 1."
+    kbbi: "Bentuk baku untuk 'standardization'; umum: 'standardisasi'."
+    topik: "umum"
+
+  - istilah: "keragaman"
+    inggris: "variability"
+    definisi: "Derajat penyebaran nilai data; makin besar makin bervariasi."
+    topik: "umum"
+
+  - istilah: "taraf nyata"
+    inggris: "significance level"
+    definisi: "Batas peluang galat jenis I (mis. 0,05) dalam pengujian hipotesis."
+    kbbi: "Padanan baku untuk 'significance level'; umum: 'tingkat signifikansi'."
+    topik: "umum"
+
+  - istilah: "nyata"
+    inggris: "significant"
+    definisi: "Hasil uji yang menolak hipotesis nol pada taraf nyata tertentu."
+    kbbi: "Padanan baku untuk 'significant'; umum memakai 'signifikan'."
+    topik: "umum"
+
+  - istilah: "selang kepercayaan"
+    inggris: "confidence interval"
+    definisi: "Selang nilai yang diperkirakan memuat parameter dengan tingkat keyakinan tertentu."
+    topik: "Modul 3"
+
+  - istilah: "inferensia"
+    inggris: "inference"
+    definisi: "Penarikan simpulan tentang populasi berdasarkan cuplikan."
+    kbbi: "Bentuk baku untuk 'inference'; umum memakai 'inferensi'."
+    topik: "Modul 3"
+
+  - istilah: "sahih"
+    inggris: "valid"
+    definisi: "Benar/absah; mengukur apa yang seharusnya diukur."
+    kbbi: "Istilah baku KBBI untuk 'valid'; umum memakai 'valid'."
+    topik: "umum"
+
+  - istilah: "keandalan"
+    inggris: "reliability"
+    definisi: "Kekonsistenan hasil pengukuran bila diulang."
+    kbbi: "Bentuk baku untuk 'reliability'; umum memakai 'reliabilitas'."
+    topik: "umum"
+
+  - istilah: "takbias"
+    inggris: "unbiased"
+    definisi: "Penduga yang nilai harapannya sama dengan parameter sebenarnya."
+    kbbi: "Padanan baku untuk 'unbiased'; umum memakai 'tak bias'."
+    topik: "umum"
+
+  - istilah: "analisis ragam peubah ganda"
+    inggris: "MANOVA"
+    definisi: "Uji perbedaan vektor nilai tengah beberapa kelompok secara serentak."
+    kbbi: "Padanan baku 'multivariate analysis of variance'; umum memakai 'MANOVA'."
+    topik: "Modul 5"
+
+  - istilah: "analisis komponen utama"
+    inggris: "principal component analysis (PCA)"
+    definisi: "Mereduksi dimensi dengan membentuk komponen ortogonal berkeragaman maksimum."
+    topik: "Modul 8"
+
+  - istilah: "muatan"
+    inggris: "loading"
+    definisi: "Korelasi/bobot peubah asli terhadap komponen/faktor/variate."
+    topik: "Modul 9"
+
+  - istilah: "analisis faktor"
+    inggris: "factor analysis"
+    definisi: "Menjelaskan korelasi antarpeubah melalui sejumlah faktor laten."
+    topik: "Modul 9"
+
+  - istilah: "analisis kelompok"
+    inggris: "cluster analysis"
+    definisi: "Mengelompokkan objek sehingga mirip di dalam kelompok dan berbeda antarkelompok."
+    kbbi: "Terjemahan 'cluster' yang digunakan pada modul ini adalah 'kelompok'; istilah lain yang beredar: 'klaster' atau 'gugus'."
+    topik: "Modul 10"
+
+  - istilah: "kelompok (cluster)"
+    inggris: "cluster"
+    definisi: "Sekumpulan objek yang memiliki kemiripan karakteristik satu sama lain."
+    kbbi: "Pada modul ini 'cluster' diterjemahkan sebagai 'kelompok' (bukan 'klaster'/'gugus')."
+    topik: "Modul 10"
+
+  - istilah: "penyekalaan berdimensi ganda"
+    inggris: "multidimensional scaling (MDS)"
+    definisi: "Memetakan objek pada ruang berdimensi rendah berdasarkan jaraknya."
+    kbbi: "Padanan baku untuk 'multidimensional scaling'; umum memakai istilah Inggrisnya."
+    topik: "Modul 12"
+
+  - istilah: "korelasi kanonik"
+    inggris: "canonical correlation"
+    definisi: "Korelasi maksimum antara kombinasi linear dua kelompok peubah."
+    topik: "Modul 13"
+
+  - istilah: "peragam kanonik"
+    inggris: "canonical variate"
+    definisi: "Kombinasi linear peubah yang membentuk pasangan kanonik."
+    topik: "Modul 13"
+
+  - istilah: "lewahan"
+    inggris: "redundancy"
+    definisi: "Proporsi ragam satu kelompok peubah yang diterangkan variate kelompok lain."
+    kbbi: "Padanan baku (lewah = berlebih) untuk 'redundancy'; umum: 'redundansi'."
+    topik: "Modul 13"
+
+  - istilah: "analisis diskriminan"
+    inggris: "discriminant analysis"
+    definisi: "Membentuk fungsi pembeda kelompok dan aturan klasifikasi amatan."
+    topik: "Modul 14"
+
+  - istilah: "matriks kekeliruan"
+    inggris: "confusion matrix"
+    definisi: "Tabulasi silang kelas aktual vs prediksi untuk menilai klasifikasi."
+    kbbi: "Padanan baku untuk 'confusion matrix'; umum memakai 'matriks konfusi'."
+    topik: "Modul 14"
+
+  - istilah: "peragaman silang"
+    inggris: "cross-validation"
+    definisi: "Menilai model dengan menguji pada bagian data yang tak dipakai melatih."
+    kbbi: "Padanan baku untuk 'cross-validation'; umum: 'validasi silang'."
+    topik: "Modul 14"
+
+  - istilah: "jarak mahalanobis"
+    inggris: "Mahalanobis distance"
+    definisi: "Jarak antartitik yang memperhitungkan ragam-peragam peubah."
+    topik: "umum"
+
+  - istilah: "reduksi dimensi"
+    inggris: "dimension reduction"
+    definisi: "Menyederhanakan data berpeubah banyak menjadi sedikit dimensi berarti."
+    topik: "Modul 8"
+
+  - istilah: "biplot"
+    inggris: "biplot"
+    definisi: "Grafik yang menampilkan objek dan peubah sekaligus dalam satu bidang."
+    topik: "Modul 11"
+
+  - istilah: "asumsi kehomogenan ragam-peragam"
+    inggris: "homogeneity of covariance"
+    definisi: "Asumsi bahwa matriks ragam-peragam antarkelompok sama (uji Box's M)."
+    topik: "Modul 5"
+
+  - istilah: "populasi"
+    inggris: "population"
+    definisi: "Keseluruhan objek yang menjadi sasaran penarikan simpulan."
+    topik: "umum"

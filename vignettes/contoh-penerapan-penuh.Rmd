@@ -1,0 +1,181 @@
+---
+title: "Contoh Penerapan modulstis Secara Penuh (Dua Backend)"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Contoh Penerapan modulstis Secara Penuh (Dua Backend)}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(eval = FALSE, comment = "#>")
+```
+
+## Ikhtisar
+
+Vignette ini mendemonstrasikan penerapan **penuh** package `modulstis` pada **dua mata
+kuliah nyata**, masing-masing dengan **backend rendering yang berbeda**:
+
+| Mata kuliah | Program studi | Spesifikasi | Backend | Berkas antara |
+|:------------|:--------------|:------------|:--------|:--------------|
+| Pemrograman Statistika (K242310) | **D-IV Statistika** | `inst/specs_ps/` (14 modul) | **bookdown** | `.Rmd` |
+| Pemrograman Statistika (K242310) | **D-III Statistika** | `inst/specs_d3/` (14 modul) | **Quarto** | `.qmd` |
+
+Dengan begitu **kedua backend memiliki contoh penerapan yang lengkap dan dapat dijalankan
+ulang** --- bukan sekadar disebut dalam dokumentasi. Keduanya berangkat dari spesifikasi
+deklaratif yang bentuknya sama persis; yang berbeda hanya satu argumen: `backend`.
+
+Keduanya adalah **satu-satunya spesifikasi yang disertakan** dalam paket --- 28 seluruhnya ---
+sehingga contoh pada vignette ini dapat dijalankan ulang apa adanya setelah paket dipasang,
+tanpa mengunduh berkas lain.
+
+## 1. Pemrograman Statistika D-IV dengan backend **bookdown**
+
+Backend `bookdown` menulis berkas antara `.Rmd` lalu memanggilnya lewat
+`rmarkdown::render()` dengan mesin XeLaTeX.
+
+```{r}
+library(modulstis)
+
+ps4 <- ModuleProject$new(
+  specs_dir  = system.file("specs_ps", package = "modulstis"),
+  theme      = "bps",
+  backend    = "bookdown",
+  output_dir = "build_ps_d4"
+)
+
+ps4$validate_all()   # 14 spesifikasi divalidasi lebih dahulu (fail-fast agregat)
+ps4$generate_data()  # berkas CSV data simulasi untuk tiap modul
+ps4$render_all()     # 14 modul + 14 kunci
+```
+
+Untuk satu modul saja --- berguna saat menyusun atau memeriksa satu pertemuan:
+
+```{r}
+spec4 <- module_spec_from_yaml(
+  system.file("specs_ps/modul-03-pemrograman-r.yml", package = "modulstis")
+)
+c(spec4$number, spec4$course$prodi)
+#> [1] "3" "D-IV Statistika"
+
+hasil4 <- render_module(spec4, backend = "bookdown", theme = "bps",
+                        output_dir = "build_ps_d4")
+hasil4$modul$path
+#> [1] "build_ps_d4/modul-03/Modul_03_pemrograman_r.pdf"   (29 halaman)
+hasil4$kunci$path
+#> [1] "build_ps_d4/kunci-03/Kunci_03_pemrograman_r.pdf"   (6 halaman)
+```
+
+## 2. Pemrograman Statistika D-III dengan backend **Quarto**
+
+Spesifikasi D-III mempunyai struktur yang identik --- hanya isi dan `course$prodi` yang
+berbeda. Untuk berpindah backend, **cukup satu argumen**:
+
+```{r}
+ps3 <- ModuleProject$new(
+  specs_dir  = system.file("specs_d3", package = "modulstis"),
+  theme      = "bps",
+  backend    = "quarto",          # <- satu-satunya perbedaan
+  output_dir = "build_ps_d3"
+)
+
+ps3$validate_all()
+ps3$generate_data()
+ps3$render_all()
+```
+
+Satu modul saja:
+
+```{r}
+spec3 <- module_spec_from_yaml(
+  system.file("specs_d3/modul-02-dasar.yml", package = "modulstis")
+)
+spec3$course$prodi
+#> [1] "D-III Statistika"
+
+hasil3 <- render_module(spec3, backend = "quarto", theme = "bps",
+                        output_dir = "build_ps_d3")
+list.files("build_ps_d3/modul-02")
+#> [1] "data" "Modul_02_dasar_r_python.pdf" "Modul_02_dasar_r_python.qmd" "preamble.tex"
+```
+
+Perhatikan berkas antaranya: **`.qmd`**, bukan `.Rmd`. Isi dokumen, preamble LaTeX, dan
+seluruh makro kotak BPS sama persis --- yang berbeda hanya sintaksis kepala dokumen dan mesin
+yang memprosesnya.
+
+**Prasyarat.** Backend Quarto menuntut Quarto CLI terpasang (uji dengan
+`quarto::quarto_version()`); backend bookdown tidak. Keduanya menuntut XeLaTeX dan pola
+pemenggalan kata bahasa Indonesia (lihat Bab 2 Buku Pedoman).
+
+## 3. Membandingkan keluaran kedua backend
+
+Karena `Document` yang dirakit `ModuleBuilder` bersifat **backend-agnostik**, spesifikasi yang
+sama dapat dirender dua kali lalu dibandingkan:
+
+```{r}
+spec <- module_spec_from_yaml(
+  system.file("specs_d3/modul-02-dasar.yml", package = "modulstis")
+)
+q <- render_module(spec, backend = "quarto",   output_dir = "cek_q")
+b <- render_module(spec, backend = "bookdown", output_dir = "cek_b")
+
+sapply(c(quarto = q$modul$path, bookdown = b$modul$path),
+       function(f) pdftools::pdf_info(f)$pages)
+#>   quarto bookdown
+#>       34       31
+```
+
+Isinya identik --- contoh, kode, kotak, dan penomoran yang sama --- tetapi **jumlah halamannya
+dapat berbeda** (di sini 34 versus 31) karena Quarto dan rmarkdown menyusun blok kode serta
+gambar dengan sedikit perbedaan spasi. Karena itu, bila modul akan digabung menjadi buku dengan
+penomoran halaman berlanjut, **pilih satu backend dan gunakan seterusnya**; jangan mencampur
+keduanya dalam satu buku.
+
+## 4. Menggabungkan menjadi buku
+
+Langkah ini tidak bergantung pada backend --- masukannya PDF:
+
+```{r}
+ps4$build_books(bookmarks = TRUE,
+                front_matter = list(cover = TRUE, copyright = TRUE,
+                                    preface = TRUE, toc = TRUE))
+#> build_ps_d4/Buku_Modul_Praktikum_PS_D4.pdf
+#> build_ps_d4/Buku_Kunci_Jawaban_PS_D4.pdf
+```
+
+## 5. Integrasi RStudio
+
+- **File → New Project → New Directory → Proyek Modul Praktikum (modulstis)**: menyiapkan
+  folder `spec/`, `modul/`, dan `buku/` beserta satu spesifikasi contoh yang langsung dapat
+  dirender. Setara dengan memanggil `buat_proyek_modul()`.
+- **File → New File → R Markdown → From Template**: pilih *Modul Praktikum (BPS/STIS)* atau
+  *Kunci Jawaban Modul (BPS/STIS)*.
+- **Menu Addins**: *Modul Praktikum Baru*, *Kunci Jawaban Baru*, *Render Modul dari Spec YAML*.
+
+## 6. Menulis judul label yang memuat rumus (0.3.2)
+
+Judul `\contoh{}`, `\kode{}`, `\latihan{}`, dan `\tugas{}` kerap memuat notasi matematika.
+Sejak versi 0.3.2, bagian yang diapit `$...$` diteruskan apa adanya sehingga tercetak sebagai
+matematika, sedangkan di luarnya `&`, `_`, `%`, `#`, `^`, dan `~` diloloskan otomatis.
+
+```{r}
+ctx <- RenderContext$new(number = 4)
+
+# dianjurkan: rumus ditulis sebagai matematika
+ctx$emit_kode("Arah pembeda $\\mathbf{S}_p^{-1}(\\bar{x}_1 - \\bar{x}_2)$")
+
+# tetap aman: karakter khusus di luar $...$ diloloskan sendiri oleh paket
+ctx$emit_contoh("50% amatan pada data_baku & pola ~x")
+```
+
+Sebelum 0.3.2, judul seperti `Sp^{-1}` menghentikan kompilasi dengan pesan yang menyesatkan
+(*"You may need to add `$ $` around a certain inline R expression"*), padahal penyebabnya bukan
+ekspresi R inline melainkan judul label itu sendiri.
+
+## Ringkasan
+
+Dengan `modulstis`, satu semester modul + kunci + data + daftar istilah dihasilkan dari
+**spesifikasi deklaratif** — reprodusibel, teruji, dan konsisten. Dua mata kuliah Pemrograman
+Statistika di atas memperlihatkan bahwa pilihan backend adalah **satu argumen**, bukan
+penulisan ulang: D-IV dirender lewat bookdown, D-III lewat Quarto, dari spesifikasi yang
+bentuknya sama.

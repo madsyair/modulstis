@@ -1,0 +1,619 @@
+number: 4
+title: "Pemrograman Python: Kondisi, Perulangan, dan Fungsi"
+short_code: "pemrograman_python"
+topic: "Pemrograman Python"
+pertemuan: 4
+sub_cpmk: >
+  Sub-CPMK 5: Mahasiswa mampu melakukan pemrograman dengan Python menggunakan pernyataan
+  kondisi, perulangan, dan fungsi, serta memahami perbedaannya dengan R.
+packages: [reticulate]
+contoh_title: "Contoh Praktikum dengan Python"
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  ta: "2025/2026"
+  semester: "3 (Ganjil)"
+  prodi: "D-IV Statistika"
+  penyusun:
+    - "Achmad Syahrul Choir"
+    - "Rudi Salam"
+    - "Christiana Anggraeni Putri"
+
+datasets:
+  - name: data_penjualan
+    role: contoh
+    recipe:
+      kind: tabular
+      "n": 12
+      seed: 2025
+      columns:
+        bulan: {type: integer, min: 1, max: 12}
+        wilayah: {type: category, levels: [Barat, Tengah, Timur], probs: [0.4, 0.35, 0.25]}
+        penjualan: {type: integer, min: 50, max: 500}
+        target: {type: integer, min: 100, max: 400}
+
+body:
+  deskripsi:
+    - >
+      Modul ini adalah pasangan Python dari Modul 3. Konsep yang sama (pernyataan kondisi,
+      perulangan, dan fungsi) kini dipelajari di Python, sehingga mahasiswa yang telah menguasai
+      alur kendali di R dapat langsung membandingkan sintaksnya. Karena gagasannya sudah dikenal,
+      fokus modul ini adalah pada perbedaan penulisan dan pada fitur khas Python yang tidak ada
+      padanan langsungnya di R.
+    - >
+      Menguasai alur kendali di kedua bahasa membuat mahasiswa fleksibel: dapat memilih perkakas
+      yang paling sesuai untuk suatu tugas pengolahan data, dan mudah membaca kode rekan kerja
+      yang memakai bahasa berbeda. Modul ini juga memperkenalkan idiom Python yang sangat produktif
+      seperti list comprehension.
+    - >
+      Materi dibahas menyeluruh dari dasar hingga lanjut: indentasi dan struktur blok; kondisi
+      lengkap (if/elif/else, ekspresi kondisional); perulangan (for dengan range/enumerate/zip,
+      while, break/continue/else pada loop); fungsi (def, argumen bawaan, *args, **kwargs, lambda);
+      comprehension (list, dict, set); penanganan galat (try/except); dan penanganan nilai hilang
+      (NaN). Setiap konsep dilengkapi kotak "Padanan dari R", contoh berjenjang, kesalahan umum,
+      tips, dan variasi.
+    - "\\begin{kotakperhatian}[Tentang data]\nBerkas data pada modul ini adalah \\textbf{data simulasi} (\\texttt{set.seed(2025)} pada pembuatannya), \\textbf{bukan data nyata} dan \\textbf{bukan data resmi} instansi mana pun.\n\\end{kotakperhatian}"
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:"
+    - "1. **Menggunakan** pernyataan kondisi (`if`, `elif`, `else`) dan ekspresi kondisional di Python."
+    - "2. **Menyusun** perulangan (`for` dengan `range`/`enumerate`/`zip`, `while`) serta pengendali `break`/`continue`."
+    - "3. **Menulis** fungsi dengan `def`, argumen bawaan, `*args`, `**kwargs`, dan `lambda`."
+    - "4. **Memakai** comprehension (list, dict, set) sebagai idiom Python yang ringkas."
+    - "5. **Menangani** galat dengan `try`/`except` dan nilai hilang (`NaN`)."
+    - "6. **Membandingkan** sintaks alur kendali Python dengan R."
+  alat:
+    - "Perangkat dan bahan yang diperlukan:"
+    - "- **Python** (Jupyter/Anaconda); modul ini fokus pada Python."
+    - "- Pustaka: `pandas`, `numpy`."
+    - "- Berkas data: `data/data_penjualan.csv`."
+  instruksi:
+    - "Ikuti tahapan berikut:"
+    - "**Sebelum praktikum:** siapkan direktori kerja; letakkan `data_penjualan.csv` di subfolder `data/`."
+    - "**Selama praktikum:** kerjakan Contoh berurutan; perhatikan indentasi (Python peka terhadap spasi di awal baris); jalankan tiap potongan kode dan bandingkan dengan padanan R pada Modul 3."
+    - "**Pembagian kerja:** Contoh dan Latihan dikerjakan selama sesi praktikum di kelas; **Penugasan dikerjakan sebagai tugas terstruktur di luar sesi**.\n\n**Pengumpulan:** susun laporan Jupyter Notebook (atau R Markdown), render ke PDF/HTML, dan kumpulkan via Google Classroom sesuai tenggat yang ditetapkan dosen."
+  teori:
+    - "### Kaitan dengan Materi Sebelumnya"
+    - >
+      Modul 3 telah mengajarkan alur kendali di R secara tuntas: kondisi, perulangan, keluarga apply,
+      dan fungsi. Modul ini mempelajari konsep yang \emph{sama} di Python, sehingga Anda tidak perlu
+      belajar gagasannya dari nol - cukup memetakan sintaks yang berbeda dan mengenali fitur khas
+      Python yang tidak ada padanan langsungnya di R. Bekal alur kendali R dari Modul 3 justru membuat
+      pembelajaran Python di sini jauh lebih cepat.
+    - >
+      Karena itu, tiap konsep dibuka dengan kotak "Padanan dari R" yang memetakan padanannya. Fokus
+      modul ini ada pada perbedaan penulisan (indentasi, elif, indeks mulai 0) dan pada idiom Python
+      yang produktif seperti comprehension, generator, dan penanganan galat. Penguasaan di sini menjadi
+      prasyarat untuk Modul 6 (manipulasi data dengan pandas) dan modul-modul Python berikutnya.
+    - "\\begin{kotakcatatan}\nBila Anda ingat betul alur kendali R dari Modul 3 (terutama sapply dan fungsi), pembelajaran modul ini akan terasa seperti \"menerjemahkan\" konsep yang sudah dikuasai ke bahasa baru.\n\\end{kotakcatatan}"
+    - "### Indentasi dan Struktur Blok"
+    - >
+      **Perbedaan paling mencolok dari R.** Python menandai blok kode dengan \textbf{indentasi}
+      (biasanya empat spasi), bukan kurung kurawal \texttt{\{ \}}. Baris pembuka blok (if, for, def,
+      dan sebagainya) diakhiri titik dua (\texttt{:}). Indentasi yang tidak konsisten menimbulkan
+      galat \texttt{IndentationError}. Konsistensi indentasi bukan sekadar gaya - ia menentukan arti
+      program.
+    - "\\begin{kotakcatatan}[Padanan dari R]\nPadanan konsep R $\\rightarrow$ Python:\\\\[3pt]\n\\begin{tabular}{@{}ll@{}}\n\\textbf{R} & \\textbf{Python}\\\\\n\\texttt{if (s) \\{...\\} else \\{...\\}} & \\texttt{if s: ... else: ...}\\\\\n\\texttt{else if} & \\texttt{elif}\\\\\n\\texttt{for (i in 1:n) \\{...\\}} & \\texttt{for i in range(n): ...}\\\\\n\\texttt{while (s) \\{...\\}} & \\texttt{while s: ...}\\\\\n\\texttt{next} / \\texttt{break} & \\texttt{continue} / \\texttt{break}\\\\\n\\texttt{function(x) \\{...\\}} & \\texttt{def f(x): ...}\\\\\n\\texttt{sapply(v, f)} & \\texttt{[f(x) for x in v]}\\\\\n\\texttt{NA} & \\texttt{None} / \\texttt{NaN}\\\\\n\\end{tabular}\n\\end{kotakcatatan}"
+    - "### Pernyataan Kondisi"
+    - >
+      **Bentuk.** \texttt{if syarat:} lalu blok terindentasi; cabang lain memakai \texttt{elif
+      syarat:} dan \texttt{else:}. Tidak ada \texttt{else if} seperti R; Python memakai \texttt{elif}.
+      Untuk kasus ringkas, tersedia \emph{ekspresi kondisional}: \texttt{a if syarat else b} (padanan
+      \texttt{ifelse} untuk satu nilai).
+    - "### Perulangan"
+    - >
+      **for.** \texttt{for x in objek:} mengulang tiap elemen. \texttt{range(n)} menghasilkan 0..n-1;
+      \texttt{range(a, b, langkah)} lebih fleksibel. \texttt{enumerate(objek)} memberi pasangan
+      (indeks, nilai); \texttt{zip(a, b)} memasangkan elemen dari beberapa objek sekaligus.
+    - >
+      **while dan pengendali.** \texttt{while syarat:} mengulang selama syarat benar. \texttt{break}
+      menghentikan perulangan; \texttt{continue} melompati sisa badan (padanan \texttt{next} di R).
+      Python juga memiliki \texttt{else} pada loop yang dijalankan bila loop selesai tanpa
+      \texttt{break}.
+    - "\\begin{kotaksalah}\nGalat umum: (1) \\textbf{lupa titik dua} di akhir baris \\texttt{if}/\\texttt{for}/\\texttt{def}; (2) \\textbf{indentasi tidak konsisten} (campur spasi dan tab); (3) \\textbf{salah batas range} - \\texttt{range(1, 5)} menghasilkan 1,2,3,4 (angka 5 TIDAK termasuk); (4) lupa bahwa indeks mulai dari \\textbf{0}.\n\\end{kotaksalah}"
+    - "### Fungsi"
+    - >
+      **Dasar.** \texttt{def nama(arg, n=bawaan):} diikuti blok terindentasi dan \texttt{return
+      hasil}. Fungsi singkat dapat ditulis sebagai \texttt{lambda}: \texttt{kuadrat = lambda x: x**2}.
+    - >
+      **Argumen fleksibel.** \texttt{*args} menampung sejumlah argumen posisional sebagai tuple;
+      \texttt{**kwargs} menampung argumen bernama sebagai dictionary. Keduanya membuat fungsi dapat
+      menerima jumlah argumen yang tidak tetap - berguna untuk fungsi serbaguna.
+    - "### Comprehension"
+    - >
+      **Idiom khas Python.** \emph{List comprehension} \texttt{[f(x) for x in v if syarat]} membuat
+      list baru secara ringkas - padanan \texttt{sapply}/\texttt{Filter} di R dalam satu baris.
+      Tersedia pula \emph{dict comprehension} \texttt{\{k: v for ...\}} dan \emph{set comprehension}
+      \texttt{\{x for ...\}}. Comprehension lebih ringkas dan sering lebih cepat daripada perulangan
+      biasa.
+    - "### Metode Bawaan Struktur Data"
+    - >
+      Berbeda dari R yang banyak memakai fungsi terpisah, Python melekatkan operasi pada objek sebagai
+      \emph{metode} (dipanggil dengan titik). List memiliki \texttt{.append()}, \texttt{.sort()},
+      \texttt{.count()}; string memiliki \texttt{.strip()}, \texttt{.split()}, \texttt{.replace()};
+      dictionary memiliki \texttt{.keys()}, \texttt{.values()}, \texttt{.items()}. Menguasai metode
+      bawaan ini membuat pengolahan data jauh lebih ringkas.
+    - "### Generator dan Efisiensi Memori"
+    - >
+      Salah satu fitur khas Python yang tidak ada di R adalah \emph{generator}: fungsi yang memakai
+      \texttt{yield} untuk menghasilkan nilai satu per satu, bukan sekaligus. Generator hemat memori
+      karena tidak menyimpan seluruh hasil - penting saat memproses jutaan baris data. Ekspresi generator
+      \texttt{(x for x in ...)} adalah versi ringkasnya.
+    - "### Decorator"
+    - >
+      \emph{Decorator} (\texttt{@nama}) adalah fungsi yang membungkus fungsi lain untuk menambah
+      perilaku - misalnya mencatat pemanggilan, mengukur waktu, atau memvalidasi masukan - tanpa mengubah
+      kode fungsi aslinya. Decorator memanfaatkan gagasan fungsi-menghasilkan-fungsi (closure dari
+      Modul 3) dengan sintaks yang khas dan banyak dipakai dalam pustaka Python modern.
+    - "### Penanganan Galat dan Nilai Hilang"
+    - >
+      **try/except.** Kode yang mungkin menimbulkan galat dibungkus \texttt{try:}; penanganannya di
+      \texttt{except:}. Ini mencegah program berhenti mendadak dan memungkinkan penanganan yang rapi
+      (mis. melewati data rusak). \textbf{Nilai hilang} di Python direpresentasikan sebagai
+      \texttt{None} (umum) atau \texttt{NaN} (numerik, dari numpy/pandas); pandas menyediakan
+      \texttt{.isna()} dan \texttt{.dropna()} untuk menanganinya.
+    - "\\begin{kotakrumus}\n\\textbf{Kerangka Python:}\\\\\n\\texttt{if s: ... elif s2: ... else: ...}\\\\\n\\texttt{for i in range(n): ...}\\\\\n\\texttt{def nama(arg, *args, **kwargs): return hasil}\\\\\n\\texttt{[f(x) for x in v if syarat]}\\\\\n\\texttt{try: ... except Exception: ...}\n\\end{kotakrumus}"
+    - "\\begin{kotaktips}\nGunakan list comprehension untuk transformasi sederhana yang jelas, tetapi tetap pakai perulangan biasa bila logikanya rumit atau bertingkat - keterbacaan lebih penting daripada keringkasan.\n\\end{kotaktips}"
+  contoh:
+    - contoh: "Pernyataan kondisi dengan elif"
+      kode: "nilai = 78\nif nilai >= 85:\n    huruf = \"A\"\nelif nilai >= 70:\n    huruf = \"B\"\nelse:\n    huruf = \"C\"\nprint(huruf)"
+      bahasa: Python
+      kode_judul: "if - elif - else"
+      eval: true
+      penjelasan: >
+        Sebuah nilai ditetapkan sebagai bahan uji. Baris if diakhiri titik dua, dan blok di bawahnya
+        ditulis menjorok empat spasi - indentasi inilah yang menandai isi blok, menggantikan kurung
+        kurawal di R. Cabang tengah memakai kata elif, bukan else if. Setiap cabang menetapkan nilai ke
+        peubah huruf, dan baris terakhir mencetaknya.
+      interpretasi: >
+        Python memakai elif (bukan else if seperti R) dan menandai blok dengan indentasi empat spasi.
+        Setiap baris pembuka blok diakhiri titik dua. Karena nilai 78 tidak >= 85 tetapi >= 70,
+        hasilnya "B".
+    - contoh: "Ekspresi kondisional (satu baris)"
+      kode: "nilai = 55\nstatus = \"Lulus\" if nilai >= 60 else \"Mengulang\"\nprint(status)"
+      bahasa: Python
+      kode_judul: "a if syarat else b"
+      eval: true
+      penjelasan: >
+        Ekspresi kondisional ditulis dalam satu baris dengan urutan yang berbeda dari if biasa: nilai
+        bila benar ditulis lebih dahulu, lalu kata if beserta syaratnya, lalu else dan nilai bila salah.
+        Seluruh ekspresi menghasilkan satu nilai yang langsung ditugaskan ke peubah status.
+      interpretasi: >
+        Ekspresi kondisional a if syarat else b adalah padanan Python untuk ifelse R pada satu nilai.
+        Ringkas untuk penetapan sederhana. Karena nilai 55 < 60, hasilnya "Mengulang".
+    - contoh: "for dengan range, enumerate, dan zip"
+      kode: "# range: menghasilkan urutan angka\nfor i in range(1, 4):\n    print(\"angka:\", i)\n# enumerate: indeks + nilai\nwilayah = [\"Barat\", \"Tengah\", \"Timur\"]\nfor i, w in enumerate(wilayah):\n    print(i, w)\n# zip: pasangkan dua list\ntarget = [300, 250, 200]\nfor w, t in zip(wilayah, target):\n    print(w, \"target\", t)"
+      bahasa: Python
+      kode_judul: "range, enumerate, zip"
+      eval: true
+      penjelasan: >
+        Tiga cara mengulang diperagakan. Fungsi range menghasilkan deret angka; batas atasnya tidak
+        termasuk sehingga range dari satu sampai empat memberi tiga angka. Fungsi enumerate mengembalikan
+        pasangan nomor posisi dan nilainya sekaligus, sehingga perulangan menerima dua peubah. Fungsi zip
+        memasangkan elemen dua list secara sejajar, berguna untuk memproses dua kolom bersamaan.
+      interpretasi: >
+        range(1,4) menghasilkan 1,2,3 (batas atas 4 tidak termasuk). enumerate memberi indeks (mulai
+        0) dan nilai sekaligus. zip memasangkan elemen dua list - sangat berguna untuk memproses
+        beberapa kolom bersamaan. Ketiganya adalah idiom perulangan Python yang produktif.
+    - contoh: "while, break, dan continue"
+      kode: "# while dengan break\nn = 1; hasil = 1\nwhile True:\n    n += 1\n    hasil *= n\n    if hasil >= 100:\n        break\nprint(\"berhenti di n =\", n, \"hasil =\", hasil)\n# continue: lewati genap\nfor i in range(1, 8):\n    if i % 2 == 0:\n        continue\n    print(i, end=\" \")"
+      bahasa: Python
+      kode_judul: "while, break, continue"
+      eval: true
+      penjelasan: >
+        Bagian pertama memakai while True yang syaratnya selalu benar, sehingga penghentiannya
+        sepenuhnya bergantung pada break di dalam badan perulangan. Nilai diperbarui memakai operator
+        gabungan seperti tambah sama dengan dan kali sama dengan. Bagian kedua memakai continue yang
+        melompati sisa badan perulangan untuk bilangan genap. Argumen end pada print mencegah perpindahan
+        baris.
+      interpretasi: >
+        while True dengan break di dalam adalah pola umum bila syarat berhenti lebih mudah ditulis di
+        tengah loop. continue melompati iterasi genap (padanan next di R), sehingga hanya bilangan
+        ganjil 1 3 5 7 yang tercetak.
+    - contoh: "Fungsi: def, bawaan, dan lambda"
+      kode: "def kategori(nilai, ambang=70):\n    return \"Lulus\" if nilai >= ambang else \"Mengulang\"\nprint(kategori(80))\nprint(kategori(65, ambang=60))\n# lambda: fungsi singkat\nkuadrat = lambda x: x ** 2\nprint(kuadrat(5))"
+      bahasa: Python
+      kode_judul: "def dan lambda"
+      eval: true
+      penjelasan: >
+        Fungsi dibuat dengan kata def diikuti nama, daftar argumen, dan titik dua. Argumen kedua diberi
+        nilai bawaan sehingga menjadi opsional. Isi fungsi memakai ekspresi kondisional yang langsung
+        dikembalikan dengan return. Dua pemanggilan menguji nilai bawaan dan penimpaannya. Baris terakhir
+        membuat fungsi singkat dengan lambda, yang cocok untuk operasi satu baris tanpa perlu nama formal.
+      interpretasi: >
+        Fungsi kategori memiliki argumen bawaan ambang=70 yang dapat ditimpa. lambda membuat fungsi
+        singkat satu baris tanpa nama formal - berguna untuk operasi sederhana, mis. sebagai argumen
+        ke .apply pada pandas.
+    - contoh: "Argumen fleksibel: *args dan **kwargs"
+      kode: "def ringkas(*args):        # sejumlah argumen posisional -> tuple\n    return sum(args) / len(args)\nprint(ringkas(80, 90, 70))     # rata-rata tiga nilai\n\ndef info(**kwargs):            # argumen bernama -> dict\n    for k, v in kwargs.items():\n        print(k, \"=\", v)\ninfo(nama=\"Ani\", ipk=3.5)"
+      bahasa: Python
+      kode_judul: "*args dan **kwargs"
+      eval: true
+      penjelasan: >
+        Fungsi pertama memakai satu bintang sehingga seluruh argumen posisional yang diberikan ditampung
+        sebagai tuple bernama args, lalu dijumlahkan dan dibagi banyaknya. Fungsi kedua memakai dua
+        bintang sehingga argumen bernama ditampung sebagai dictionary, lalu ditelusuri dengan .items()
+        yang memberi pasangan kunci dan nilai. Keduanya membuat fungsi dapat menerima jumlah argumen yang
+        tidak tetap.
+      interpretasi: >
+        *args menampung sejumlah argumen posisional sebagai tuple (di sini dirata-ratakan);
+        **kwargs menampung argumen bernama sebagai dictionary. Keduanya membuat fungsi dapat menerima
+        jumlah argumen tak tetap - fitur khas Python yang tidak memiliki padanan langsung di R.
+    - contoh: "Comprehension: list, dict, dan set"
+      kode: "nilai = [80, 55, 90, 65]\n# list comprehension dengan saringan\nlulus = [n for n in nilai if n >= 60]\nprint(\"lulus:\", lulus)\n# dict comprehension\npeta = {n: (\"L\" if n >= 60 else \"M\") for n in nilai}\nprint(peta)\n# set comprehension (nilai unik)\nunik = {n % 10 for n in nilai}\nprint(\"digit satuan unik:\", unik)"
+      bahasa: Python
+      kode_judul: "tiga jenis comprehension"
+      eval: true
+      penjelasan: >
+        Tiga bentuk comprehension dipakai berurutan. Bentuk pertama memakai kurung siku dengan penyaring
+        if di belakang, menghasilkan list berisi elemen yang lolos syarat. Bentuk kedua memakai kurung
+        kurawal dengan pasangan kunci titik dua nilai, sehingga menghasilkan dictionary; nilainya sendiri
+        ditentukan ekspresi kondisional. Bentuk ketiga memakai kurung kurawal tanpa pasangan, menghasilkan
+        himpunan yang otomatis membuang nilai kembar.
+      interpretasi: >
+        List comprehension menyaring nilai lulus dalam satu baris (padanan sapply+Filter di R). Dict
+        comprehension membuat pasangan nilai-label. Set comprehension menghasilkan himpunan nilai unik.
+        Comprehension adalah idiom Python yang sangat ringkas dan sering dipakai.
+    - contoh: "Menerapkan fungsi ke DataFrame"
+      kode: "import pandas as pd\njual = pd.read_csv(\"data/data_penjualan.csv\")\ndef status(row):\n    return \"Tercapai\" if row[\"penjualan\"] >= row[\"target\"] else \"Belum\"\njual[\"status\"] = jual.apply(status, axis=1)\nprint(jual[[\"penjualan\", \"target\", \"status\"]].head())"
+      bahasa: Python
+      kode_judul: "apply pada DataFrame"
+      eval: true
+      penjelasan: >
+        Data dibaca dengan pandas lebih dahulu. Sebuah fungsi biasa dibuat untuk memproses satu baris,
+        yang di dalamnya kolom diakses memakai kurung siku berisi nama kolom. Metode .apply menerapkan
+        fungsi itu ke seluruh baris; argumen axis bernilai satu menandakan pengerjaan per baris, bukan
+        per kolom. Hasilnya ditugaskan sebagai kolom baru.
+      interpretasi: >
+        .apply(fungsi, axis=1) menerapkan fungsi ke tiap baris DataFrame, mirip peran keluarga apply
+        di R. Argumen axis=1 berarti "per baris" (axis=0 berarti per kolom). Kolom baru status
+        menandai pencapaian target tiap baris.
+    - contoh: "Penanganan galat dan nilai hilang"
+      kode: "import numpy as np, pandas as pd\n# try/except: cegah program berhenti\nfor teks in [\"120\", \"abc\", \"90\"]:\n    try:\n        print(int(teks) * 2)\n    except ValueError:\n        print(\"lewati:\", teks, \"(bukan angka)\")\n# nilai hilang\ns = pd.Series([80, np.nan, 90])\nprint(\"rata-rata (abai NaN):\", s.mean())\nprint(\"posisi NaN:\", s.isna().tolist())"
+      bahasa: Python
+      kode_judul: "try/except dan NaN"
+      eval: true
+      penjelasan: >
+        Bagian pertama menelusuri beberapa teks dan mencoba mengubahnya menjadi angka di dalam blok try;
+        bila gagal, blok except menangkap galat bertipe ValueError dan mencetak pesan alih-alih
+        menghentikan program. Bagian kedua membuat Series yang memuat nilai hilang, lalu menghitung
+        rata-ratanya - pandas mengabaikan NaN secara bawaan - dan menandai posisinya dengan .isna().
+      interpretasi: >
+        try/except menangani galat konversi tanpa menghentikan program: teks "abc" dilewati dengan
+        pesan, bukan menyebabkan crash. Untuk nilai hilang, pandas mengabaikan NaN saat menghitung
+        mean, dan .isna() menandai posisinya. Keduanya penting untuk mengolah data nyata yang sering
+        tidak rapi.
+    - contoh: "Indeks dan iris (slicing) yang mendalam"
+      kode: "v = [10, 20, 30, 40, 50]\nprint(v[0], v[-1])        # pertama & terakhir\nprint(v[1:4])             # iris: indeks 1,2,3\nprint(v[:3])              # tiga pertama\nprint(v[::2])             # tiap dua langkah\nprint(v[::-1])            # dibalik\nteks = \"Statistika\"\nprint(teks[:4], teks[-3:])  # iris pada string juga"
+      bahasa: Python
+      kode_judul: "slicing list dan string"
+      eval: true
+      penjelasan: >
+        Iris ditulis dengan pola awal titik dua akhir titik dua langkah. Indeks negatif menghitung dari
+        belakang sehingga minus satu berarti elemen terakhir. Batas akhir tidak termasuk, sehingga satu
+        titik dua empat memberi tiga elemen. Mengosongkan salah satu batas berarti sampai ujung. Langkah
+        bernilai dua mengambil setiap elemen kedua, dan langkah minus satu membalik urutan. Pola yang sama
+        berlaku pada teks.
+      interpretasi: >
+        Iris (slicing) v[awal:akhir:langkah] adalah fitur Python yang sangat ekspresif: v[1:4] mengambil
+        indeks 1-3 (akhir tak termasuk), v[:3] tiga pertama, v[::2] tiap dua langkah, v[::-1] membalik
+        urutan. Iris bekerja sama pada list dan string. Ini jauh lebih ringkas daripada padanannya di R
+        dan sering dipakai untuk memilih sebagian data dengan cepat.
+    - contoh: "Comprehension bersarang dan bersyarat"
+      kode: "# comprehension dengan dua for (bersarang)\npasangan = [(i, j) for i in range(1, 4) for j in range(1, 3)]\nprint(pasangan)\n# comprehension dengan if-else\nnilai = [82, 55, 90, 48]\nlabel = [\"L\" if n >= 60 else \"M\" for n in nilai]\nprint(label)\n# nested list comprehension: matriks\nmatriks = [[i * j for j in range(1, 4)] for i in range(1, 4)]\nprint(matriks)"
+      bahasa: Python
+      kode_judul: "comprehension bersarang"
+      eval: true
+      penjelasan: >
+        Bentuk pertama memuat dua klausa for berurutan sehingga menghasilkan seluruh kombinasi kedua
+        deret, setara dengan perulangan bersarang. Bentuk kedua menyisipkan ekspresi kondisional sebelum
+        klausa for sehingga tiap elemen diubah menjadi label. Bentuk ketiga menempatkan sebuah
+        comprehension di dalam comprehension lain sehingga menghasilkan list berisi list, yaitu struktur
+        dua dimensi.
+      interpretasi: >
+        Comprehension dapat memuat beberapa for (menghasilkan kombinasi seperti perulangan bersarang)
+        dan if-else (mengubah tiap elemen). Nested list comprehension membangun struktur dua dimensi
+        seperti matriks dalam satu baris. Ini idiom yang sangat ringkas namun harus dipakai bijak -
+        bila logikanya rumit, perulangan biasa lebih mudah dibaca.
+    - contoh: "Generator: efisiensi memori"
+      kode: "# generator dengan yield: menghasilkan nilai satu per satu\ndef hitung_kuadrat(n):\n    for i in range(1, n + 1):\n        yield i ** 2\ngen = hitung_kuadrat(5)\nprint(list(gen))               # 1 4 9 16 25\n# generator expression (hemat memori)\ntotal = sum(x ** 2 for x in range(1, 1001))\nprint(\"jumlah kuadrat 1..1000:\", total)"
+      bahasa: Python
+      kode_judul: "yield dan generator"
+      eval: true
+      penjelasan: >
+        Fungsi ini memakai yield alih-alih return, sehingga nilainya dihasilkan satu per satu setiap
+        diminta, bukan sekaligus. Objek yang dikembalikan bersifat malas dan baru menghitung saat
+        ditelusuri; fungsi list memaksanya menghasilkan seluruh nilai. Baris terakhir memakai ekspresi
+        generator, yaitu bentuk ringkas tanpa kurung siku, yang dipakai langsung sebagai argumen sum
+        sehingga hemat memori.
+      interpretasi: >
+        Generator menghasilkan nilai satu per satu dengan yield, alih-alih membuat seluruh list di
+        memori sekaligus - sangat hemat memori untuk data besar. Generator expression (x**2 for x in ...)
+        tanpa kurung siku bekerja serupa. Konsep ini tidak memiliki padanan langsung di R dan berguna
+        saat memproses data yang tak muat di memori.
+    - contoh: "Penanganan galat berlapis"
+      kode: "def proses(nilai):\n    try:\n        angka = float(nilai)\n        hasil = 100 / angka\n    except ValueError:\n        return \"bukan angka\"\n    except ZeroDivisionError:\n        return \"tak bisa bagi nol\"\n    else:\n        return round(hasil, 2)\n    finally:\n        pass  # selalu dijalankan (mis. menutup berkas)\nfor v in [\"4\", \"abc\", \"0\", \"2.5\"]:\n    print(v, \"->\", proses(v))"
+      bahasa: Python
+      kode_judul: "try/except/else/finally"
+      eval: true
+      penjelasan: >
+        Struktur penanganan galat lengkap dipakai di dalam sebuah fungsi. Blok try memuat kode yang
+        berisiko. Dua blok except menangani jenis galat berbeda secara terpisah sehingga pesannya dapat
+        disesuaikan. Blok else dijalankan hanya bila tidak ada galat sama sekali. Blok finally selalu
+        dijalankan apa pun yang terjadi, dan biasanya dipakai untuk membersihkan sumber daya. Perulangan
+        di bawahnya menguji fungsi dengan empat masukan berbeda.
+      interpretasi: >
+        Penanganan galat Python dapat menangani beberapa jenis galat secara terpisah (ValueError vs
+        ZeroDivisionError), memberi pesan yang tepat untuk masing-masing. Blok else dijalankan bila tak
+        ada galat; finally selalu dijalankan (berguna untuk membersihkan sumber daya seperti menutup
+        berkas). Penanganan galat yang cermat membuat program tangguh terhadap data nyata yang berantakan.
+    - contoh: "Decorator: memodifikasi perilaku fungsi"
+      kode: "# decorator sederhana yang mencatat pemanggilan\ndef catat(fungsi):\n    def pembungkus(*args, **kwargs):\n        print(f\"memanggil {fungsi.__name__} dengan {args}\")\n        return fungsi(*args, **kwargs)\n    return pembungkus\n\n@catat\ndef tambah(a, b):\n    return a + b\nprint(tambah(3, 5))"
+      bahasa: Python
+      kode_judul: "@decorator"
+      eval: true
+      penjelasan: >
+        Fungsi catat menerima sebuah fungsi sebagai argumen lalu mengembalikan fungsi pembungkus yang
+        menambahkan pencetakan sebelum memanggil fungsi aslinya. Pembungkus memakai bintang args dan dua
+        bintang kwargs agar dapat meneruskan argumen apa pun. Tanda at di atas definisi fungsi tambah
+        adalah cara ringkas menerapkan pembungkus itu, sehingga setiap pemanggilan tambah otomatis
+        tercatat.
+      interpretasi: >
+        Decorator (@nama) membungkus sebuah fungsi untuk menambah perilaku tanpa mengubah kodenya - di
+        sini mencatat setiap pemanggilan. Decorator memanfaatkan konsep fungsi-menghasilkan-fungsi
+        (closure) yang dipelajari di Modul 3, kini dengan sintaks khas Python. Ini fitur lanjut yang
+        banyak dipakai di pustaka Python (mis. untuk pengukuran waktu, caching, atau validasi).
+    - contoh: "Metode string dan pemformatan"
+      kode: "teks = \"  Statistika Resmi  \"\nprint(teks.strip())            # hapus spasi tepi\nprint(teks.strip().upper())    # huruf besar\nprint(teks.strip().replace(\"Resmi\", \"Negara\"))\nkata = \"Barat,Tengah,Timur\".split(\",\")  # pisah jadi list\nprint(kata)\nprint(\"-\".join(kata))         # gabung dengan pemisah\nprint(f\"{3.14159:.2f}\")        # format angka"
+      bahasa: Python
+      kode_judul: "metode string"
+      eval: true
+      penjelasan: >
+        Beberapa metode teks dirangkai berurutan. Metode strip membuang spasi di kedua ujung, upper
+        mengubah menjadi huruf besar, dan replace mengganti potongan teks. Metode split memecah teks
+        menjadi list berdasarkan pemisah yang diberikan, sedangkan join melakukan kebalikannya dengan
+        menyatukan list memakai teks pemisah di depannya. Baris terakhir memakai f-string dengan penentu
+        format untuk membatasi angka desimal.
+      interpretasi: >
+        Python memiliki metode string yang kaya: strip menghapus spasi, upper/lower mengubah huruf,
+        replace mengganti teks, split memecah string jadi list, dan join menggabungkannya kembali.
+        f-string dengan penentu format (:.2f) mengendalikan tampilan angka. Pengolahan teks penting
+        saat membersihkan data mentah - misalnya nama wilayah dengan spasi berlebih atau format tak
+        seragam - sebelum dianalisis.
+    - contoh: "Studi kasus: pipeline pemrosesan lengkap"
+      kode: "import pandas as pd\njual = pd.read_csv(\"data/data_penjualan.csv\")\n# 1) fungsi klasifikasi\ndef grade(rasio):\n    if rasio >= 1.2: return \"A\"\n    elif rasio >= 1.0: return \"B\"\n    elif rasio >= 0.8: return \"C\"\n    return \"D\"\n# 2) hitung rasio (tervektor) lalu klasifikasi (comprehension)\njual[\"rasio\"] = jual[\"penjualan\"] / jual[\"target\"]\njual[\"grade\"] = [grade(r) for r in jual[\"rasio\"]]\n# 3) ringkas per wilayah dengan groupby\nringkas = jual.groupby(\"wilayah\").agg(\n    n=(\"grade\", \"size\"),\n    rasio_rata=(\"rasio\", \"mean\"))\nprint(ringkas.round(2))\n# 4) distribusi grade\nprint(jual[\"grade\"].value_counts().sort_index())"
+      bahasa: Python
+      kode_judul: "pipeline: fungsi + comprehension + groupby"
+      eval: true
+      penjelasan: >
+        Alurnya diberi penanda nomor pada komentar. Sebuah fungsi klasifikasi bertingkat dibuat memakai
+        elif dan beberapa return. Kolom rasio dihitung secara tervektor dengan membagi dua kolom. Fungsi
+        klasifikasi diterapkan lewat list comprehension yang menelusuri kolom rasio. Ringkasan per wilayah
+        dibuat dengan groupby dipadu agg bergaya named aggregation, lalu dibulatkan. Baris terakhir
+        menghitung distribusi grade dengan value_counts yang diurutkan menurut labelnya.
+      interpretasi: >
+        Studi kasus ini merangkai seluruh keterampilan modul: fungsi klasifikasi bertingkat dengan
+        elif; operasi tervektor untuk rasio; list comprehension untuk menerapkan grade; groupby+agg
+        untuk ringkasan per wilayah; dan value_counts untuk distribusi. Bandingkan dengan studi kasus R
+        pada Modul 3 - alur berpikirnya identik, hanya sintaksnya yang berbeda. Inilah bukti nyata
+        bahwa menguasai konsep lebih penting daripada menghafal sintaks satu bahasa.
+    - contoh: "Dictionary yang mendalam"
+      kode: "harga = {\"beras\": 12000, \"gula\": 15000, \"minyak\": 18000}\nprint(list(harga.keys()))       # kunci\nprint(list(harga.values()))     # nilai\nfor barang, h in harga.items(): # iterasi pasangan\n    print(f\"{barang}: Rp{h:,}\")\nharga[\"telur\"] = 28000          # tambah entri\nprint(harga.get(\"tepung\", 0))   # aman: 0 bila tak ada\nprint(\"gula\" in harga)          # cek keanggotaan"
+      bahasa: Python
+      kode_judul: "metode dictionary"
+      eval: true
+      penjelasan: >
+        Sebuah dictionary harga dibuat lebih dahulu. Metode .keys() dan .values() mengambil kunci dan
+        nilainya, dibungkus list agar tercetak rapi. Metode .items() memberi pasangan keduanya sehingga
+        dapat ditelusuri dengan dua peubah sekaligus; f-string dipakai untuk memformat angka dengan
+        pemisah ribuan. Entri baru ditambahkan cukup dengan penugasan pada kunci baru. Metode .get
+        mengambil nilai secara aman dengan nilai cadangan bila kunci tidak ada, dan operator in memeriksa
+        keanggotaan.
+      interpretasi: >
+        Dictionary adalah struktur kunci-nilai yang sangat sering dipakai. .keys()/.values()/.items()
+        mengakses komponennya; iterasi .items() memberi pasangan sekaligus. .get(kunci, bawaan) aman
+        mengambil nilai tanpa galat bila kunci tak ada. Operator in memeriksa keanggotaan. Dictionary
+        adalah padanan list bernama R tetapi dengan metode yang lebih kaya dan akses yang sangat cepat.
+    - contoh: "Himpunan (set) dan operasinya"
+      kode: "a = {1, 2, 3, 4}\nb = {3, 4, 5, 6}\nprint(a | b)          # gabungan\nprint(a & b)          # irisan\nprint(a - b)          # selisih\nprint(a ^ b)          # selisih simetris\n# menghapus duplikat dari list\ndata = [1, 2, 2, 3, 3, 3, 4]\nprint(sorted(set(data)))"
+      bahasa: Python
+      kode_judul: "operasi himpunan"
+      eval: true
+      penjelasan: >
+        Dua himpunan dibuat dengan kurung kurawal. Empat operator himpunan dipakai berturut-turut: garis
+        tegak untuk gabungan, ampersand untuk irisan, tanda minus untuk selisih, dan tanda sisipan untuk
+        selisih simetris yaitu anggota yang hanya ada di salah satunya. Dua baris terakhir memperlihatkan
+        pemakaian paling lazim, yaitu membuang nilai kembar dari sebuah list dengan mengubahnya menjadi
+        himpunan lalu mengurutkannya.
+      interpretasi: >
+        Set (himpunan) menyimpan nilai unik dan mendukung operasi matematika himpunan: gabungan (|),
+        irisan (&), selisih (-), selisih simetris (^). Kegunaan praktis paling umum: menghapus duplikat
+        dari list dengan set(). Operasi himpunan berguna saat membandingkan dua kumpulan kategori,
+        misalnya wilayah yang ada di dua sumber data berbeda.
+    - contoh: "Unpacking dan penetapan ganda"
+      kode: "# penetapan ganda\na, b, c = 1, 2, 3\nprint(a, b, c)\n# menukar nilai tanpa variabel bantu\na, b = b, a\nprint(a, b)\n# unpacking dengan bintang\npertama, *tengah, akhir = [10, 20, 30, 40, 50]\nprint(pertama, tengah, akhir)\n# unpacking dalam perulangan\npasangan = [(\"Barat\", 320), (\"Timur\", 210)]\nfor wilayah, nilai in pasangan:\n    print(wilayah, nilai)"
+      bahasa: Python
+      kode_judul: "unpacking"
+      eval: true
+      penjelasan: >
+        Empat bentuk pembongkaran diperagakan. Penetapan ganda memberi nilai ke beberapa peubah sekaligus
+        dalam satu baris. Penukaran nilai dilakukan tanpa peubah bantu karena ruas kanan dievaluasi lebih
+        dahulu. Bintang di depan nama peubah menampung seluruh elemen sisa sebagai list. Bentuk terakhir
+        memakai pembongkaran di dalam perulangan, sehingga tiap pasangan langsung terurai menjadi dua
+        peubah.
+      interpretasi: >
+        Unpacking adalah fitur Python yang elegan: menetapkan beberapa variabel sekaligus (a, b, c =
+        ...), menukar nilai tanpa variabel bantu (a, b = b, a), dan membongkar list dengan bintang
+        (*tengah menampung sisa). Unpacking dalam perulangan (for wilayah, nilai in ...) sangat sering
+        dipakai bersama zip dan .items(). Fitur ini membuat kode Python ringkas dan mudah dibaca.
+    - contoh: "map, filter, dan reduce (gaya fungsional)"
+      kode: "from functools import reduce\nnilai = [3, 8, 1, 9, 4, 7]\n# map: terapkan fungsi ke tiap elemen\nkuadrat = list(map(lambda x: x ** 2, nilai))\nprint(kuadrat)\n# filter: saring elemen\nbesar = list(filter(lambda x: x > 5, nilai))\nprint(besar)\n# reduce: akumulasi jadi satu nilai\ntotal = reduce(lambda a, b: a + b, nilai)\nprint(\"total:\", total)"
+      bahasa: Python
+      kode_judul: "map, filter, reduce"
+      eval: true
+      penjelasan: >
+        Fungsi reduce diimpor lebih dahulu dari modul functools karena bukan fungsi bawaan. Fungsi map
+        menerapkan fungsi lambda ke tiap elemen, dan filter mempertahankan elemen yang lolos syarat;
+        keduanya menghasilkan objek malas sehingga dibungkus list agar isinya tampak. Fungsi reduce
+        mengakumulasi elemen secara berpasangan menjadi satu nilai tunggal.
+      interpretasi: >
+        Python mendukung gaya fungsional yang setara dengan Map/Filter/Reduce di R (Modul 3): map
+        menerapkan fungsi ke tiap elemen, filter menyaring, dan reduce (dari functools) mengakumulasi.
+        Meski demikian, di Python idiom yang lebih disukai untuk map dan filter biasanya adalah list
+        comprehension yang lebih mudah dibaca. Membandingkan keduanya menunjukkan bahwa satu tujuan
+        sering punya beberapa cara - pilih yang paling jelas.
+    - contoh: "Membaca data dan iterasi baris DataFrame"
+      kode: "import pandas as pd\njual = pd.read_csv(\"data/data_penjualan.csv\")\n# iterasi baris dengan iterrows\nfor idx, baris in jual.head(3).iterrows():\n    print(f\"baris {idx}: {baris['wilayah']} = {baris['penjualan']}\")\n# operasi tervektor (lebih cepat dari iterasi)\njual[\"selisih\"] = jual[\"penjualan\"] - jual[\"target\"]\nprint(jual[[\"wilayah\", \"selisih\"]].head())\n# ringkasan cepat\nprint(jual[\"penjualan\"].agg([\"min\", \"max\", \"mean\"]))"
+      bahasa: Python
+      kode_judul: "iterrows vs tervektor"
+      eval: true
+      penjelasan: >
+        Tiga pendekatan dibandingkan. Metode .iterrows menelusuri baris satu per satu dan memberi
+        pasangan indeks beserta isi barisnya, yang di dalam f-string diakses seperti dictionary. Baris
+        berikutnya mengerjakan hal serupa secara tervektor dengan mengurangkan dua kolom sekaligus, jauh
+        lebih ringkas dan cepat. Baris terakhir memakai .agg dengan daftar nama fungsi untuk menghitung
+        beberapa ringkasan sekaligus.
+      interpretasi: >
+        pandas menyediakan iterrows untuk menelusuri baris DataFrame satu per satu, mirip perulangan
+        pada data frame R. Namun untuk operasi sederhana seperti selisih kolom, pendekatan tervektor
+        (jual["penjualan"] - jual["target"]) jauh lebih cepat dan ringkas - hindari iterrows bila bisa
+        tervektor. .agg dengan daftar fungsi menghitung beberapa ringkasan sekaligus. Prinsip "utamakan
+        tervektor" ini sama dengan yang dipelajari untuk R di Modul 3.
+    - "\\begin{kotakvariasi}\nUntuk menerapkan fungsi ke seluruh kolom, selain \\texttt{.apply}, pandas menyediakan operasi tervektor langsung (mis. \\texttt{jual[\"penjualan\"] / jual[\"target\"]}) dan \\texttt{numpy.where(syarat, a, b)} sebagai padanan \\texttt{ifelse}. Operasi tervektor umumnya jauh lebih cepat daripada \\texttt{.apply} baris demi baris.\n\\end{kotakvariasi}"
+  latihan:
+    - "Kerjakan bertahap. **Dasar** melengkapi kode; **Menengah** menulis sendiri; **Lanjut** memecahkan kasus. Gunakan `data/data_penjualan.csv`."
+    - "#### Tingkat Dasar (melengkapi kode)"
+    - "\\latihan{Kondisi dengan elif}"
+    - "```{python eval=FALSE}\nnilai = 68\nif nilai >= 85:\n    huruf = \"A\"\n____ nilai >= 70:      # kata kunci cabang tengah\n    huruf = \"B\"\nelse:\n    huruf = \"C\"\nprint(huruf)\n```"
+    - "\\latihan{for dengan range}"
+    - "```{python eval=FALSE}\ntotal = 0\nfor i in range(1, ____):   # jumlahkan 1..10\n    total += i\nprint(total)\n```"
+    - "\\latihan{List comprehension}"
+    - "```{python eval=FALSE}\nnilai = [80, 55, 90, 65]\nlulus = [n >= 60 for n in ____]   # objek yang diiterasi\nprint(lulus)\n```"
+    - "#### Tingkat Menengah (menulis sendiri)"
+    - "\\latihan{enumerate dan zip}"
+    - "Diberi dua list `wilayah = [\"Barat\",\"Tengah\",\"Timur\"]` dan `penjualan = [320, 280, 210]`. Gunakan `zip` untuk mencetak tiap wilayah beserta penjualannya, dan `enumerate` untuk mencetak nomor urut tiap wilayah."
+    - "\\latihan{Fungsi dengan *args}"
+    - "Tulis fungsi `rata(*args)` yang menerima sejumlah angka dan mengembalikan rata-ratanya. Uji dengan `rata(80, 90)` dan `rata(70, 85, 95, 100)`."
+    - "\\latihan{Slicing}"
+    - "Diberi `data = [5, 10, 15, 20, 25, 30]`. Gunakan slicing untuk mengambil: (a) tiga elemen pertama, (b) tiga elemen terakhir, (c) elemen indeks genap, (d) list dalam urutan terbalik."
+    - "\\latihan{Generator}"
+    - "Tulis generator `ganjil(n)` yang menghasilkan bilangan ganjil dari 1 sampai n. Gunakan untuk mencetak semua ganjil hingga 15 dan menghitung jumlahnya."
+    - "\\latihan{Membetulkan kode yang salah}"
+    - "Kode Python berikut memuat kesalahan indentasi, titik dua, elif, dan indeks. Temukan dan perbaiki, lalu jelaskan tiap kesalahannya."
+    - "```{python eval=FALSE}\nnilai = 78\nif nilai >= 85                    # lupa titik dua\n    huruf = \"A\"\nelseif nilai >= 70:               # kata kunci salah (harusnya elif)\nhuruf = \"B\"                       # indentasi salah\nelse:\n    huruf = \"C\"\n\nangka = [10, 20, 30]\nfor i in range(1, 4):             # akan keluar batas indeks\n    print(angka[i])\n```"
+    - "**Keluaran yang benar.** Setelah diperbaiki, kode akan menghasilkan keluaran berikut. Gunakan ini untuk memverifikasi perbaikan Anda.\n\n```\nB          # huruf untuk nilai 78\n10\n20\n30\n```"
+    - "#### Tingkat Lanjut (kasus kecil)"
+    - "\\latihan{try/except dan comprehension}"
+    - "Diberi list `data = [\"120\", \"90\", \"xx\", \"75\"]`. Tulis kode yang mengubah tiap elemen menjadi integer bila memungkinkan (lewati yang gagal dengan `try/except`), lalu hitung rata-ratanya. Petunjuk: gabungkan perulangan, `try/except`, dan penanganan angka yang valid."
+  penugasan:
+    - "\\begin{kotaktugas}\nSebagai calon pengolah data \\emph{official statistics}, olah data penjualan wilayah tiruan memakai \\texttt{data\\_penjualan.csv} (\\emph{data simulasi}) dengan Python.\n\\end{kotaktugas}"
+    - "**Konteks.** Data penjualan 12 catatan dari tiga wilayah beserta targetnya perlu diklasifikasikan dan diringkas per wilayah menggunakan Python."
+    - "\\tugas{Fungsi status pencapaian}"
+    - "1. Tulis fungsi `status(p, t, ambang=1.0)` yang mengembalikan \"Tercapai\"/\"Belum\" berdasarkan rasio penjualan terhadap target, lalu terapkan ke seluruh baris dengan `.apply`."
+    - "\\tugas{Ringkasan dengan groupby}"
+    - "2. Hitung **jumlah wilayah yang \"Tercapai\"** per wilayah menggunakan `groupby`."
+    - "3. Hitung **rata-rata dan maksimum** penjualan per wilayah."
+    - "\\tugas{Comprehension dan penanganan galat}"
+    - "4. Dengan **list comprehension**, buat daftar wilayah yang penjualannya di atas rata-rata keseluruhan."
+    - "5. Susun laporan Jupyter Notebook berisi kode, keluaran, dan interpretasi. Sertakan **tabel perbandingan** minimal empat konstruksi alur kendali R vs Python yang Anda pakai (rujuk Modul 3)."
+  ringkasan:
+    - "\\begin{kotaktujuan}\n\\textbf{Daftar periksa penguasaan:}\n\\begin{itemize}\n\\item[$\\square$] Saya dapat memakai \\texttt{if}/\\texttt{elif}/\\texttt{else} dan ekspresi kondisional dengan indentasi benar.\n\\item[$\\square$] Saya dapat memakai \\texttt{for} (dengan \\texttt{range}/\\texttt{enumerate}/\\texttt{zip}), \\texttt{while}, \\texttt{break}/\\texttt{continue}.\n\\item[$\\square$] Saya dapat menulis fungsi \\texttt{def}, \\texttt{lambda}, serta memakai \\texttt{*args}/\\texttt{**kwargs}.\n\\item[$\\square$] Saya dapat memakai list/dict/set comprehension.\n\\item[$\\square$] Saya dapat menangani galat (\\texttt{try}/\\texttt{except}) dan nilai hilang (\\texttt{NaN}).\n\\item[$\\square$] Saya memahami perbedaan sintaks alur kendali Python dan R.\n\\end{itemize}\n\\end{kotaktujuan}"
+    - "**Kartu Referensi Cepat.** Rangkuman padanan R $\\rightarrow$ Python:"
+    - "\\begin{kotakrumus}\n\\begin{tabular}{@{}ll@{}}\n\\textbf{R} & \\textbf{Python}\\\\\n\\texttt{if/else if/else} & \\texttt{if/elif/else}\\\\\n\\texttt{ifelse(s,a,b)} & \\texttt{a if s else b}\\\\\n\\texttt{for (i in 1:n)} & \\texttt{for i in range(n)}\\\\\n\\texttt{next} / \\texttt{break} & \\texttt{continue} / \\texttt{break}\\\\\n\\texttt{function(x)} & \\texttt{def f(x):}\\\\\n\\texttt{sapply(v,f)} & \\texttt{[f(x) for x in v]}\\\\\n\\texttt{tapply/aggregate} & \\texttt{groupby}\\\\\n\\texttt{is.na(x)} & \\texttt{x.isna()}\\\\\n\\texttt{NA} & \\texttt{None}/\\texttt{NaN}\\\\\n\\end{tabular}\n\\end{kotakrumus}"
+    - "Alur kendali Python kini dikuasai menyeluruh dan dapat dibandingkan langsung dengan R (Modul 3). Perbedaan utama: indentasi menggantikan kurung kurawal, \\texttt{elif} menggantikan \\texttt{else if}, indeks mulai dari 0, dan comprehension sebagai idiom ringkas. Fitur khas Python (\\texttt{*args}/\\texttt{**kwargs}, comprehension, \\texttt{try}/\\texttt{except}) memperkaya cara menulis program. Pada modul berikutnya kita masuk ke manipulasi data dengan \\texttt{dplyr} (R)."
+  referensi:
+    - "McKinney, W. (2017). *Python for Data Analysis*, 2nd ed. O'Reilly Media. (Referensi utama pandas dan Python untuk data.)"
+    - "Zhang, N. (2020). *A Tour of Data Science: Learn R and Python in Parallel*. Chapman and Hall/CRC. (Perbandingan R dan Python.)"
+    - "Chen, D. Y. (2018). *Pandas for Everyone: Python Data Analysis*. Addison-Wesley. (Manipulasi data dengan pandas.)"
+    - "Ramalho, L. (2015). *Fluent Python*. O'Reilly Media. (Comprehension, fungsi, dan idiom Python lanjut.)"
+
+exercises:
+  - id: "L4.1"
+    points: 15
+    solution: "Tingkat Dasar: elif, range, list comprehension. Isian: elif, 11, nilai."
+    judul_py: "Solusi Tingkat Dasar (Python)"
+    solusi_py: |
+      nilai = 68
+      if nilai >= 85: huruf = "A"
+      elif nilai >= 70: huruf = "B"
+      else: huruf = "C"
+      print(huruf)                      # C
+      total = 0
+      for i in range(1, 11): total += i
+      print(total)                      # 55
+      nilai = [80, 55, 90, 65]
+      print([n >= 60 for n in nilai])   # [True, False, True, True]
+    interpretasi: >
+      elif adalah cabang tengah (bukan else if); range(1, 11) menjumlahkan 1..10 = 55; list
+      comprehension memberi daftar boolean. Semua setara konsepnya dengan Modul 3 di R.
+  - id: "L4.2"
+    points: 25
+    solution: "Tingkat Menengah/Lanjut: enumerate/zip, *args, try/except + comprehension."
+    judul_py: "Solusi Menengah dan Lanjut (Python)"
+    solusi_py: |
+      wilayah = ["Barat","Tengah","Timur"]; penjualan = [320, 280, 210]
+      for w, p in zip(wilayah, penjualan): print(w, p)
+      for i, w in enumerate(wilayah): print(i+1, w)
+      def rata(*args): return sum(args) / len(args)
+      print(rata(80, 90)); print(rata(70, 85, 95, 100))
+      # try/except + comprehension
+      data = ["120", "90", "xx", "75"]
+      angka = []
+      for x in data:
+          try: angka.append(int(x))
+          except ValueError: pass
+      print("rata-rata:", sum(angka) / len(angka))   # 95.0
+    interpretasi: >
+      zip memasangkan wilayah-penjualan; enumerate memberi nomor urut. rata(*args) menerima jumlah
+      argumen tak tetap. try/except melewati "xx" yang tak bisa dikonversi, lalu rata-rata dihitung
+      dari angka yang valid (120,90,75 -> 95.0).
+  - id: "T4.1"
+    points: 60
+    solution: "Penugasan: fungsi status, groupby, comprehension, dan laporan perbandingan."
+    judul_py: "Solusi Penugasan (Python)"
+    solusi_py: |
+      import pandas as pd
+      jual = pd.read_csv("data/data_penjualan.csv")
+      def status(p, t, ambang=1.0):
+          return "Tercapai" if p / t >= ambang else "Belum"
+      jual["status"] = jual.apply(lambda r: status(r["penjualan"], r["target"]), axis=1)
+      # jumlah "Tercapai" per wilayah
+      print(jual[jual["status"] == "Tercapai"].groupby("wilayah").size())
+      # rata-rata & maksimum per wilayah
+      print(jual.groupby("wilayah")["penjualan"].agg(["mean", "max"]))
+      # comprehension: wilayah di atas rata-rata keseluruhan
+      rata = jual["penjualan"].mean()
+      atas = [w for w, p in zip(jual["wilayah"], jual["penjualan"]) if p > rata]
+      print("di atas rata-rata:", set(atas))
+    interpretasi: >
+      Fungsi status menandai tiap baris; groupby+size meringkas jumlah "Tercapai" per wilayah
+      (padanan tapply di R); groupby+agg memberi rata-rata dan maksimum. List comprehension menyaring
+      wilayah di atas rata-rata. Data simulasi, bukan data resmi.
+
+  - id: "L4.D"
+    points: 10
+    solution: "Membetulkan kode: titik dua, elif, indentasi, indeks range."
+    judul_py: "Solusi Membetulkan Kode (Python)"
+    solusi_py: |
+      nilai = 78
+      if nilai >= 85:              # titik dua
+          huruf = "A"
+      elif nilai >= 70:            # elif (bukan elseif)
+          huruf = "B"             # indentasi konsisten
+      else:
+          huruf = "C"
+      print(huruf)
+
+      angka = [10, 20, 30]
+      for i in range(3):           # range(3) -> 0,1,2 (dalam batas)
+          print(angka[i])
+    interpretasi: >
+      Kesalahan Python: baris if lupa titik dua; elseif harus elif; indentasi harus konsisten (empat
+      spasi); range(1,4) menghasilkan 1,2,3 sehingga angka[3] di luar batas - pakai range(3) atau
+      range(len(angka)). Python peka terhadap indentasi dan titik dua, berbeda dari R.
+
+references:
+  - "McKinney, W. (2017). Python for Data Analysis, 2nd ed. O'Reilly Media."
+  - "Zhang, N. (2020). A Tour of Data Science: Learn R and Python in Parallel. Chapman and Hall/CRC."
+  - "Chen, D. Y. (2018). Pandas for Everyone: Python Data Analysis. Addison-Wesley."
+  - "Ramalho, L. (2015). Fluent Python. O'Reilly Media."

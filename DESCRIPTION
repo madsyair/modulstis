@@ -1,0 +1,30 @@
+Package: modulstis
+Title: Generator Template Modul Praktikum 
+Version: 0.3.8
+SystemRequirements: XeLaTeX; pola pemenggalan bahasa Indonesia
+        (hyph-id). Pada TeX Live berbasis Debian pasang melalui
+        'texlive-lang-other'; pada TinyTeX melalui
+        tinytex::tlmgr_install('hyphen-indonesian'). Periksa dengan
+        'kpsewhich hyph-id.tex'.
+Authors@R: 
+    person("Achmad Syahrul", "Choir", email = "madsyair@stis.ac.id",
+           role = c("aut", "cre"))
+Description: Menghasilkan template modul praktikum dan buku kunci jawaban dari
+    satu spesifikasi deklaratif (YAML/objek). Mendukung backend bookdown dan
+    Quarto dengan LaTeX (XeLaTeX) untuk PDF bernuansa warna logo BPS. Menerapkan
+    desain berorientasi objek (R6), pipeline fungsional untuk membangkitkan
+    banyak modul, logging terstruktur, dan kerangka uji (harness).
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 8.0.0
+Depends: R (>= 4.1.0)
+Imports: R6, yaml, purrr, fs
+Suggests: rmarkdown, knitr, bookdown, quarto, testthat (>= 3.0.0),
+        pdftools, rstudioapi
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+NeedsCompilation: no
+Packaged: 2026-09-05 05:21:00 UTC; root
+Author: Achmad Syahrul Choir [aut, cre]
+Maintainer: Achmad Syahrul Choir <madsyair@stis.ac.id>

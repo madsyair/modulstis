@@ -1,0 +1,635 @@
+number: 13
+title: "Analisis Ragam: ANOVA Satu Arah dan Dua Arah"
+short_code: "anova"
+topic: "Analisis Ragam (ANOVA)"
+pertemuan: 13
+sub_cpmk: >
+  Sub-CPMK 13: Mahasiswa mampu membuat analisis dan melakukan pengolahan ANOVA satu arah dan
+  dua arah, serta uji perbandingan ganda (Tukey dan Duncan), baik dengan fungsi R maupun dengan
+  perhitungan manual langkah demi langkah.
+packages: [dplyr, car, agricolae]
+contoh_title: "Contoh Praktikum dengan R"
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  ta: "2025/2026"
+  semester: "3 (Ganjil)"
+  prodi: "D-IV Statistika"
+  penyusun:
+    - "Achmad Syahrul Choir"
+    - "Rudi Salam"
+    - "Christiana Anggraeni Putri"
+
+datasets:
+  - name: data_panen
+    role: contoh
+    recipe:
+      kind: tabular
+      "n": 90
+      seed: 2025
+      columns:
+        varietas: {type: balanced, levels: [V1, V2, V3], each: 30}
+        pupuk: {type: balanced, levels: [Organik, Anorganik], each: 15}
+        hasil: {type: numeric, min: 30, max: 80, digits: 2}
+        tinggi: {type: numeric, min: 80, max: 160, digits: 1}
+
+body:
+  deskripsi:
+    - >
+      Modul ini membahas \textbf{analisis ragam} (\emph{analysis of variance}), perkakas untuk
+      membandingkan rata-rata \textbf{lebih dari dua} kelompok sekaligus. Pada Modul 11 kita telah
+      membandingkan dua kelompok dengan uji t; ketika kelompoknya bertambah, menguji seluruh pasangan
+      satu per satu justru menimbulkan persoalan baru yang akan dibahas di teori.
+    - >
+      Gagasan intinya terkandung dalam namanya. Meskipun yang dibandingkan adalah rata-rata, caranya
+      justru dengan menguraikan \emph{keragaman} total data menjadi dua bagian: keragaman
+      \textbf{antar-kelompok} dan keragaman \textbf{dalam kelompok}. Bila keragaman antar-kelompok
+      jauh lebih besar daripada keragaman dalam kelompok, kita menyimpulkan rata-rata kelompok memang
+      berbeda. Perbandingan kedua keragaman itulah statistik F yang telah dikenalkan pada Modul 12.
+    - >
+      Seperti dua modul sebelumnya, setiap analisis disajikan melalui \textbf{dua jalur}: memakai
+      fungsi bawaan R, dan menghitungnya \textbf{manual langkah demi langkah} - termasuk menyusun
+      sendiri seluruh tabel ANOVA dari jumlah kuadrat hingga nilai-p memakai \texttt{qf} dan
+      \texttt{pf}.
+    - >
+      Materi dibahas dari dasar hingga lanjut: ANOVA satu arah beserta penguraian jumlah kuadrat;
+      pemeriksaan asumsi melalui sisaan; uji perbandingan ganda dengan Tukey, Duncan, dan Bonferroni;
+      ANOVA dua arah beserta pengaruh utama dan interaksi; grafik interaksi; ukuran pengaruh; serta
+      alternatif nonparametrik Kruskal-Wallis.
+    - "\\begin{kotakperhatian}[Tentang data]\nBerkas data pada modul ini adalah \\textbf{data simulasi} (\\texttt{set.seed(2025)}), \\textbf{bukan data nyata} dan \\textbf{bukan data resmi} instansi mana pun. Data menggambarkan percobaan pertanian tiruan dengan rancangan faktorial berimbang: tiga varietas dan dua jenis pupuk, masing-masing 15 amatan.\n\\end{kotakperhatian}"
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:"
+    - "1. **Menjelaskan** mengapa ANOVA diperlukan dan bahaya melakukan banyak uji t berpasangan."
+    - "2. **Melakukan** ANOVA satu arah dengan `aov` serta **menyusun tabel ANOVA manual** dari penguraian jumlah kuadrat."
+    - "3. **Menghitung** nilai kritis F dengan `qf` dan nilai-p dengan `pf`, serta menggambar daerah penolakannya."
+    - "4. **Memeriksa** asumsi ANOVA melalui sisaan: kenormalan, kesamaan ragam, dan kebebasan."
+    - "5. **Melakukan** uji perbandingan ganda dengan **Tukey**, **Duncan**, dan Bonferroni, serta memahami perbedaan ketegasannya."
+    - "6. **Melakukan** ANOVA dua arah, membedakan **pengaruh utama** dari **interaksi**, dan membacanya lewat grafik interaksi."
+    - "7. **Menghitung** ukuran pengaruh (eta kuadrat) dan memakai alternatif nonparametrik bila asumsi tidak terpenuhi."
+  alat:
+    - "Perangkat dan bahan yang diperlukan:"
+    - "- **R** (RStudio); modul ini fokus pada R sesuai RPS."
+    - "- Paket: `dplyr`, `car` (uji Levene), dan `agricolae` (uji Duncan)."
+    - "- Berkas data: `data/data_panen.csv`."
+  instruksi:
+    - "Ikuti tahapan berikut:"
+    - "**Sebelum praktikum:** siapkan direktori kerja; letakkan `data_panen.csv` di subfolder `data/`; pasang `agricolae` bila belum tersedia."
+    - "**Selama praktikum:** kerjakan Contoh berurutan; untuk setiap analisis, **tuliskan hipotesisnya lebih dahulu**; kerjakan versi fungsi R **dan** versi manualnya, lalu bandingkan tabel ANOVA yang Anda susun sendiri dengan keluaran `summary(aov(...))` - keduanya harus sama."
+    - "**Pembagian kerja:** Contoh dan Latihan dikerjakan selama sesi praktikum di kelas; **Penugasan dikerjakan sebagai tugas terstruktur di luar sesi**.\n\n**Pengumpulan:** susun laporan R Markdown, render ke PDF/HTML, dan kumpulkan via Google Classroom sesuai tenggat yang ditetapkan dosen."
+  teori:
+    - "### Kaitan dengan Materi Sebelumnya"
+    - >
+      Modul ini menyatukan beberapa bekal sekaligus. Kerangka uji hipotesis berasal dari Modul 11.
+      Sebaran F beserta fungsi \texttt{qf} dan \texttt{pf} berasal dari Modul 12, dan di sini menjadi
+      statistik utamanya. Uji Levene dari Modul 12 dipakai untuk memeriksa asumsi kesamaan ragam,
+      sedangkan uji kenormalan dipakai pada sisaan. Grafik dari Modul 7 dan 9 dipakai untuk diagnosa
+      model dan grafik interaksi.
+    - >
+      ANOVA juga menjadi jembatan menuju Modul 14. Analisis ragam sesungguhnya adalah kasus khusus
+      model linear, dan tabel ANOVA yang disusun di sini akan muncul kembali sebagai uji kebermaknaan
+      model pada regresi.
+    - "### Mengapa Bukan Banyak Uji t"
+    - >
+      Bila terdapat tiga kelompok, terdapat tiga pasangan yang dapat dibandingkan; bila lima kelompok,
+      pasangannya menjadi sepuluh. Setiap pengujian memiliki peluang galat jenis I sebesar taraf
+      nyatanya, sehingga melakukan banyak pengujian melipatgandakan peluang menemukan perbedaan yang
+      sebenarnya tidak ada.
+    - "\\begin{kotaksalah}[Peluang galat menumpuk]\nDengan taraf nyata 5 persen, peluang tidak melakukan galat pada satu pengujian adalah 0,95. Untuk 10 pengujian yang saling bebas, peluang tidak melakukan galat sama sekali menjadi $0{,}95^{10} \\approx 0{,}60$, sehingga peluang \\textbf{setidaknya satu} kesimpulan keliru mencapai sekitar 40 persen. ANOVA menghindarinya dengan satu pengujian menyeluruh, dan bila nyata barulah dilanjutkan uji perbandingan ganda yang sudah memperhitungkan penumpukan ini.\n\\end{kotaksalah}"
+    - "### Penguraian Jumlah Kuadrat"
+    - >
+      Inti ANOVA adalah penguraian keragaman total menjadi komponen-komponennya. Setiap amatan
+      menyimpang dari rata-rata keseluruhan, dan simpangan itu dapat dipecah menjadi simpangan
+      rata-rata kelompoknya terhadap rata-rata keseluruhan, ditambah simpangan amatan terhadap
+      rata-rata kelompoknya sendiri.
+    - "\\begin{kotakrumus}\n\\textbf{ANOVA satu arah.}\\\\[3pt]\n$JK_{total} = \\sum (y_{ij} - \\bar{y})^{2}$, \\quad db $= N-1$\\\\[3pt]\n$JK_{perlakuan} = \\sum n_i (\\bar{y}_i - \\bar{y})^{2}$, \\quad db $= k-1$\\\\[3pt]\n$JK_{galat} = \\sum (y_{ij} - \\bar{y}_i)^{2}$, \\quad db $= N-k$\\\\[5pt]\n$JK_{total} = JK_{perlakuan} + JK_{galat}$\\\\[5pt]\n$KT = \\dfrac{JK}{db}$, \\qquad $F = \\dfrac{KT_{perlakuan}}{KT_{galat}}$\n\\end{kotakrumus}"
+    - >
+      Hipotesis nolnya menyatakan seluruh rata-rata kelompok sama. Bila hipotesis nol benar, kedua
+      kuadrat tengah menduga ragam yang sama sehingga rasionya mendekati satu. Makin besar rasio F,
+      makin kuat bukti adanya perbedaan - karena itu pengujian ANOVA selalu \textbf{satu arah ke
+      kanan}.
+    - "\\begin{kotakinfo}[Bentuk tabel ANOVA satu arah]\n\\begin{tabular}{@{}lcccc@{}}\n\\textbf{Sumber} & \\textbf{db} & \\textbf{JK} & \\textbf{KT} & \\textbf{F}\\\\\nPerlakuan & $k-1$ & $JK_p$ & $JK_p/(k-1)$ & $KT_p/KT_g$\\\\\nGalat & $N-k$ & $JK_g$ & $JK_g/(N-k)$ & \\\\\nTotal & $N-1$ & $JK_t$ & & \\\\\n\\end{tabular}\n\\end{kotakinfo}"
+    - "### Asumsi ANOVA"
+    - >
+      Tiga asumsi harus dipenuhi: amatan saling \textbf{bebas}, sisaan menyebar \textbf{normal}, dan
+      ragam antar-kelompok \textbf{sama} (homogen). Pemeriksaan kenormalan dilakukan pada
+      \textbf{sisaan} model, bukan pada data mentah tiap kelompok - inilah cara yang benar karena
+      sisaan sudah membuang pengaruh perbedaan rata-rata antar-kelompok.
+    - "\\begin{kotaksalah}[Memeriksa kenormalan pada data mentah]\nMenguji kenormalan langsung pada seluruh data \\texttt{hasil} tanpa memisahkan kelompok akan menyesatkan: bila rata-rata kelompok memang berbeda, sebaran gabungannya dapat tampak bermodus ganda meskipun sisaannya normal sempurna. Periksalah \\texttt{residuals(model)}.\n\\end{kotaksalah}"
+    - "### Uji Perbandingan Ganda"
+    - >
+      ANOVA yang nyata hanya menyatakan \emph{ada} perbedaan, tanpa menyebut pasangan mana yang
+      berbeda. Untuk itu diperlukan uji lanjut yang sudah memperhitungkan penumpukan galat.
+    - "\\begin{kotakinfo}[Membandingkan uji lanjut]\n\\begin{tabular}{@{}lll@{}}\n\\textbf{Uji} & \\textbf{Perintah} & \\textbf{Sifat}\\\\\nTukey HSD & \\texttt{TukeyHSD(model)} & tegas, kendali galat menyeluruh\\\\\nDuncan & \\texttt{agricolae::duncan.test()} & lebih longgar, bertingkat\\\\\nBonferroni & \\texttt{pairwise.t.test(...)} & paling tegas, sederhana\\\\\n\\end{tabular}\\\\[4pt]\nMakin tegas suatu uji, makin kecil peluang galat jenis I tetapi makin besar peluang galat jenis II.\n\\end{kotakinfo}"
+    - "\\begin{kotaktips}\nJangan menjalankan uji lanjut bila ANOVA-nya sendiri tidak nyata. Melakukannya sama saja mengabaikan hasil pengujian menyeluruh dan mengembalikan persoalan penumpukan galat yang justru hendak dihindari. Urutannya baku: ANOVA nyata lebih dahulu, baru uji lanjut.\n\\end{kotaktips}"
+    - "### ANOVA Dua Arah dan Interaksi"
+    - >
+      Ketika terdapat dua faktor, keragaman diuraikan menjadi empat komponen: pengaruh utama faktor
+      pertama, pengaruh utama faktor kedua, \textbf{interaksi} keduanya, dan galat.
+      \textbf{Interaksi} berarti pengaruh suatu faktor \emph{bergantung} pada taraf faktor lainnya.
+    - "\\begin{kotaksalah}[Menafsirkan pengaruh utama saat interaksi nyata]\nBila interaksi nyata, pengaruh utama \\textbf{tidak boleh} ditafsirkan sendiri-sendiri. Menyatakan ``pupuk organik lebih baik'' menjadi menyesatkan bila kenyataannya organik lebih baik pada satu varietas tetapi lebih buruk pada varietas lain. Periksalah selalu interaksinya lebih dahulu, dan bila nyata, tafsirkan pengaruh tiap faktor \\emph{pada masing-masing taraf} faktor lainnya.\n\\end{kotaksalah}"
+    - >
+      \textbf{Ukuran pengaruh.} Nilai-p menyatakan kekuatan bukti, bukan besarnya pengaruh. Eta
+      kuadrat menyatakan proporsi keragaman total yang dapat diterangkan suatu faktor, dihitung
+      sebagai jumlah kuadrat faktor dibagi jumlah kuadrat total.
+  contoh:
+    - contoh: "Memeriksa rancangan dan deskripsi awal"
+      kode_r: "suppressPackageStartupMessages(library(dplyr))\npan <- read.csv(\"data/data_panen.csv\")\nstr(pan)\n# rancangan berimbang: tiap sel berisi amatan sama banyak\ntable(pan$varietas, pan$pupuk)\npan |>\n  group_by(varietas) |>\n  summarise(n = n(), rata = round(mean(hasil), 3),\n            sd = round(sd(hasil), 3), .groups = \"drop\")"
+      judul_r: "table dan ringkasan per kelompok"
+      eval: true
+      penjelasan: >
+        Data dibaca lalu strukturnya diperiksa dengan str. Tabel silang kedua faktor memastikan
+        rancangannya berimbang, yaitu tiap kombinasi taraf berisi amatan sama banyak - syarat yang
+        memudahkan penguraian jumlah kuadrat. Ringkasan per varietas disusun dengan dplyr, memuat
+        banyaknya amatan, rata-rata, dan simpangan baku tiap kelompok.
+      interpretasi: >
+        Rancangan berimbang dengan 15 amatan per sel menyederhanakan analisis karena penguraian jumlah
+        kuadratnya tunggal dan tidak bergantung urutan faktor. Ringkasan awal memberi gambaran besaran
+        perbedaan rata-rata antar-varietas dan keragaman di dalam masing-masing; keduanya nanti menjadi
+        pembilang dan penyebut statistik F.
+    - contoh: "Bahaya banyak uji t berpasangan"
+      kode_r: "alpha <- 0.05\nk <- c(3, 4, 5, 10)\nbanyak_uji <- choose(k, 2)\npeluang_galat <- 1 - (1 - alpha)^banyak_uji\nrbind(kelompok = k, pasangan = banyak_uji,\n      peluang_min1_galat = round(peluang_galat, 4))"
+      judul_r: "penumpukan peluang galat"
+      eval: true
+      penjelasan: >
+        Fungsi choose menghitung banyaknya pasangan yang dapat dibentuk dari k kelompok, yaitu kombinasi
+        dua dari k. Peluang melakukan setidaknya satu galat dihitung sebagai satu dikurangi peluang tidak
+        melakukan galat sama sekali, yaitu satu dikurangi alpha dipangkatkan banyaknya pengujian. Ketiga
+        baris digabung dengan rbind agar polanya mudah dibaca.
+      interpretasi: >
+        Angka-angka ini memperlihatkan persoalannya dengan gamblang: pada lima kelompok peluang keliru
+        sudah melebihi 40 persen, dan pada sepuluh kelompok mendekati kepastian. Inilah alasan
+        keberadaan ANOVA - satu pengujian menyeluruh yang menjaga taraf nyata tetap terkendali, baru
+        dilanjutkan uji lanjut yang juga memperhitungkan penumpukan ini.
+    - contoh: "Menyusun tabel ANOVA secara manual"
+      kode_r: "y <- pan$hasil\ng <- factor(pan$varietas)\nN <- length(y); k <- nlevels(g)\ny_bar <- mean(y)\n\n# rata-rata dan ukuran tiap kelompok\nrata_i <- tapply(y, g, mean)\nn_i    <- tapply(y, g, length)\n\n# Langkah 1: jumlah kuadrat\nJK_total <- sum((y - y_bar)^2)\nJK_perlakuan <- sum(n_i * (rata_i - y_bar)^2)\nJK_galat <- sum((y - rata_i[g])^2)\n\n# Langkah 2: derajat bebas\ndb_p <- k - 1; db_g <- N - k; db_t <- N - 1\n\n# Langkah 3: kuadrat tengah dan F\nKT_p <- JK_perlakuan / db_p\nKT_g <- JK_galat / db_g\nF_hitung <- KT_p / KT_g\n\n# Langkah 4: nilai kritis dan nilai-p (sebaran F, Modul 12)\nF_kritis <- qf(0.95, db_p, db_g)\np_value  <- 1 - pf(F_hitung, db_p, db_g)\n\ntabel <- rbind(\n  Perlakuan = c(db = db_p, JK = JK_perlakuan, KT = KT_p, F = F_hitung, p = p_value),\n  Galat     = c(db_g, JK_galat, KT_g, NA, NA),\n  Total     = c(db_t, JK_total, NA, NA, NA))\nround(tabel, 5)\n# pemeriksaan penguraian\nround(c(JK_total = JK_total, jumlah_komponen = JK_perlakuan + JK_galat), 6)"
+      judul_r: "penguraian jumlah kuadrat dari nol"
+      eval: true
+      penjelasan: >
+        Seluruh besaran dihitung tanpa memanggil aov. Rata-rata dan ukuran tiap kelompok diperoleh dengan
+        tapply - keterampilan Modul 3. Jumlah kuadrat total mengukur simpangan seluruh amatan terhadap
+        rata-rata keseluruhan. Jumlah kuadrat perlakuan menimbang simpangan rata-rata kelompok dengan
+        ukuran kelompoknya. Jumlah kuadrat galat memakai penulisan rata_i indeks g, yaitu mengambil
+        rata-rata kelompok yang sesuai untuk tiap amatan. Nilai kritis diambil dengan qf dan nilai-p
+        sebagai luas ekor kanan dengan pf. Tabel disusun dengan rbind menyerupai keluaran baku.
+      interpretasi: >
+        Baris pemeriksaan terakhir membuktikan bahwa jumlah kuadrat total tepat sama dengan jumlah kedua
+        komponennya - inilah penguraian yang menjadi inti analisis ragam. Bandingkan tabel ini dengan
+        keluaran summary pada contoh sebelumnya: seluruh angkanya sama. Fungsi aov sesungguhnya hanya
+        mengotomatiskan keempat langkah ini.
+    - contoh: "Daerah penolakan sebaran F"
+      kode_r: "curve(df(x, db_p, db_g), from = 0, to = 6, lwd = 2, col = \"#123A6B\",\n      ylab = \"kepekatan\", xlab = \"nilai F\",\n      main = paste0(\"Sebaran F (db = \", db_p, \", \", db_g, \")\"))\nxk <- seq(F_kritis, 6, length.out = 300)\npolygon(c(F_kritis, xk, 6), c(0, df(xk, db_p, db_g), 0),\n        col = \"#F5822060\", border = NA)\nabline(v = F_kritis, col = \"#F58220\", lty = 2, lwd = 2)\nabline(v = F_hitung, col = \"#00A651\", lwd = 2)\nlegend(\"topright\", c(paste(\"F kritis =\", round(F_kritis, 3)),\n                     paste(\"F hitung =\", round(F_hitung, 3))),\n       col = c(\"#F58220\", \"#00A651\"), lty = c(2, 1), lwd = 2, bty = \"n\")"
+      judul_r: "arsiran ekor kanan"
+      eval: true
+      penjelasan: >
+        Kurva sebaran F digambar mulai dari nol memakai derajat bebas pembilang dan penyebut dari model.
+        Hanya ekor kanan yang diarsir, sesuai sifat ANOVA yang selalu satu arah. Garis putus-putus
+        menandai nilai kritis dan garis pejal menandai statistik hitung; keduanya dicantumkan pada
+        legenda beserta angkanya memakai paste.
+      interpretasi: >
+        Berbeda dari uji ragam dua populasi pada Modul 12 yang memakai dua ekor, ANOVA hanya memakai
+        ekor kanan. Alasannya, statistik F di sini membandingkan keragaman antar-kelompok terhadap
+        keragaman dalam kelompok; hanya nilai F yang besar yang menjadi bukti adanya perbedaan,
+        sedangkan F yang kecil justru mendukung hipotesis nol.
+    - contoh: "Memeriksa asumsi melalui sisaan"
+      kode_r: "# sisaan dihitung MANUAL: amatan dikurangi rata-rata kelompoknya\ndugaan <- rata_i[g]              # nilai dugaan tiap amatan\nsisaan <- y - dugaan\nround(head(cbind(y = y, dugaan = dugaan, sisaan = sisaan), 4), 3)\nround(sum(sisaan), 10)           # jumlah sisaan harus nol\n\npar(mfrow = c(1, 2))\nqqnorm(sisaan, pch = 19, col = \"#0B6FB4\", main = \"Q-Q sisaan\")\nqqline(sisaan, col = \"#F58220\", lwd = 2)\nplot(dugaan, sisaan, pch = 19, col = \"#0B6FB4\",\n     xlab = \"nilai dugaan\", ylab = \"sisaan\", main = \"Sisaan vs dugaan\")\nabline(h = 0, col = \"#F58220\", lty = 2, lwd = 2)\npar(mfrow = c(1, 1))\nshapiro.test(sisaan)"
+      judul_r: "sisaan manual, qqnorm, dan shapiro"
+      eval: true
+      penjelasan: >
+        Sisaan dihitung tanpa objek model: nilai dugaan tiap amatan adalah rata-rata kelompoknya,
+        diperoleh dengan penulisan rata_i indeks g, lalu sisaan adalah selisih amatan terhadap dugaan
+        itu. Beberapa baris pertama ditampilkan dengan cbind agar hubungan ketiganya terlihat, dan
+        jumlah seluruh sisaan diperiksa harus nol. Diagram kuantil-kuantil memeriksa kenormalan sisaan,
+        sedangkan diagram kedua memetakan sisaan terhadap dugaan dengan garis acuan pada nol. Uji
+        Shapiro-Wilk memberi pemeriksaan formalnya.
+      interpretasi: >
+        Perhatikan bahwa yang diperiksa adalah sisaan, bukan data mentah - inilah cara yang benar seperti
+        dibahas di teori. Pada diagram sisaan terhadap dugaan, sebaran titik yang acak tanpa pola dan
+        lebar pita yang seragam mendukung asumsi kesamaan ragam. Pola berbentuk corong akan menandakan
+        ragam yang membesar mengikuti nilai dugaan.
+    - contoh: "Ukuran pengaruh eta kuadrat"
+      kode_r: "eta2 <- JK_perlakuan / JK_total\neta2_parsial <- JK_perlakuan / (JK_perlakuan + JK_galat)\nround(c(eta_kuadrat = eta2, eta_parsial = eta2_parsial), 5)\ncat(\"Persentase keragaman yang diterangkan varietas:\",\n    round(100 * eta2, 2), \"persen\\n\")"
+      judul_r: "eta kuadrat dari jumlah kuadrat"
+      eval: true
+      penjelasan: >
+        Eta kuadrat dihitung sebagai jumlah kuadrat perlakuan dibagi jumlah kuadrat total, memanfaatkan
+        besaran yang sudah dihitung pada contoh perhitungan manual. Pada ANOVA satu arah, eta kuadrat dan
+        eta kuadrat parsial bernilai sama karena penyebutnya identik; keduanya baru berbeda pada ANOVA
+        dua arah. Baris terakhir menyatakannya sebagai persentase memakai cat.
+      interpretasi: >
+        Ukuran pengaruh menjawab pertanyaan yang tidak dijawab nilai-p: seberapa besar peran faktor itu.
+        Nilai eta kuadrat menyatakan proporsi keragaman total yang dapat diterangkan perbedaan
+        antar-kelompok. Melaporkannya bersama nilai-p mencegah kekeliruan menyimpulkan pengaruh itu
+        penting hanya karena nilai-p kecil, terutama pada contoh berukuran besar.
+    - contoh: "Menyusun tabel ANOVA dua arah manual"
+      kode_r: "A <- factor(pan$varietas); B <- factor(pan$pupuk)\na <- nlevels(A); b <- nlevels(B)\nn_sel <- N / (a * b)          # rancangan berimbang\n\nrata_A  <- tapply(y, A, mean)\nrata_B  <- tapply(y, B, mean)\nrata_AB <- tapply(y, list(A, B), mean)\n\nJK_A  <- b * n_sel * sum((rata_A - y_bar)^2)\nJK_B  <- a * n_sel * sum((rata_B - y_bar)^2)\n# interaksi: simpangan rata-rata sel terhadap model tanpa interaksi\nharap <- outer(rata_A, rata_B, function(u, v) u + v - y_bar)\nJK_AB <- n_sel * sum((rata_AB - harap)^2)\nJK_galat2 <- JK_total - JK_A - JK_B - JK_AB\n\ndbA <- a - 1; dbB <- b - 1; dbAB <- (a-1)*(b-1); dbG <- N - a*b\nKT <- c(JK_A/dbA, JK_B/dbB, JK_AB/dbAB, JK_galat2/dbG)\nFs <- KT[1:3] / KT[4]\nps <- 1 - pf(Fs, c(dbA, dbB, dbAB), dbG)\n\nround(rbind(\n  varietas      = c(db = dbA,  JK = JK_A,  KT = KT[1], F = Fs[1], p = ps[1]),\n  pupuk         = c(dbB,  JK_B,  KT[2], Fs[2], ps[2]),\n  interaksi     = c(dbAB, JK_AB, KT[3], Fs[3], ps[3]),\n  galat         = c(dbG,  JK_galat2, KT[4], NA, NA)), 5)"
+      judul_r: "penguraian empat komponen"
+      eval: true
+      penjelasan: >
+        Kedua faktor diubah menjadi faktor lalu banyaknya taraf dan ukuran tiap sel dihitung. Rata-rata
+        marginal tiap faktor diperoleh dengan tapply, sedangkan rata-rata tiap sel memakai tapply dengan
+        daftar dua faktor. Jumlah kuadrat pengaruh utama menimbang simpangan rata-rata marginal dengan
+        banyaknya amatan yang mendasarinya. Untuk interaksi, dihitung lebih dahulu rata-rata yang
+        diharapkan bila tidak ada interaksi memakai outer, yaitu jumlah kedua pengaruh dikurangi
+        rata-rata keseluruhan; simpangan rata-rata sel terhadapnya itulah interaksi. Jumlah kuadrat galat
+        diperoleh sebagai sisa penguraian.
+      interpretasi: >
+        Bandingkan tabel ini dengan keluaran summary model dua arah; seluruh angkanya sama. Rumus
+        interaksi memperjelas maknanya: interaksi mengukur seberapa jauh rata-rata sel menyimpang dari
+        yang diharapkan bila kedua faktor bekerja secara terpisah dan saling menambahkan. Bila kedua
+        faktor benar-benar bekerja sendiri-sendiri, simpangan itu mendekati nol.
+    - contoh: "Grafik interaksi"
+      kode_r: "par(mfrow = c(1, 2))\ninteraction.plot(pan$varietas, pan$pupuk, pan$hasil,\n                 col = c(\"#0B6FB4\", \"#F58220\"), lwd = 2, type = \"b\", pch = 19,\n                 xlab = \"Varietas\", ylab = \"Rata-rata hasil\", trace.label = \"Pupuk\")\ninteraction.plot(pan$pupuk, pan$varietas, pan$hasil,\n                 col = c(\"#0B6FB4\", \"#F58220\", \"#00A651\"), lwd = 2, type = \"b\", pch = 19,\n                 xlab = \"Pupuk\", ylab = \"Rata-rata hasil\", trace.label = \"Varietas\")\npar(mfrow = c(1, 1))\nround(rata_AB, 3)"
+      judul_r: "interaction.plot dua arah"
+      eval: true
+      penjelasan: >
+        Fungsi interaction.plot menerima tiga argumen berurutan: peubah pada sumbu mendatar, peubah
+        penanda garis, dan peubah tanggapan. Kedua panel menukar peran kedua faktor sehingga interaksi
+        dapat dilihat dari dua sudut pandang. Argumen type bernilai b menampilkan titik sekaligus garis,
+        dan trace.label memberi judul pada legenda. Baris terakhir menampilkan tabel rata-rata sel yang
+        mendasari gambar tersebut.
+      interpretasi: >
+        Cara membacanya: garis yang kira-kira sejajar menandakan tidak ada interaksi, karena selisih
+        antar-taraf tetap sama di seluruh taraf faktor lainnya. Garis yang berpotongan atau menyimpang
+        jauh dari sejajar menandakan adanya interaksi. Gambar ini sebaiknya selalu disertakan ketika
+        melaporkan ANOVA dua arah, karena jauh lebih mudah ditangkap pembaca daripada angka nilai-p
+        interaksi.
+    - contoh: "Ukuran pengaruh pada ANOVA dua arah"
+      kode_r: "eta_A  <- JK_A / JK_total\neta_B  <- JK_B / JK_total\neta_AB <- JK_AB / JK_total\nsisa   <- JK_galat2 / JK_total\nround(c(varietas = eta_A, pupuk = eta_B, interaksi = eta_AB,\n        galat = sisa, jumlah = eta_A + eta_B + eta_AB + sisa), 5)"
+      judul_r: "penguraian proporsi keragaman"
+      eval: true
+      penjelasan: >
+        Tiap jumlah kuadrat dibagi jumlah kuadrat total untuk memperoleh proporsi keragaman yang
+        diterangkannya. Unsur terakhir menjumlahkan keempat proporsi sebagai pemeriksaan bahwa
+        penguraiannya lengkap.
+      interpretasi: >
+        Jumlah keempat proporsi tepat satu, menegaskan bahwa seluruh keragaman total sudah terurai habis
+        menjadi keempat komponen. Penyajian seperti ini sangat informatif untuk laporan karena langsung
+        menunjukkan faktor mana yang paling berperan, dan seberapa besar bagian keragaman yang masih
+        belum dapat diterangkan model - yaitu bagian galat.
+  latihan:
+    - "Kerjakan bertahap. **Dasar** melengkapi kode; **Menengah** menulis sendiri dan membetulkan kode; **Lanjut** menyusun laporan. Gunakan `data/data_panen.csv`. Untuk setiap analisis, **tuliskan hipotesisnya lebih dahulu**, dan kerjakan **versi fungsi R sekaligus versi manualnya**."
+    - "#### Tingkat Dasar (melengkapi kode)"
+    - "\\latihan{ANOVA satu arah}"
+    - "```{r eval=FALSE}\npan <- read.csv(\"data/data_panen.csv\")\nmodel <- ____(tinggi ~ varietas, data = pan)   # fungsi ANOVA\n____(model)                                     # menampilkan tabel ANOVA\n```"
+    - "\\latihan{Nilai kritis dan nilai-p}"
+    - "```{r eval=FALSE}\ndb1 <- 2; db2 <- 87\n____(0.95, db1, db2)          # nilai kritis F\n1 - ____(3.5, db1, db2)       # nilai-p untuk F = 3,5\n```"
+    - "\\latihan{Uji lanjut}"
+    - "```{r eval=FALSE}\n____(model)                                   # Tukey HSD\npairwise.t.test(pan$tinggi, pan$varietas,\n                p.adjust.method = \"____\")     # penyesuaian Bonferroni\n```"
+    - "#### Tingkat Menengah (menulis sendiri)"
+    - "\\latihan{ANOVA satu arah dua jalur}"
+    - "Untuk peubah `tinggi` menurut `varietas`: (a) jalankan `aov` dan tampilkan tabelnya; (b) **susun sendiri tabel ANOVA manual** dari penguraian jumlah kuadrat, lengkap dengan nilai kritis `qf` dan nilai-p `pf`; (c) buktikan kedua tabel sama; (d) gambarkan daerah penolakannya."
+    - "\\latihan{Asumsi dan uji lanjut}"
+    - "Periksa asumsi ANOVA pada model tersebut melalui **sisaan** (kenormalan dan diagram sisaan terhadap dugaan) serta kesamaan ragam dengan Levene. Bila ANOVA nyata, lanjutkan dengan Tukey **dan** Duncan, lalu jelaskan perbedaan hasil keduanya beserta alasannya. Hitung pula eta kuadratnya."
+    - "\\latihan{Membetulkan kode yang salah}"
+    - "Kode berikut memuat beberapa kesalahan (kenormalan diuji pada data mentah, nilai-p F memakai ekor yang salah, uji lanjut dijalankan tanpa memeriksa ANOVA, dan rumus interaksi keliru). Temukan dan perbaiki, lalu jelaskan tiap kesalahannya."
+    - "```{r eval=FALSE}\npan <- read.csv(\"data/data_panen.csv\")\nmodel <- aov(hasil ~ varietas, data = pan)\n\n# (a) kenormalan diperiksa pada data mentah, bukan sisaan\nshapiro.test(pan$hasil)\n\n# (b) nilai-p F memakai ekor KANAN\nF_hit <- summary(model)[[1]][1, \"F value\"]\np <- pf(F_hit, 2, 87)\n\n# (c) uji lanjut langsung dijalankan tanpa memeriksa ANOVA nyata atau tidak\nTukeyHSD(model)\n\n# (d) rumus ini TIDAK memuat interaksi\nmodel2 <- aov(hasil ~ varietas + pupuk, data = pan)\nsummary(model2)   # lalu disimpulkan tentang interaksi\n```"
+    - "**Keluaran yang benar.** Setelah diperbaiki, kode menghasilkan pola keluaran berikut. Gunakan ini untuk memverifikasi perbaikan Anda.\n\n```\n# (a) kenormalan diperiksa pada SISAAN\n\tShapiro-Wilk normality test\ndata:  residuals(model)\n\n# (b) nilai-p = luas ekor KANAN\np <- 1 - pf(F_hit, 2, 87)\n\n# (c) uji lanjut dijalankan HANYA bila ANOVA nyata\nif (summary(model)[[1]][1, \"Pr(>F)\"] < 0.05) TukeyHSD(model)\n\n# (d) rumus dengan interaksi menghasilkan EMPAT baris\n                Df Sum Sq Mean Sq F value Pr(>F)\nvarietas         2    ...     ...     ...    ...\npupuk            1    ...     ...     ...    ...\nvarietas:pupuk   2    ...     ...     ...    ...\nResiduals       84    ...     ...\n```\n\nCatatan: yang wajib benar adalah **objek yang diuji** (sisaan), **arah ekor** nilai-p, **urutan** pemeriksaan sebelum uji lanjut, dan **tanda bintang** pada rumus agar barisnya empat, bukan tiga."
+    - "#### Tingkat Lanjut (kasus kecil)"
+    - "\\latihan{Laporan ANOVA dua arah lengkap}"
+    - "Susun laporan lengkap untuk `hasil` menurut `varietas` dan `pupuk`: (a) deskripsi rata-rata tiap sel; (b) pemeriksaan asumsi melalui sisaan; (c) **tabel ANOVA dua arah manual** dengan penguraian empat komponen, dibuktikan sama dengan `summary(aov(...))`; (d) **grafik interaksi dua panel** beserta pembacaannya; (e) keputusan bertahap yang **mendahulukan interaksi**; (f) ukuran pengaruh tiap komponen beserta pemeriksaan bahwa jumlahnya satu; (g) uji lanjut bila diperlukan, disertai alasan pemilihan jenis ujinya."
+  penugasan:
+    - "\\begin{kotaktugas}\nSebagai calon analis \\emph{official statistics}, susun laporan analisis ragam atas data percobaan tiruan dari \\texttt{data\\_panen.csv} (\\emph{data simulasi}), mencakup ANOVA satu arah, uji perbandingan ganda, dan ANOVA dua arah. Setiap analisis dikerjakan \\textbf{dua jalur}: dengan fungsi R dan dengan perhitungan manual.\n\\end{kotaktugas}"
+    - "**Konteks.** Sebuah percobaan pertanian tiruan menguji tiga varietas dan dua jenis pupuk dengan rancangan faktorial berimbang, masing-masing 15 amatan per sel. Diukur hasil panen dan tinggi tanaman. Anda diminta menilai pengaruh kedua faktor tersebut."
+    - "\\tugas{ANOVA satu arah}"
+    - "1. Uji pengaruh `varietas` terhadap `hasil`. Jalankan `aov`, **lalu susun tabel ANOVA manual** dari penguraian jumlah kuadrat. Sajikan keduanya berdampingan sebagai bukti kesamaan."
+    - "2. Hitung nilai kritis dengan `qf` dan nilai-p dengan `pf`, lalu **gambarkan daerah penolakannya** beserta posisi F hitung."
+    - "\\tugas{Asumsi dan uji lanjut}"
+    - "3. Periksa ketiga asumsi ANOVA melalui **sisaan** model. Jelaskan mengapa pemeriksaan dilakukan pada sisaan, bukan pada data mentah."
+    - "4. Lakukan uji perbandingan ganda dengan **Tukey**, **Duncan**, dan **Bonferroni**. Bandingkan hasilnya dalam satu tabel dan jelaskan mengapa ketegasannya berbeda."
+    - "5. Hitung **eta kuadrat** dan tafsirkan bersama nilai-p. Jelaskan mengapa keduanya perlu dilaporkan bersama."
+    - "\\tugas{ANOVA dua arah}"
+    - "6. Jalankan ANOVA dua arah `hasil ~ varietas * pupuk`, lalu **susun tabel manualnya** dengan penguraian empat komponen. Buktikan bahwa jumlah keempat jumlah kuadrat sama dengan jumlah kuadrat total."
+    - "7. Buat **grafik interaksi dua panel** dan jelaskan pembacaannya. Berdasarkan gambar dan nilai-p interaksi, tentukan apakah pengaruh utama boleh ditafsirkan terpisah."
+    - "8. Ulangi analisis untuk peubah `tinggi`. Bandingkan kesimpulannya dengan peubah `hasil`."
+    - "\\tugas{Laporan}"
+    - "9. Susun laporan R Markdown berisi kode, keluaran, gambar, dan interpretasi. Tutup dengan **ringkasan (maksimal 300 kata)** mengenai temuan Anda, urutan penafsiran yang Anda ikuti, keterbatasan yang perlu diingat, dan penegasan bahwa data merupakan simulasi sehingga tidak menggambarkan keunggulan varietas atau pupuk yang sebenarnya."
+  tambahan:
+    - >
+      Seluruh perhitungan pada bagian Contoh sengaja dikerjakan manual langkah demi langkah agar
+      rumus analisis ragam benar-benar dipahami. Bagian ini menyajikan penyelesaian yang sama menggunakan
+      fungsi bawaan R, yang dalam praktik sehari-hari jauh lebih ringkas. Kerjakan bagian ini
+      setelah Anda menyelesaikan Penugasan, lalu bandingkan angkanya dengan hasil manual Anda.
+    - "\\begin{kotakcatatan}\nGunakan fungsi bawaan setelah Anda memahami perhitungan manualnya. Fungsi memang mempercepat pekerjaan, tetapi hanya bermanfaat penuh bila Anda mengetahui apa yang dihitungnya - itulah yang memungkinkan Anda menelusuri kekeliruan ketika keluarannya terasa janggal.\n\\end{kotakcatatan}"
+
+    - contoh: "ANOVA satu arah dengan fungsi R"
+      kode_r: "# H0: mu_V1 = mu_V2 = mu_V3   lawan   H1: setidaknya satu berbeda\nmodel1 <- aov(hasil ~ varietas, data = pan)\nsummary(model1)"
+      judul_r: "aov dan summary"
+      eval: true
+      penjelasan: >
+        Fungsi aov menerima bentuk rumus yang dibaca sebagai hasil menurut varietas, disertai argumen
+        data. Objek yang dikembalikan memuat seluruh perhitungan model. Fungsi summary menampilkannya
+        sebagai tabel ANOVA baku berisi derajat bebas, jumlah kuadrat, kuadrat tengah, statistik F, dan
+        nilai-p.
+      interpretasi: >
+        Baris pertama tabel adalah sumber keragaman perlakuan, dan baris kedua adalah galat atau sisa.
+        Statistik F adalah rasio kedua kuadrat tengah. Nilai-p dibandingkan terhadap taraf nyata untuk
+        mengambil keputusan. Perhatikan bahwa hipotesis tandingannya hanya menyatakan setidaknya satu
+        rata-rata berbeda, tanpa menyebut yang mana - itulah tugas uji lanjut.
+    - contoh: "Memeriksa kesamaan hasil manual dan aov"
+      kode_r: "ringkas <- summary(model1)[[1]]\nbanding <- rbind(\n  manual = c(db = db_p, JK = JK_perlakuan, KT = KT_p,\n             F = F_hitung, p = p_value),\n  aov    = c(ringkas[1, \"Df\"], ringkas[1, \"Sum Sq\"], ringkas[1, \"Mean Sq\"],\n             ringkas[1, \"F value\"], ringkas[1, \"Pr(>F)\"]))\nround(banding, 6)\nall.equal(F_hitung, ringkas[1, \"F value\"])"
+      judul_r: "membuktikan kesamaan"
+      eval: true
+      penjelasan: >
+        Keluaran summary pada objek aov berupa list, sehingga tabelnya diambil dengan kurung siku ganda
+        indeks satu. Nilai tiap kolom diambil dengan nama kolomnya, yang pada tabel ANOVA R memakai
+        penulisan seperti Sum Sq dan Pr yang lebih besar dari F. Kedua baris digabung dengan rbind, lalu
+        all.equal memeriksa kesamaan dengan toleransi ketelitian mesin.
+      interpretasi: >
+        Seluruh angka berpasangan dan all.equal mengembalikan nilai benar. Ini menegaskan sekali lagi
+        bahwa fungsi bawaan bukan kotak hitam. Kemampuan mengambil komponen tabel ANOVA seperti ini juga
+        berguna untuk menyusun laporan reproducible, karena angka pada narasi dapat diambil langsung dari
+        objek hasil.
+    - contoh: "Uji kesamaan ragam antar-kelompok"
+      kode_r: "suppressPackageStartupMessages(library(car))\nbartlett.test(hasil ~ varietas, data = pan)\nleveneTest(hasil ~ factor(varietas), data = pan)\n# ragam tiap kelompok sebagai gambaran\nround(tapply(pan$hasil, pan$varietas, var), 3)"
+      judul_r: "bartlett dan levene pada ANOVA"
+      eval: true
+      penjelasan: >
+        Kedua uji dari Modul 12 dipakai kembali, kini untuk memeriksa asumsi ANOVA. Bentuk rumusnya sama
+        dengan yang dipakai aov. Fungsi leveneTest menuntut peubah pengelompok berupa faktor sehingga
+        dibungkus factor. Baris terakhir menampilkan ragam tiap kelompok sebagai gambaran langsung.
+      interpretasi: >
+        Asumsi kesamaan ragam penting karena ANOVA memakai satu kuadrat tengah galat bersama untuk
+        seluruh kelompok. Bila ragam sangat berbeda, penduga bersama itu menjadi tidak mewakili. Seperti
+        pada Modul 12, uji Levene lebih dapat dipercaya bila kenormalan meragukan. Bila asumsi ini
+        terlanggar, tersedia pilihan oneway.test dengan koreksi Welch.
+    - contoh: "Uji perbandingan ganda Tukey"
+      kode_r: "tuk <- TukeyHSD(model1, conf.level = 0.95)\ntuk\nplot(tuk, las = 1)"
+      judul_r: "TukeyHSD"
+      eval: true
+      penjelasan: >
+        Fungsi TukeyHSD menerima objek aov dan menghitung seluruh perbandingan berpasangan sekaligus
+        dengan kendali galat menyeluruh. Keluarannya memuat selisih rata-rata tiap pasangan, batas bawah
+        dan atas selang kepercayaannya, serta nilai-p yang sudah disesuaikan. Fungsi plot menggambarkan
+        selang tersebut; argumen las bernilai satu membuat label sumbu tegak menjadi mendatar.
+      interpretasi: >
+        Pembacaannya sederhana: pasangan yang selang kepercayaannya memuat angka nol dinyatakan tidak
+        berbeda nyata. Pada gambar, hal itu tampak sebagai garis selang yang memotong garis tegak nol.
+        Perhatikan bahwa nilai-p di sini sudah disesuaikan terhadap penumpukan galat, sehingga lebih
+        besar daripada nilai-p uji t biasa untuk pasangan yang sama.
+    - contoh: "Uji Duncan dan Bonferroni"
+      kode_r: "suppressPackageStartupMessages(library(agricolae))\ndun <- duncan.test(model1, \"varietas\", group = TRUE)\ndun$groups\n# Bonferroni lewat pairwise.t.test\npairwise.t.test(pan$hasil, pan$varietas, p.adjust.method = \"bonferroni\")"
+      judul_r: "duncan.test dan pairwise.t.test"
+      eval: true
+      penjelasan: >
+        Fungsi duncan.test dari paket agricolae menerima objek model dan nama faktornya; argumen group
+        bernilai TRUE meminta pengelompokan berhuruf. Komponen groups memuat rata-rata tiap taraf beserta
+        huruf penandanya. Fungsi pairwise.t.test menjalankan seluruh uji t berpasangan lalu menyesuaikan
+        nilai-p; metode bonferroni mengalikan tiap nilai-p dengan banyaknya perbandingan.
+      interpretasi: >
+        Pada keluaran Duncan, taraf yang berbagi huruf sama dinyatakan tidak berbeda nyata - cara
+        penyajian yang lazim dalam laporan pertanian. Bandingkan ketegasan ketiga uji: Bonferroni paling
+        tegas sehingga nilai-p-nya terbesar, Duncan paling longgar sehingga paling mudah menyatakan
+        berbeda, dan Tukey berada di antaranya. Pilihan uji sebaiknya ditetapkan sebelum melihat data.
+    - contoh: "ANOVA dua arah dengan interaksi"
+      kode_r: "# H0 ada tiga: pengaruh varietas, pengaruh pupuk, dan interaksi\nmodel2 <- aov(hasil ~ varietas * pupuk, data = pan)\nsummary(model2)"
+      judul_r: "aov dengan tanda bintang"
+      eval: true
+      penjelasan: >
+        Tanda bintang pada rumus adalah cara ringkas menuliskan kedua pengaruh utama beserta
+        interaksinya sekaligus; penulisan lengkapnya adalah varietas tambah pupuk tambah varietas titik
+        dua pupuk. Bila hanya pengaruh utama yang diinginkan tanpa interaksi, gunakan tanda tambah.
+        Keluaran summary menampilkan satu baris untuk tiap sumber keragaman.
+      interpretasi: >
+        Tabel kini memuat empat baris: dua pengaruh utama, satu interaksi, dan galat. Urutan pembacaannya
+        penting: periksa baris interaksi lebih dahulu. Bila interaksi nyata, pengaruh utama tidak boleh
+        ditafsirkan sendiri-sendiri seperti dibahas di teori. Bila interaksi tidak nyata, barulah kedua
+        pengaruh utama dibaca secara terpisah.
+    - contoh: "Alternatif nonparametrik Kruskal-Wallis"
+      kode_r: "kruskal.test(hasil ~ varietas, data = pan)\n# bandingkan dengan ANOVA\nc(anova = summary(model1)[[1]][1, \"Pr(>F)\"],\n  kruskal = kruskal.test(hasil ~ varietas, data = pan)$p.value) |> round(5)\n# uji lanjut nonparametrik\npairwise.wilcox.test(pan$hasil, pan$varietas,\n                     p.adjust.method = \"bonferroni\")$p.value |> round(4)"
+      judul_r: "kruskal.test dan wilcox berpasangan"
+      eval: true
+      penjelasan: >
+        Fungsi kruskal.test memakai bentuk rumus yang sama dengan aov, tetapi bekerja pada peringkat data
+        sehingga tidak menuntut asumsi kenormalan. Kedua nilai-p digabung untuk dibandingkan. Baris
+        terakhir menjalankan uji lanjut nonparametrik dengan penyesuaian Bonferroni; komponen p.value
+        diambil agar tercetak sebagai matriks ringkas.
+      interpretasi: >
+        Uji Kruskal-Wallis adalah padanan nonparametrik ANOVA satu arah dan dipakai ketika asumsi
+        kenormalan tidak terpenuhi. Perhatikan bahwa hipotesis nolnya sedikit berbeda: ia menguji
+        kesamaan sebaran, bukan semata rata-rata. Bila asumsi ANOVA terpenuhi, ANOVA lebih berkuasa
+        sehingga tetap dipilih; uji ini menjadi cadangan ketika asumsi terlanggar.
+    - contoh: "Studi kasus: laporan ANOVA lengkap"
+      kode_r: "cat(\"=== 1. Deskripsi ===\\n\")\nprint(round(tapply(pan$hasil, list(pan$varietas, pan$pupuk), mean), 2))\n\ncat(\"\\n=== 2. Pemeriksaan asumsi ===\\n\")\nsis2 <- residuals(model2)\ncat(\"Shapiro sisaan p =\", round(shapiro.test(sis2)$p.value, 5), \"\\n\")\ncat(\"Levene varietas p =\",\n    round(leveneTest(hasil ~ factor(varietas), data = pan)$`Pr(>F)`[1], 5), \"\\n\")\n\ncat(\"\\n=== 3. ANOVA dua arah ===\\n\")\ntab2 <- summary(model2)[[1]]\nprint(round(tab2, 5))\n\ncat(\"\\n=== 4. Keputusan bertahap ===\\n\")\np_int <- tab2[\"varietas:pupuk\", \"Pr(>F)\"]\nif (!is.na(p_int) && p_int < 0.05) {\n  cat(\"Interaksi NYATA: tafsirkan pengaruh tiap faktor pada masing-masing taraf faktor lain.\\n\")\n} else {\n  cat(\"Interaksi tidak nyata: pengaruh utama boleh ditafsirkan terpisah.\\n\")\n  cat(\"  varietas p =\", round(tab2[\"varietas\", \"Pr(>F)\"], 5), \"\\n\")\n  cat(\"  pupuk    p =\", round(tab2[\"pupuk\", \"Pr(>F)\"], 5), \"\\n\")\n}"
+      judul_r: "alur empat langkah ANOVA"
+      eval: true
+      penjelasan: >
+        Alurnya disusun dalam empat bagian bertanda judul. Bagian pertama menyajikan rata-rata tiap sel
+        dengan tapply berdaftar dua faktor. Bagian kedua memeriksa asumsi pada sisaan model dua arah.
+        Bagian ketiga mencetak tabel ANOVA yang diambil dari komponen pertama keluaran summary. Bagian
+        keempat mengambil nilai-p interaksi dengan pengindeksan nama baris, lalu memakai percabangan
+        untuk memilih kalimat penafsiran yang tepat; pemeriksaan is.na melindungi bila baris tersebut
+        tidak ada.
+      interpretasi: >
+        Inilah kerangka laporan ANOVA yang benar: deskripsi, pemeriksaan asumsi, tabel ANOVA, lalu
+        keputusan bertahap yang mendahulukan interaksi. Perhatikan bahwa alur percabangan di bagian
+        keempat mengikuti aturan penafsiran yang dibahas di teori, sehingga laporan tidak akan keliru
+        menyatakan pengaruh utama ketika interaksi ternyata nyata.
+  ringkasan:
+    - "\\begin{kotaktujuan}\n\\textbf{Daftar periksa penguasaan:}\n\\begin{itemize}\n\\item[$\\square$] Saya dapat menjelaskan mengapa ANOVA diperlukan dan bahaya banyak uji t berpasangan.\n\\item[$\\square$] Saya dapat menyusun tabel ANOVA manual dari penguraian jumlah kuadrat.\n\\item[$\\square$] Saya dapat menghitung nilai kritis dan nilai-p dengan \\texttt{qf} dan \\texttt{pf}.\n\\item[$\\square$] Saya memeriksa asumsi pada \\textbf{sisaan}, bukan pada data mentah.\n\\item[$\\square$] Saya dapat memakai Tukey, Duncan, dan Bonferroni serta memahami perbedaan ketegasannya.\n\\item[$\\square$] Saya tidak menjalankan uji lanjut bila ANOVA tidak nyata.\n\\item[$\\square$] Saya dapat menguraikan ANOVA dua arah menjadi empat komponen dan membaca grafik interaksi.\n\\item[$\\square$] Saya mendahulukan interaksi sebelum menafsirkan pengaruh utama.\n\\item[$\\square$] Saya melaporkan ukuran pengaruh, bukan hanya nilai-p.\n\\end{itemize}\n\\end{kotaktujuan}"
+    - "**Kartu Referensi Cepat.** Perintah analisis ragam:"
+    - "\\begin{kotakrumus}\n\\begin{tabular}{@{}ll@{}}\n\\textbf{Keperluan} & \\textbf{Perintah R}\\\\\nANOVA satu arah & \\texttt{aov(y \\textasciitilde{} g, data = df)}\\\\\nTabel ANOVA & \\texttt{summary(model)}\\\\\nMengambil tabel & \\texttt{summary(model)[[1]]}\\\\\nANOVA dua arah & \\texttt{aov(y \\textasciitilde{} A * B, data = df)}\\\\\nTanpa interaksi & \\texttt{aov(y \\textasciitilde{} A + B, data = df)}\\\\\nSisaan & \\texttt{residuals(model)}, \\texttt{fitted(model)}\\\\\nKenormalan sisaan & \\texttt{shapiro.test(residuals(model))}\\\\\nKesamaan ragam & \\texttt{car::leveneTest(y \\textasciitilde{} factor(g))}\\\\\nNilai kritis F & \\texttt{qf(0.95, db1, db2)}\\\\\nNilai-p F & \\texttt{1 - pf(F, db1, db2)}\\\\\nTukey HSD & \\texttt{TukeyHSD(model)}\\\\\nDuncan & \\texttt{agricolae::duncan.test(model, \"g\")}\\\\\nBonferroni & \\texttt{pairwise.t.test(y, g, p.adjust.method=)}\\\\\nGrafik interaksi & \\texttt{interaction.plot(A, B, y)}\\\\\nEta kuadrat & \\texttt{JK\\_faktor / JK\\_total}\\\\\nNonparametrik & \\texttt{kruskal.test(y \\textasciitilde{} g)}\\\\\nRagam tak sama & \\texttt{oneway.test(y \\textasciitilde{} g)}\\\\\n\\end{tabular}\n\\end{kotakrumus}"
+    - "Modul ini memperluas perbandingan rata-rata ke lebih dari dua kelompok melalui penguraian keragaman. Prinsip penting yang perlu dibawa: pahami tabel ANOVA lewat penguraian jumlah kuadrat, periksa asumsi pada sisaan, dahulukan interaksi sebelum menafsirkan pengaruh utama, jangan menjalankan uji lanjut bila ANOVA tidak nyata, dan laporkan ukuran pengaruh bersama nilai-p. Modul 14 melanjutkan ke korelasi dan regresi, tempat tabel ANOVA yang sama muncul kembali sebagai uji kebermaknaan model."
+  referensi:
+    - "Montgomery, D. C. (2019). *Design and Analysis of Experiments*, 10th ed. Wiley. (Rujukan utama ANOVA dan rancangan percobaan.)"
+    - "Walpole, R. E., Myers, R. H., Myers, S. L., & Ye, K. (2016). *Probability and Statistics for Engineers and Scientists*, 9th ed. Pearson. (Penguraian jumlah kuadrat dan uji F.)"
+    - "de Mendiburu, F. (2023). *agricolae: Statistical Procedures for Agricultural Research*. R package documentation. (Uji Duncan dan uji perbandingan ganda lainnya.)"
+    - "Fox, J., & Weisberg, S. (2019). *An R Companion to Applied Regression*, 3rd ed. Sage. (Model linear, diagnosa sisaan, dan uji Levene.)"
+
+exercises:
+  - id: "L13.1"
+    points: 15
+    solution: "Tingkat Dasar: aov/summary, qf/pf, TukeyHSD, bonferroni."
+    judul_r: "Solusi Tingkat Dasar (R)"
+    solusi_r: |
+      pan <- read.csv("data/data_panen.csv")
+      model <- aov(tinggi ~ varietas, data = pan)
+      summary(model)
+
+      db1 <- 2; db2 <- 87
+      qf(0.95, db1, db2)          # nilai kritis F
+      1 - pf(3.5, db1, db2)       # nilai-p untuk F = 3,5
+
+      TukeyHSD(model)
+      pairwise.t.test(pan$tinggi, pan$varietas, p.adjust.method = "bonferroni")
+    interpretasi: >
+      Fungsi aov membentuk model dan summary menampilkan tabel ANOVA. Nilai kritis F diambil dengan qf
+      pada peluang 0,95 karena pengujian satu arah ke kanan, dan nilai-p dihitung sebagai satu dikurangi
+      pf. TukeyHSD menghitung seluruh perbandingan berpasangan dengan kendali galat menyeluruh,
+      sedangkan pairwise.t.test dengan metode bonferroni menyesuaikan nilai-p dengan mengalikannya
+      terhadap banyaknya perbandingan.
+  - id: "L13.2"
+    points: 25
+    solution: "Tingkat Menengah dan Lanjut: ANOVA dua jalur, asumsi dan uji lanjut, serta ANOVA dua arah lengkap."
+    judul_r: "Solusi Menengah dan Lanjut (R)"
+    solusi_r: |
+      suppressPackageStartupMessages({library(car); library(agricolae)})
+      pan <- read.csv("data/data_panen.csv")
+
+      # ---- (a) fungsi R ----
+      model <- aov(tinggi ~ varietas, data = pan)
+      summary(model)
+
+      # ---- (b) tabel ANOVA manual ----
+      y <- pan$tinggi; g <- factor(pan$varietas)
+      N <- length(y); k <- nlevels(g); y_bar <- mean(y)
+      rata_i <- tapply(y, g, mean); n_i <- tapply(y, g, length)
+      JK_t <- sum((y - y_bar)^2)
+      JK_p <- sum(n_i * (rata_i - y_bar)^2)
+      JK_g <- sum((y - rata_i[g])^2)
+      db_p <- k - 1; db_g <- N - k
+      KT_p <- JK_p/db_p; KT_g <- JK_g/db_g
+      Fh <- KT_p/KT_g
+      Fk <- qf(0.95, db_p, db_g); pv <- 1 - pf(Fh, db_p, db_g)
+      round(rbind(Perlakuan = c(db_p, JK_p, KT_p, Fh, pv),
+                  Galat     = c(db_g, JK_g, KT_g, NA, NA),
+                  Total     = c(N-1, JK_t, NA, NA, NA)), 5)
+
+      # ---- (c) bukti kesamaan ----
+      s1 <- summary(model)[[1]]
+      all.equal(Fh, s1[1, "F value"])
+      round(c(JK_total = JK_t, komponen = JK_p + JK_g), 6)
+
+      # ---- (d) daerah penolakan ----
+      curve(df(x, db_p, db_g), 0, 6, lwd = 2, col = "#123A6B",
+            ylab = "kepekatan", xlab = "F")
+      xs <- seq(Fk, 6, length.out = 300)
+      polygon(c(Fk, xs, 6), c(0, df(xs, db_p, db_g), 0), col = "#F5822060", border = NA)
+      abline(v = Fk, col = "#F58220", lty = 2, lwd = 2)
+      abline(v = Fh, col = "#00A651", lwd = 2)
+
+      # ---- Asumsi dan uji lanjut ----
+      sis <- residuals(model)
+      par(mfrow = c(1, 2))
+      qqnorm(sis, pch = 19, col = "#0B6FB4"); qqline(sis, col = "#F58220", lwd = 2)
+      plot(fitted(model), sis, pch = 19, col = "#0B6FB4",
+           xlab = "dugaan", ylab = "sisaan"); abline(h = 0, col = "#F58220", lty = 2)
+      par(mfrow = c(1, 1))
+      shapiro.test(sis)
+      leveneTest(tinggi ~ factor(varietas), data = pan)
+
+      if (s1[1, "Pr(>F)"] < 0.05) {
+        print(TukeyHSD(model))
+        print(duncan.test(model, "varietas", group = TRUE)$groups)
+      } else {
+        cat("ANOVA tidak nyata: uji lanjut TIDAK dijalankan.\n")
+      }
+      round(JK_p / JK_t, 5)      # eta kuadrat
+    interpretasi: >
+      Tabel manual dan tabel aov menghasilkan angka yang sama, dan all.equal mengembalikan nilai benar.
+      Pemeriksaan penguraian menegaskan jumlah kuadrat total sama dengan jumlah komponennya. Asumsi
+      diperiksa pada sisaan, bukan data mentah. Uji lanjut dibungkus percabangan sehingga hanya
+      dijalankan bila ANOVA nyata - inilah urutan yang benar. Duncan cenderung lebih mudah menyatakan
+      berbeda dibandingkan Tukey karena kendali galatnya lebih longgar.
+  - id: "L13.D"
+    points: 10
+    solution: "Membetulkan kode: kenormalan pada sisaan, ekor kanan nilai-p, urutan uji lanjut, dan tanda bintang untuk interaksi."
+    judul_r: "Solusi Membetulkan Kode (R)"
+    solusi_r: |
+      pan <- read.csv("data/data_panen.csv")
+      model <- aov(hasil ~ varietas, data = pan)
+
+      # (a) kenormalan diperiksa pada SISAAN model
+      shapiro.test(residuals(model))
+
+      # (b) nilai-p uji F adalah luas ekor KANAN
+      F_hit <- summary(model)[[1]][1, "F value"]
+      p <- 1 - pf(F_hit, 2, 87)
+      p
+
+      # (c) uji lanjut hanya bila ANOVA nyata
+      if (summary(model)[[1]][1, "Pr(>F)"] < 0.05) {
+        print(TukeyHSD(model))
+      } else {
+        cat("ANOVA tidak nyata: uji lanjut tidak dijalankan.\n")
+      }
+
+      # (d) tanda BINTANG agar interaksi ikut diuji
+      model2 <- aov(hasil ~ varietas * pupuk, data = pan)
+      summary(model2)      # kini memuat baris varietas:pupuk
+    interpretasi: >
+      Empat kesalahan diperbaiki. Pertama, asumsi kenormalan berlaku pada sisaan model; menguji data
+      mentah dapat menyesatkan karena perbedaan rata-rata antar-kelompok membuat sebaran gabungan tampak
+      tidak normal. Kedua, statistik F pada ANOVA hanya besar bila ada perbedaan, sehingga nilai-p adalah
+      luas ekor kanan. Ketiga, uji lanjut hanya dijalankan setelah ANOVA terbukti nyata, agar kendali
+      penumpukan galat tidak sia-sia. Keempat, tanda tambah hanya memuat pengaruh utama; untuk menguji
+      interaksi diperlukan tanda bintang sehingga tabelnya memuat empat baris.
+  - id: "T13.1"
+    points: 50
+    solution: "Penugasan: ANOVA satu arah dua jalur, asumsi, tiga uji lanjut, ANOVA dua arah manual, grafik interaksi."
+    judul_r: "Solusi Penugasan (R)"
+    solusi_r: |
+      suppressPackageStartupMessages({library(dplyr); library(car); library(agricolae)})
+      pan <- read.csv("data/data_panen.csv")
+      y <- pan$hasil; A <- factor(pan$varietas); B <- factor(pan$pupuk)
+      N <- length(y); y_bar <- mean(y)
+
+      # 1) ANOVA satu arah: fungsi dan manual
+      m1 <- aov(hasil ~ varietas, data = pan); summary(m1)
+      rata_i <- tapply(y, A, mean); n_i <- tapply(y, A, length)
+      JK_t <- sum((y - y_bar)^2)
+      JK_p <- sum(n_i * (rata_i - y_bar)^2)
+      JK_g <- sum((y - rata_i[A])^2)
+      k <- nlevels(A); db_p <- k-1; db_g <- N-k
+      KT_p <- JK_p/db_p; KT_g <- JK_g/db_g; Fh <- KT_p/KT_g
+      round(rbind(Perlakuan = c(db_p, JK_p, KT_p, Fh, 1-pf(Fh,db_p,db_g)),
+                  Galat = c(db_g, JK_g, KT_g, NA, NA),
+                  Total = c(N-1, JK_t, NA, NA, NA)), 5)
+
+      # 2) nilai kritis, nilai-p, dan gambar
+      Fk <- qf(0.95, db_p, db_g)
+      curve(df(x, db_p, db_g), 0, 6, lwd = 2, col = "#123A6B", ylab = "kepekatan", xlab = "F")
+      xs <- seq(Fk, 6, length.out = 300)
+      polygon(c(Fk, xs, 6), c(0, df(xs, db_p, db_g), 0), col = "#F5822060", border = NA)
+      abline(v = Fk, col = "#F58220", lty = 2, lwd = 2); abline(v = Fh, col = "#00A651", lwd = 2)
+
+      # 3) asumsi pada sisaan
+      sis <- residuals(m1)
+      shapiro.test(sis)
+      leveneTest(hasil ~ factor(varietas), data = pan)
+
+      # 4) tiga uji lanjut
+      if (summary(m1)[[1]][1, "Pr(>F)"] < 0.05) {
+        print(TukeyHSD(m1))
+        print(duncan.test(m1, "varietas", group = TRUE)$groups)
+        print(pairwise.t.test(y, A, p.adjust.method = "bonferroni"))
+      } else cat("ANOVA tidak nyata; uji lanjut dilewati.\n")
+
+      # 5) eta kuadrat
+      round(c(eta2 = JK_p / JK_t), 5)
+
+      # 6) ANOVA dua arah: fungsi dan manual
+      m2 <- aov(hasil ~ varietas * pupuk, data = pan); summary(m2)
+      a <- nlevels(A); b <- nlevels(B); n_sel <- N/(a*b)
+      rA <- tapply(y, A, mean); rB <- tapply(y, B, mean); rAB <- tapply(y, list(A,B), mean)
+      JK_A <- b*n_sel*sum((rA - y_bar)^2)
+      JK_B <- a*n_sel*sum((rB - y_bar)^2)
+      harap <- outer(rA, rB, function(u,v) u + v - y_bar)
+      JK_AB <- n_sel*sum((rAB - harap)^2)
+      JK_G2 <- JK_t - JK_A - JK_B - JK_AB
+      round(c(JK_A = JK_A, JK_B = JK_B, JK_AB = JK_AB, JK_G = JK_G2,
+              jumlah = JK_A + JK_B + JK_AB + JK_G2, JK_total = JK_t), 5)
+
+      # 7) grafik interaksi
+      par(mfrow = c(1, 2))
+      interaction.plot(A, B, y, col = c("#0B6FB4","#F58220"), lwd = 2, type = "b", pch = 19)
+      interaction.plot(B, A, y, col = c("#0B6FB4","#F58220","#00A651"), lwd = 2, type = "b", pch = 19)
+      par(mfrow = c(1, 1))
+
+      # 8) ulangi untuk tinggi
+      summary(aov(tinggi ~ varietas * pupuk, data = pan))
+    interpretasi: >
+      Tabel manual dan tabel aov berpasangan pada kedua rancangan. Pada nomor 6, pemeriksaan jumlah
+      keempat komponen terhadap jumlah kuadrat total membuktikan penguraiannya lengkap. Uji lanjut
+      dibungkus percabangan sehingga hanya berjalan bila ANOVA nyata, dan ketiganya dibandingkan untuk
+      melihat perbedaan ketegasan. Grafik interaksi disajikan dua panel agar dapat dibaca dari kedua
+      sudut pandang; garis yang hampir sejajar menandakan tidak ada interaksi. Karena data merupakan
+      simulasi dengan nilai acak yang saling bebas, wajar bila tidak ditemukan pengaruh nyata, dan hal
+      itu harus dinyatakan jujur dalam laporan tanpa menafsirkannya sebagai keunggulan varietas atau
+      pupuk tertentu.
+
+references:
+  - "Montgomery, D. C. (2019). Design and Analysis of Experiments, 10th ed. Wiley."
+  - "Walpole, R. E., Myers, R. H., Myers, S. L., & Ye, K. (2016). Probability and Statistics for Engineers and Scientists, 9th ed. Pearson."
+  - "de Mendiburu, F. (2023). agricolae: Statistical Procedures for Agricultural Research. R package documentation."
+  - "Fox, J., & Weisberg, S. (2019). An R Companion to Applied Regression, 3rd ed. Sage."

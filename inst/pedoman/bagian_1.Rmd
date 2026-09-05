@@ -1,0 +1,663 @@
+---
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_sections: true
+    keep_tex: false
+    fig_caption: true
+    includes:
+      in_header: preamble_pedoman.tex
+geometry: "left=2.6cm,right=2.4cm,top=3.0cm,bottom=2.4cm"
+fontsize: 11pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, warning = FALSE, message = FALSE, comment = "",
+  fig.align = "center", out.width = "92%"
+)
+options(width = 88)
+```
+
+# Mengapa `modulstis`
+
+## Masalah yang Hendak Diselesaikan
+
+Menyusun modul praktikum secara manual tampak sederhana pada modul pertama. Persoalan baru
+muncul ketika modulnya bertambah menjadi empat belas atau dua puluh enam.
+
+Empat masalah berikut berulang pada hampir semua penyusunan modul.
+
+**Preamble yang disalin berulang.** Setiap modul memerlukan pengaturan LaTeX yang sama:
+warna, font, geometri halaman, definisi kotak berwarna, gaya judul. Ketika salinan sudah
+tersebar di dua puluh berkas, satu perubahan kecil --- misalnya menggeser warna oranye ---
+menuntut penyuntingan dua puluh kali. Dalam praktiknya, selalu ada satu atau dua yang
+terlewat.
+
+**Penomoran yang tidak sinkron.** Modul memuat penomoran bagian, contoh, kode, dan latihan.
+Bila satu contoh disisipkan di tengah, seluruh nomor sesudahnya harus digeser, termasuk
+setiap rujukan silang di dalam teks. Pekerjaan ini menjemukan dan rawan luput.
+
+**Kunci jawaban yang tercecer.** Soal dan solusinya hidup di dua berkas terpisah. Ketika soal
+diperbaiki tetapi kuncinya lupa disesuaikan, kekeliruan itu baru ketahuan saat penilaian.
+
+**Ketidakseragaman antar-modul.** Modul yang disusun pada waktu berbeda cenderung berbeda
+strukturnya: ada yang memuat ringkasan, ada yang tidak; judul bagian tidak sama; gaya
+penulisan interpretasi berbeda-beda.
+
+\begin{kotaksalah}[Akar persoalannya]
+Keempat masalah di atas berakar pada satu hal yang sama: \textbf{naskah dipakai sebagai sumber
+kebenaran}. Selama isi modul hidup di dalam berkas naskah yang saling disalin, tidak ada
+mekanisme yang memaksa keseragaman maupun menjaga kesinkronan.
+\end{kotaksalah}
+
+## Gagasan Pokok
+
+`modulstis` memindahkan sumber kebenaran dari naskah ke **spesifikasi**. Satu modul
+dideskripsikan sebagai berkas data --- bukan naskah --- lalu paket membangkitkan seluruh
+keluarannya.
+
+```{=latex}
+\begin{center}
+\begin{tikzpicture}[
+  kotak/.style={draw=bpsnavy, fill=bpsbiru!8, rounded corners=2pt, minimum height=1.0cm,
+                align=center, font=\small, line width=0.7pt},
+  hasil/.style={draw=bpshijau, fill=bpshijau!8, rounded corners=2pt, minimum height=0.85cm,
+                align=center, font=\small, line width=0.7pt},
+  panah/.style={->, >=stealth, bpsoranye, line width=1.1pt}]
+  \node[kotak, minimum width=3.4cm] (spec) at (0,0) {\textbf{spesifikasi}\\[1pt]
+       {\ttfamily\scriptsize modul-01.yml}};
+  \node[kotak, minimum width=2.8cm] (pkg) at (4.6,0) {\textbf{\texttt{modulstis}}};
+  \node[hasil, minimum width=3.0cm] (m) at (9.6,1.65) {Modul PDF};
+  \node[hasil, minimum width=3.0cm] (k) at (9.6,0.55) {Kunci Jawaban PDF};
+  \node[hasil, minimum width=3.0cm] (d) at (9.6,-0.55) {Data simulasi};
+  \node[hasil, minimum width=3.0cm] (r) at (9.6,-1.65) {Berkas \texttt{.Rmd}};
+  \draw[panah] (spec) -- (pkg);
+  \draw[panah] (pkg.east) -- ++(0.5,0) |- (m);
+  \draw[panah] (pkg.east) -- ++(0.5,0) |- (k);
+  \draw[panah] (pkg.east) -- ++(0.5,0) |- (d);
+  \draw[panah] (pkg.east) -- ++(0.5,0) |- (r);
+\end{tikzpicture}
+\end{center}
+\begin{center}
+{\small\color{abuteks} Gambar 1.1: Satu spesifikasi menghasilkan seluruh keluaran modul}
+\end{center}
+```
+
+Akibat pergeseran ini, keempat masalah tadi hilang dengan sendirinya:
+
+| Masalah | Bagaimana teratasi |
+|---------|--------------------|
+| Preamble disalin berulang | preamble dibangkitkan dari satu templat; ubah sekali, berlaku semua |
+| Penomoran tidak sinkron | nomor dihitung otomatis saat render |
+| Kunci tercecer | soal dan solusi hidup di **satu** spesifikasi |
+| Tidak seragam | struktur bagian ditetapkan paket, bukan diketik ulang |
+
+## Apa yang Dihasilkan
+
+Dari satu berkas spesifikasi, paket menghasilkan empat keluaran sekaligus.
+
+\begin{kotakinfo}[Keluaran satu modul]
+\begin{tabular}{@{}ll@{}}
+\textbf{Berkas} & \textbf{Isi}\\
+\texttt{Modul\_NN\_*.pdf} & modul praktikum siap cetak, bersampul pembatas\\
+\texttt{Kunci\_NN\_*.pdf} & kunci jawaban seluruh latihan dan penugasan\\
+\texttt{Modul\_NN\_*.Rmd} & sumber R Markdown yang dibangkitkan\\
+\texttt{data/*.csv} & data simulasi beserta \texttt{gen\_data.R}\\
+\end{tabular}
+\end{kotakinfo}
+
+Pada tingkat mata kuliah, paket juga menyusun **buku gabungan** --- seluruh modul dirangkai
+menjadi satu berkas dengan penomoran halaman yang berlanjut, dilengkapi bagian awal dan
+bagian akhir. Hal ini dibahas pada Bab 10.
+
+## Apa yang Bukan Tujuan Paket Ini
+
+Agar harapan tidak keliru, tiga hal berikut perlu ditegaskan.
+
+`modulstis` **bukan penyunting visual**. Seluruh isi ditulis sebagai teks, sehingga dapat
+disimpan di kendali versi dan diperbandingkan perubahannya.
+
+`modulstis` **tidak menggantikan** `bookdown`, R Markdown, maupun Quarto. Paket ini
+mengorkestrasi keduanya --- menyiapkan berkas, memanggil mesin render, lalu merapikan hasilnya.
+Dua backend tersedia dan keduanya mempunyai contoh penerapan penuh: **bookdown** (berkas antara
+`.Rmd`) diperagakan pada Pemrograman Statistika D-IV, dan **Quarto** (berkas antara `.qmd`) pada
+Pemrograman Statistika D-III. Berpindah di antara keduanya cukup dengan mengganti argumen
+`backend`; lihat vignette *Contoh Penerapan modulstis Secara Penuh (Dua Backend)*.
+
+`modulstis` **tidak menulis isi modul untuk Anda**. Materi, contoh, dan interpretasi tetap
+merupakan pekerjaan penyusun. Yang diotomatiskan adalah bentuk dan penyusunannya, bukan
+substansinya.
+
+## Peta Buku Ini
+
+\begin{kotakinfo}[Susunan buku]
+\begin{tabular}{@{}ll@{}}
+\textbf{Bagian I} (Bab 1--3) & Memulai: pemasangan hingga modul pertama\\
+\textbf{Bagian II} (Bab 4--6) & Menyusun isi: spesifikasi, bagian modul, contoh dan latihan\\
+\textbf{Bagian III} (Bab 7--8) & Sintaks: LaTeX dan R Markdown\\
+\textbf{Bagian IV} (Bab 9--11) & Menyesuaikan tampilan dan menerbitkan buku\\
+\textbf{Lampiran} & Rujukan cepat, API, pemecahan masalah, studi kasus\\
+\end{tabular}
+\end{kotakinfo}
+
+Bila Anda ingin segera mencoba, lompatlah ke Bab 3 setelah menyelesaikan pemasangan pada
+Bab 2. Bab 1 ini boleh dibaca belakangan.
+
+\newpage
+
+# Menyiapkan Lingkungan
+
+Bab ini memastikan komputer Anda siap sebelum modul pertama dibuat. Seluruh langkah hanya
+perlu dikerjakan sekali.
+
+## Prasyarat Lingkungan
+
+\begin{kotakinfo}[Yang harus tersedia]
+\begin{tabular}{@{}p{3.4cm}p{10.5cm}@{}}
+\textbf{R} & versi 4.1 atau lebih baru; mesin penjalan seluruh kode\\
+\textbf{RStudio} & penyunting; membuat pekerjaan lebih nyaman meski tidak wajib\\
+\textbf{XeLaTeX} & mesin penyusun PDF; disediakan TinyTeX atau TeX Live\\
+\textbf{poppler-utils} & menyediakan \texttt{pdfunite}, \texttt{pdftoppm}, \texttt{pdfinfo}\\
+\textbf{Pola pemenggalan} & kaidah pemenggalan kata bahasa Indonesia bagi LaTeX\\
+\textbf{Quarto} & \emph{opsional}; hanya bila memakai backend Quarto (lihat Bagian 2.10)\\
+\end{tabular}
+\end{kotakinfo}
+
+Selain itu diperlukan font **Carlito**, yaitu font bebas yang metriknya setara Calibri dan
+dipakai pada seluruh tata letak modul.
+
+## Memasang R dan RStudio
+
+**R** diunduh dari `cran.r-project.org`, pilih paket sesuai sistem operasi Anda. Pemasangan
+berjalan seperti aplikasi biasa.
+
+**RStudio Desktop** diunduh dari `posit.co/download/rstudio-desktop`. Pasang setelah R
+terpasang, agar RStudio langsung mengenalinya.
+
+\begin{kotaktips}
+Bila Anda memakai penyunting lain --- VS Code, Positron, atau bahkan terminal --- seluruh
+perintah dalam buku ini tetap berlaku. Buku ini sengaja ditulis dalam bentuk perintah yang
+dapat dijalankan di mana saja, dengan catatan tambahan bila RStudio menyediakan jalan pintas
+melalui menu.
+\end{kotaktips}
+
+## Mengenali Tata Letak RStudio
+
+Empat panel RStudio akan disebut berulang kali dalam buku ini. Gambar berikut menandai
+keempatnya.
+
+```{=latex}
+\begin{center}
+\includegraphics[width=\linewidth]{gambar/tataletak_rstudio.pdf}
+\end{center}
+\begin{center}
+{\small\color{abuteks} Gambar 2.1: Ilustrasi tata letak RStudio saat menyunting spesifikasi modul}
+\end{center}
+```
+
+\begin{kotakinfo}[Keterangan panel]
+\begin{tabular}{@{}p{0.8cm}p{3.2cm}p{10cm}@{}}
+\textbf{1} & \textbf{Source} & tempat menyunting berkas spesifikasi \texttt{.yml},
+berkas \texttt{.Rmd}, maupun \texttt{preamble.tex}\\[2pt]
+\textbf{2} & \textbf{Environment} & memperlihatkan objek yang sedang hidup, misalnya
+\texttt{sp} (spesifikasi) dan \texttt{th} (tema)\\[2pt]
+\textbf{3} & \textbf{Console} & tempat menjalankan perintah; pesan \texttt{INFO} dari
+paket muncul di sini saat render berjalan\\[2pt]
+\textbf{4} & \textbf{Files} & memperlihatkan berkas yang dihasilkan; PDF hasil render
+tampak di sini dan dapat langsung dibuka\\
+\end{tabular}
+\end{kotakinfo}
+
+Sepanjang buku, rujukan seperti "amati panel Console" mengacu pada penomoran gambar di atas.
+
+## Memasang XeLaTeX
+
+Cara paling ringan adalah **TinyTeX**, distribusi LaTeX kecil yang dapat dipasang dari dalam R
+dan otomatis menambah paket yang dibutuhkan.
+
+```{r eval=FALSE}
+install.packages("tinytex")
+tinytex::install_tinytex()
+```
+
+Pemasangan mengunduh sekitar 100 MB dan berlangsung beberapa menit. Setelah selesai,
+**tutup dan buka kembali RStudio** agar jalur perkakas terbaca.
+
+Bila di komputer Anda sudah terpasang TeX Live atau MiKTeX lengkap, langkah ini tidak perlu.
+
+## Memasang Font Carlito
+
+Font Carlito bersifat bebas dan tersedia sebagai bagian dari paket font Google Crosextra.
+
+\begin{kotaklangkah}[Linux]
+Jalankan \texttt{sudo apt install fonts-crosextra-carlito} lalu \texttt{fc-cache -f}.
+\end{kotaklangkah}
+
+\begin{kotaklangkah}[Windows dan macOS]
+Unduh berkas \texttt{Carlito-Regular.ttf} beserta variannya, lalu pasang seperti font biasa
+(klik kanan, \emph{Install}). Setelah itu jalankan ulang RStudio.
+\end{kotaklangkah}
+
+\begin{kotaksalah}[Bila font tidak ditemukan]
+Galat \texttt{Package fontspec Error: The font "Carlito" cannot be found} berarti font belum
+terpasang atau belum terbaca sistem. Pada Linux, periksa dengan \texttt{fc-list | grep -i
+carlito}. Bila tetap tidak ditemukan, Anda dapat menggantinya sementara dengan font lain
+melalui penyuntingan preamble --- caranya dibahas pada Bab 9.
+\end{kotaksalah}
+
+## Memasang Pola Pemenggalan Bahasa Indonesia
+
+Prasyarat ini mudah terlewat karena ketiadaannya **tidak menimbulkan galat**. Modul tetap
+tersusun, hanya saja kata-katanya terpenggal menurut kaidah bahasa Inggris.
+
+\begin{kotaksalah}[Gejala yang perlu dikenali]
+Perhatikan kata yang terpotong di ujung baris. Bila Anda menemukan \texttt{meny-atakan},
+\texttt{pengelom-pokan}, atau \texttt{peng-hasilkan}, berarti pola pemenggalan Indonesia belum
+terpasang. Pemenggalan yang benar mengikuti batas suku kata: \texttt{me-nyatakan},
+\texttt{penge-lompokan}, \texttt{meng-hasilkan}.
+\end{kotaksalah}
+
+Pemasangannya bergantung pada distribusi LaTeX yang Anda pakai.
+
+```bash
+# TeX Live berbasis Debian atau Ubuntu
+sudo apt-get install texlive-lang-other
+```
+
+```r
+# TinyTeX
+tinytex::tlmgr_install(c("hyphen-indonesian"))
+```
+
+Periksa keberhasilannya dari terminal:
+
+```bash
+kpsewhich hyph-id.tex
+```
+
+Bila berkasnya ditemukan, polanya sudah tersedia. Paket `modulstis` memilihnya secara otomatis
+melalui satu baris pada preamble:
+
+```latex
+\language=\csname l@indonesian\endcsname
+```
+
+\begin{kotaktips}
+Cara ini sengaja dipilih daripada memuat paket \texttt{polyglossia} atau \texttt{babel}. Selain
+tidak menambah ketergantungan, ia tidak mengubah penamaan bagian --- ``Daftar Isi'', ``Tabel'',
+dan ``Gambar'' tetap sebagaimana ditetapkan paket --- dan tidak bentrok dengan makro sampul.
+\end{kotaktips}
+
+## Memasang poppler-utils
+
+Perkakas ini dipakai untuk menggabungkan PDF dan membaca jumlah halamannya.
+
+```{=latex}
+\begin{kotaklangkah}[Pemasangan]
+\textbf{Linux:} \texttt{sudo apt install poppler-utils}\\
+\textbf{macOS:} \texttt{brew install poppler}\\
+\textbf{Windows:} unduh \emph{poppler for Windows}, lalu tambahkan foldernya ke \texttt{PATH}
+\end{kotaklangkah}
+```
+
+Perkakas ini hanya diperlukan saat menyusun buku gabungan (Bab 10). Untuk membuat modul
+satuan, ketiadaannya tidak menghalangi.
+
+## Memasang `modulstis`
+
+Paket dipasang dari berkas tarball yang disertakan.
+
+```{r eval=FALSE}
+install.packages("modulstis_0.3.8.tar.gz", repos = NULL, type = "source")
+```
+
+Bila Anda sedang mengembangkan paketnya sendiri, muat sumbernya langsung tanpa memasang.
+
+```{r eval=FALSE}
+pkgload::load_all("paket_R/modulstis")
+```
+
+\begin{kotaksalah}[Sumber lokal tertimpa versi terpasang]
+Bila paket versi lama pernah dipasang di sistem, perintah \texttt{library(modulstis)} akan
+memuat versi lama itu --- bukan sumber yang sedang Anda sunting. Akibatnya perubahan Anda
+seolah tidak berpengaruh. Utamakan \texttt{pkgload::load\_all()} saat mengembangkan, atau
+hapus versi terpasang dengan \texttt{remove.packages("modulstis")}.
+\end{kotaksalah}
+
+## Daftar Periksa Kesiapan
+
+Jalankan potongan berikut. Seluruh baris harus bernilai `TRUE`.
+
+```{r eval=FALSE}
+periksa_kesiapan <- function() {
+  hasil <- c(
+    R_versi_cukup   = getRversion() >= "4.1.0",
+    modulstis       = requireNamespace("modulstis", quietly = TRUE),
+    rmarkdown       = requireNamespace("rmarkdown", quietly = TRUE),
+    knitr           = requireNamespace("knitr", quietly = TRUE),
+    bookdown        = requireNamespace("bookdown", quietly = TRUE),
+    xelatex         = nzchar(Sys.which("xelatex")),
+    pdfunite        = nzchar(Sys.which("pdfunite")),
+    pdfinfo         = nzchar(Sys.which("pdfinfo"))
+  )
+  print(hasil)
+  if (all(hasil)) message("Lingkungan siap.")
+  else message("Belum siap: ", paste(names(hasil)[!hasil], collapse = ", "))
+  invisible(hasil)
+}
+periksa_kesiapan()
+```
+
+Keluaran yang diharapkan:
+
+```
+  R_versi_cukup       modulstis       rmarkdown           knitr
+           TRUE            TRUE            TRUE            TRUE
+       bookdown         xelatex        pdfunite         pdfinfo
+           TRUE            TRUE            TRUE            TRUE
+Lingkungan siap.
+```
+
+Font Carlito tidak dapat diperiksa dari R secara lintas sistem; keberhasilannya akan terbukti
+pada render pertama di Bab 3.
+
+Bila Anda berencana memakai backend Quarto, tambahkan satu pemeriksaan lagi --- ini
+**opsional** dan tidak diperlukan bagi backend bookdown:
+
+```{r eval=FALSE}
+c(quarto_cli = nzchar(Sys.which("quarto")),
+  paket_quarto = requireNamespace("quarto", quietly = TRUE))
+```
+
+## Memilih Backend: R Markdown atau Quarto
+
+`modulstis` dapat merender lewat **dua backend**, dan keduanya menghasilkan modul serta kunci
+yang isinya sama. Yang berbeda hanya berkas antara dan mesin yang memprosesnya.
+
+\begin{kotakinfo}[Dua backend]
+\begin{tabular}{@{}p{3.0cm}p{5.3cm}p{5.6cm}@{}}
+ & \textbf{bookdown} (bawaan) & \textbf{quarto}\\
+Berkas antara & \texttt{.Rmd} & \texttt{.qmd}\\
+Mesin & \texttt{rmarkdown::render()} & Quarto CLI\\
+Prasyarat & sudah terpasang bersama R & Quarto CLI harus dipasang\\
+Mesin PDF & XeLaTeX & XeLaTeX\\
+Preamble BPS & sama & sama\\
+\end{tabular}
+\end{kotakinfo}
+
+Cara berpindah **hanya satu argumen**:
+
+```{r eval=FALSE}
+render_module(spec, backend = "bookdown")   # bawaan
+render_module(spec, backend = "quarto")     # menuntut Quarto CLI
+
+proj <- ModuleProject$new(specs_dir = "spec", backend = "quarto")
+```
+
+**Memasang Quarto.** Unduh pemasang dari <https://quarto.org/docs/get-started/>, atau pada
+Linux berbasis Debian/Ubuntu pasang berkas `.deb` yang disediakan di sana. RStudio versi baru
+sudah menyertakan Quarto sehingga sering kali tidak perlu memasang apa pun. Periksa dengan:
+
+```{r eval=FALSE}
+quarto::quarto_version()
+#> [1] '1.6.39'
+```
+
+\begin{kotakinfo}[Mana yang sebaiknya dipakai]
+\begin{itemize}
+\item \textbf{Pakai bookdown} bila Anda ingin prasyarat sesedikit mungkin, bekerja pada
+      komputer yang tidak dapat memasang perangkat lunak baru, atau menyusun modul yang akan
+      digabung menjadi buku bersama modul lama.
+\item \textbf{Pakai Quarto} bila mata kuliah Anda juga memakai Python atau Julia lewat mesin
+      Quarto, atau bila Anda memang sudah terbiasa dengan \texttt{.qmd}.
+\item \textbf{Jangan mencampur keduanya dalam satu buku.} Isi kedua keluaran identik, tetapi
+      jumlah halamannya dapat berbeda beberapa halaman karena Quarto dan rmarkdown menyusun
+      blok kode serta gambar dengan spasi yang sedikit berbeda. Penomoran halaman berlanjut
+      (Bab 10) mengandaikan seluruh modul dirender dengan backend yang sama.
+\end{itemize}
+\end{kotakinfo}
+
+Contoh penerapan penuh untuk **kedua** backend tersedia sebagai vignette
+*Contoh Penerapan modulstis Secara Penuh (Dua Backend)*: Pemrograman Statistika D-IV dirender
+lewat bookdown, dan D-III lewat Quarto, dari spesifikasi yang bentuknya sama.
+
+## Galat Pemasangan yang Lazim
+
+\begin{kotakinfo}[Gejala dan tindakan]
+\begin{tabular}{@{}p{5.4cm}p{9cm}@{}}
+\textbf{Gejala} & \textbf{Tindakan}\\
+\texttt{xelatex not found} & TinyTeX belum terpasang, atau RStudio belum dijalankan ulang
+sesudahnya\\[3pt]
+\texttt{! LaTeX Error: File `tcolorbox.sty' not found} & jalankan
+\texttt{tinytex::tlmgr\_install("tcolorbox")}\\[3pt]
+\texttt{fontspec Error: font cannot be found} & font Carlito belum terpasang (lihat
+bagian sebelumnya)\\[3pt]
+\texttt{pdfunite: command not found} & poppler-utils belum terpasang; hanya menghalangi
+penyusunan buku gabungan\\[3pt]
+\texttt{there is no package called 'R6'} & pasang dependensi:
+\texttt{install.packages(c("R6","yaml","purrr","fs","glue","rlang"))}\\
+\end{tabular}
+\end{kotakinfo}
+
+\newpage
+
+## Memulai Proyek Baru
+
+Setelah paket terpasang, kerangka proyek dapat dibuat langsung dari RStudio:
+**File > New Project > New Directory > Proyek Modul Praktikum (modulstis)**.
+
+RStudio menanyakan identitas mata kuliah --- nama, kode, program studi, semester,
+penyusun, dan banyaknya modul --- lalu menyiapkan folder beserta berkas pendukungnya.
+
+\begin{kotakinfo}[Isi proyek yang dihasilkan]\par\smallskip
+\begin{tabular}{@{}p{3.4cm}p{10.5cm}@{}}
+\texttt{spec/} & spesifikasi modul dalam YAML, satu berkas per modul\\[3pt]
+\texttt{modul/} & keluaran render: PDF modul, kunci jawaban, dan data\\[3pt]
+\texttt{buku/} & bagian awal dan akhir buku gabungan\\[3pt]
+\texttt{render\_modul.R} & skrip render seluruh spesifikasi\\[3pt]
+\texttt{README.md} & identitas mata kuliah dan alur kerjanya\\
+\end{tabular}
+\end{kotakinfo}
+
+Proyek baru menyertakan satu spesifikasi contoh yang **lolos validasi apa adanya**.
+Jalankan skrip berikut untuk membuktikan bahwa lingkungan Anda sudah siap sebelum
+menulis isi sungguhan.
+
+```bash
+Rscript render_modul.R
+```
+
+Bila PDF modul dan kunci terbentuk tanpa galat, seluruh prasyarat pada bab ini sudah
+terpenuhi. Bila gagal, pesan galatnya menunjuk prasyarat mana yang belum tersedia.
+
+\begin{kotaktips}
+Fungsi yang sama dapat dipanggil dari konsol tanpa melalui menu RStudio:
+
+\vspace{4pt}
+\texttt{modulstis::buat\_proyek\_modul("folder\_baru", matkul = "Nama Mata Kuliah", kode = "K000000")}
+\end{kotaktips}
+
+
+# Modul Pertama dalam 15 Menit
+
+Bab ini mengajak Anda menghasilkan satu modul praktikum lengkap sesegera mungkin. Rinciannya
+sengaja ditunda ke bab-bab berikutnya --- tujuan di sini adalah memperoleh keberhasilan
+pertama dan melihat wujud keluarannya.
+
+## Menyiapkan Folder Kerja
+
+\begin{kotaklangkah}[1 --- Buat folder]
+Buat folder kosong, misalnya \texttt{modul-saya}. Di RStudio: menu
+\emph{File $\rightarrow$ New Project $\rightarrow$ New Directory $\rightarrow$ New Project}.
+Bekerja dalam proyek membuat jalur berkas relatif selalu benar.
+\end{kotaklangkah}
+
+## Menyalin Spesifikasi Contoh
+
+Paket menyertakan empat puluh spesifikasi siap pakai: 26 dari mata kuliah Analisis Peubah
+Ganda dan 14 dari Pemrograman Statistika. Kita pinjam salah satunya sebagai titik awal.
+
+```{r eval=FALSE}
+library(modulstis)
+
+# lihat spesifikasi yang tersedia
+list.files(system.file("specs_ps", package = "modulstis"))
+
+# salin satu ke folder kerja
+file.copy(
+  system.file("specs_ps", "modul-01-pengenalan.yml", package = "modulstis"),
+  "modul-saya.yml"
+)
+```
+
+## Membaca dan Memeriksa Spesifikasi
+
+Sebelum dirender, spesifikasi sebaiknya diperiksa lebih dahulu. Paket menerapkan prinsip
+*fail-fast*: kekeliruan dilaporkan sebelum render dimulai, bukan setelah menunggu lama.
+
+```{r eval=FALSE}
+sp <- module_spec_from_yaml("modul-saya.yml")
+
+sp$validate()$ok        # TRUE bila spesifikasi sah
+sp$number               # nomor modul
+sp$title                # judul modul
+length(sp$body$contoh)  # banyaknya contoh
+```
+
+```
+[1] TRUE
+[1] 1
+[1] "Pengenalan dan Instalasi Perangkat Pemrograman Statistika"
+[1] 15
+```
+
+\begin{kotakinfo}[Bila validasi gagal]
+Objek \texttt{sp\$validate()} mengembalikan \texttt{ok} bernilai \texttt{FALSE} beserta
+komponen \texttt{messages} berisi seluruh kekeliruan sekaligus --- bukan satu per satu.
+Bacalah pesannya, perbaiki berkas YAML, lalu muat ulang.
+\end{kotakinfo}
+
+## Membangkitkan Data
+
+Modul memakai data simulasi yang dibangkitkan dari resep di dalam spesifikasi. Karena
+resepnya memuat `seed`, hasilnya selalu sama setiap kali dibangkitkan.
+
+```{r eval=FALSE}
+generate_module_data(sp, output_dir = ".")
+list.files("data")
+```
+
+```
+[1] "data_demo.csv"
+```
+
+## Merender Modul dan Kunci
+
+Inilah langkah intinya. Tiga baris berikut menghasilkan dua berkas PDF.
+
+```{r eval=FALSE}
+th <- theme_factory()                              # tema BPS bawaan
+r  <- renderer_factory("bookdown", theme = th)     # mesin render
+
+r$render(ModuleBuilder$new(theme = th)$build(sp), ".")      # modul
+r$render(AnswerKeyBuilder$new(theme = th)$build(sp), ".")   # kunci jawaban
+```
+
+Selama render berjalan, panel Console menampilkan pesan seperti berikut.
+
+```
+INFO  [10:14:22] Render (bookdown/rmarkdown) modul=1 jenis=modul
+INFO  [10:14:51] Render selesai berkas=Modul_01_pengenalan.pdf
+```
+
+\begin{kotaktips}
+Render pertama biasanya paling lama karena LaTeX perlu menyiapkan berkas pendukung. Render
+berikutnya jauh lebih cepat.
+\end{kotaktips}
+
+## Memeriksa Hasil
+
+Folder kerja kini berisi berkas berikut.
+
+```
+modul-saya/
+  modul-saya.yml                     spesifikasi (sumber kebenaran)
+  Modul_01_pengenalan.Rmd            R Markdown yang dibangkitkan
+  Modul_01_pengenalan.pdf            modul praktikum siap cetak
+  Kunci_01_pengenalan.Rmd
+  Kunci_01_pengenalan.pdf            kunci jawaban
+  preamble.tex                       preamble LaTeX yang dibangkitkan
+  data/data_demo.csv                 data simulasi
+```
+
+Bukalah `Modul_01_pengenalan.pdf`. Anda akan mendapati sampul pembatas berwarna, sebelas
+bagian bernomor, kotak berwarna, contoh berlabel, dan kode yang sudah dijalankan beserta
+keluarannya.
+
+\begin{kotakperhatian}[Berkas .Rmd adalah hasil, bukan sumber]
+Berkas \texttt{.Rmd} yang muncul \textbf{dibangkitkan} dari spesifikasi. Menyuntingnya memang
+bisa, tetapi perubahan Anda akan \textbf{tertimpa} pada render berikutnya. Sunting berkas
+\texttt{.yml}, bukan \texttt{.Rmd}.
+\end{kotakperhatian}
+
+## Menyunting Isi Modul
+
+Mari lakukan satu perubahan kecil untuk merasakan alur kerjanya. Bukalah `modul-saya.yml`
+pada panel Source, lalu ubah judulnya.
+
+```yaml
+number: 1
+title: "Modul Percobaan Saya"
+```
+
+Kemudian render ulang dengan perintah yang sama seperti sebelumnya. Buka kembali PDF-nya:
+judul pada sampul, pada kepala halaman, dan pada daftar isi seluruhnya sudah berubah ---
+cukup dengan menyunting satu baris.
+
+Inilah gagasan pokok yang disebut pada Bab 1. Isi hidup di satu tempat, dan seluruh
+keluaran mengikutinya.
+
+## Menyusun Fungsi Pintasan
+
+Karena keempat langkah tadi akan sering diulang, sebaiknya dibungkus menjadi satu fungsi.
+Letakkan di berkas `bangun.R` pada folder kerja Anda.
+
+```{r eval=FALSE}
+bangun_modul <- function(spec, folder = ".", data = TRUE) {
+  sp <- modulstis::module_spec_from_yaml(spec)
+  lap <- sp$validate()
+  if (!lap$ok) {
+    message("Spesifikasi belum sah:")
+    print(lap$messages)
+    return(invisible(FALSE))
+  }
+  if (data) modulstis::generate_module_data(sp, output_dir = folder)
+  th <- modulstis::theme_factory()
+  r  <- modulstis::renderer_factory("bookdown", theme = th)
+  r$render(modulstis::ModuleBuilder$new(theme = th)$build(sp), folder)
+  r$render(modulstis::AnswerKeyBuilder$new(theme = th)$build(sp), folder)
+  message("Selesai: ", sp$title)
+  invisible(TRUE)
+}
+
+# pemakaian
+bangun_modul("modul-saya.yml")
+```
+
+Sejak titik ini, membangun ulang modul cukup satu baris.
+
+## Apa Selanjutnya
+
+Anda kini memiliki modul yang berjalan. Langkah berikutnya bergantung pada kebutuhan Anda.
+
+\begin{kotakinfo}[Ke mana selanjutnya]
+\begin{tabular}{@{}p{6.4cm}p{8cm}@{}}
+\textbf{Ingin mengubah isi modul} & Bab 4 (anatomi spesifikasi) dan Bab 5 (sebelas bagian)\\[3pt]
+\textbf{Ingin menambah contoh dan latihan} & Bab 6\\[3pt]
+\textbf{Ingin memakai kotak, rumus, tabel} & Bab 7 (sintaks LaTeX)\\[3pt]
+\textbf{Ingin mengatur perilaku kode} & Bab 8 (R Markdown dan knitr)\\[3pt]
+\textbf{Ingin mengubah warna atau sampul} & Bab 9\\[3pt]
+\textbf{Ingin menyusun buku gabungan} & Bab 10\\
+\end{tabular}
+\end{kotakinfo}

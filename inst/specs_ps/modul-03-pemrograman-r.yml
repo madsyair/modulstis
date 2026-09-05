@@ -1,0 +1,606 @@
+number: 3
+title: "Pemrograman R: Kondisi, Perulangan, Apply, dan Fungsi"
+short_code: "pemrograman_r"
+topic: "Pemrograman R"
+pertemuan: 3
+sub_cpmk: >
+  Sub-CPMK 3: Mahasiswa mampu melakukan pemrograman dengan R menggunakan pernyataan
+  kondisi, perulangan, keluarga apply, serta membuat fungsi.
+packages: [reticulate]
+contoh_title: "Contoh Praktikum dengan R"
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  ta: "2025/2026"
+  semester: "3 (Ganjil)"
+  prodi: "D-IV Statistika"
+  penyusun:
+    - "Achmad Syahrul Choir"
+    - "Rudi Salam"
+    - "Christiana Anggraeni Putri"
+
+datasets:
+  - name: data_penjualan
+    role: contoh
+    recipe:
+      kind: tabular
+      "n": 12
+      seed: 2025
+      columns:
+        bulan: {type: integer, min: 1, max: 12}
+        wilayah: {type: category, levels: [Barat, Tengah, Timur], probs: [0.4, 0.35, 0.25]}
+        penjualan: {type: integer, min: 50, max: 500}
+        target: {type: integer, min: 100, max: 400}
+
+body:
+  deskripsi:
+    - >
+      Modul ini mendalami pemrograman dengan R melalui empat pilar alur kendali: pernyataan
+      kondisi, perulangan, keluarga apply, dan pembuatan fungsi. Keempatnya adalah alat untuk
+      mengotomatiskan pekerjaan berulang, membuat keputusan berdasarkan data, dan menyusun kode
+      yang ringkas serta dapat dipakai ulang. Penguasaan alur kendali adalah pembatas antara
+      "menjalankan perintah satu per satu" dan "menulis program".
+    - >
+      Berbeda dengan dua modul sebelumnya yang menyajikan R dan Python berdampingan, modul ini
+      berfokus pada R agar penguasaannya tuntas. Pada modul berikutnya (Modul 4) konsep yang sama
+      dipelajari di Python, sehingga mahasiswa dapat membandingkan keduanya dengan bekal R yang
+      sudah matang.
+    - >
+      Materi dibahas menyeluruh: pernyataan kondisi lengkap (if, else if, else, ifelse, switch);
+      ketiga bentuk perulangan (for, while, repeat) beserta pengendali break dan next; seluruh
+      anggota keluarga apply (sapply, lapply, vapply, mapply, tapply, apply) dengan contoh
+      masing-masing; serta pembuatan fungsi mulai dari sederhana hingga berargumen bawaan dan
+      pemahaman skop variabel. Tiap konsep dilengkapi contoh, catatan kesalahan umum, tips
+      efisiensi, dan variasi penulisan.
+    - "\\begin{kotakperhatian}[Tentang data]\nBerkas data pada modul ini adalah \\textbf{data simulasi} (\\texttt{set.seed(2025)}), \\textbf{bukan data nyata} dan \\textbf{bukan data resmi} instansi mana pun.\n\\end{kotakperhatian}"
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:"
+    - "1. **Menggunakan** pernyataan kondisi (`if`, `else if`, `else`, `ifelse`, `switch`) untuk pengambilan keputusan."
+    - "2. **Menyusun** ketiga bentuk perulangan (`for`, `while`, `repeat`) dan mengendalikannya dengan `break` serta `next`."
+    - "3. **Menerapkan** seluruh keluarga fungsi `apply` (`sapply`, `lapply`, `vapply`, `mapply`, `tapply`, `apply`) sebagai alternatif perulangan yang ringkas."
+    - "4. **Membuat** fungsi dengan argumen, nilai bawaan, dan nilai kembalian, serta memahami **skop variabel** (lokal vs global)."
+    - "5. **Memilih** alat yang paling ringkas dan efisien untuk suatu tugas (perulangan vs apply vs operasi tervektor)."
+  alat:
+    - "Perangkat dan bahan yang diperlukan:"
+    - "- **R** (RStudio); modul ini fokus pada R."
+    - "- Berkas data: `data/data_penjualan.csv`."
+  instruksi:
+    - "Ikuti tahapan berikut:"
+    - "**Sebelum praktikum:** siapkan direktori kerja; letakkan `data_penjualan.csv` di subfolder `data/`."
+    - "**Selama praktikum:** kerjakan Contoh berurutan; jalankan tiap potongan kode dan amati keluaran; bandingkan pendekatan perulangan dengan apply; tulis interpretasi dengan kalimat sendiri."
+    - "**Pembagian kerja:** Contoh dan Latihan dikerjakan selama sesi praktikum di kelas; **Penugasan dikerjakan sebagai tugas terstruktur di luar sesi**.\n\n**Pengumpulan:** susun laporan R Markdown, render ke PDF/HTML, dan kumpulkan via Google Classroom sesuai tenggat yang ditetapkan dosen."
+  teori:
+    - "### Kaitan dengan Materi Sebelumnya"
+    - >
+      Modul 2 memperkenalkan tipe data, struktur data (vektor, list, data frame), operator, dan
+      fungsi sederhana. Modul ini memakai semua itu sebagai bahan: pernyataan kondisi bekerja pada
+      nilai logika hasil operator perbandingan; perulangan menelusuri elemen vektor dan list; keluarga
+      apply menerapkan fungsi ke struktur data; dan fungsi yang dibuat di sini memproses vektor serta
+      data frame yang telah dikenal.
+    - >
+      Dengan kata lain, jika Modul 2 adalah "kata benda" (data dan wadahnya), modul ini adalah "kata
+      kerja" (cara mengendalikan alur pengolahan). Empat pilar di sini - kondisi, perulangan, apply,
+      fungsi - adalah pembatas antara sekadar menjalankan perintah satu per satu dan menulis program
+      yang mengotomatiskan pekerjaan. Semua ini menjadi prasyarat langsung untuk Modul 5 (manipulasi
+      data dengan dplyr) yang banyak memakai fungsi dan alur pada data frame.
+    - "\\begin{kotakcatatan}\nBila Anda belum lancar mengakses elemen vektor/list dan membuat fungsi sederhana (Modul 2), tinjau ulang sebentar - modul ini membangun langsung di atasnya, terutama bagian keluarga apply yang sangat bergantung pada pemahaman fungsi.\n\\end{kotakcatatan}"
+    - "### Pernyataan Kondisi"
+    - >
+      **Mengapa penting.** Program sering harus mengambil keputusan berbeda bergantung pada data.
+      Pernyataan kondisi memungkinkan kode "bercabang": menjalankan bagian tertentu hanya bila syarat
+      terpenuhi.
+    - >
+      **Bentuk-bentuknya.** Bentuk umum: \texttt{if (syarat) \{ ... \} else if (syarat2) \{ ... \}
+      else \{ ... \}}. Untuk memilih di antara banyak kemungkinan berdasarkan satu nilai, tersedia
+      \texttt{switch()}. Untuk syarat yang bekerja pada seluruh vektor sekaligus (elemen per elemen),
+      gunakan \texttt{ifelse(syarat, nilai\_benar, nilai\_salah)} yang jauh lebih ringkas daripada
+      perulangan.
+    - "\\begin{kotakcatatan}\nGunakan \\texttt{if} untuk satu keputusan tunggal; gunakan \\texttt{ifelse} bila ingin memberi label pada seluruh vektor. Menaruh \\texttt{if} biasa di dalam perulangan untuk memproses vektor bekerja, tetapi \\texttt{ifelse} lebih ringkas dan cepat.\n\\end{kotakcatatan}"
+    - "### Perulangan"
+    - >
+      **Tiga bentuk.** \texttt{for (i in himpunan) \{ ... \}} mengulang untuk tiap elemen himpunan -
+      cocok bila jumlah iterasi diketahui. \texttt{while (syarat) \{ ... \}} mengulang selama syarat
+      benar - cocok bila jumlah iterasi tak diketahui di awal. \texttt{repeat \{ ... ; if (syarat)
+      break \}} mengulang tanpa henti hingga ditemui \texttt{break}.
+    - >
+      **Pengendali.** \texttt{break} menghentikan perulangan seketika; \texttt{next} melompati sisa
+      badan perulangan dan lanjut ke iterasi berikutnya. Keduanya berguna untuk menangani kasus
+      khusus di tengah perulangan.
+    - "\\begin{kotaksalah}\nHindari ``menumbuhkan'' objek di dalam perulangan (mis. \\texttt{x <- c(x, nilai)} berulang kali) karena sangat lambat pada data besar. Sediakan wadah berukuran tetap lebih dahulu (mis. \\texttt{x <- numeric(n)}) lalu isi berdasarkan indeks, atau gunakan keluarga \\texttt{apply}. Pastikan pula perulangan \\texttt{while}/\\texttt{repeat} memiliki syarat berhenti agar tidak berjalan tanpa akhir.\n\\end{kotaksalah}"
+    - "\\begin{kotaksalah}[Jebakan 1:length]\nUntuk mengulang sepanjang objek, gunakan \\texttt{seq\\_along(x)} atau \\texttt{seq\\_len(n)}, \\textbf{bukan} \\texttt{1:length(x)}. Bila \\texttt{x} kosong, \\texttt{length(x)} bernilai 0 sehingga \\texttt{1:0} justru menghasilkan \\texttt{c(1, 0)} - perulangan berjalan dua kali yang tak diinginkan. \\texttt{seq\\_along(x)} aman mengembalikan urutan kosong.\n\\end{kotaksalah}"
+    - "### Keluarga Apply"
+    - >
+      **Gagasan.** Alih-alih menulis perulangan eksplisit, keluarga \texttt{apply} menerapkan sebuah
+      fungsi ke banyak elemen sekaligus. Kodenya lebih ringkas, lebih mudah dibaca, dan sering lebih
+      cepat. Ini adalah gaya khas dan idiomatik dalam R.
+    - >
+      **Anggota-anggotanya.** \texttt{lapply(x, f)} menerapkan f ke tiap elemen dan mengembalikan
+      \emph{list}. \texttt{sapply(x, f)} sama tetapi menyederhanakan hasil menjadi vektor/matriks
+      bila memungkinkan. \texttt{vapply(x, f, tipe)} seperti sapply tetapi dengan tipe hasil yang
+      ditegaskan (lebih aman). \texttt{mapply(f, x, y)} menerapkan f ke beberapa argumen sekaligus.
+      \texttt{tapply(x, grup, f)} menerapkan f per kelompok. \texttt{apply(m, MARGIN, f)} menerapkan
+      f ke baris (MARGIN=1) atau kolom (MARGIN=2) matriks/data frame.
+    - "\\begin{kotaktips}\nPilih anggota apply sesuai kebutuhan: \\texttt{sapply} untuk hasil ringkas, \\texttt{lapply} bila ingin tetap berupa list, \\texttt{vapply} bila ingin keamanan tipe, \\texttt{tapply} untuk ringkasan per kelompok. Pemilihan yang tepat membuat kode lebih jelas maksudnya.\n\\end{kotaktips}"
+    - "### Memilih Perkakas: Perulangan, Apply, atau Vektor?"
+    - >
+      Salah satu keputusan penting saat menulis kode R adalah memilih pendekatan yang tepat. Panduan
+      praktis: (1) bila operasi dapat ditulis secara \emph{tervektor} (mis. \texttt{x + y},
+      \texttt{ifelse}), itu selalu paling ringkas dan cepat; (2) bila perlu menerapkan fungsi ke tiap
+      elemen/kolom/kelompok, gunakan \emph{keluarga apply}; (3) gunakan \emph{perulangan eksplisit}
+      hanya bila tiap iterasi bergantung pada hasil iterasi sebelumnya (mis. deret rekursif) atau
+      logikanya terlalu rumit untuk apply.
+    - "\\begin{kotakcatatan}[Panduan memilih]\nUrutan preferensi umum: \\textbf{operasi tervektor} $\\rightarrow$ \\textbf{apply} $\\rightarrow$ \\textbf{perulangan}. Bukan karena perulangan buruk, tetapi karena dua yang pertama biasanya lebih ringkas, lebih jelas maksudnya, dan lebih cepat pada data besar.\n\\end{kotakcatatan}"
+    - "### Fungsi dan Skop Variabel"
+    - >
+      **Membuat fungsi.** \texttt{nama <- function(argumen) \{ ... ; return(hasil) \}}. Argumen dapat
+      memiliki nilai bawaan (mis. \texttt{function(x, n = 10)}). Fungsi tanpa \texttt{return()}
+      eksplisit mengembalikan nilai ekspresi terakhir.
+    - >
+      **Skop variabel.** Variabel yang dibuat di dalam fungsi bersifat \emph{lokal}: hanya ada selama
+      fungsi berjalan dan tidak mengubah variabel bernama sama di luar fungsi. Ini disebut \emph{lexical
+      scoping}. Memahami skop mencegah galat halus akibat variabel yang tak sengaja bertabrakan.
+    - "\\begin{kotakrumus}\n\\textbf{Kerangka:}\\\\\n\\texttt{if (syarat) \\{ ... \\} else \\{ ... \\}}\\\\\n\\texttt{for (i in 1:n) \\{ ... \\}}\\\\\n\\texttt{sapply(objek, fungsi)}\\\\\n\\texttt{tapply(nilai, grup, fungsi)}\\\\\n\\texttt{nama <- function(arg, n = bawaan) \\{ ... \\}}\n\\end{kotakrumus}"
+  contoh:
+    - contoh: "Pernyataan kondisi berjenjang"
+      kode_r: "nilai <- 78\nif (nilai >= 85) {\n  huruf <- \"A\"\n} else if (nilai >= 70) {\n  huruf <- \"B\"\n} else {\n  huruf <- \"C\"\n}\nhuruf"
+      judul_r: "if - else if - else"
+      eval: true
+      penjelasan: >
+        Sebuah nilai ditetapkan lebih dahulu sebagai bahan uji. Blok kondisi memeriksa syarat secara
+        berurutan dari atas: bila syarat pertama tidak terpenuhi, pemeriksaan berlanjut ke else if, dan
+        else menangkap semua kemungkinan yang tersisa. Setiap cabang menetapkan nilai ke peubah huruf.
+        Hanya satu cabang yang dijalankan, dan baris terakhir menampilkan hasilnya.
+      interpretasi: >
+        Program memeriksa syarat berurutan: karena nilai 78 tidak >= 85 tetapi >= 70, hasilnya "B".
+        Hanya satu cabang yang dijalankan. Urutan syarat penting: yang lebih ketat diletakkan lebih
+        dahulu.
+    - contoh: "Kondisi tervektor dengan ifelse"
+      kode_r: "penjualan <- c(120, 340, 90, 410)\nifelse(penjualan >= 300, \"Tinggi\", \"Rendah\")"
+      judul_r: "ifelse pada vektor"
+      eval: true
+      penjelasan: >
+        Sebuah vektor berisi empat nilai dibuat lebih dahulu. Fungsi ifelse menerima tiga argumen:
+        syarat, nilai bila benar, dan nilai bila salah. Berbeda dari if biasa, ifelse memeriksa seluruh
+        elemen sekaligus sehingga hasilnya berupa vektor label sepanjang vektor masukan.
+      interpretasi: >
+        ifelse bekerja elemen per elemen: keempat nilai dibandingkan dengan 300 sekaligus,
+        menghasilkan vektor label. Ini jauh lebih ringkas daripada menulis perulangan untuk kasus
+        tervektor semacam ini.
+    - contoh: "Memilih dengan switch"
+      kode_r: "kategori <- \"B\"\nbobot <- switch(kategori,\n  A = 4.0,\n  B = 3.0,\n  C = 2.0,\n  0.0)          # nilai bawaan bila tak cocok\nbobot"
+      judul_r: "switch untuk banyak pilihan"
+      eval: true
+      penjelasan: >
+        Peubah kategori ditetapkan lebih dahulu. Fungsi switch menerima nilai itu sebagai argumen
+        pertama, lalu daftar pasangan nama dan hasilnya. Nilai yang cocok akan dikembalikan. Argumen
+        terakhir yang ditulis tanpa nama berperan sebagai nilai bawaan bila tidak ada yang cocok.
+      interpretasi: >
+        switch memilih hasil berdasarkan nilai kategori, lebih rapi daripada rangkaian if-else yang
+        panjang saat pilihan banyak. Argumen terakhir tanpa nama (0.0) menjadi nilai bawaan bila tak
+        ada yang cocok.
+    - contoh: "Perulangan for dengan wadah tetap"
+      kode_r: "n <- 5\nhasil <- numeric(n)      # sediakan wadah dulu (efisien)\nfor (i in 1:n) {\n  hasil[i] <- i^2\n}\nhasil"
+      judul_r: "for yang efisien"
+      eval: true
+      penjelasan: >
+        Banyaknya iterasi ditetapkan lebih dahulu. Wadah hasil disiapkan dengan numeric(n) yang membuat
+        vektor kosong berukuran tetap; inilah kunci efisiensinya. Perulangan berjalan dari satu sampai
+        n, dan pada tiap putaran hasil kuadrat disimpan ke posisi ke-i. Baris terakhir menampilkan
+        seluruh isi wadah.
+      interpretasi: >
+        Wadah hasil disiapkan berukuran n lebih dahulu, lalu diisi berdasarkan indeks - jauh lebih
+        cepat daripada menumbuhkan vektor. Perulangan menghitung kuadrat 1 sampai 5.
+    - contoh: "Perulangan while dan repeat"
+      kode_r: "# while: berhenti saat syarat salah\nn <- 1; hasil <- 1\nwhile (hasil < 100) {\n  n <- n + 1\n  hasil <- hasil * n\n}\ncat(\"while -> n =\", n, \", hasil =\", hasil, \"\\n\")\n\n# repeat: berhenti dengan break\ntotal <- 0; i <- 0\nrepeat {\n  i <- i + 1\n  total <- total + i\n  if (total > 20) break\n}\ncat(\"repeat -> berhenti di i =\", i, \", total =\", total, \"\\n\")"
+      judul_r: "while dan repeat"
+      eval: true
+      penjelasan: >
+        Bagian pertama memakai while: peubah awal ditetapkan, lalu perulangan berjalan selama syarat
+        masih benar, dengan nilai diperbarui di dalamnya sehingga syarat akhirnya menjadi salah. Bagian
+        kedua memakai repeat yang tidak punya syarat sama sekali, sehingga penghentiannya bergantung
+        sepenuhnya pada break yang dipicu oleh pemeriksaan if di dalam badan perulangan.
+      interpretasi: >
+        while mengulang selama hasil < 100. repeat mengulang tanpa henti sampai break dipicu ketika
+        total melebihi 20. Keduanya memerlukan mekanisme berhenti yang jelas; tanpa itu, perulangan
+        berjalan selamanya.
+    - contoh: "break dan next"
+      kode_r: "for (i in 1:10) {\n  if (i %% 2 == 0) next   # lewati bilangan genap\n  if (i > 7) break        # berhenti setelah 7\n  cat(i, \"\")\n}"
+      judul_r: "next melewati, break menghentikan"
+      eval: true
+      penjelasan: >
+        Perulangan berjalan dari satu sampai sepuluh. Pemeriksaan pertama memakai sisa bagi untuk
+        mengenali bilangan genap; bila genap, next melompati sisa badan perulangan sehingga bilangan itu
+        tidak tercetak. Pemeriksaan kedua menghentikan perulangan sepenuhnya dengan break begitu nilai
+        melewati tujuh. Fungsi cat mencetak tanpa berpindah baris.
+      interpretasi: >
+        next melewati iterasi untuk bilangan genap (tak dicetak); break menghentikan perulangan
+        setelah melewati 7. Keluaran hanya bilangan ganjil 1 3 5 7. Keduanya berguna menangani kasus
+        khusus di tengah perulangan.
+    - contoh: "sapply dan lapply"
+      kode_r: "angka <- list(a = 1:3, b = 4:6, c = 7:9)\nlapply(angka, sum)    # hasil berupa LIST\nsapply(angka, sum)    # hasil disederhanakan jadi VEKTOR"
+      judul_r: "lapply vs sapply"
+      eval: true
+      penjelasan: >
+        Sebuah list bernama berisi tiga vektor dibuat lebih dahulu. Fungsi lapply menerapkan sum ke
+        tiap komponen dan selalu mengembalikan list. Fungsi sapply melakukan hal sama tetapi mencoba
+        menyederhanakan hasilnya; karena tiap hasil berupa satu angka, keluarannya menjadi vektor
+        bernama. Perhatikan bahwa nama fungsi ditulis tanpa tanda kurung karena yang diserahkan adalah
+        fungsinya, bukan hasil pemanggilannya.
+      interpretasi: >
+        lapply dan sapply menerapkan sum ke tiap komponen list. Bedanya pada bentuk hasil: lapply
+        mengembalikan list, sapply menyederhanakannya menjadi vektor bernama. Pilih sesuai kebutuhan
+        bentuk keluaran.
+    - contoh: "vapply dan mapply"
+      kode_r: "# vapply: seperti sapply, tetapi tipe hasil ditegaskan (lebih aman)\nvapply(1:4, function(x) x^2, numeric(1))\n# mapply: terapkan fungsi ke beberapa argumen sekaligus\nmapply(function(a, b) a + b, 1:3, c(10, 20, 30))"
+      judul_r: "vapply dan mapply"
+      eval: true
+      penjelasan: >
+        Fungsi vapply menerima argumen ketiga berupa contoh bentuk hasil, di sini numeric(1) yang
+        berarti satu angka bertipe numerik; bila hasil sebenarnya menyimpang, R akan memunculkan galat
+        sehingga lebih aman. Fungsi mapply menerapkan fungsi pada beberapa vektor sekaligus secara
+        sejajar, memasangkan elemen pertama dengan elemen pertama, dan seterusnya.
+      interpretasi: >
+        vapply menghitung kuadrat 1..4 dengan menjamin hasil bertipe numeric (numeric(1)) - lebih
+        aman dari sapply yang bisa mengembalikan tipe tak terduga. mapply menjumlahkan pasangan
+        elemen dari dua vektor sekaligus (1+10, 2+20, 3+30).
+    - contoh: "tapply dan apply pada data nyata"
+      kode_r: "jual <- read.csv(\"data/data_penjualan.csv\")\n# tapply: rata-rata penjualan per wilayah\ntapply(jual$penjualan, jual$wilayah, mean)\n# apply: rata-rata tiap kolom numerik (MARGIN = 2)\napply(jual[, c(\"penjualan\", \"target\")], 2, mean)"
+      judul_r: "tapply per kelompok, apply per kolom"
+      eval: true
+      penjelasan: >
+        Data dibaca lebih dahulu. Fungsi tapply menerima tiga argumen: vektor nilai, vektor pengelompok,
+        dan fungsi yang diterapkan pada tiap kelompok. Fungsi apply bekerja pada matriks atau data frame
+        dan memerlukan argumen MARGIN, yang bernilai satu untuk baris dan dua untuk kolom; di sini
+        dipilih dua sehingga rata-rata dihitung per kolom.
+      interpretasi: >
+        tapply meringkas penjualan menurut kelompok wilayah - inti banyak analisis statistik.
+        apply dengan MARGIN=2 menghitung rata-rata tiap kolom (MARGIN=1 untuk baris). Keduanya
+        menggantikan perulangan bersarang dengan satu baris yang jelas maksudnya.
+    - contoh: "Fungsi dengan argumen bawaan dan skop"
+      kode_r: "capai_target <- function(jual, tgt, ambang = 1.0) {\n  rasio <- jual / tgt          # 'rasio' bersifat LOKAL\n  ifelse(rasio >= ambang, \"Tercapai\", \"Belum\")\n}\ncapai_target(340, 300)\ncapai_target(280, 300, ambang = 0.9)\nexists(\"rasio\")                 # FALSE: rasio tak bocor ke luar fungsi"
+      judul_r: "fungsi + skop lokal"
+      eval: true
+      penjelasan: >
+        Fungsi dibuat dengan tiga argumen, yang terakhir diberi nilai bawaan. Di dalam badan fungsi,
+        peubah rasio dibuat sebagai hasil antara lalu dipakai oleh ifelse. Dua pemanggilan berikutnya
+        menunjukkan pemakaian nilai bawaan dan penimpaannya. Baris terakhir memakai exists untuk
+        membuktikan bahwa peubah rasio tidak tersedia di luar fungsi, karena sifatnya lokal.
+      interpretasi: >
+        Fungsi capai_target membandingkan penjualan terhadap target; argumen ambang bawaan 1.0 dapat
+        ditimpa (mis. 0.9). Variabel rasio yang dibuat di dalam fungsi bersifat lokal - exists("rasio")
+        di luar fungsi mengembalikan FALSE, menunjukkan skop lokal mencegah tabrakan variabel.
+    - contoh: "Perulangan aman dengan seq_along dan bantuan"
+      kode_r: "x <- c(10, 20, 30)\nfor (i in seq_along(x)) {   # aman walau x kosong\n  cat(\"elemen\", i, \"=\", x[i], \"\\n\")\n}\n# args(sapply)   # lihat argumen fungsi (jalankan di Console)\nargs(mean)                  # argumen fungsi mean"
+      judul_r: "seq_along dan args"
+      eval: true
+      penjelasan: >
+        Fungsi seq_along menghasilkan urutan nomor posisi sepanjang vektor, sehingga aman dipakai
+        sebagai batas perulangan. Di dalam perulangan, cat mencetak nomor posisi beserta nilainya.
+        Baris terakhir memakai args untuk menampilkan daftar argumen sebuah fungsi; perintah pembuka
+        dokumentasi ditulis sebagai komentar karena membuka jendela terpisah.
+      interpretasi: >
+        seq_along(x) menghasilkan 1..panjang(x) dan tetap aman bila x kosong (mengembalikan urutan
+        kosong, bukan c(1,0) seperti 1:length(x)). args() menampilkan argumen suatu fungsi - berguna
+        saat lupa cara memakainya. Gunakan pula ?fungsi atau help(fungsi) untuk dokumentasi lengkap.
+    - contoh: "Perulangan bersarang"
+      kode_r: "# tabel perkalian 3x3\nfor (i in 1:3) {\n  for (j in 1:3) {\n    cat(sprintf(\"%2d\", i * j), \"\")\n  }\n  cat(\"\\n\")\n}"
+      judul_r: "for di dalam for"
+      eval: true
+      penjelasan: >
+        Dua perulangan disusun bersarang. Perulangan luar menentukan baris, dan untuk setiap nilainya
+        perulangan dalam berjalan penuh menentukan kolom. Fungsi sprintf memformat hasil kali agar
+        lebarnya seragam sehingga tabel tampak rapi. Perintah cat dengan karakter baris baru diletakkan
+        di perulangan luar agar perpindahan baris terjadi sekali setiap baris tabel selesai.
+      interpretasi: >
+        Perulangan bersarang (satu for di dalam for) memproses kombinasi dua dimensi - di sini membuat
+        tabel perkalian. Perulangan luar (i) menentukan baris; perulangan dalam (j) menentukan kolom.
+        Perhatikan penempatan cat("\\n") di perulangan luar untuk pindah baris. Perulangan bersarang
+        berguna tetapi mahal; untuk data besar, pertimbangkan apply atau operasi matriks.
+    - contoh: "apply dengan fungsi anonim dan argumen tambahan"
+      kode_r: "jual <- read.csv(\"data/data_penjualan.csv\")\n# fungsi anonim langsung di dalam sapply\nsapply(jual[, c(\"penjualan\",\"target\")], function(x) max(x) - min(x))  # rentang\n# meneruskan argumen tambahan (na.rm) ke fungsi\nsapply(jual[, c(\"penjualan\",\"target\")], mean, na.rm = TRUE)\n# apply per baris: selisih penjualan-target\nhead(apply(jual[, c(\"penjualan\",\"target\")], 1, function(r) r[1] - r[2]))"
+      judul_r: "fungsi anonim dalam apply"
+      eval: true
+      penjelasan: >
+        Tiga cara pemakaian diperagakan. Pertama, fungsi anonim ditulis langsung di dalam sapply tanpa
+        diberi nama, berguna untuk operasi sekali pakai. Kedua, argumen tambahan seperti na.rm
+        dituliskan setelah nama fungsi dan akan diteruskan kepadanya. Ketiga, apply dengan MARGIN
+        bernilai satu bekerja per baris, dan fungsi anonimnya menerima satu baris utuh sehingga
+        elemennya diakses dengan nomor posisi.
+      interpretasi: >
+        Fungsi anonim (function(x) ...) ditulis langsung di dalam sapply/apply tanpa perlu memberinya
+        nama - praktis untuk operasi sekali pakai. Argumen tambahan seperti na.rm=TRUE dapat diteruskan
+        setelah nama fungsi. apply dengan MARGIN=1 dan fungsi anonim menghitung selisih tiap baris.
+        Kemampuan menyisipkan fungsi anonim membuat keluarga apply sangat fleksibel.
+    - contoh: "Pemrograman fungsional: Map, Filter, Reduce"
+      kode_r: "angka <- 1:10\nFilter(function(x) x %% 2 == 0, angka)   # saring genap\nunlist(Map(function(x) x^2, 1:5))         # petakan kuadrat\nReduce(`+`, 1:5)                          # akumulasi jumlah = 15\nReduce(function(a, b) a * b, 1:5)         # akumulasi hasil kali = 120"
+      judul_r: "Filter, Map, Reduce"
+      eval: true
+      penjelasan: >
+        Tiga fungsi bergaya fungsional dipakai berurutan. Filter menerima fungsi penguji dan
+        mempertahankan elemen yang menghasilkan nilai benar. Map menerapkan fungsi ke tiap elemen dan
+        mengembalikan list, sehingga unlist dipakai untuk menyederhanakannya menjadi vektor. Reduce
+        mengakumulasi elemen secara berpasangan dari kiri ke kanan; tanda tambah dalam petik balik
+        menunjukkan bahwa operator pun dapat diperlakukan sebagai fungsi.
+      interpretasi: >
+        R mendukung gaya pemrograman fungsional: Filter memilih elemen yang memenuhi syarat (padanan
+        penyaringan), Map menerapkan fungsi ke tiap elemen (mirip lapply), dan Reduce mengakumulasi
+        elemen menjadi satu nilai (mis. menjumlah atau mengalikan seluruhnya). Gaya ini ringkas dan
+        ekspresif, melengkapi keluarga apply untuk pola pengolahan tertentu.
+    - contoh: "Fungsi yang mengembalikan banyak nilai"
+      kode_r: "statistik <- function(x) {\n  list(n = length(x),\n       rata = mean(x),\n       sd = sd(x),\n       rentang = range(x))\n}\njual <- read.csv(\"data/data_penjualan.csv\")\nhasil <- statistik(jual$penjualan)\nhasil$rata\nhasil$rentang"
+      judul_r: "mengembalikan list"
+      eval: true
+      penjelasan: >
+        Fungsi disusun untuk mengembalikan sebuah list berisi empat komponen bernama. Karena fungsi R
+        hanya dapat mengembalikan satu objek, list dipakai sebagai wadah agar beberapa nilai dapat
+        dikembalikan sekaligus. Setelah fungsi dipanggil dan hasilnya disimpan, tiap komponen diakses
+        memakai tanda dolar diikuti namanya.
+      interpretasi: >
+        Fungsi di R hanya dapat mengembalikan satu objek, tetapi objek itu bisa berupa list yang memuat
+        banyak nilai. Di sini fungsi statistik mengembalikan jumlah, rata-rata, simpangan baku, dan
+        rentang sekaligus - diakses dengan hasil$rata, hasil$rentang, dan seterusnya. Pola ini rapi
+        untuk fungsi yang menghasilkan beberapa keluaran terkait.
+    - contoh: "Fungsi rekursif"
+      kode_r: "faktorial <- function(n) {\n  if (n <= 1) return(1)\n  n * faktorial(n - 1)   # memanggil dirinya sendiri\n}\nfaktorial(5)              # 120\nsapply(1:6, faktorial)    # faktorial 1 sampai 6"
+      judul_r: "fungsi memanggil dirinya"
+      eval: true
+      penjelasan: >
+        Fungsi ini memanggil dirinya sendiri dengan argumen yang mengecil setiap kali. Baris pertama di
+        dalamnya adalah kasus dasar yang menghentikan rekursi ketika n mencapai satu; tanpa kasus dasar,
+        pemanggilan akan berlangsung tanpa akhir. Baris berikutnya mengalikan n dengan hasil pemanggilan
+        untuk n dikurangi satu. Baris terakhir menerapkannya ke deret angka memakai sapply.
+      interpretasi: >
+        Fungsi rekursif memanggil dirinya sendiri dengan masalah yang lebih kecil hingga mencapai kasus
+        dasar (di sini n <= 1). faktorial(5) = 5*4*3*2*1 = 120. Rekursi elegan untuk masalah yang
+        terdefinisi secara berulang, meski untuk kasus sederhana perulangan biasa sering lebih efisien.
+        Pastikan selalu ada kasus dasar agar rekursi berhenti.
+    - contoh: "Merangkai alur kendali: analisis lengkap"
+      kode_r: "jual <- read.csv(\"data/data_penjualan.csv\")\n# fungsi klasifikasi\nklasifikasi <- function(rasio) {\n  if (rasio >= 1.2) \"Sangat Baik\"\n  else if (rasio >= 1.0) \"Baik\"\n  else \"Perlu Perbaikan\"\n}\n# terapkan ke tiap baris dengan sapply\njual$rasio <- jual$penjualan / jual$target\njual$kelas <- sapply(jual$rasio, klasifikasi)\n# ringkas per wilayah dengan tapply\ntapply(jual$rasio, jual$wilayah, function(x) round(mean(x), 2))\ntable(jual$wilayah, jual$kelas)   # tabulasi silang"
+      judul_r: "sintesis kondisi + fungsi + apply"
+      eval: true
+      penjelasan: >
+        Alurnya empat langkah. Data dibaca, lalu fungsi klasifikasi dibuat dengan kondisi berjenjang
+        yang mengembalikan salah satu dari tiga kategori. Kolom rasio dihitung secara tervektor dengan
+        membagi dua kolom. Fungsi klasifikasi diterapkan ke tiap nilai rasio memakai sapply, hasilnya
+        disimpan sebagai kolom baru. Terakhir, tapply meringkas rasio per wilayah dengan fungsi anonim
+        yang sekaligus membulatkan, dan table membuat tabulasi silang dua peubah kategori.
+      interpretasi: >
+        Contoh ini merangkai seluruh pilar modul: fungsi klasifikasi memakai kondisi berjenjang; sapply
+        menerapkannya ke tiap baris; tapply dengan fungsi anonim meringkas rasio rata-rata per wilayah;
+        dan table membuat tabulasi silang wilayah terhadap kelas. Inilah alur kerja nyata - membuat
+        fungsi, menerapkannya, lalu meringkas - yang menjadi pola berulang dalam analisis data resmi.
+    - contoh: "Kasus tepi: vektor kosong dan penanganan aman"
+      kode_r: "kosong <- numeric(0)         # vektor tanpa elemen\nlength(kosong)               # 0\nfor (i in seq_along(kosong)) cat(\"ini tak pernah jalan\")  # aman\nsum(kosong)                  # 0 (bukan galat)\nmean(kosong)                 # NaN - hati-hati!\n# vapply menjamin tipe hasil\nvapply(1:3, function(x) x * 2, numeric(1))"
+      judul_r: "menangani vektor kosong"
+      eval: true
+      penjelasan: >
+        Vektor tanpa elemen dibuat dengan numeric(0) untuk menguji perilaku kode pada kasus tepi.
+        Panjangnya diperiksa, lalu perulangan dengan seq_along dijalankan dan terbukti tidak berjalan
+        sama sekali karena urutannya kosong. Dua baris berikutnya memperlihatkan perbedaan penting:
+        penjumlahan vektor kosong menghasilkan nol, tetapi rata-ratanya menghasilkan nilai tak
+        terdefinisi. Baris terakhir memakai vapply yang menegaskan tipe hasil.
+      interpretasi: >
+        Data nyata kadang kosong. seq_along(kosong) menghasilkan urutan kosong sehingga perulangan aman
+        tidak berjalan (berbeda dengan 1:length yang berbahaya). sum() vektor kosong menghasilkan 0,
+        tetapi mean() menghasilkan NaN - perlu diwaspadai. vapply menjamin tipe hasil sehingga lebih
+        aman daripada sapply saat hasil harus bertipe tertentu. Menangani kasus tepi membuat kode
+        tangguh terhadap data tak terduga.
+    - contoh: "Fungsi dengan validasi argumen"
+      kode_r: "bagi_aman <- function(a, b) {\n  if (b == 0) {\n    warning(\"pembagi nol, mengembalikan NA\")\n    return(NA)\n  }\n  a / b\n}\nbagi_aman(10, 2)      # 5\nbagi_aman(10, 0)      # NA dengan peringatan\nsapply(c(2, 0, 5), function(b) bagi_aman(10, b))"
+      judul_r: "validasi dalam fungsi"
+      eval: true
+      penjelasan: >
+        Fungsi memeriksa argumen pembaginya lebih dahulu. Bila bernilai nol, warning memunculkan pesan
+        peringatan lalu return mengembalikan nilai kosong dan menghentikan fungsi saat itu juga. Bila
+        aman, pembagian biasa dijalankan. Dua pemanggilan berikutnya menguji kedua jalur tersebut, dan
+        baris terakhir menerapkannya ke beberapa nilai sekaligus memakai sapply dengan fungsi anonim.
+      interpretasi: >
+        Fungsi yang baik memeriksa argumennya. Di sini bagi_aman memeriksa pembagi nol dan mengembalikan
+        NA dengan peringatan alih-alih menghasilkan Inf atau galat. Menerapkannya dengan sapply ke
+        beberapa nilai menunjukkan penanganan yang konsisten. Validasi argumen adalah praktik penting
+        agar fungsi tidak gagal secara diam-diam pada masukan tak terduga.
+    - contoh: "Fungsi yang menghasilkan fungsi (closure)"
+      kode_r: "pengali <- function(faktor) {\n  function(x) x * faktor    # fungsi ini 'mengingat' faktor\n}\nkali2 <- pengali(2)\nkali10 <- pengali(10)\nkali2(5)                   # 10\nkali10(5)                  # 50\nsapply(1:3, kali10)        # 10 20 30"
+      judul_r: "closure / pabrik fungsi"
+      eval: true
+      penjelasan: >
+        Fungsi luar menerima sebuah faktor pengali lalu mengembalikan fungsi baru sebagai hasilnya.
+        Fungsi yang dikembalikan itu masih mengingat nilai faktor dari lingkungan tempat ia dibuat -
+        inilah yang disebut closure. Dua pemanggilan menghasilkan dua fungsi berbeda yang masing-masing
+        mengingat faktornya sendiri, lalu keduanya diuji, dan yang terakhir dipakai di dalam sapply.
+      interpretasi: >
+        Fungsi dapat mengembalikan fungsi lain yang "mengingat" nilai dari lingkungan pembuatnya - ini
+        disebut closure. pengali(2) menghasilkan fungsi yang selalu mengali 2; pengali(10) mengali 10.
+        Konsep ini memanfaatkan skop leksikal (dibahas di teori) dan berguna untuk membuat keluarga
+        fungsi serupa tanpa pengulangan kode. Ini konsep lanjut yang memperkaya cara berpikir fungsional.
+    - contoh: "do.call dan pemanggilan dinamis"
+      kode_r: "jual <- read.csv(\"data/data_penjualan.csv\")\n# do.call: memanggil fungsi dengan daftar argumen\ndo.call(paste, list(\"Wilayah\", \"penjualan\", sep = \"-\"))\n# menggabungkan beberapa vektor jadi data frame\nkolom <- list(a = 1:3, b = 4:6, c = 7:9)\ndo.call(cbind, kolom)\n# menerapkan fungsi ringkasan yang dipilih dinamis\nfungsi_pilih <- \"mean\"\ndo.call(fungsi_pilih, list(jual$penjualan))"
+      judul_r: "do.call"
+      eval: true
+      penjelasan: >
+        Fungsi do.call menerima nama fungsi dan sebuah list berisi argumen, lalu memanggil fungsi itu
+        seolah argumennya ditulis biasa. Contoh pertama menggabungkan teks dengan pemisah. Contoh kedua
+        menyatukan beberapa vektor menjadi matriks dengan cbind. Contoh ketiga memperlihatkan
+        keunggulan utamanya: nama fungsi disimpan dalam peubah sebagai teks sehingga dapat ditentukan
+        saat program berjalan.
+      interpretasi: >
+        do.call memanggil sebuah fungsi dengan argumen yang disusun sebagai list - berguna saat nama
+        fungsi atau argumennya ditentukan saat program berjalan (dinamis). Contoh: menggabungkan kolom
+        dengan cbind, atau memilih fungsi ringkasan berdasarkan variabel. Ini alat lanjut untuk menulis
+        kode yang fleksibel dan dapat dikonfigurasi.
+    - contoh: "Membandingkan kinerja: perulangan vs tervektor"
+      kode_r: "n <- 100000\nx <- runif(n)\n# cara lambat: perulangan menumbuhkan (dihindari)\nt1 <- system.time({\n  hasil <- numeric(n)\n  for (i in seq_along(x)) hasil[i] <- x[i] * 2\n})\n# cara cepat: tervektor\nt2 <- system.time({ hasil2 <- x * 2 })\ncat(\"perulangan (detik):\", round(t1[\"elapsed\"], 3), \"\\n\")\ncat(\"tervektor (detik): \", round(t2[\"elapsed\"], 3), \"\\n\")"
+      judul_r: "mengukur waktu dengan system.time"
+      eval: true
+      penjelasan: >
+        Sebuah vektor besar dibangkitkan sebagai bahan uji. Fungsi system.time membungkus blok kode dan
+        mengukur lama pengerjaannya. Blok pertama memakai perulangan yang sudah efisien karena wadahnya
+        disiapkan lebih dahulu. Blok kedua mengerjakan hal yang sama secara tervektor dalam satu
+        perintah. Dua baris terakhir mencetak lama pengerjaan keduanya, diambil dari komponen elapsed.
+      interpretasi: >
+        system.time mengukur lama eksekusi. Untuk operasi sederhana pada 100.000 elemen, pendekatan
+        tervektor (x * 2) biasanya jauh lebih cepat daripada perulangan, meski perulangan sudah memakai
+        wadah tetap. Ini membuktikan secara nyata mengapa operasi tervektor dan apply dianjurkan.
+        Mengukur kinerja membantu menemukan bagian kode yang perlu dioptimalkan pada data besar.
+    - contoh: "Studi kasus: pemrosesan bertahap data penjualan"
+      kode_r: "jual <- read.csv(\"data/data_penjualan.csv\")\n# Langkah 1: fungsi menilai pencapaian\nnilai_capaian <- function(p, t) {\n  rasio <- p / t\n  if (rasio >= 1.2) return(\"A\")\n  if (rasio >= 1.0) return(\"B\")\n  if (rasio >= 0.8) return(\"C\")\n  \"D\"\n}\n# Langkah 2: terapkan ke tiap baris (mapply untuk dua argumen)\njual$grade <- mapply(nilai_capaian, jual$penjualan, jual$target)\n# Langkah 3: ringkasan per wilayah\nfor (w in unique(jual$wilayah)) {\n  sub <- jual[jual$wilayah == w, ]\n  cat(sprintf(\"%-7s: %d catatan, rata rasio %.2f\\n\",\n      w, nrow(sub), mean(sub$penjualan / sub$target)))\n}\n# Langkah 4: distribusi grade\ntable(jual$grade)"
+      judul_r: "alur lengkap: fungsi + mapply + perulangan + ringkasan"
+      eval: true
+      penjelasan: >
+        Alurnya diberi penanda nomor pada komentar. Langkah pertama membuat fungsi penilai yang memakai
+        beberapa return berurutan sebagai pengganti else bertingkat. Langkah kedua menerapkannya ke dua
+        kolom sekaligus dengan mapply karena fungsinya menerima dua argumen. Langkah ketiga memakai
+        perulangan atas nilai unik wilayah, menyaring data tiap wilayah, lalu mencetak ringkasannya
+        dengan sprintf agar lebar kolomnya rapi. Langkah keempat menghitung distribusi grade dengan table.
+      interpretasi: >
+        Studi kasus ini menggabungkan seluruh keterampilan modul dalam satu alur nyata. Langkah 1
+        mendefinisikan fungsi bertingkat dengan beberapa return. Langkah 2 memakai mapply untuk
+        menerapkan fungsi dua-argumen ke tiap baris. Langkah 3 memakai perulangan untuk mencetak
+        ringkasan per wilayah dengan format rapi. Langkah 4 membuat distribusi grade dengan table.
+        Pola "definisikan fungsi, terapkan ke data, ringkas hasil" inilah yang berulang di analisis
+        data resmi. Perhatikan bagaimana kondisi, perulangan, apply, dan fungsi bekerja bersama.
+    - contoh: "outer dan apply pada matriks"
+      kode_r: "# outer: tabel dari dua vektor\nharga <- c(100, 200, 300)\njumlah <- c(2, 5)\nouter(harga, jumlah)          # matriks perkalian semua kombinasi\n# apply pada matriks hasil\nm <- outer(1:4, 1:4, FUN = \"*\")   # tabel perkalian 4x4\napply(m, 1, sum)              # jumlah tiap baris\napply(m, 2, max)              # maksimum tiap kolom\nrowSums(m); colMeans(m)       # fungsi ringkas khusus"
+      judul_r: "outer, apply, rowSums"
+      eval: true
+      penjelasan: >
+        Fungsi outer membentuk matriks dari semua kombinasi dua vektor; secara bawaan operasinya
+        perkalian, dan pada pemanggilan kedua operasi itu disebut eksplisit lewat argumen FUN. Setelah
+        matriks terbentuk, apply dipakai dua kali dengan MARGIN berbeda untuk meringkas per baris dan
+        per kolom. Baris terakhir memakai rowSums dan colMeans yang merupakan versi khusus yang lebih
+        cepat untuk operasi yang sama.
+      interpretasi: >
+        outer membentuk matriks dari semua kombinasi dua vektor - berguna untuk tabel harga-jumlah atau
+        tabel perkalian. apply dengan MARGIN=1/2 meringkas per baris/kolom, sedangkan rowSums, colMeans,
+        dan sejenisnya adalah versi teroptimasi yang lebih cepat untuk operasi umum. Menguasai operasi
+        matriks penting untuk komputasi statistik seperti aljabar matriks pada regresi (Modul 14).
+    - "\\begin{kotakvariasi}\nUntuk banyak tugas, operasi tervektor bawaan R adalah yang tercepat dan terjelas: \\texttt{jual\\$penjualan / jual\\$target} langsung membagi seluruh kolom tanpa perulangan atau apply. Gunakan perulangan/apply hanya bila operasi tak dapat ditulis secara tervektor.\n\\end{kotakvariasi}"
+  latihan:
+    - "Kerjakan bertahap. **Dasar** melengkapi kode; **Menengah** menulis sendiri; **Lanjut** memecahkan kasus. Gunakan `data/data_penjualan.csv`."
+    - "#### Tingkat Dasar (melengkapi kode)"
+    - "\\latihan{Kondisi tervektor}"
+    - "```{r eval=FALSE}\nnilai <- c(82, 55, 70, 90, 48)\nifelse(nilai >= ____, \"Lulus\", \"Mengulang\")   # ambang 60\n```"
+    - "\\latihan{Perulangan for dengan wadah}"
+    - "```{r eval=FALSE}\nn <- 5\nkuadrat <- numeric(____)      # wadah berukuran n\nfor (i in 1:n) kuadrat[i] <- i^2\nkuadrat\n```"
+    - "\\latihan{Keluarga apply}"
+    - "```{r eval=FALSE}\nm <- matrix(c(80,90,70,85,60,75), nrow = 3, byrow = TRUE)\napply(m, ____, mean)   # rata-rata tiap BARIS (MARGIN?)\n```"
+    - "#### Tingkat Menengah (menulis sendiri)"
+    - "\\latihan{Ringkasan per kelompok}"
+    - "Baca `data_penjualan.csv`, lalu gunakan `tapply` untuk menghitung **total** penjualan per wilayah. Jelaskan keluarannya."
+    - "\\latihan{Perulangan dengan pengendali}"
+    - "Tulis perulangan `for` dari 1 sampai 20 yang **melewati** kelipatan 3 (`next`) dan **berhenti** saat angka melewati 15 (`break`). Cetak angka yang lolos."
+    - "\\latihan{Perulangan bersarang}"
+    - "Buat tabel perkalian 4x4 memakai perulangan bersarang. Tampilkan hasilnya rapi dengan lebar kolom seragam (petunjuk: `sprintf`)."
+    - "\\latihan{Pemrograman fungsional}"
+    - "Diberi vektor `c(3, 8, 1, 9, 4, 7)`. Gunakan `Filter` untuk mengambil nilai > 5, `Map` untuk mengkuadratkannya, dan `Reduce` untuk menjumlahkan hasilnya. Kerjakan dalam satu rangkaian."
+    - "\\latihan{Membetulkan kode yang salah}"
+    - "Kode R berikut memuat kesalahan alur kendali (syarat, perulangan, apply). Temukan dan perbaiki, lalu jelaskan tiap kesalahannya."
+    - "```{r eval=FALSE}\n# ingin menjumlahkan 1..5\ntotal <- 0\nfor (i in 1;5) total <- total + i    # salah penulisan rentang\n\n# ingin label lulus untuk vektor\nnilai <- c(80, 55, 70)\nif (nilai >= 60) \"Lulus\" else \"Ulang\"  # if tunggal untuk vektor (harusnya ifelse)\n\n# rata-rata tiap kolom\nm <- matrix(1:6, nrow = 2)\napply(m, 3, mean)                    # MARGIN salah\n```"
+    - "**Keluaran yang benar.** Setelah diperbaiki, kode akan menghasilkan keluaran berikut. Gunakan ini untuk memverifikasi perbaikan Anda.\n\n```\n[1] 15                            # total 1 sampai 5\n[1] \"Lulus\" \"Ulang\" \"Lulus\"   # label tiap nilai\n[1] 1.5 3.5 5.5                   # rata-rata tiap kolom\n```"
+    - "#### Tingkat Lanjut (kasus kecil)"
+    - "\\latihan{Fungsi ringkasan lengkap}"
+    - "Tulis fungsi `ringkas(x)` yang menerima vektor numerik dan mengembalikan sebuah list berisi rata-rata, median, dan simpangan baku. Terapkan pada kolom `penjualan`, lalu gunakan `sapply` untuk menerapkannya pada kolom `penjualan` dan `target` sekaligus."
+  penugasan:
+    - "\\begin{kotaktugas}\nSebagai calon pengolah data \\emph{official statistics}, olah data penjualan wilayah tiruan memakai \\texttt{data\\_penjualan.csv} (\\emph{data simulasi}) dengan alur kendali R.\n\\end{kotaktugas}"
+    - "**Konteks.** Sebuah unit menerima data penjualan 12 catatan dari tiga wilayah (Barat, Tengah, Timur) beserta targetnya. Anda diminta mengklasifikasikan pencapaian dan meringkasnya per wilayah."
+    - "\\tugas{Fungsi status pencapaian}"
+    - "1. Tulis fungsi `status(p, t, ambang = 1)` yang mengembalikan \"Tercapai\"/\"Belum\" berdasarkan rasio penjualan terhadap target, lalu tambahkan hasilnya sebagai kolom baru pada data."
+    - "\\tugas{Ringkasan dengan apply}"
+    - "2. Gunakan `tapply` untuk menghitung **jumlah wilayah yang \"Tercapai\"** per wilayah."
+    - "3. Gunakan `apply` atau `sapply` untuk menghitung **rata-rata dan maksimum** kolom `penjualan` dan `target` sekaligus."
+    - "\\tugas{Analisis dan laporan}"
+    - "4. Wilayah mana yang paling banyak mencapai target? Wilayah mana rata-rata penjualannya tertinggi? Tuliskan pengamatan Anda."
+    - "5. Susun laporan R Markdown berisi kode, keluaran, dan interpretasi; render ke PDF/HTML. Jelaskan **kapan** sebaiknya memakai `ifelse`/`apply` daripada perulangan eksplisit, dan berikan satu contoh dari tugas ini."
+  ringkasan:
+    - "\\begin{kotaktujuan}\n\\textbf{Daftar periksa penguasaan:}\n\\begin{itemize}\n\\item[$\\square$] Saya dapat memakai \\texttt{if}/\\texttt{else if}/\\texttt{else}, \\texttt{ifelse}, dan \\texttt{switch}.\n\\item[$\\square$] Saya dapat menyusun \\texttt{for}, \\texttt{while}, dan \\texttt{repeat} dengan aman, serta memakai \\texttt{break}/\\texttt{next}.\n\\item[$\\square$] Saya dapat memilih anggota keluarga apply yang tepat (\\texttt{sapply}/\\texttt{lapply}/\\texttt{vapply}/\\texttt{mapply}/\\texttt{tapply}/\\texttt{apply}).\n\\item[$\\square$] Saya dapat menulis fungsi dengan argumen bawaan dan memahami skop lokal.\n\\item[$\\square$] Saya dapat memilih pendekatan paling ringkas (tervektor vs apply vs perulangan).\n\\end{itemize}\n\\end{kotaktujuan}"
+    - "**Kartu Referensi Cepat.** Rangkuman perintah alur kendali R:"
+    - "\\begin{kotakrumus}\n\\begin{tabular}{@{}ll@{}}\n\\textbf{Tugas} & \\textbf{Perintah R}\\\\\nKondisi tunggal & \\texttt{if (s) \\{\\} else \\{\\}}\\\\\nKondisi tervektor & \\texttt{ifelse(s, a, b)}\\\\\nBanyak pilihan & \\texttt{switch(x, ...)}\\\\\nUlang tetap & \\texttt{for (i in 1:n) \\{\\}}\\\\\nUlang bersyarat & \\texttt{while (s) \\{\\}}\\\\\nHentikan/lewati & \\texttt{break} / \\texttt{next}\\\\\nTerap ke elemen & \\texttt{sapply(x, f)}\\\\\nTerap per kelompok & \\texttt{tapply(x, g, f)}\\\\\nTerap baris/kolom & \\texttt{apply(m, 1/2, f)}\\\\\nBuat fungsi & \\texttt{function(arg) \\{\\}}\\\\\n\\end{tabular}\n\\end{kotakrumus}"
+    - "Empat pilar alur kendali R kini dikuasai secara menyeluruh: kondisi, perulangan, keluarga apply, dan fungsi. Prinsip penting: pilih alat yang paling ringkas dan efisien - operasi tervektor dan \\texttt{apply} umumnya lebih baik daripada perulangan eksplisit untuk data. Pada Modul 4, konsep yang sama dipelajari di Python."
+  referensi:
+    - "Pramana, S., dkk. (2016). *Dasar-dasar Statistik menggunakan R*. In-Media. (Alur kendali dan fungsi di R.)"
+    - "Wickham, H. (2019). *Advanced R*, 2nd ed. Chapman and Hall/CRC. (Fungsi, skop, dan keluarga apply; tersedia daring gratis.)"
+    - "Jones, E., Harden, S., & Crawley, M. J. (2023). *The R Book*, 3rd ed. Wiley. (Referensi dasar pemrograman R.)"
+    - "Zhang, N. (2020). *A Tour of Data Science: Learn R and Python in Parallel*. Chapman and Hall/CRC. (Perbandingan dengan Python.)"
+
+exercises:
+  - id: "L3.1"
+    points: 15
+    solution: "Tingkat Dasar: ifelse, for berwadah, apply. Isian: 60, n, 1."
+    judul_r: "Solusi Tingkat Dasar (R)"
+    solusi_r: |
+      nilai <- c(82, 55, 70, 90, 48)
+      ifelse(nilai >= 60, "Lulus", "Mengulang")
+      n <- 5; kuadrat <- numeric(n)
+      for (i in 1:n) kuadrat[i] <- i^2
+      kuadrat                                   # 1 4 9 16 25
+      m <- matrix(c(80,90,70,85,60,75), nrow = 3, byrow = TRUE)
+      apply(m, 1, mean)                         # rata-rata tiap baris
+    interpretasi: >
+      ifelse memberi label pada seluruh vektor; wadah numeric(n) disiapkan sebelum diisi; apply
+      dengan MARGIN=1 memberi rata-rata tiap baris. Tiga alat untuk tiga bentuk tugas.
+  - id: "L3.2"
+    points: 25
+    solution: "Tingkat Menengah/Lanjut: tapply, pengendali perulangan, fungsi ringkasan."
+    judul_r: "Solusi Menengah dan Lanjut (R)"
+    solusi_r: |
+      jual <- read.csv("data/data_penjualan.csv")
+      tapply(jual$penjualan, jual$wilayah, sum)   # total per wilayah
+      # perulangan dengan next dan break
+      for (i in 1:20) {
+        if (i %% 3 == 0) next
+        if (i > 15) break
+        cat(i, "")
+      }
+      cat("\n")
+      # fungsi ringkasan
+      ringkas <- function(x) list(rata = mean(x), median = median(x), sd = sd(x))
+      ringkas(jual$penjualan)
+      sapply(jual[, c("penjualan","target")], ringkas)
+    interpretasi: >
+      tapply meringkas total per wilayah. Perulangan melewati kelipatan 3 (next) dan berhenti setelah
+      15 (break). Fungsi ringkas mengembalikan list tiga statistik; sapply menerapkannya ke dua kolom
+      sekaligus.
+  - id: "T3.1"
+    points: 60
+    solution: "Penugasan: fungsi status, ringkasan tapply/apply, analisis, dan laporan."
+    judul_r: "Solusi Penugasan (R)"
+    solusi_r: |
+      jual <- read.csv("data/data_penjualan.csv")
+      status <- function(p, t, ambang = 1) ifelse(p / t >= ambang, "Tercapai", "Belum")
+      jual$status <- status(jual$penjualan, jual$target)
+      # jumlah "Tercapai" per wilayah
+      tapply(jual$status == "Tercapai", jual$wilayah, sum)
+      # rata-rata & maksimum dua kolom sekaligus
+      apply(jual[, c("penjualan","target")], 2, function(x) c(rata = mean(x), maks = max(x)))
+      # rata-rata penjualan per wilayah (untuk analisis)
+      tapply(jual$penjualan, jual$wilayah, mean)
+    interpretasi: >
+      Fungsi status menandai tiap baris tercapai/belum; tapply meringkas jumlah "Tercapai" per
+      wilayah; apply memberi rata-rata dan maksimum kedua kolom. tapply rata-rata penjualan membantu
+      menjawab wilayah mana yang tertinggi. Data simulasi, bukan data resmi.
+
+  - id: "L3.D"
+    points: 10
+    solution: "Membetulkan kode: rentang 1:5, ifelse untuk vektor, MARGIN benar."
+    judul_r: "Solusi Membetulkan Kode (R)"
+    solusi_r: |
+      total <- 0
+      for (i in 1:5) total <- total + i   # rentang pakai titik dua
+      total                               # 15
+
+      nilai <- c(80, 55, 70)
+      ifelse(nilai >= 60, "Lulus", "Ulang")  # ifelse untuk vektor
+
+      m <- matrix(1:6, nrow = 2)
+      apply(m, 2, mean)   # MARGIN=2 (kolom), atau 1 (baris); 3 tak valid
+    interpretasi: >
+      Kesalahan: rentang ditulis 1;5 seharusnya 1:5; if tunggal tak cocok untuk vektor (pakai ifelse
+      yang bekerja elemen per elemen); MARGIN pada apply hanya 1 (baris) atau 2 (kolom), nilai 3 tak
+      valid untuk matriks dua dimensi.
+
+references:
+  - "Pramana, S., dkk. (2016). Dasar-dasar Statistik menggunakan R. In-Media."
+  - "Wickham, H. (2019). Advanced R, 2nd ed. Chapman and Hall/CRC."
+  - "Jones, E., Harden, S., & Crawley, M. J. (2023). The R Book, 3rd ed. Wiley."
+  - "Zhang, N. (2020). A Tour of Data Science: Learn R and Python in Parallel. Chapman and Hall/CRC."

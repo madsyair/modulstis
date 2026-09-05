@@ -1,0 +1,351 @@
+% =====================================================================
+%  Preamble desain Modul Praktikum Pemrograman Statistika
+%  Politeknik Statistika STIS - Palet warna BPS (biru, oranye, hijau)
+%  Mesin: XeLaTeX
+% =====================================================================
+
+% ---------- Font ----------
+\usepackage{fontspec}
+% ---------- Pemenggalan kata bahasa Indonesia ----------
+\language=\csname l@indonesian\endcsname
+
+\setmainfont{Carlito}[Ligatures=TeX]
+\setsansfont{Carlito}[Ligatures=TeX]
+\setmonofont{DejaVu Sans Mono}[Scale=0.76]
+
+% ---------- Paket umum ----------
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{graphicx}
+\usetikzlibrary{calc}
+\usepackage{etoolbox}
+\usepackage[most]{tcolorbox}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{mdframed}
+\usepackage{enumitem}
+\usepackage{amsmath,amssymb}
+\usepackage{microtype}
+\usepackage{tocloft}
+\usepackage{fancyvrb}
+\usepackage{setspace}
+\usepackage{ragged2e}
+
+% ---------- Dependensi tabel (knitr/kableExtra) ----------
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+
+% ---------- Palet warna BPS ----------
+\definecolor{bpsnavy}{HTML}{123A6B}
+\definecolor{bpsbiru}{HTML}{0B6FB4}
+\definecolor{bpsbirumuda}{HTML}{6FB3E0}
+\definecolor{bpsoranye}{HTML}{F58220}
+\definecolor{bpshijau}{HTML}{00A651}
+\definecolor{abuteks}{HTML}{45505C}
+\definecolor{codebg}{HTML}{F4F7FB}
+\definecolor{codebgpy}{HTML}{FFF8E8}
+\definecolor{pykuning}{HTML}{E8A200}
+\definecolor{outbg}{HTML}{F6FBF7}
+
+\onehalfspacing
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\setlength{\headheight}{24pt}
+\color{abuteks!95!black}
+
+% ---------- Istilah bahasa Indonesia ----------
+\renewcommand{\contentsname}{Daftar Isi}
+\renewcommand{\listfigurename}{Daftar Gambar}
+\renewcommand{\listtablename}{Daftar Tabel}
+\renewcommand{\tablename}{Tabel}
+\renewcommand{\figurename}{Gambar}
+
+% ---------- Penomoran mengikuti nomor modul ----------
+\newcommand{\nomormodul}{1}
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+\renewcommand{\theequation}{\arabic{equation}}
+\renewcommand{\thetable}{\arabic{table}}
+\renewcommand{\thefigure}{\arabic{figure}}
+
+% ---------- Gaya judul ----------
+\titleformat{\section}[hang]
+  {\sffamily\bfseries\Large\color{bpsnavy}}{Bab \thesection}{0.7em}{}
+  [{\vspace{1pt}{\color{bpsoranye}\titlerule[1.6pt]}}]
+\titlespacing*{\section}{0pt}{18pt}{8pt}
+
+\titleformat{\subsection}[hang]
+  {\sffamily\bfseries\large\color{bpsbiru}}{\thesubsection}{0.5em}{}
+\titlespacing*{\subsection}{0pt}{13pt}{4pt}
+
+\titleformat{\subsubsection}[hang]
+  {\sffamily\bfseries\normalsize\color{bpsnavy}}{\thesubsubsection}{0.5em}{}
+\titlespacing*{\subsubsection}{0pt}{10pt}{3pt}
+
+% ---------- Header & footer ----------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{bpsnavy}\textbf{Pedoman \texttt{modulstis}}}
+\fancyhead[R]{\small\color{abuteks}\leftmark}
+\renewcommand{\headrulewidth}{1pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{bpsbiru}\leaders\hrule height \headrulewidth\hfill}}
+\fancyfoot[L]{\scriptsize\color{abuteks}Politeknik Statistika STIS}
+\fancyfoot[C]{\small\colorbox{bpsnavy}{\textcolor{white}{\,\thepage\,}}}
+\fancyfoot[R]{\scriptsize\color{abuteks}D-IV Komputasi Statistik}
+\renewcommand{\footrulewidth}{0pt}
+
+% ---------- Daftar isi ----------
+\renewcommand{\cfttoctitlefont}{\sffamily\bfseries\Large\color{bpsnavy}}
+\renewcommand{\cftsecfont}{\bfseries\color{bpsnavy}}
+\renewcommand{\cftsecpagefont}{\bfseries\color{bpsnavy}}
+\renewcommand{\cftsubsecfont}{\color{abuteks}}
+\setlength{\cftbeforesecskip}{5pt}
+
+% ---------- Kotak-kotak ----------
+\newtcolorbox{kotakinfo}[1][]{
+  breakable, enhanced, colback=bpsbiru!5, colframe=bpsbiru,
+  boxrule=0pt, leftrule=4pt, arc=2pt, left=10pt, right=10pt, top=8pt, bottom=8pt,
+  before upper={\ifstrempty{#1}{}{\textcolor{bpsbiru!80!black}{\sffamily\bfseries #1.}~}}}
+
+\newtcolorbox{kotaktujuan}{
+  breakable, enhanced, colback=bpsnavy!5, colframe=bpsnavy,
+  boxrule=0pt, leftrule=4pt, arc=2pt, left=10pt, right=10pt, top=8pt, bottom=8pt}
+
+% Kotak penjelasan kode: menerangkan APA yang dikerjakan kode, sebelum interpretasi hasil
+% Kotak anatomi: memperagakan pasangan ui-server dengan warna serasi
+\definecolor{padanA}{HTML}{C2410C}   % oranye tua  - identitas MASUKAN
+\definecolor{padanB}{HTML}{1D4ED8}   % biru tua    - identitas KELUARAN
+\definecolor{padanC}{HTML}{047857}   % hijau tua   - objek reaktif / data
+\newtcolorbox{kotakanatomi}[1][Anatomi Pasangan ui dan server]{
+  breakable, enhanced, colback=white, colframe=bpsnavy, boxrule=0.7pt,
+  arc=2pt, left=8pt, right=8pt, top=7pt, bottom=7pt,
+  title={\sffamily\bfseries #1}, coltitle=white, colbacktitle=bpsnavy}
+
+\newtcolorbox{kotakpenjelasan}[1][Penjelasan Kode]{
+  breakable, enhanced, colback=bpsbirumuda!5, colframe=bpsnavy, boxrule=0pt, leftrule=4pt,
+  arc=2pt, left=10pt, right=10pt, top=7pt, bottom=7pt,
+  before upper={\textcolor{bpsnavy}{\sffamily\bfseries #1.}~}}
+
+\newtcolorbox{kotakinterpretasi}[1][Interpretasi Output]{
+  breakable, enhanced, colback=bpsbiru!6, colframe=bpsbiru, boxrule=0.9pt, arc=3pt,
+  left=10pt, right=10pt, top=9pt, bottom=8pt,
+  title={\sffamily\bfseries #1}, coltitle=white, colbacktitle=bpsbiru,
+  fonttitle=\small, attach boxed title to top left={xshift=8pt, yshift=-3pt},
+  boxed title style={boxrule=0pt, arc=2pt}}
+
+\newtcolorbox{kotakcatatan}[1][Catatan]{
+  breakable, enhanced, colback=bpshijau!7, colframe=bpshijau, boxrule=0pt, leftrule=4pt,
+  arc=2pt, left=10pt, right=10pt, top=7pt, bottom=7pt,
+  before upper={\textcolor{bpshijau!60!black}{\sffamily\bfseries #1.}~}}
+
+\newtcolorbox{kotakperhatian}[1][Perhatian]{
+  breakable, enhanced, colback=bpsoranye!8, colframe=bpsoranye, boxrule=0pt, leftrule=4pt,
+  arc=2pt, left=10pt, right=10pt, top=7pt, bottom=7pt,
+  before upper={\textcolor{bpsoranye!80!black}{\sffamily\bfseries #1.}~}}
+
+\definecolor{merahsalah}{HTML}{C0392B}
+\newtcolorbox{kotaksalah}[1][Kesalahan Umum]{
+  breakable, enhanced, colback=merahsalah!6, colframe=merahsalah, boxrule=0pt, leftrule=4pt,
+  arc=2pt, left=10pt, right=10pt, top=7pt, bottom=7pt,
+  before upper={\textcolor{merahsalah}{\sffamily\bfseries #1.}~}}
+
+\newtcolorbox{kotaktips}[1][Tips dan Praktik Baik]{
+  breakable, enhanced, colback=bpshijau!7, colframe=bpshijau, boxrule=0pt, leftrule=4pt,
+  arc=2pt, left=10pt, right=10pt, top=7pt, bottom=7pt,
+  before upper={\textcolor{bpshijau!55!black}{\sffamily\bfseries #1.}~}}
+
+\newtcolorbox{kotakvariasi}[1][Variasi dan Alternatif]{
+  breakable, enhanced, colback=bpsbirumuda!14, colframe=bpsbiru, boxrule=0pt, leftrule=4pt,
+  arc=2pt, left=10pt, right=10pt, top=7pt, bottom=7pt,
+  before upper={\textcolor{bpsbiru}{\sffamily\bfseries #1.}~}}
+
+\newtcolorbox{kotakrumus}{
+  breakable, enhanced, colback=bpsnavy!3, colframe=bpsnavy!35, boxrule=0.7pt,
+  arc=3pt, left=10pt, right=10pt, top=6pt, bottom=6pt}
+
+\newtcolorbox{kotaktugas}{
+  breakable, enhanced, colback=bpsoranye!5, colframe=bpsnavy, boxrule=1pt, arc=3pt,
+  left=10pt, right=10pt, top=8pt, bottom=8pt}
+
+\newtcolorbox{kotakkunci}{
+  breakable, enhanced, colback=bpshijau!6, colframe=bpshijau, boxrule=0.9pt, arc=3pt,
+  left=10pt, right=10pt, top=9pt, bottom=8pt,
+  title={\sffamily\bfseries Kunci \& Pembahasan}, coltitle=white, colbacktitle=bpshijau,
+  fonttitle=\small, attach boxed title to top left={xshift=8pt, yshift=-3pt},
+  boxed title style={boxrule=0pt, arc=2pt}}
+
+% ---------- Kotak & perintah Daftar Istilah ----------
+\newtcolorbox{kotakistilah}{
+  breakable, enhanced, colback=bpsnavy!4, colframe=bpsnavy, boxrule=0pt,
+  leftrule=4pt, arc=2pt, left=10pt, right=10pt, top=8pt, bottom=8pt}
+% \istilahitem{istilah}{inggris}{definisi}
+\newcommand{\istilahitem}[3]{%
+  \noindent\textbf{\color{bpsnavy}#1}%
+  \ifx\relax#2\relax\else\ {\small\color{abuteks}(#2)}\fi\ \textemdash\ #3\par
+  \vspace{3pt}}
+% \istilahkbbi{catatan KBBI}
+\newcommand{\istilahkbbi}[1]{%
+  {\small\color{bpsoranye}\textbf{KBBI:}}\ {\small\color{abuteks}#1}\par\vspace{5pt}}
+
+% ---------- Penomoran Contoh, Kode, Latihan, Tugas ----------
+\newcounter{contohctr}
+\newcommand{\contoh}[1]{%
+  \refstepcounter{contohctr}%
+  \par\vspace{12pt}%
+  \noindent\begin{tcolorbox}[enhanced, colback=bpsoranye!12, colframe=bpsoranye,
+    boxrule=0pt, leftrule=5pt, arc=2pt, left=9pt, right=9pt, top=4pt, bottom=4pt]
+  \sffamily\bfseries\color{bpsnavy}Contoh \arabic{section}.\arabic{contohctr}%
+  \textcolor{bpsoranye}{\ \ $\vert$\ \ }#1
+  \end{tcolorbox}\par\vspace{2pt}\nopagebreak}
+
+\newcounter{kodectr}
+\newcommand{\kode}[2][R]{%
+  \refstepcounter{kodectr}%
+  \par\vspace{8pt}\nopagebreak
+  \def\lblbahasa{#1}%
+  \ifx\lblbahasa\bahasaPython
+    \noindent\colorbox{pykuning}{\textcolor{white}{\sffamily\bfseries\small\;Kode \arabic{section}.\arabic{kodectr} · Python\;}}%
+  \else
+    \noindent\colorbox{bpsbiru}{\textcolor{white}{\sffamily\bfseries\small\;Kode \arabic{section}.\arabic{kodectr} · R\;}}%
+  \fi
+  \;{\small\bfseries\color{bpsnavy}#2}%
+  \par\vspace{-3pt}\nopagebreak}
+\def\bahasaPython{Python}
+
+\newcounter{latihanctr}
+\newcommand{\latihan}[1]{%
+  \refstepcounter{latihanctr}%
+  \par\vspace{12pt}%
+  \noindent\begin{tcolorbox}[enhanced, colback=bpshijau!12, colframe=bpshijau,
+    boxrule=0pt, leftrule=5pt, arc=2pt, left=9pt, right=9pt, top=4pt, bottom=4pt]
+  \sffamily\bfseries\color{bpsnavy}Latihan \arabic{section}.\arabic{latihanctr}%
+  \textcolor{bpshijau!60!black}{\ \ $\vert$\ \ }#1
+  \end{tcolorbox}\par\vspace{2pt}\nopagebreak}
+
+\newcounter{tugasctr}
+\newcommand{\tugas}[1]{%
+  \refstepcounter{tugasctr}%
+  \par\vspace{10pt}%
+  \noindent\begin{tcolorbox}[enhanced, colback=bpsnavy!8, colframe=bpsnavy,
+    boxrule=0pt, leftrule=5pt, arc=2pt, left=9pt, right=9pt, top=4pt, bottom=4pt]
+  \sffamily\bfseries\color{bpsnavy}Tugas \nomormodul.\arabic{tugasctr}%
+  \textcolor{bpsnavy}{\ \ $\vert$\ \ }#1
+  \end{tcolorbox}\par\vspace{2pt}\nopagebreak}
+
+% pastikan environment Shaded ada walau dokumen tak punya blok kode
+\makeatletter
+\@ifundefined{Shaded}{\newenvironment{Shaded}{}{}}{}
+\@ifundefined{Highlighting}{\newenvironment{Highlighting}[1][]{}{}}{}
+\makeatother
+% ---------- Gaya blok kode R (environment Shaded dari pandoc) ----------
+\renewenvironment{Shaded}{%
+  \begin{mdframed}[backgroundcolor=codebg, linecolor=bpsbiru, linewidth=3pt,
+    topline=false, bottomline=false, rightline=false,
+    innerleftmargin=10pt, innerrightmargin=8pt, innertopmargin=7pt,
+    innerbottommargin=7pt, skipabove=4pt, skipbelow=6pt]%
+  \small}{\end{mdframed}}
+
+% ---------- Gaya blok output R ----------
+\newenvironment{routbox}{%
+  \begin{mdframed}[backgroundcolor=outbg, linecolor=bpshijau, linewidth=3pt,
+    topline=false, bottomline=false, rightline=false,
+    innerleftmargin=10pt, innerrightmargin=8pt, innertopmargin=6pt,
+    innerbottommargin=6pt, skipabove=2pt, skipbelow=8pt]%
+  \footnotesize}{\end{mdframed}}
+
+% ---------- Daftar berpoin ----------
+\setlist[itemize]{leftmargin=1.4em, itemsep=2pt, topsep=3pt}
+\setlist[enumerate]{leftmargin=1.7em, itemsep=2pt, topsep=3pt}
+
+% ---------- Hyperref (dimuat pandoc setelah preamble) ----------
+\AtBeginDocument{\hypersetup{colorlinks=true, linkcolor=bpsbiru, urlcolor=bpsbiru, citecolor=bpsbiru}}
+
+% ---------- Halaman cover pembatas ----------
+% \coverpembatas[BADGE]{nomor}{judul}{pertemuan}{sub-cpmk}
+\newcommand{\coverpembatas}[5][]{%
+  \begin{titlepage}
+  \thispagestyle{empty}
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[white] (current page.south west) rectangle (current page.north east);
+    % pita diagonal atas
+    \fill[bpshijau!75!black] (current page.north west) -- ++(0,-7.4cm) --
+      ($(current page.north east)+(0,-4.4cm)$) -- (current page.north east) -- cycle;
+    \fill[bpshijau, opacity=0.9] (current page.north west) -- ++(0,-5.5cm) --
+      ($(current page.north east)+(0,-2.7cm)$) -- (current page.north east) -- cycle;
+    % ornamen
+    \fill[bpsoranye, opacity=0.13] ($(current page.east)+(-1.6cm,1.2cm)$) circle (3.9cm);
+    \fill[bpshijau, opacity=0.10] ($(current page.south east)+(-4.6cm,3.0cm)$) circle (2.6cm);
+    % pita bawah
+    \fill[bpsnavy] (current page.south west) rectangle ($(current page.south east)+(0,1.6cm)$);
+    \fill[bpsoranye] ($(current page.south west)+(0,1.6cm)$) rectangle ($(current page.south east)+(0,1.78cm)$);
+    % tiga blok warna BPS
+    \fill[bpsbiru]   ($(current page.south west)+(2.5cm,2.7cm)$) rectangle ++(2.2cm,0.26cm);
+    \fill[bpsoranye] ($(current page.south west)+(4.9cm,2.7cm)$) rectangle ++(2.2cm,0.26cm);
+    \fill[bpshijau]  ($(current page.south west)+(7.3cm,2.7cm)$) rectangle ++(2.2cm,0.26cm);
+    % identitas institusi
+    \node[anchor=north west, text=white, align=left]
+      at ($(current page.north west)+(2.5cm,-1.7cm)$)
+      {\sffamily\Large POLITEKNIK STATISTIKA STIS\\[3pt]
+       \sffamily\normalsize Program Studi D-IV Komputasi Statistik};
+    \node[anchor=north west, text=white, align=left]
+      at ($(current page.north west)+(2.5cm,-3.7cm)$)
+      {\sffamily\small MODUL PRAKTIKUM \ \textbullet\ \ PEMROGRAMAN STATISTIKA (K242310)};
+    % blok nomor modul
+    \fill[bpsoranye] ($(current page.west)+(2.5cm,2.0cm)$) rectangle ++(0.18cm,3.7cm);
+    \node[anchor=north west, text=bpsnavy] at ($(current page.west)+(3.0cm,5.75cm)$)
+      {\sffamily\bfseries\fontsize{20}{22}\selectfont MODUL};
+    \node[anchor=north west, text=bpsnavy] at ($(current page.west)+(2.9cm,4.85cm)$)
+      {\sffamily\bfseries\fontsize{78}{78}\selectfont #2};
+    % judul modul
+    \node[anchor=north west, text=bpsnavy, align=left, text width=14.5cm]
+      at ($(current page.west)+(2.5cm,1.5cm)$)
+      {\sffamily\bfseries\fontsize{32}{38}\selectfont #3};
+    % badge opsional
+    \node[anchor=north west] at ($(current page.west)+(2.5cm,-1.1cm)$)
+      {\ifx\relax#1\relax\else\colorbox{bpshijau}{\textcolor{white}{\sffamily\bfseries\ #1\ }}\fi};
+    % keterangan
+    \node[anchor=north west, text=abuteks, align=left, text width=13.5cm]
+      at ($(current page.west)+(2.5cm,-2.1cm)$)
+      {\sffamily\large\bfseries #4\\[7pt]
+       \sffamily\normalsize\justifying #5};
+    % penyusun
+    \node[anchor=west, text=abuteks, align=left]
+      at ($(current page.south west)+(2.5cm,3.55cm)$)
+      {\sffamily\footnotesize\textbf{Penyusun:}\ \ Achmad Syahrul Choir, Rudi Salam, Christiana Anggraeni Putri};
+    % teks pita bawah
+    \node[anchor=west, text=white] at ($(current page.south west)+(2.5cm,0.8cm)$)
+      {\sffamily\small Semester 3 (Ganjil)};
+  \end{tikzpicture}
+  \end{titlepage}%
+  % penomoran berlanjut lintas modul (buku gabungan)
+  \setcounter{page}{2}}
+
+% --- penyesuaian khusus buku pedoman ---
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+\makeatletter
+\@addtoreset{contohctr}{section}
+\@addtoreset{kodectr}{section}
+\@addtoreset{latihanctr}{section}
+\makeatother
+% kotak 'langkah' untuk instruksi bertahap
+\newtcolorbox{kotaklangkah}[1][Langkah]{breakable, enhanced,
+  colback=bpshijau!5, colframe=bpshijau, boxrule=0pt, leftrule=4pt, arc=2pt,
+  left=10pt, right=10pt, top=7pt, bottom=7pt,
+  before upper={\textcolor{bpshijau!70!black}{\sffamily\bfseries #1.}~}}
+% Bagian II dimulai dari Bab 4
+\setcounter{section}{3}
+
+
+% penomoran berlanjut pedoman
+\setcounter{page}{14}

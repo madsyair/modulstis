@@ -1,0 +1,14 @@
+Name: Modul Praktikum Baru
+Description: Membuat berkas kerangka modul praktikum baru (tema BPS/modulstis)
+Binding: addin_new_module
+Interactive: true
+
+Name: Kunci Jawaban Baru
+Description: Membuat berkas kerangka kunci jawaban baru (tema BPS/modulstis)
+Binding: addin_new_answerkey
+Interactive: true
+
+Name: Render Modul dari Spec YAML
+Description: Pilih berkas spesifikasi .yml lalu render modul + kunci ke PDF
+Binding: addin_render_spec
+Interactive: true

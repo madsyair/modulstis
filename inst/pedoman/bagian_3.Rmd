@@ -1,0 +1,679 @@
+---
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_sections: true
+    keep_tex: false
+    fig_caption: true
+    includes:
+      in_header: preamble_pedoman_b3.tex
+geometry: "left=2.6cm,right=2.4cm,top=3.0cm,bottom=2.4cm"
+fontsize: 11pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, warning = FALSE, message = FALSE, comment = "",
+  fig.align = "center", out.width = "92%"
+)
+options(width = 88)
+```
+
+# Sintaks LaTeX yang Dipakai Modul
+
+Bab ini adalah rujukan lengkap perintah LaTeX yang tersedia di dalam modul. Anda tidak perlu
+menguasai LaTeX secara umum --- cukup mengenali perintah yang dibahas di sini.
+
+## Kapan Markdown, Kapan LaTeX
+
+Isi modul dapat ditulis dengan dua cara. Memilih yang tepat menghemat banyak waktu.
+
+\begin{kotakinfo}[Memilih cara penulisan]
+\begin{tabular}{@{}p{4.6cm}p{9.6cm}@{}}
+\textbf{Pakai Markdown} & paragraf biasa, penekanan, daftar, tabel sederhana, judul
+subbagian\\[3pt]
+\textbf{Pakai LaTeX} & kotak berwarna, rumus matematika, tabel di dalam kotak, penataan
+halaman\\
+\end{tabular}
+\end{kotakinfo}
+
+Markdown lebih ringkas dan lebih tahan salah tulis. Gunakan LaTeX hanya ketika Markdown
+tidak menyediakan yang Anda perlukan.
+
+```yaml
+# Markdown -- cukup untuk kebanyakan keperluan
+- "Paragraf biasa dengan **tebal**, *miring*, dan `kode`."
+- "| Kolom A | Kolom B |\n|---------|---------|\n| 1 | 2 |"
+
+# LaTeX -- untuk kotak berwarna
+- "\\begin{kotaktips}\nIsi kotak.\n\\end{kotaktips}"
+```
+
+## Katalog Kotak
+
+Modul menyediakan empat belas jenis kotak. Berikut seluruhnya beserta wujud aslinya.
+
+### Kotak berjudul dapat diubah
+
+Sembilan kotak berikut menerima argumen opsional berupa judul di dalam kurung siku.
+
+```yaml
+- "\\begin{kotakperhatian}[Judul Khusus]\nIsi kotak.\n\\end{kotakperhatian}"
+```
+
+Bila argumen dikosongkan, judul bawaannya dipakai.
+
+\begin{kotakperhatian}
+Kotak \texttt{kotakperhatian} --- judul bawaan \emph{Perhatian}. Dipakai untuk peringatan
+yang wajib diperhatikan, termasuk penegasan status data simulasi.
+\end{kotakperhatian}
+
+\begin{kotaksalah}
+Kotak \texttt{kotaksalah} --- judul bawaan \emph{Kesalahan Umum}. Dipakai menandai
+miskonsepsi yang lazim beserta cara menghindarinya.
+\end{kotaksalah}
+
+\begin{kotaktips}
+Kotak \texttt{kotaktips} --- judul bawaan \emph{Tips dan Praktik Baik}. Berisi anjuran yang
+mempermudah pekerjaan atau menjaga mutu hasil.
+\end{kotaktips}
+
+\begin{kotakvariasi}
+Kotak \texttt{kotakvariasi} --- judul bawaan \emph{Variasi dan Alternatif}. Menyebutkan
+perkakas atau pendekatan lain untuk tujuan serupa.
+\end{kotakvariasi}
+
+\begin{kotakcatatan}
+Kotak \texttt{kotakcatatan} --- judul bawaan \emph{Catatan}. Dipakai pula untuk kotak
+\emph{Padanan dari R} pada modul Python.
+\end{kotakcatatan}
+
+\begin{kotakinfo}[Kotak info dengan judul]
+Kotak \texttt{kotakinfo} --- \textbf{tanpa} judul bawaan. Cocok memuat tabel acuan. Bila
+argumen judul dikosongkan, kotak tampil tanpa judul sama sekali.
+\end{kotakinfo}
+
+\begin{kotakpenjelasan}
+Kotak \texttt{kotakpenjelasan} --- judul bawaan \emph{Penjelasan Kode}. Diisi otomatis dari
+kunci \texttt{penjelasan} pada sebuah contoh; jarang ditulis manual.
+\end{kotakpenjelasan}
+
+\begin{kotakinterpretasi}
+Kotak \texttt{kotakinterpretasi} --- judul bawaan \emph{Interpretasi Output}. Diisi otomatis
+dari kunci \texttt{interpretasi}.
+\end{kotakinterpretasi}
+
+### Kotak tanpa argumen judul
+
+Lima kotak berikut tidak menerima argumen.
+
+\begin{kotakrumus}
+Kotak \texttt{kotakrumus} --- memuat rumus atau kerangka perintah:\\[4pt]
+$SE = \dfrac{s}{\sqrt{n}}$
+\end{kotakrumus}
+
+\begin{kotaktujuan}
+Kotak \texttt{kotaktujuan} --- dipakai untuk daftar periksa penguasaan:
+\begin{itemize}
+\item[$\square$] Butir pertama
+\item[$\square$] Butir kedua
+\end{itemize}
+\end{kotaktujuan}
+
+\begin{kotaktugas}
+Kotak \texttt{kotaktugas} --- memuat rumusan penugasan yang harus dikerjakan mahasiswa.
+\end{kotaktugas}
+
+\begin{kotakkunci}
+Kotak \texttt{kotakkunci} --- dipakai pada buku kunci jawaban; memuat butir soal beserta
+bobot nilainya.
+\end{kotakkunci}
+
+Kotak `kotakistilah` dipakai bagian daftar istilah, dan `kotakanatomi` dipakai khusus modul
+RShiny untuk memperagakan pasangan `ui`--`server` berwarna serasi.
+
+### Tabel rujukan cepat
+
+\begin{kotakinfo}[Empat belas kotak]
+\begin{tabular}{@{}p{3.5cm}p{2.3cm}p{8.4cm}@{}}
+\textbf{Nama} & \textbf{Judul?} & \textbf{Peran}\\
+\texttt{kotakperhatian} & ya & peringatan wajib\\
+\texttt{kotaksalah} & ya & kesalahan umum\\
+\texttt{kotaktips} & ya & praktik baik\\
+\texttt{kotakvariasi} & ya & alternatif\\
+\texttt{kotakcatatan} & ya & catatan, padanan bahasa\\
+\texttt{kotakinfo} & ya & tabel acuan\\
+\texttt{kotakpenjelasan} & ya & penjelasan kode (otomatis)\\
+\texttt{kotakinterpretasi} & ya & interpretasi keluaran (otomatis)\\
+\texttt{kotakanatomi} & ya & pasangan ui--server\\
+\texttt{kotakrumus} & tidak & rumus\\
+\texttt{kotaktujuan} & tidak & daftar periksa\\
+\texttt{kotaktugas} & tidak & rumusan tugas\\
+\texttt{kotakkunci} & tidak & butir kunci jawaban\\
+\texttt{kotakistilah} & tidak & daftar istilah\\
+\end{tabular}
+\end{kotakinfo}
+
+\begin{kotaksalah}[Markdown tidak berlaku di dalam kotak]
+Isi kotak diteruskan ke LaTeX apa adanya, sehingga \texttt{**tebal**} akan tercetak sebagai
+bintang, bukan huruf tebal. Di dalam kotak, pakailah perintah LaTeX:
+\texttt{\textbackslash textbf\{tebal\}}, \texttt{\textbackslash emph\{miring\}}, dan
+\texttt{\textbackslash texttt\{kode\}}.
+\end{kotaksalah}
+
+## Perintah Penomoran
+
+Empat perintah berikut menghasilkan judul bernomor otomatis.
+
+\begin{kotakinfo}[Perintah penomoran]
+\begin{tabular}{@{}p{3.6cm}p{4.0cm}p{6.6cm}@{}}
+\textbf{Perintah} & \textbf{Menghasilkan} & \textbf{Dipakai di}\\
+\texttt{\textbackslash contoh\{judul\}} & \emph{Contoh N.x} & bagian Contoh (otomatis)\\[2pt]
+\texttt{\textbackslash kode\{judul\}} & \emph{Kode N.x} & label kotak kode (otomatis)\\[2pt]
+\texttt{\textbackslash latihan\{judul\}} & \emph{Latihan N.x} & bagian Latihan (manual)\\[2pt]
+\texttt{\textbackslash tugas\{judul\}} & \emph{Tugas N.x} & bagian Penugasan (manual)\\
+\end{tabular}
+\end{kotakinfo}
+
+Dua yang pertama dihasilkan paket dari kunci `contoh` dan `judul_r`. Dua yang terakhir Anda
+tulis sendiri di dalam daftar `latihan` dan `penugasan`.
+
+```yaml
+- "\\latihan{Melengkapi kode dasar}"
+- "\\tugas{Pendugaan parameter}"
+```
+
+## Rumus Matematika
+
+Rumus ditulis dengan sintaks LaTeX baku.
+
+\begin{kotakinfo}[Dua bentuk penulisan]
+\begin{tabular}{@{}p{5.2cm}p{9.2cm}@{}}
+\textbf{Sebaris} & \texttt{\$...\$} --- menyatu dengan teks\\[3pt]
+\textbf{Terpisah} & \texttt{\textbackslash[...\textbackslash]} --- baris tersendiri, di tengah\\
+\end{tabular}
+\end{kotakinfo}
+
+Contoh penulisan dan hasilnya:
+
+```
+Galat baku dirumuskan $SE = s/\sqrt{n}$, sehingga
+\[ \bar{x} \pm t_{\alpha/2,\,n-1}\,\frac{s}{\sqrt{n}} \]
+```
+
+Galat baku dirumuskan $SE = s/\sqrt{n}$, sehingga
+\[ \bar{x} \pm t_{\alpha/2,\,n-1}\,\frac{s}{\sqrt{n}} \]
+
+### Simbol yang sering dipakai
+
+\begin{kotakinfo}[Rujukan simbol statistika]
+\begin{tabular}{@{}p{4.4cm}p{2.4cm}p{4.4cm}p{2.4cm}@{}}
+\textbf{Perintah} & \textbf{Hasil} & \textbf{Perintah} & \textbf{Hasil}\\
+\texttt{\textbackslash bar\{x\}} & $\bar{x}$ &
+\texttt{\textbackslash hat\{p\}} & $\hat{p}$\\
+\texttt{\textbackslash mu} & $\mu$ &
+\texttt{\textbackslash sigma} & $\sigma$\\
+\texttt{\textbackslash alpha} & $\alpha$ &
+\texttt{\textbackslash beta} & $\beta$\\
+\texttt{\textbackslash chi\^{}\{2\}} & $\chi^{2}$ &
+\texttt{\textbackslash eta\^{}\{2\}} & $\eta^{2}$\\
+\texttt{\textbackslash sum} & $\sum$ &
+\texttt{\textbackslash sqrt\{x\}} & $\sqrt{x}$\\
+\texttt{\textbackslash frac\{a\}\{b\}} & $\frac{a}{b}$ &
+\texttt{\textbackslash dfrac\{a\}\{b\}} & $\dfrac{a}{b}$\\
+\texttt{\textbackslash leq} & $\leq$ &
+\texttt{\textbackslash neq} & $\neq$\\
+\texttt{\textbackslash times} & $\times$ &
+\texttt{\textbackslash cdot} & $\cdot$\\
+\texttt{x\_\{i\}} & $x_{i}$ &
+\texttt{x\^{}\{2\}} & $x^{2}$\\
+\end{tabular}
+\end{kotakinfo}
+
+\begin{kotaktips}
+Gunakan \texttt{\textbackslash dfrac} alih-alih \texttt{\textbackslash frac} pada rumus
+sebaris agar pecahannya tidak tercetak terlalu kecil.
+\end{kotaktips}
+
+### Rumus di dalam kotak
+
+Rumus paling sering ditempatkan di dalam `kotakrumus`. Perhatikan pelolosan garis miring
+terbalik saat ditulis di dalam YAML.
+
+```yaml
+- "\\begin{kotakrumus}\n\\textbf{Statistik uji t:}\\\\[3pt]\n
+   $t = \\dfrac{\\bar{x} - \\mu_0}{s/\\sqrt{n}}$, \\quad db $= n-1$\n
+   \\end{kotakrumus}"
+```
+
+Hasilnya:
+
+\begin{kotakrumus}
+\textbf{Statistik uji t:}\\[3pt]
+$t = \dfrac{\bar{x} - \mu_0}{s/\sqrt{n}}$, \quad db $= n-1$
+\end{kotakrumus}
+
+\begin{kotaksalah}[Jumlah garis miring terbalik]
+Di dalam teks YAML berkutip ganda, satu garis miring terbalik LaTeX ditulis
+\texttt{\textbackslash\textbackslash}, dan pergantian baris LaTeX
+(\texttt{\textbackslash\textbackslash}) ditulis
+\texttt{\textbackslash\textbackslash\textbackslash\textbackslash}. Bila rumus tidak tampil
+sebagaimana mestinya, periksalah jumlah garis miring terbaliknya lebih dahulu.
+\end{kotaksalah}
+
+## Tabel
+
+Tabel sederhana cukup ditulis dengan Markdown.
+
+```
+| Peubah | Tipe | Keterangan |
+|--------|------|------------|
+| umur   | integer | umur kepala rumah tangga |
+```
+
+Untuk tabel **di dalam kotak**, Markdown tidak berlaku sehingga harus memakai `tabular`.
+
+```yaml
+- "\\begin{kotakinfo}[Tipe kolom]\n\\begin{tabular}{@{}lll@{}}\n
+   \\textbf{Tipe} & \\textbf{Argumen} & \\textbf{Hasil}\\\\\n
+   \\texttt{numeric} & min, max & pecahan\\\\\n
+   \\texttt{integer} & min, max & bilangan bulat\\\\\n
+   \\end{tabular}\n\\end{kotakinfo}"
+```
+
+\begin{kotakinfo}[Penentu kolom \texttt{tabular}]
+\begin{tabular}{@{}p{2.2cm}p{12.2cm}@{}}
+\texttt{l} & rata kiri, lebar mengikuti isi\\[2pt]
+\texttt{c} & rata tengah\\[2pt]
+\texttt{r} & rata kanan\\[2pt]
+\texttt{p\{4cm\}} & lebar tetap, teks membungkus ke bawah\\[2pt]
+\texttt{@\{\}} & menghapus spasi tepi; letakkan di awal dan akhir\\
+\end{tabular}
+\end{kotakinfo}
+
+\begin{kotaktips}
+Bila kolom terakhir memuat kalimat panjang, pakailah \texttt{p\{...\}} agar teksnya
+membungkus. Tanpa itu, tabel akan melebar melewati batas halaman.
+\end{kotaktips}
+
+## Gambar
+
+Gambar disisipkan dengan `\includegraphics`, biasanya dibungkus lingkungan `center`.
+
+```yaml
+- "\\begin{center}\n\\includegraphics[width=0.85\\linewidth]{gambar/hasil.png}\n
+   \\end{center}\n\\begin{center}\n{\\small\\color{abuteks} Gambar 1: Keterangan}\n
+   \\end{center}"
+```
+
+Untuk gambar yang dihasilkan kode R, tidak perlu perintah apa pun --- keluaran grafik
+disisipkan otomatis oleh knitr (dibahas Bab 8).
+
+## Karakter Khusus
+
+Lima karakter berikut memiliki arti khusus dalam LaTeX dan harus diloloskan bila hendak
+dicetak apa adanya.
+
+\begin{kotakinfo}[Karakter yang harus diloloskan]
+\begin{tabular}{@{}p{2.0cm}p{3.4cm}p{9.0cm}@{}}
+\textbf{Karakter} & \textbf{Ditulis} & \textbf{Arti khusus dalam LaTeX}\\
+\_ & \texttt{\textbackslash\_} & penurunan (subscript)\\[2pt]
+\% & \texttt{\textbackslash\%} & awal komentar\\[2pt]
+\$ & \texttt{\textbackslash\$} & pembuka/penutup mode matematika\\[2pt]
+\& & \texttt{\textbackslash\&} & pemisah kolom tabel\\[2pt]
+\# & \texttt{\textbackslash\#} & penanda argumen makro\\
+\end{tabular}
+\end{kotakinfo}
+
+\begin{kotakcatatan}[Pelolosan otomatis]
+Pada kunci \texttt{penjelasan} dan \texttt{interpretasi}, paket menjalankan fungsi
+\texttt{latex\_prose\_safe()} yang meloloskan kelima karakter tersebut secara otomatis dan
+mengubah \texttt{`kode`} menjadi \texttt{\textbackslash texttt\{kode\}}. Jadi Anda dapat
+menulis \texttt{input\$n} atau \texttt{50\%} apa adanya --- keduanya akan tercetak benar.
+
+Pelolosan ini \textbf{tidak} berlaku pada blok LaTeX mentah yang Anda tulis sendiri. Di
+sana, pelolosan tetap menjadi tanggung jawab Anda.
+\end{kotakcatatan}
+
+## Menyunting Preamble
+
+Seluruh definisi kotak, warna, dan tata letak hidup di berkas `preamble.tex` yang
+dibangkitkan paket. Berkas ini **boleh disunting** untuk keperluan khusus.
+
+### Struktur preamble
+
+\begin{kotakinfo}[Bagian-bagian \texttt{preamble.tex}]
+\begin{tabular}{@{}p{4.6cm}p{9.8cm}@{}}
+\textbf{Bagian} & \textbf{Isi}\\
+Paket & \texttt{fontspec}, \texttt{tcolorbox}, \texttt{tikz}, \texttt{titlesec}, dll.\\[2pt]
+Font & \texttt{\textbackslash setmainfont}, \texttt{\textbackslash setmonofont}\\[2pt]
+Warna & empat belas \texttt{\textbackslash definecolor}\\[2pt]
+Penomoran & \texttt{\textbackslash thesection}, penomor contoh dan kode\\[2pt]
+Gaya judul & \texttt{\textbackslash titleformat}, \texttt{\textbackslash titlespacing}\\[2pt]
+Kepala/kaki & \texttt{\textbackslash fancyhead}, \texttt{\textbackslash fancyfoot}\\[2pt]
+Kotak & empat belas \texttt{\textbackslash newtcolorbox}\\[2pt]
+Sampul & makro \texttt{\textbackslash coverpembatas}\\
+\end{tabular}
+\end{kotakinfo}
+
+### Mengganti warna
+
+Palet BPS terdiri atas empat warna pokok. Menggantinya cukup mengubah kode heksadesimalnya.
+
+```latex
+\definecolor{bpsnavy}{HTML}{123A6B}      % biru tua -- judul dan kepala halaman
+\definecolor{bpsbiru}{HTML}{0B6FB4}      % biru -- aksen utama
+\definecolor{bpsoranye}{HTML}{F58220}    % oranye -- penanda dan peringatan
+\definecolor{bpshijau}{HTML}{00A651}     % hijau -- kunci jawaban
+```
+
+Perubahan pada satu tempat ini langsung berlaku pada seluruh kotak, sampul, dan penomoran.
+
+### Mengganti font
+
+```latex
+\setmainfont{Carlito}[Ligatures=TeX]
+\setmonofont{DejaVu Sans Mono}[Scale=0.88]
+```
+
+Bila Carlito tidak tersedia, gantilah dengan font lain yang terpasang --- misalnya
+`Liberation Sans` atau `TeX Gyre Heros`.
+
+### Menambah kotak baru
+
+Kotak baru didefinisikan meniru pola kotak yang sudah ada.
+
+```latex
+\newtcolorbox{kotakcontoh}[1][Contoh Kasus]{
+  breakable, enhanced,
+  colback=bpshijau!5,          % warna latar (5 persen kepekatan)
+  colframe=bpshijau,           % warna bingkai
+  boxrule=0pt, leftrule=4pt,   % hanya garis kiri yang tebal
+  arc=2pt,
+  left=10pt, right=10pt, top=7pt, bottom=7pt,
+  before upper={\textcolor{bpshijau!70!black}{\sffamily\bfseries #1.}~}}
+```
+
+Setelah didefinisikan, kotak dapat langsung dipakai dari YAML:
+
+```yaml
+- "\\begin{kotakcontoh}[Kasus Survei]\nIsi kotak.\n\\end{kotakcontoh}"
+```
+
+\begin{kotakinfo}[Anatomi definisi kotak]
+\begin{tabular}{@{}p{4.0cm}p{10.4cm}@{}}
+\texttt{[1][Judul]} & kotak menerima satu argumen opsional; \texttt{Judul} adalah bawaannya\\[2pt]
+\texttt{breakable} & kotak boleh terpotong antar-halaman\\[2pt]
+\texttt{colback} & warna latar; \texttt{warna!5} berarti kepekatan 5 persen\\[2pt]
+\texttt{colframe} & warna bingkai\\[2pt]
+\texttt{leftrule} & tebal garis kiri; pola khas modul ini\\[2pt]
+\texttt{before upper} & teks judul yang dicetak sebelum isi; \texttt{\#1} adalah argumennya\\
+\end{tabular}
+\end{kotakinfo}
+
+\begin{kotaksalah}[Preamble akan tertimpa]
+Berkas \texttt{preamble.tex} pada folder modul \textbf{dibangkitkan ulang} setiap kali
+render. Penyuntingan langsung padanya akan hilang. Bila perubahan ingin permanen, suntinglah
+templatnya di dalam paket --- \texttt{inst/templates/preamble.tex.tmpl} --- lalu pasang ulang
+paketnya. Cara ini dibahas lebih lanjut pada Bab 9.
+\end{kotaksalah}
+
+## Membaca Galat LaTeX
+
+Pesan galat LaTeX terkenal sulit dibaca. Berikut yang paling sering muncul.
+
+\begin{kotakinfo}[Galat LaTeX yang lazim]
+\begin{tabular}{@{}p{5.6cm}p{8.8cm}@{}}
+\textbf{Pesan} & \textbf{Penyebab dan tindakan}\\
+\texttt{Undefined control sequence} & perintah tidak dikenal --- salah ketik, atau kotak
+belum didefinisikan\\[3pt]
+\texttt{Missing \$ inserted} & karakter \texttt{\_} atau \texttt{\^{}} di luar mode
+matematika; loloskan dengan \texttt{\textbackslash\_}\\[3pt]
+\texttt{File `x.sty' not found} & paket LaTeX belum ada; jalankan
+\texttt{tinytex::tlmgr\_install("x")}\\[3pt]
+\texttt{Extra alignment tab} & jumlah \texttt{\&} pada baris tabel melebihi jumlah kolom
+yang dideklarasikan\\[3pt]
+\texttt{Runaway argument} & kurung kurawal tidak berpasangan\\[3pt]
+\texttt{pgfkeys: I do not know the key} & argumen opsional kotak keliru --- periksa apakah
+kotak itu memang menerima judul\\
+\end{tabular}
+\end{kotakinfo}
+
+\begin{kotaktips}
+Nomor baris pada pesan galat mengacu pada berkas \texttt{.tex} hasil bangkitan, bukan pada
+YAML Anda. Untuk menelusurinya, render dengan \texttt{keep\_tex = TRUE} pada berkas
+\texttt{.Rmd}, lalu bukalah \texttt{.tex}-nya pada baris yang disebutkan.
+\end{kotaktips}
+
+\newpage
+
+# Sintaks R Markdown dan Knitr
+
+Bab ini membahas lapisan di bawah LaTeX: bagaimana kode dijalankan dan keluarannya
+disisipkan ke dalam dokumen.
+
+## Struktur Berkas yang Dibangkitkan
+
+Berkas `.Rmd` hasil bangkitan memiliki tiga bagian.
+
+\begin{kotakinfo}[Bagian berkas \texttt{.Rmd}]
+\begin{tabular}{@{}p{4.2cm}p{10.2cm}@{}}
+\textbf{Header YAML} & menetapkan format keluaran, mesin LaTeX, dan preamble\\[3pt]
+\textbf{Chunk \texttt{setup}} & mengatur perilaku bawaan seluruh chunk\\[3pt]
+\textbf{Isi} & teks, blok LaTeX, dan chunk kode\\
+\end{tabular}
+\end{kotakinfo}
+
+```yaml
+---
+output:
+  pdf_document:
+    latex_engine: xelatex
+    number_sections: true
+    includes:
+      in_header: preamble.tex
+geometry: "left=2.6cm,right=2.4cm,top=3.0cm,bottom=2.4cm"
+fontsize: 11pt
+---
+```
+
+\begin{kotakcatatan}
+Mesin \texttt{xelatex} wajib dipakai karena preamble memuat \texttt{fontspec} untuk font
+Carlito. Mesin \texttt{pdflatex} tidak mendukungnya.
+\end{kotakcatatan}
+
+## Chunk Kode
+
+Chunk adalah blok kode yang dijalankan saat render. Penulisannya diapit tiga tanda petik
+balik.
+
+````
+```{r eval=FALSE}
+x <- c(1, 2, 3)
+mean(x)
+```
+````
+
+### Opsi chunk yang dipakai modul
+
+\begin{kotakinfo}[Opsi chunk]
+\begin{tabular}{@{}p{3.0cm}p{2.4cm}p{9.0cm}@{}}
+\textbf{Opsi} & \textbf{Bawaan} & \textbf{Kegunaan}\\
+\texttt{echo} & \texttt{TRUE} & menampilkan kodenya\\[2pt]
+\texttt{eval} & \texttt{TRUE} & menjalankan kodenya\\[2pt]
+\texttt{include} & \texttt{TRUE} & \texttt{FALSE} menjalankan tanpa menampilkan apa pun\\[2pt]
+\texttt{warning} & \texttt{FALSE} & menampilkan peringatan\\[2pt]
+\texttt{message} & \texttt{FALSE} & menampilkan pesan\\[2pt]
+\texttt{comment} & \texttt{""} & awalan baris keluaran\\[2pt]
+\texttt{fig.width} & 7 & lebar gambar (inci)\\[2pt]
+\texttt{fig.height} & 4.2 & tinggi gambar (inci)\\[2pt]
+\texttt{out.width} & \texttt{"88\%"} & lebar tampil relatif terhadap kolom\\[2pt]
+\texttt{fig.align} & \texttt{"center"} & perataan gambar\\
+\end{tabular}
+\end{kotakinfo}
+
+Opsi bawaan ditetapkan sekali pada chunk `setup`:
+
+```{r eval=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, warning = FALSE, message = FALSE, comment = "",
+  fig.align = "center", fig.width = 7, fig.height = 4.2,
+  out.width = "88%", fig.pos = "H"
+)
+options(width = 90, digits = 4, scipen = 999)
+```
+
+\begin{kotakinfo}[Tiga pengaturan \texttt{options} yang penting]
+\begin{tabular}{@{}p{3.4cm}p{11.0cm}@{}}
+\texttt{width = 90} & lebar keluaran teks; mencegah baris terpotong di tepi halaman\\[3pt]
+\texttt{digits = 4} & banyaknya angka bermakna pada keluaran\\[3pt]
+\texttt{scipen = 999} & mencegah angka tercetak dalam notasi ilmiah\\
+\end{tabular}
+\end{kotakinfo}
+
+\begin{kotaktips}
+Pengaturan \texttt{scipen = 999} sangat membantu pada modul statistik: tanpa itu, angka
+seperti 1500000 akan tercetak \texttt{1.5e+06} yang menyulitkan pembacaan mahasiswa.
+\end{kotaktips}
+
+## Chunk Python
+
+Modul dwibahasa menjalankan Python melalui paket `reticulate`.
+
+````
+```{python eval=FALSE}
+import pandas as pd
+df = pd.read_csv("data/demo.csv")
+print(df.head(3))
+```
+````
+
+\begin{kotaksalah}[Python memerlukan \texttt{print}]
+Berbeda dari R yang mencetak nilai terakhir secara otomatis, Python hanya mencetak bila
+diminta. Bungkuslah dengan \texttt{print()} agar keluarannya muncul di modul.
+\end{kotaksalah}
+
+### Berbagi objek antar bahasa
+
+Objek dapat dipertukarkan antara R dan Python dalam satu dokumen.
+
+\begin{kotakinfo}[Mengakses objek lintas bahasa]
+\begin{tabular}{@{}p{5.6cm}p{8.8cm}@{}}
+\textbf{Dari R ke objek Python} & \texttt{py\$nama\_objek}\\[3pt]
+\textbf{Dari Python ke objek R} & \texttt{r.nama\_objek}\\
+\end{tabular}
+\end{kotakinfo}
+
+```{r eval=FALSE}
+library(reticulate)
+mean(py$df$umur)      # membaca DataFrame Python dari R
+```
+
+## Kait Keluaran
+
+Keluaran kode di dalam modul tidak tampil polos, melainkan dibungkus kotak berwarna hijau
+muda. Ini dikerjakan oleh **kait keluaran** (*output hook*) pada chunk `setup`.
+
+```{r eval=FALSE}
+knitr::knit_hooks$set(output = function(x, options) {
+  paste0("\\begin{routbox}\n\\begin{verbatim}\n", x,
+         "\\end{verbatim}\n\\end{routbox}\n")
+})
+```
+
+Kait ini menyadap setiap keluaran teks, lalu membungkusnya dengan lingkungan `routbox` yang
+didefinisikan di preamble. Karena bekerja pada tingkat knitr, seluruh chunk terpengaruh
+tanpa perlu perintah tambahan.
+
+\begin{kotakcatatan}
+Kait keluaran dipasang otomatis oleh paket. Anda tidak perlu menulisnya --- pengetahuan ini
+berguna hanya bila hendak mengubah tampilan keluaran.
+\end{kotakcatatan}
+
+## Menyisipkan Nilai Sebaris
+
+Nilai hasil perhitungan dapat disisipkan langsung ke dalam kalimat.
+
+````
+Rata-rata pengeluaran adalah `r knitr::inline_expr("round(mean(x), 2)")` ribu rupiah.
+````
+
+Cara ini membuat laporan **reproducible**: bila datanya berubah, angka dalam narasi ikut
+menyesuaikan tanpa penyuntingan manual.
+
+\begin{kotaktips}
+Anjurkan mahasiswa memakai penyisipan sebaris pada laporan penugasan mereka. Menyalin angka
+dengan tangan adalah sumber kekeliruan yang lazim, dan mudah dihindari.
+\end{kotaktips}
+
+## Gambar dari Kode
+
+Grafik yang dihasilkan kode disisipkan otomatis. Ukurannya dikendalikan dua kelompok opsi
+yang sering tertukar.
+
+\begin{kotakinfo}[Dua kelompok ukuran gambar]
+\begin{tabular}{@{}p{4.4cm}p{10.0cm}@{}}
+\texttt{fig.width}, \texttt{fig.height} & ukuran \textbf{kanvas} saat grafik digambar
+(inci); memengaruhi ukuran huruf relatif\\[3pt]
+\texttt{out.width}, \texttt{out.height} & ukuran \textbf{tampil} di dalam dokumen\\
+\end{tabular}
+\end{kotakinfo}
+
+\begin{kotaksalah}[Huruf grafik terlalu kecil]
+Bila huruf pada grafik tampak kekecilan, jangan memperbesar \texttt{out.width} ---
+tindakan itu justru memperkecilnya secara relatif. Kecilkanlah \texttt{fig.width} sehingga
+kanvasnya lebih sempit dan hurufnya menjadi proporsional lebih besar.
+\end{kotaksalah}
+
+## Menjaga Hasil Tetap Reprodusibel
+
+Tiga kebiasaan berikut menjamin modul menghasilkan angka yang sama setiap kali dirender.
+
+\begin{kotakinfo}[Tiga kebiasaan]
+\begin{tabular}{@{}p{4.6cm}p{9.8cm}@{}}
+\textbf{Kunci pembangkit acak} & \texttt{set.seed(2025)} sebelum kode yang memakai
+bilangan acak\\[3pt]
+\textbf{Jalur relatif} & \texttt{"data/berkas.csv"}, bukan jalur mutlak\\[3pt]
+\textbf{Sebut versi paket} & cantumkan versi paket pada bagian \emph{Alat dan Bahan}\\
+\end{tabular}
+\end{kotakinfo}
+
+\begin{kotaksalah}[Kunci acak ditempatkan keliru]
+\texttt{set.seed()} hanya berpengaruh pada pembangkitan acak \emph{sesudahnya}. Bila
+diletakkan setelah kode yang membangkitkan data, hasilnya tetap berubah-ubah. Letakkan
+sebelum baris yang memerlukannya.
+\end{kotaksalah}
+
+## Menampilkan Kode tanpa Menjalankan
+
+Tiga keadaan menuntut kode ditampilkan tanpa dijalankan; masing-masing memiliki cara sendiri.
+
+\begin{kotakinfo}[Tiga cara]
+\begin{tabular}{@{}p{5.0cm}p{9.4cm}@{}}
+\textbf{Cara} & \textbf{Kapan dipakai}\\
+\texttt{eval: false} pada contoh & kode aplikasi Shiny, perintah pemasangan paket\\[3pt]
+Blok berpagar biasa & kerangka latihan yang harus dilengkapi mahasiswa\\[3pt]
+\texttt{echo = FALSE} & kode penyiapan yang tidak perlu dilihat mahasiswa\\
+\end{tabular}
+\end{kotakinfo}
+
+Untuk kerangka latihan, blok berpagar biasa lebih tepat daripada chunk, karena isinya memang
+tidak dimaksudkan sebagai kode yang sah.
+
+````yaml
+- "```{r eval=FALSE}\nx <- pel$nilai\nmean(x)\n____(x)   # simpangan baku\n```"
+````
+
+## Ringkasan Bab
+
+\begin{kotakinfo}[Yang perlu diingat]
+\begin{tabular}{@{}p{5.4cm}p{9.0cm}@{}}
+Mesin LaTeX & wajib \texttt{xelatex} karena memakai \texttt{fontspec}\\[3pt]
+Opsi bawaan & ditetapkan sekali pada chunk \texttt{setup}\\[3pt]
+Python & memerlukan \texttt{print()} agar keluarannya tampil\\[3pt]
+Lintas bahasa & \texttt{py\$obj} dari R, \texttt{r.obj} dari Python\\[3pt]
+Kait keluaran & membungkus keluaran ke dalam kotak; dipasang otomatis\\[3pt]
+Ukuran gambar & \texttt{fig.*} mengatur kanvas, \texttt{out.*} mengatur tampilan\\[3pt]
+Reprodusibel & \texttt{set.seed}, jalur relatif, sebut versi paket\\
+\end{tabular}
+\end{kotakinfo}
