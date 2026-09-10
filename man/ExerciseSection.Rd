@@ -5,59 +5,59 @@
 \title{Bagian latihan (menomori latihan)}
 \description{
 Bagian latihan (menomori latihan)
+
+Bagian latihan (menomori latihan)
 }
 \section{Super class}{
-\code{\link[modulstis:Section]{Section}} -> \code{ExerciseSection}
+\code{\link[modulstis:Section]{modulstis::Section}} -> \code{ExerciseSection}
 }
 \section{Methods}{
 \subsection{Public methods}{
-  \itemize{
-    \item \href{#method-ExerciseSection-render_body}{\code{ExerciseSection$render_body()}}
-    \item \href{#method-ExerciseSection-clone}{\code{ExerciseSection$clone()}}
-  }
+\itemize{
+\item \href{#method-ExerciseSection-render_body}{\code{ExerciseSection$render_body()}}
+\item \href{#method-ExerciseSection-clone}{\code{ExerciseSection$clone()}}
 }
-\if{html}{\out{<details open><summary>Inherited methods</summary>
+}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
 <ul>
-  <li><span class="pkg-link" data-pkg="modulstis" data-topic="Section" data-id="initialize"><a href='../../modulstis/html/Section.html#method-Section-initialize'><code>Section$initialize()</code></a></span></li>
-  <li><span class="pkg-link" data-pkg="modulstis" data-topic="Section" data-id="render"><a href='../../modulstis/html/Section.html#method-Section-render'><code>Section$render()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="modulstis" data-topic="Section" data-id="initialize"><a href='../../modulstis/html/Section.html#method-Section-initialize'><code>modulstis::Section$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="modulstis" data-topic="Section" data-id="render"><a href='../../modulstis/html/Section.html#method-Section-render'><code>modulstis::Section$render()</code></a></span></li>
 </ul>
-</details>}}
+</details>
+}}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ExerciseSection-render_body"></a>}}
 \if{latex}{\out{\hypertarget{method-ExerciseSection-render_body}{}}}
-\subsection{\code{ExerciseSection$render_body()}}{
-  Render isi latihan
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{ExerciseSection$render_body(ctx)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{ctx}}{\link{RenderContext}}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{render_body()}}{
+Render isi latihan
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ExerciseSection$render_body(ctx)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{ctx}}{\link{RenderContext}}
+}
+\if{html}{\out{</div>}}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ExerciseSection-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-ExerciseSection-clone}{}}}
-\subsection{\code{ExerciseSection$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{ExerciseSection$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ExerciseSection$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
 }

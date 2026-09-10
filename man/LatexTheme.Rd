@@ -4,145 +4,149 @@
 \alias{LatexTheme}
 \title{Tema LaTeX bergaya BPS}
 \description{
+Tema LaTeX bergaya BPS
+
+Tema LaTeX bergaya BPS
+}
+\details{
 Memusatkan seluruh keputusan tampilan sebagai design token dan
 menghasilkan preamble LaTeX untuk modul maupun kunci jawaban.
 Mengikuti prinsip DRY: satu sumber tampilan untuk kedua backend
 (bookdown dan Quarto).
 }
 \section{Public fields}{
-  \if{html}{\out{<div class="r6-fields">}}
-  \describe{
-    \item{\code{palette}}{daftar warna (navy, biru, ...)}
-  }
-  \if{html}{\out{</div>}}
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{palette}}{daftar warna (navy, biru, ...)}
+}
+\if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
-  \itemize{
-    \item \href{#method-LatexTheme-initialize}{\code{LatexTheme$new()}}
-    \item \href{#method-LatexTheme-preamble}{\code{LatexTheme$preamble()}}
-    \item \href{#method-LatexTheme-box}{\code{LatexTheme$box()}}
-    \item \href{#method-LatexTheme-cover}{\code{LatexTheme$cover()}}
-    \item \href{#method-LatexTheme-clone}{\code{LatexTheme$clone()}}
-  }
+\itemize{
+\item \href{#method-LatexTheme-new}{\code{LatexTheme$new()}}
+\item \href{#method-LatexTheme-preamble}{\code{LatexTheme$preamble()}}
+\item \href{#method-LatexTheme-box}{\code{LatexTheme$box()}}
+\item \href{#method-LatexTheme-cover}{\code{LatexTheme$cover()}}
+\item \href{#method-LatexTheme-clone}{\code{LatexTheme$clone()}}
+}
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-LatexTheme-initialize"></a>}}
-\if{latex}{\out{\hypertarget{method-LatexTheme-initialize}{}}}
-\subsection{\code{LatexTheme$new()}}{
-  Buat tema baru
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{LatexTheme$new(palette = "bps")}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{palette}}{"bps" atau list warna kustom}
-    }
-    \if{html}{\out{</div>}}
-  }
+\if{html}{\out{<a id="method-LatexTheme-new"></a>}}
+\if{latex}{\out{\hypertarget{method-LatexTheme-new}{}}}
+\subsection{Method \code{new()}}{
+Buat tema baru
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{LatexTheme$new(palette = "bps")}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{palette}}{"bps" atau list warna kustom}
+}
+\if{html}{\out{</div>}}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-LatexTheme-preamble"></a>}}
 \if{latex}{\out{\hypertarget{method-LatexTheme-preamble}{}}}
-\subsection{\code{LatexTheme$preamble()}}{
-  Bangun preamble LaTeX lengkap
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{LatexTheme$preamble(
+\subsection{Method \code{preamble()}}{
+Bangun preamble LaTeX lengkap
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{LatexTheme$preamble(
   number,
   topic,
   variant = c("modul", "kunci"),
   course = NULL
-)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{number}}{nomor modul}
-      \item{\code{topic}}{topik/judul header}
-      \item{\code{variant}}{"modul" atau "kunci"}
-      \item{\code{course}}{metadata mata kuliah (matkul, kode, prodi, ...); \code{NULL}
-memakai nilai bawaan Analisis Peubah Ganda}
-    }
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    string preamble
-  }
+)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{number}}{nomor modul}
+
+\item{\code{topic}}{topik/judul header}
+
+\item{\code{variant}}{"modul" atau "kunci"}
+
+\item{\code{course}}{metadata mata kuliah (matkul, kode, prodi, ...); \code{NULL}
+memakai nilai bawaan Analisis Peubah Ganda}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+string preamble
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-LatexTheme-box"></a>}}
 \if{latex}{\out{\hypertarget{method-LatexTheme-box}{}}}
-\subsection{\code{LatexTheme$box()}}{
-  Bangun blok kotak berwarna
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{LatexTheme$box(type, body, title = NULL)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{type}}{jenis kotak (info, tujuan, interpretasi, ...)}
-      \item{\code{body}}{isi kotak}
-      \item{\code{title}}{judul opsional}
-    }
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    string LaTeX
-  }
+\subsection{Method \code{box()}}{
+Bangun blok kotak berwarna
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{LatexTheme$box(type, body, title = NULL)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{type}}{jenis kotak (info, tujuan, interpretasi, ...)}
+
+\item{\code{body}}{isi kotak}
+
+\item{\code{title}}{judul opsional}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+string LaTeX
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-LatexTheme-cover"></a>}}
 \if{latex}{\out{\hypertarget{method-LatexTheme-cover}{}}}
-\subsection{\code{LatexTheme$cover()}}{
-  Bangun makro sampul pembatas
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{LatexTheme$cover(number, title, pertemuan, sub_cpmk, badge = NULL)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{number}}{nomor modul}
-      \item{\code{title}}{judul (huruf besar)}
-      \item{\code{pertemuan}}{baris pertemuan}
-      \item{\code{sub_cpmk}}{teks sub-CPMK}
-      \item{\code{badge}}{label badge opsional (mis. "KUNCI JAWABAN")}
-    }
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    string pemanggilan \\coverpembatas
-  }
+\subsection{Method \code{cover()}}{
+Bangun makro sampul pembatas
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{LatexTheme$cover(number, title, pertemuan, sub_cpmk, badge = NULL)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{number}}{nomor modul}
+
+\item{\code{title}}{judul (huruf besar)}
+
+\item{\code{pertemuan}}{baris pertemuan}
+
+\item{\code{sub_cpmk}}{teks sub-CPMK}
+
+\item{\code{badge}}{label badge opsional (mis. "KUNCI JAWABAN")}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+string pemanggilan \\coverpembatas
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-LatexTheme-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-LatexTheme-clone}{}}}
-\subsection{\code{LatexTheme$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{LatexTheme$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{LatexTheme$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
 }

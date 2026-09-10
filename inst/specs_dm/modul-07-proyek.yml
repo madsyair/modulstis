@@ -1,0 +1,978 @@
+number: 7
+title: Persiapan Proyek Data Mining
+short_code: proyek
+topic: Persiapan Proyek
+pertemuan: 7
+sub_cpmk: |
+  Sub-CPMK 7: Mahasiswa mampu merumuskan persoalan data mining beserta kriteria sukses yang terukur, menilai kecukupan data dan sumber daya, menetapkan biaya kekeliruan, serta menyusun proposal proyek berdasarkan kerangka CRISP-DM.
+packages:
+- recipes
+- rsample
+- parsnip
+- workflows
+- yardstick
+contoh_title: Contoh Praktikum dengan R
+tambahan_title: 'Tambahan: Menyusun Piagam Proyek'
+course:
+  matkul: Data Mining dan Big Data
+  matkul_besar: DATA MINING DAN BIG DATA
+  kode: K202505
+  semester: 6 (Genap)
+  prodi: D-IV Statistika
+  penyusun:
+  - Achmad Syahrul Choir
+datasets:
+- name: data_proyek
+  role: contoh
+  recipe:
+    kind: tabular
+    n: 900
+    seed: 2026
+    columns:
+      id:
+        type: integer
+        min: 1
+        max: 900
+      wilayah:
+        type: category
+        levels:
+        - Perkotaan
+        - Perdesaan
+        probs:
+        - 0.55
+        - 0.45
+      umur_krt:
+        type: integer
+        min: 20
+        max: 75
+      anggota_rt:
+        type: integer
+        min: 1
+        max: 9
+      lama_sekolah:
+        type: numeric
+        min: 0
+        max: 18
+        digits: 1
+      pengeluaran:
+        type: numeric
+        min: 400
+        max: 12000
+        digits: 2
+      akses_listrik:
+        type: numeric
+        min: 40
+        max: 100
+        digits: 1
+      akses_air:
+        type: numeric
+        min: 20
+        max: 100
+        digits: 1
+      penerima_bantuan:
+        type: category
+        levels:
+        - ya
+        - tidak
+        probs:
+        - 0.2
+        - 0.8
+body:
+  deskripsi:
+  - |
+    Enam modul sebelumnya membangun keterampilan teknis. Modul ini mengembalikan perhatian ke pertanyaan yang mendahului seluruh keterampilan itu: persoalan apa yang hendak dijawab, dan bagaimana kita tahu jawabannya berguna.
+  - |
+    Pertanyaan itu tampak sederhana tetapi kerap terlewat. Banyak proyek data mining gagal bukan karena algoritmanya keliru melainkan karena tidak pernah jelas apa yang hendak dicapai, sehingga hasilnya tidak dapat dinilai berhasil atau tidak. Model berakurasi tinggi yang tak menjawab kebutuhan siapa pun tetaplah kegagalan.
+  - |
+    Modul ini menyusun proposal proyek yang akan dikerjakan pada Modul 13 dan 14. Materinya mencakup perumusan persoalan beserta kriteria sukses terukur, penilaian kecukupan data dan sumber daya, penetapan biaya kekeliruan, penyusunan jadwal dan daftar risiko, serta pemeriksaan kelayakan etika.
+  - |-
+    \begin{kotakperhatian}[Tentang data]
+    Berkas data pada modul ini adalah \textbf{data simulasi} (\texttt{set.seed(2026)}), \textbf{bukan data nyata} dan \textbf{bukan data resmi} instansi mana pun. Konteks penerima bantuan dipakai semata sebagai latihan perumusan persoalan.
+    \end{kotakperhatian}
+  tujuan:
+  - 'Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:'
+  - 1. **Merumuskan** persoalan data mining dari kebutuhan pengguna.
+  - 2. **Menetapkan** kriteria sukses yang terukur beserta acuan pembandingnya.
+  - 3. **Menilai** kecukupan data melalui kurva belajar.
+  - 4. **Menyusun** matriks biaya kekeliruan dan memakainya memilih ambang.
+  - 5. **Menaksir** kebutuhan sumber daya dan menyusun jadwal proyek.
+  - 6. **Mengenali** risiko proyek beserta langkah pencegahannya.
+  - 7. **Memeriksa** kelayakan etika sebelum proyek dimulai.
+  - 8. **Menyusun** proposal proyek lengkap berdasarkan kerangka CRISP-DM.
+  alat:
+  - 'Perangkat dan bahan yang diperlukan:'
+  - '- **R** (RStudio) dengan paket `recipes`, `rsample`, `parsnip`, `workflows`, dan `yardstick`.'
+  - '- Berkas data: `data/data_proyek.csv`.'
+  - '- Templat proposal disediakan pada bagian Tambahan.'
+  instruksi:
+  - 'Ikuti tahapan berikut:'
+  - '**Sebelum praktikum:** siapkan berkas data; pikirkan satu persoalan nyata yang menarik bagi Anda
+    dan dapat dijawab dengan data serupa.'
+  - '**Selama praktikum:** kerjakan Contoh berurutan. Berbeda dari modul lain, keluaran utama modul ini
+    adalah **dokumen proposal**, bukan model.'
+  - |-
+    **Pembagian kerja:** Contoh dan Latihan dikerjakan di kelas; **Penugasan berupa proposal dikerjakan di luar sesi** dan akan dipakai pada Modul 13 dan 14.
+
+    **Pengumpulan:** susun proposal sebagai laporan R Markdown, render ke PDF, kumpulkan melalui Google Classroom.
+  teori:
+  - '### Kedudukan pada CRISP-DM'
+  - |
+    Modul ini sepenuhnya menempati tahap pertama, Business Understanding, ditambah perencanaan bagi tahap-tahap berikutnya. Tahap ini paling sering diremehkan karena tidak menghasilkan kode maupun angka, padahal justru menentukan apakah seluruh pekerjaan berikutnya berguna.
+  - '### Dari Kebutuhan Menjadi Persoalan Data Mining'
+  - |
+    Pengguna jarang menyampaikan kebutuhannya dalam bahasa data mining. Yang terdengar biasanya berupa keluhan atau harapan --- misalnya bantuan sering tidak tepat sasaran. Tugas analis adalah menerjemahkannya menjadi persoalan yang dapat dikerjakan dan dinilai.
+  - |-
+    \begin{kotakinfo}[Tiga tingkat perumusan]\par\smallskip
+    \begin{tabular}{@{}p{3.0cm}p{11.4cm}@{}}
+    \textbf{Kebutuhan} & ``bantuan sering tidak tepat sasaran''\\[3pt]
+    \textbf{Pertanyaan} & ``rumah tangga mana yang paling mungkin layak menerima bantuan?''\\[3pt]
+    \textbf{Tugas teknis} & klasifikasi biner dengan sasaran status penerima, dinilai dengan recall pada kelas layak\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Ketiganya harus tertulis, bukan hanya yang ketiga. Menuliskan tingkat pertama menjaga agar pekerjaan tidak melenceng, sedangkan menuliskan tingkat kedua memastikan pengguna dan analis memahami hal yang sama.
+  - '### Kriteria Sukses yang Terukur'
+  - |
+    Kriteria sukses yang baik dapat diperiksa kebenarannya oleh orang lain tanpa perdebatan. Pernyataan seperti model harus akurat tidak memenuhi syarat itu, sebab tidak menyebutkan seberapa akurat, diukur bagaimana, dan dibandingkan terhadap apa.
+  - |-
+    \begin{kotakinfo}[Empat unsur kriteria sukses]\par\smallskip
+    \begin{tabular}{@{}p{3.0cm}p{4.4cm}p{6.8cm}@{}}
+    \textbf{Unsur} & \textbf{Pertanyaan} & \textbf{Contoh}\\
+    \hline
+    Ukuran & apa yang diukur? & recall pada kelas layak\\[2pt]
+    Besaran & berapa nilainya? & minimal 0,70\\[2pt]
+    Acuan & dibandingkan apa? & aturan lama yang berlaku\\[2pt]
+    Kondisi & diukur di mana? & pada data uji terpisah\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotaksalah}[Kriteria tanpa acuan tidak bermakna]
+    Menetapkan akurasi minimal delapan puluh persen tampak tegas, tetapi tidak berarti apa-apa bila menebak kelas mayoritas saja sudah mencapai delapan puluh lima persen. Setiap kriteria wajib disertai acuan: tebakan mayoritas, aturan yang berlaku saat ini, atau kinerja model sebelumnya.
+    \end{kotaksalah}
+  - '### Biaya Kekeliruan Tidak Simetris'
+  - |
+    Pada hampir semua penerapan nyata, kedua jenis kekeliruan tidak sama mahalnya. Melewatkan rumah tangga yang sesungguhnya layak berbeda akibatnya dari memasukkan rumah tangga yang tidak layak. Perbedaan itu perlu dinyatakan dalam angka agar keputusan ambang dapat dipertanggungjawabkan.
+  - |-
+    \begin{kotakrumus}
+    \textbf{Biaya total} atas suatu ambang $t$:\\[4pt]
+    $C(t) = n_{SP}(t) \cdot c_{SP} + n_{SN}(t) \cdot c_{SN}$\\[4pt]
+    dengan $n_{SP}$ dan $n_{SN}$ banyaknya salah positif dan salah negatif, serta $c$ biaya satuannya. Ambang terbaik meminimumkan $C(t)$, dan lazimnya \textbf{bukan} 0,5.
+    \end{kotakrumus}
+  - '### Menilai Kecukupan Data'
+  - |
+    Pertanyaan apakah datanya cukup dapat dijawab secara empiris melalui kurva belajar: model dilatih pada beberapa ukuran data yang bertambah, lalu kinerjanya diamati. Bila kurva masih menanjak, menambah data kemungkinan menolong. Bila sudah mendatar, menambah data tidak akan banyak berpengaruh dan usaha sebaiknya dialihkan ke peubah baru atau model lain.
+  - |-
+    \begin{kotaktips}
+    Kurva belajar sebaiknya dibuat pada tahap perencanaan, bukan setelah proyek berjalan. Ia menjawab dua pertanyaan sekaligus: apakah perlu mengumpulkan data lebih banyak, dan apakah kinerja yang dijanjikan pada proposal masuk akal.
+    \end{kotaktips}
+  - '### Risiko Proyek'
+  - |-
+    \begin{kotakinfo}[Lima risiko yang lazim]\par\smallskip
+    \begin{tabular}{@{}p{3.4cm}p{4.6cm}p{6.2cm}@{}}
+    \textbf{Risiko} & \textbf{Gejala awal} & \textbf{Pencegahan}\\
+    \hline
+    Data tak tersedia & janji lisan tanpa kepastian & pastikan akses sebelum mulai\\[2pt]
+    Mutu data buruk & banyak nilai hilang & jelajahi contoh kecil lebih dahulu\\[2pt]
+    Sasaran berubah & permintaan bertambah & tuliskan lingkup dan sahkan\\[2pt]
+    Kinerja tak tercapai & kurva belajar mendatar rendah & sepakati rencana cadangan\\[2pt]
+    Hasil tak dipakai & pengguna tak dilibatkan & libatkan sejak tahap pertama\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Risiko terakhir paling sering terjadi dan paling menyakitkan, sebab seluruh pekerjaan teknis sudah selesai ketika baru ketahuan bahwa hasilnya tidak dipakai. Pencegahannya bukan teknis melainkan melibatkan pengguna sejak perumusan persoalan.
+  contoh:
+  - contoh: Menerjemahkan kebutuhan menjadi tugas teknis
+    kode_r: |-
+      rumusan <- data.frame(
+        tingkat = c("Kebutuhan pengguna", "Pertanyaan analisis", "Tugas teknis",
+                    "Sasaran", "Ukuran utama", "Acuan pembanding"),
+        isi = c("bantuan sering tidak tepat sasaran",
+                "rumah tangga mana yang paling mungkin layak menerima?",
+                "klasifikasi biner",
+                "penerima_bantuan (ya/tidak)",
+                "recall pada kelas ya",
+                "aturan ambang pengeluaran yang berlaku"))
+      print(rumusan, right = FALSE)
+    judul_r: menuliskan rumusan bertingkat
+    eval: true
+    penjelasan: |
+      Rumusan disusun sebagai tabel enam baris yang menurunkan kebutuhan pengguna menjadi tugas teknis. Setiap tingkat dituliskan agar keterkaitannya terlihat dan dapat diperiksa orang lain.
+    interpretasi: |
+      Menuliskan seluruh tingkat, bukan hanya tugas teknisnya, adalah kebiasaan yang menyelamatkan proyek. Ketika di tengah pekerjaan muncul godaan menambah peubah atau mengganti model, tabel ini menjadi rujukan apakah perubahan itu masih melayani kebutuhan awal. Tanpa rujukan tertulis, lingkup pekerjaan cenderung melebar tanpa disadari.
+  - contoh: Menghitung acuan pembanding
+    kode_r: |-
+      proyek <- read.csv("data/data_proyek.csv", stringsAsFactors = TRUE)
+      proyek$penerima_bantuan <- factor(proyek$penerima_bantuan,
+                                        levels = c("ya", "tidak"))
+
+      # acuan 1: tebakan mayoritas
+      prop <- prop.table(table(proyek$penerima_bantuan))
+      cat("acuan tebakan mayoritas:", round(max(prop), 4), "\n")
+
+      # acuan 2: aturan sederhana yang berlaku saat ini
+      ambang_lama <- quantile(proyek$pengeluaran, 0.2)
+      aturan_lama <- factor(ifelse(proyek$pengeluaran <= ambang_lama, "ya", "tidak"),
+                            levels = c("ya", "tidak"))
+      cm_lama <- table(duga = aturan_lama, benar = proyek$penerima_bantuan)
+      print(cm_lama)
+
+      akurasi_lama <- sum(diag(cm_lama)) / sum(cm_lama)
+      recall_lama  <- cm_lama[1, 1] / sum(cm_lama[, 1])
+      cat("\naturan lama - akurasi:", round(akurasi_lama, 4),
+          "| recall:", round(recall_lama, 4), "\n")
+    judul_r: dua jenis acuan pembanding
+    eval: true
+    penjelasan: |
+      Dua acuan dihitung. Yang pertama adalah tebakan mayoritas, yaitu batas bawah yang wajib dilampaui model apa pun. Yang kedua meniru aturan sederhana yang lazim dipakai di lapangan, yaitu memilih dua puluh persen rumah tangga berpengeluaran terendah.
+    interpretasi: |
+      Acuan kedua jauh lebih bermakna daripada yang pertama, sebab itulah yang sesungguhnya menjadi pesaing model. Bila model tidak melampaui aturan sederhana yang sudah berjalan, maka menggantinya hanya menambah kerumitan tanpa manfaat. Menetapkan acuan seperti ini pada tahap proposal mencegah kekecewaan di akhir.
+  - contoh: Menyusun kriteria sukses yang terukur
+    kode_r: |-
+      kriteria <- data.frame(
+        ukuran = c("Recall kelas ya", "Presisi kelas ya", "ROC-AUC", "Waktu latih"),
+        sasaran = c(">= 0,70", ">= 0,35", ">= 0,70", "<= 5 menit"),
+        acuan = c(sprintf("aturan lama = %.3f", recall_lama),
+                  "aturan lama", "tebakan acak = 0,50", "tidak ada"),
+        diukur_pada = c("data uji", "data uji", "validasi silang", "mesin standar"),
+        wajib = c("ya", "tidak", "ya", "tidak"))
+      print(kriteria, right = FALSE)
+    judul_r: tabel kriteria sukses
+    eval: true
+    penjelasan: |
+      Kriteria disusun sebagai tabel dengan empat unsur yang dibahas pada Teori: ukuran, besaran sasaran, acuan pembanding, dan kondisi pengukuran. Kolom terakhir membedakan kriteria yang wajib dipenuhi dari yang sekadar diharapkan.
+    interpretasi: |
+      Pembedaan wajib dan tidak wajib penting karena kriteria jarang seluruhnya tercapai. Menetapkan sejak awal mana yang menentukan keberhasilan mencegah perdebatan di akhir proyek. Perhatikan pula bahwa kriteria mencakup hal nonstatistik seperti waktu latih --- model yang sangat akurat tetapi menuntut berjam-jam pelatihan bisa jadi tak terpakai dalam operasi harian.
+  - contoh: Menyusun inventarisasi data
+    kode_r: |-
+      inventaris <- data.frame(
+        peubah = names(proyek),
+        tipe = sapply(proyek, function(x) class(x)[1]),
+        hilang = colSums(is.na(proyek)),
+        unik = sapply(proyek, function(x) length(unique(x))),
+        row.names = NULL)
+      inventaris$peran <- c("penanda", rep("prediktor", 7), "sasaran")
+      inventaris$layak <- ifelse(inventaris$peran == "penanda", "tidak dipakai",
+                          ifelse(inventaris$hilang / nrow(proyek) > 0.3,
+                                 "terlalu banyak hilang", "layak"))
+      print(inventaris, right = FALSE)
+    judul_r: tabel inventarisasi peubah
+    eval: true
+    penjelasan: |
+      Tabel disusun memuat tipe, cacah nilai hilang, dan cacah nilai unik tiap peubah. Peran tiap peubah ditetapkan, lalu kelayakannya dinilai dengan ambang tiga puluh persen nilai hilang.
+    interpretasi: |
+      Tabel semacam ini menjadi lampiran wajib proposal. Ia memaksa penyusun memutuskan peran tiap peubah sejak awal, dan memaksa menyatakan peubah mana yang tidak akan dipakai beserta alasannya. Perhatikan bahwa penanda ditandai tidak dipakai --- melupakan hal ini berakibat model menghafal nomor urut dan tampak sangat baik secara keliru.
+  - contoh: Menilai kecukupan data dengan kurva belajar
+    kode_r: |-
+      suppressPackageStartupMessages({
+        library(recipes); library(rsample); library(parsnip)
+        library(workflows); library(yardstick); library(dplyr)})
+
+      set.seed(2026)
+      bagi <- initial_split(proyek, prop = 0.75, strata = penerima_bantuan)
+      lat <- training(bagi); uji <- testing(bagi)
+
+      rec <- recipe(penerima_bantuan ~ ., data = lat) |>
+        update_role(id, new_role = "penanda") |>
+        step_dummy(all_nominal_predictors()) |>
+        step_normalize(all_numeric_predictors())
+      wf <- workflow() |> add_recipe(rec) |>
+        add_model(logistic_reg() |> set_engine("glm"))
+
+      ukuran <- c(50, 100, 200, 350, 500, nrow(lat))
+      kurva <- t(sapply(ukuran, function(m) {
+        set.seed(1)
+        s <- lat[sample(nrow(lat), m), ]
+        fm <- fit(wf, data = s)
+        du <- predict(fm, uji, type = "prob") |>
+          bind_cols(uji |> select(penerima_bantuan))
+        c(n = m, auc = roc_auc(du, penerima_bantuan, .pred_ya)$.estimate)
+      }))
+      print(round(kurva, 4))
+    judul_r: kurva belajar menurut ukuran data latih
+    eval: true
+    penjelasan: |
+      Model dilatih pada enam ukuran contoh yang bertambah, diambil dari data latih. Kinerjanya selalu dinilai pada data uji yang sama agar sebanding. Benih acak ditetapkan agar penarikan contohnya dapat diulang.
+    interpretasi: |
+      Bacalah arah kolom kedua. Bila nilainya masih menanjak pada ukuran terbesar, menambah data kemungkinan menolong sehingga pengumpulan data tambahan layak diusulkan. Bila sudah mendatar --- sebagaimana lazim terjadi ketika peubah yang tersedia memang terbatas daya jelasnya --- maka menambah data tidak akan menolong, dan usaha sebaiknya dialihkan pada peubah baru atau perumusan persoalan yang berbeda.
+  - contoh: Menggambarkan kurva belajar
+    kode_r: |-
+      plot(kurva[, "n"], kurva[, "auc"], type = "b", pch = 19, lwd = 2,
+           col = "#0B6FB4", ylim = c(0.4, 1),
+           xlab = "Ukuran data latih", ylab = "ROC-AUC pada data uji",
+           main = "Kurva Belajar")
+      abline(h = 0.5, col = "#C0392B", lty = 2, lwd = 2)
+      abline(h = 0.7, col = "#00A651", lty = 3, lwd = 2)
+      grid(col = "grey88")
+      legend("bottomright", c("kinerja model", "tebakan acak", "sasaran proposal"),
+             col = c("#0B6FB4", "#C0392B", "#00A651"),
+             lty = c(1, 2, 3), lwd = 2, pch = c(19, NA, NA), bty = "n", cex = .8)
+    judul_r: kurva belajar beserta garis acuan
+    eval: true
+    penjelasan: |
+      Kurva digambar bersama dua garis acuan: tebakan acak pada nilai setengah dan sasaran yang dijanjikan pada proposal. Batas sumbu tegak ditetapkan agar keduanya selalu terlihat.
+    interpretasi: |
+      Menyertakan garis sasaran pada gambar mengubahnya dari sekadar grafik menjadi alat pengambilan keputusan. Bila kurva mendatar jauh di bawah garis sasaran, maka sasaran itu tidak realistis dan proposal perlu direvisi sebelum disepakati --- jauh lebih baik daripada menyadarinya setelah proyek berjalan berminggu-minggu.
+  - contoh: Menyusun matriks biaya kekeliruan
+    kode_r: |-
+      biaya_sp <- 500     # salah positif: bantuan diberikan pada yang tak layak
+      biaya_sn <- 5000    # salah negatif: yang layak tidak menerima bantuan
+
+      matriks_biaya <- matrix(c(0, biaya_sp, biaya_sn, 0), nrow = 2,
+        dimnames = list(dugaan = c("ya", "tidak"),
+                        sebenarnya = c("ya", "tidak")))
+      print(matriks_biaya)
+
+      cat("\nrasio biaya salah negatif terhadap salah positif:",
+          biaya_sn / biaya_sp, "berbanding 1\n")
+    judul_r: matriks biaya dua kelas
+    eval: true
+    penjelasan: |
+      Biaya satuan tiap jenis kekeliruan ditetapkan lalu disusun sebagai matriks berukuran dua kali dua. Sel diagonal bernilai nol karena dugaan yang benar tidak menimbulkan biaya kekeliruan.
+    interpretasi: |
+      Angka biaya tidak perlu tepat secara akuntansi; yang menentukan adalah rasionya. Rasio sepuluh berbanding satu menyatakan bahwa melewatkan satu rumah tangga layak dianggap sepuluh kali lebih merugikan daripada memberi bantuan kepada satu yang tak layak. Rasio ini adalah **keputusan kebijakan** yang harus disepakati pengguna, bukan ditetapkan sendiri oleh analis.
+  - contoh: Memilih ambang berdasarkan biaya
+    kode_r: |-
+      model <- fit(wf, data = lat)
+      du <- predict(model, uji, type = "prob") |>
+        bind_cols(uji |> select(penerima_bantuan))
+
+      ambang <- seq(0.05, 0.95, by = 0.05)
+      biaya <- sapply(ambang, function(t) {
+        duga <- ifelse(du$.pred_ya > t, "ya", "tidak")
+        sp <- sum(duga == "ya"    & du$penerima_bantuan == "tidak")
+        sn <- sum(duga == "tidak" & du$penerima_bantuan == "ya")
+        sp * biaya_sp + sn * biaya_sn
+      })
+
+      t_terbaik <- ambang[which.min(biaya)]
+      cat("ambang berbiaya terendah:", t_terbaik, "| biaya:", min(biaya), "\n")
+      cat("biaya pada ambang 0,50   :", biaya[ambang == 0.5], "\n")
+      cat("penghematan:",
+          round(100 * (biaya[ambang == 0.5] - min(biaya)) / biaya[ambang == 0.5], 1),
+          "persen\n")
+    judul_r: mencari ambang berbiaya minimum
+    eval: true
+    penjelasan: |
+      Sembilan belas ambang dicoba. Pada tiap ambang, banyaknya salah positif dan salah negatif dihitung lalu dikalikan biaya satuannya. Ambang yang menghasilkan biaya terendah dicari memakai which.min.
+    interpretasi: |
+      Perhatikan besarnya penghematan yang diperoleh semata dari memilih ambang, tanpa mengganti model sama sekali. Ambang bawaan setengah hampir selalu bukan pilihan terbaik ketika biaya kekeliruan tidak simetris. Inilah salah satu keputusan paling menguntungkan yang dapat diambil pada tahap perencanaan, dan sekaligus salah satu yang paling sering terlewat.
+  - contoh: Menggambarkan biaya menurut ambang
+    kode_r: |-
+      plot(ambang, biaya / 1000, type = "b", pch = 19, lwd = 2, col = "#0B6FB4",
+           xlab = "Ambang keputusan", ylab = "Total biaya (ribu satuan)",
+           main = "Biaya Kekeliruan menurut Ambang")
+      abline(v = t_terbaik, col = "#00A651", lty = 2, lwd = 2)
+      abline(v = 0.5, col = "#C0392B", lty = 3, lwd = 2)
+      grid(col = "grey88")
+      legend("top", c("biaya total", "ambang terbaik", "ambang bawaan 0,5"),
+             col = c("#0B6FB4", "#00A651", "#C0392B"),
+             lty = c(1, 2, 3), lwd = 2, pch = c(19, NA, NA), bty = "n", cex = .8)
+    judul_r: grafik biaya dan dua garis ambang
+    eval: true
+    penjelasan: |
+      Total biaya digambar terhadap ambang, dibagi seribu agar sumbunya mudah dibaca. Dua garis tegak menandai ambang terbaik dan ambang bawaan sebagai pembanding.
+    interpretasi: |
+      Jarak mendatar antara kedua garis tegak menyatakan seberapa jauh ambang bawaan meleset, sedangkan jarak tegak pada kurva menyatakan kerugian akibat memakainya. Gambar semacam ini sangat efektif dipakai menjelaskan kepada pengambil keputusan mengapa ambang perlu ditetapkan berdasarkan biaya, bukan dibiarkan pada nilai bawaan.
+  - contoh: Menaksir kebutuhan waktu dan menyusun jadwal
+    kode_r: |-
+      jadwal <- data.frame(
+        tahap = c("1 Business Understanding", "2 Data Understanding",
+                  "3 Data Preparation", "4 Modeling",
+                  "5 Evaluation", "6 Deployment"),
+        mulai_minggu = c(1, 2, 3, 7, 10, 12),
+        lama_minggu  = c(2, 2, 4, 4, 2, 2),
+        porsi_persen = c(10, 10, 35, 25, 12, 8))
+      jadwal$selesai_minggu <- jadwal$mulai_minggu + jadwal$lama_minggu - 1
+      print(jadwal, right = FALSE)
+
+      cat("\ntotal durasi:", max(jadwal$selesai_minggu), "minggu\n")
+      cat("porsi terbesar:", jadwal$tahap[which.max(jadwal$porsi_persen)],
+          paste0("(", max(jadwal$porsi_persen), " persen)"), "\n")
+    judul_r: tabel jadwal proyek
+    eval: true
+    penjelasan: |
+      Jadwal disusun sebagai tabel yang memuat minggu mulai, lama, dan porsi usaha tiap tahap. Minggu selesai dihitung dari keduanya, dengan pengurangan satu agar minggu mulai ikut terhitung.
+    interpretasi: |
+      Perhatikan porsi terbesar yang jatuh pada penyiapan data, sejalan dengan pengalaman lapangan yang berulang kali dilaporkan. Jadwal yang memberi porsi besar pada pemodelan dan kecil pada penyiapan hampir selalu meleset. Menyusun jadwal dengan porsi realistis pada tahap proposal mencegah janji yang tak dapat ditepati.
+  - contoh: Menggambarkan jadwal sebagai diagram batang
+    kode_r: |-
+      par(mar = c(4, 12, 3, 2))
+      plot(NA, xlim = c(0, max(jadwal$selesai_minggu) + 1),
+           ylim = c(0.5, nrow(jadwal) + 0.5), yaxt = "n",
+           xlab = "Minggu ke-", ylab = "",
+           main = "Jadwal Proyek menurut Tahap CRISP-DM")
+      warna <- c("#123A6B", "#0B6FB4", "#6FB3E0", "#F58220", "#00A651", "#45505C")
+      for (i in seq_len(nrow(jadwal))) {
+        y <- nrow(jadwal) - i + 1
+        rect(jadwal$mulai_minggu[i] - 0.4, y - 0.3,
+             jadwal$selesai_minggu[i] + 0.4, y + 0.3,
+             col = warna[i], border = "white")
+        text(jadwal$selesai_minggu[i] + 0.6, y,
+             paste0(jadwal$porsi_persen[i], "%"), cex = .75, pos = 4)
+      }
+      axis(2, at = nrow(jadwal):1, labels = jadwal$tahap, las = 1, cex.axis = .75)
+      par(mar = c(5, 4, 4, 2) + 0.1)
+    judul_r: diagram jadwal dengan rect
+    eval: true
+    penjelasan: |
+      Kanvas kosong dibuat lebih dahulu, lalu tiap tahap digambar sebagai persegi panjang memakai rect dengan koordinat dari tabel jadwal. Sumbu tegak diberi label nama tahap secara manual, dan margin kiri diperlebar agar labelnya muat.
+    interpretasi: |
+      Diagram semacam ini lazim disebut diagram Gantt dan menjadi lampiran baku pada proposal proyek. Nilainya bukan pada keindahan melainkan pada kemampuannya memperlihatkan tumpang tindih antar-tahap --- dan pada CRISP-DM tumpang tindih itu wajar, sebab tahapnya memang tidak berjalan sekali lurus.
+  - contoh: Menyusun daftar risiko dan pencegahannya
+    kode_r: |-
+      risiko <- data.frame(
+        risiko = c("Data tidak tersedia tepat waktu",
+                   "Mutu data lebih buruk dari dugaan",
+                   "Kinerja tidak mencapai sasaran",
+                   "Lingkup pekerjaan melebar",
+                   "Hasil tidak dipakai pengguna"),
+        peluang = c("sedang", "tinggi", "sedang", "tinggi", "sedang"),
+        dampak = c("tinggi", "tinggi", "sedang", "sedang", "tinggi"),
+        pencegahan = c("pastikan akses tertulis sebelum mulai",
+                       "jelajahi contoh kecil pada minggu pertama",
+                       "sepakati rencana cadangan pada proposal",
+                       "tuliskan lingkup dan sahkan bersama",
+                       "libatkan pengguna sejak perumusan"))
+      risiko$prioritas <- ifelse(risiko$peluang == "tinggi" & risiko$dampak == "tinggi",
+                                 "utama",
+                          ifelse(risiko$peluang == "rendah" & risiko$dampak == "rendah",
+                                 "rendah", "sedang"))
+      print(risiko[, c("risiko", "peluang", "dampak", "prioritas")], right = FALSE)
+    judul_r: tabel risiko berprioritas
+    eval: true
+    penjelasan: |
+      Lima risiko disusun beserta taksiran peluang dan dampaknya. Prioritas ditetapkan dengan ifelse bersarang: risiko berpeluang dan berdampak tinggi menjadi utama, sedangkan yang keduanya rendah menjadi prioritas rendah.
+    interpretasi: |
+      Yang membuat daftar risiko berguna bukan penyusunannya melainkan kolom pencegahannya. Risiko tanpa langkah pencegahan hanyalah daftar kekhawatiran. Perhatikan bahwa sebagian besar pencegahan bersifat nonteknis --- kesepakatan tertulis, pelibatan pengguna, penjelajahan awal --- yang menegaskan bahwa keberhasilan proyek data mining tidak ditentukan kemampuan teknis semata.
+  - contoh: Memeriksa kelayakan etika
+    kode_r: |-
+      etika <- data.frame(
+        pertanyaan = c("Apakah data diperoleh dengan sah?",
+                       "Apakah memuat data pribadi?",
+                       "Dapatkah individu dikenali setelah digabung?",
+                       "Adakah kelompok yang berpotensi dirugikan?",
+                       "Dapatkah keputusan model dijelaskan?",
+                       "Adakah mekanisme sanggahan bagi yang terdampak?"),
+        jawaban = c("ya", "tidak", "perlu diperiksa", "perlu diperiksa", "ya", "belum ada"),
+        tindakan = c("-", "-", "periksa keunikan gabungan penanda",
+                     "bandingkan kinerja antar-kelompok", "-",
+                     "usulkan prosedur peninjauan manual"))
+      print(etika, right = FALSE)
+
+      cat("\nbutir yang menuntut tindakan:", sum(etika$tindakan != "-"), "dari",
+          nrow(etika), "\n")
+    judul_r: daftar periksa etika
+    eval: true
+    penjelasan: |
+      Enam pertanyaan etika disusun sebagai daftar periksa, masing-masing dengan jawaban dan tindakan yang diperlukan. Butir yang menuntut tindakan dihitung.
+    interpretasi: |
+      Butir kelima dan keenam kerap terlupakan padahal paling menentukan pada penerapan yang menyangkut hajat orang banyak. Model yang keputusannya tidak dapat dijelaskan sukar dipertanggungjawabkan ketika dipersoalkan, dan ketiadaan mekanisme sanggahan berarti kekeliruan model tidak dapat diperbaiki dari sisi yang terdampak. Keduanya perlu direncanakan sejak proposal, bukan ditambahkan setelah model jadi.
+  - contoh: Memeriksa keadilan antar-kelompok
+    kode_r: |-
+      du$wilayah <- uji$wilayah
+      du$duga <- factor(ifelse(du$.pred_ya > t_terbaik, "ya", "tidak"),
+                        levels = c("ya", "tidak"))
+
+      per_wilayah <- do.call(rbind, lapply(levels(du$wilayah), function(w) {
+        s <- du[du$wilayah == w, ]
+        cm <- table(duga = s$duga, benar = s$penerima_bantuan)
+        data.frame(wilayah = w, n = nrow(s),
+                   ditandai = round(mean(s$duga == "ya"), 4),
+                   recall = round(cm[1, 1] / max(sum(cm[, 1]), 1), 4))
+      }))
+      print(per_wilayah, right = FALSE)
+
+      cat("\nselisih recall antar-wilayah:",
+          round(abs(diff(per_wilayah$recall)), 4), "\n")
+    judul_r: membandingkan kinerja antar-kelompok
+    eval: true
+    penjelasan: |
+      Dugaan dipecah menurut wilayah, lalu proporsi yang ditandai dan recall dihitung pada tiap kelompok. Fungsi max dengan nilai satu mencegah pembagian dengan nol bila suatu kelompok tidak memuat kelas positif.
+    interpretasi: |
+      Selisih recall antar-kelompok adalah ukuran keadilan yang paling langsung. Bila model jauh lebih baik menangkap kasus di satu wilayah daripada wilayah lain, maka penerapannya akan memperlebar ketimpangan yang justru hendak dikurangi. Pemeriksaan ini wajib direncanakan sejak proposal dan dilaporkan apa adanya, sebab kekeliruan semacam ini tidak akan terlihat pada ukuran kinerja keseluruhan.
+  latihan:
+  - Kerjakan bertahap. Gunakan `data/data_proyek.csv`.
+  - '#### Tingkat Dasar (melengkapi kode)'
+  - \latihan{Menghitung acuan}
+  - |-
+    ```{r eval=FALSE}
+    proyek <- read.csv("data/data_proyek.csv", stringsAsFactors = TRUE)
+    prop <- ____(table(proyek$penerima_bantuan))    # proporsi kelas
+    cat("acuan mayoritas:", round(____(prop), 4), "
+    ")
+    ambang_lama <- ____(proyek$pengeluaran, 0.2)     # kuantil ke-20
+    ```
+  - \latihan{Matriks biaya}
+  - |-
+    ```{r eval=FALSE}
+    biaya_sp <- 500; biaya_sn <- 5000
+    m <- ____(c(0, biaya_sp, biaya_sn, 0), nrow = ____)   # matriks 2x2
+    cat("rasio:", biaya_sn / biaya_sp, "
+    ")
+    ```
+  - \latihan{Inventarisasi peubah}
+  - |-
+    ```{r eval=FALSE}
+    inv <- data.frame(
+      peubah = ____(proyek),
+      tipe = sapply(proyek, function(x) ____(x)[1]),
+      hilang = ____(is.na(proyek)))
+    ```
+  - '#### Tingkat Menengah (menulis sendiri)'
+  - \latihan{Kurva belajar}
+  - Susun kurva belajar dengan enam ukuran data latih. Sajikan tabel dan grafik beserta garis acuan tebakan
+    acak dan sasaran 0,70. Berdasarkan bentuk kurvanya, tentukan apakah Anda akan mengusulkan pengumpulan
+    data tambahan --- dan jelaskan alasannya.
+  - \latihan{Membetulkan kode yang salah}
+  - Kode berikut memuat empat kesalahan (acuan dihitung dari data uji, kurva belajar dinilai pada data
+    latih, ambang ditetapkan tanpa memakai biaya, dan penanda ikut dimodelkan). Temukan dan perbaiki,
+    lalu jelaskan akibat masing-masing.
+  - |-
+    ```{r eval=FALSE}
+    # (a) acuan dihitung dari data UJI
+    acuan <- max(prop.table(table(uji$penerima_bantuan)))
+
+    # (b) kurva belajar dinilai pada data LATIH
+    kurva <- sapply(c(50, 100, 200), function(m) {
+      s <- lat[1:m, ]
+      fm <- fit(wf, data = s)
+      d <- predict(fm, s, type = "prob") |> bind_cols(s |> select(penerima_bantuan))
+      roc_auc(d, penerima_bantuan, .pred_ya)$.estimate
+    })
+
+    # (c) ambang ditetapkan pada nilai bawaan tanpa mempertimbangkan biaya
+    duga <- ifelse(du$.pred_ya > 0.5, "ya", "tidak")
+
+    # (d) kolom penanda ikut dimodelkan
+    rec <- recipe(penerima_bantuan ~ ., data = lat) |>
+      step_normalize(all_numeric_predictors())
+    ```
+  - |-
+    **Keluaran yang benar.** Setelah diperbaiki, kode yang dipakai adalah sebagai berikut.
+
+    ```
+    # (a) acuan dihitung dari data LATIH atau seluruh data, bukan data uji
+    acuan <- max(prop.table(table(lat$penerima_bantuan)))
+
+    # (b) kurva belajar dinilai pada data UJI yang sama bagi seluruh ukuran
+    kurva <- sapply(c(50, 100, 200), function(m) {
+      set.seed(1); s <- lat[sample(nrow(lat), m), ]
+      fm <- fit(wf, data = s)
+      d <- predict(fm, uji, type = "prob") |>
+        bind_cols(uji |> select(penerima_bantuan))
+      roc_auc(d, penerima_bantuan, .pred_ya)$.estimate
+    })
+
+    # (c) ambang dipilih berdasarkan biaya kekeliruan
+    ambang <- seq(0.05, 0.95, by = 0.05)
+    biaya <- sapply(ambang, function(t) {
+      dg <- ifelse(du$.pred_ya > t, "ya", "tidak")
+      sum(dg == "ya" & du$penerima_bantuan == "tidak") * biaya_sp +
+      sum(dg == "tidak" & du$penerima_bantuan == "ya") * biaya_sn
+    })
+    t_terbaik <- ambang[which.min(biaya)]
+
+    # (d) penanda diubah perannya
+    rec <- recipe(penerima_bantuan ~ ., data = lat) |>
+      update_role(id, new_role = "penanda") |>
+      step_dummy(all_nominal_predictors()) |>
+      step_normalize(all_numeric_predictors())
+    ```
+
+    Pemeriksaan yang wajib berhasil: `t_terbaik != 0.5` bernilai **TRUE** pada data ini, dan `"id" %in% names(bake(prep(rec, training = lat), new_data = NULL))` bernilai **TRUE** sedangkan id tidak berperan prediktor.
+  - '#### Tingkat Lanjut (perumusan)'
+  - \latihan{Merumuskan persoalan sendiri}
+  - Pilih satu kebutuhan nyata yang dapat dijawab dengan data serupa. Susun **rumusan bertingkat** (kebutuhan,
+    pertanyaan, tugas teknis), **kriteria sukses** berisi empat unsur, dan **matriks biaya** beserta alasan
+    rasionya. Jelaskan pula siapa pengguna hasilnya dan bagaimana hasil itu akan dipakai.
+  penugasan:
+  - |-
+    \begin{kotaktugas}
+    Sebagai calon analis pada instansi statistik, susun \textbf{proposal proyek data mining} yang akan Anda kerjakan pada Modul 13 dan 14. Proposal harus dapat dinilai kelayakannya oleh pembaca yang tidak terlibat penyusunannya.
+    \end{kotaktugas}
+  - '**Konteks.** Sebuah unit meminta Anda mengusulkan satu proyek penambangan data. Pimpinan akan menilai
+    proposal berdasarkan kejelasan persoalan, keterukuran kriteria sukses, kelayakan teknis, dan pertimbangan
+    etikanya.'
+  - \tugas{Business Understanding}
+  - '1. Susun **rumusan bertingkat**: kebutuhan pengguna, pertanyaan analisis, dan tugas teknis. Sebutkan
+    siapa penggunanya dan bagaimana hasilnya akan dipakai.'
+  - '2. Hitung **dua acuan pembanding**: tebakan mayoritas dan satu aturan sederhana yang meniru praktik
+    berjalan. Laporkan kinerja aturan sederhana itu.'
+  - 3. Susun **tabel kriteria sukses** memuat keempat unsur (ukuran, besaran, acuan, kondisi) serta penandaan
+    wajib atau tidak.
+  - \tugas{Penilaian Kelayakan}
+  - 4. Susun **inventarisasi peubah** memuat tipe, nilai hilang, peran, dan kelayakan. Jelaskan peubah
+    mana yang tidak dipakai beserta alasannya.
+  - 5. Buat **kurva belajar** dan tafsirkan. Tentukan apakah Anda mengusulkan pengumpulan data tambahan,
+    dan bila sasaran tampak tak tercapai, usulkan revisi sasarannya.
+  - 6. Susun **matriks biaya kekeliruan**, cari ambang berbiaya terendah, dan laporkan penghematannya
+    dibandingkan ambang bawaan. Jelaskan bahwa rasio biaya merupakan keputusan kebijakan.
+  - \tugas{Perencanaan
+  - 7. Susun **jadwal proyek** enam tahap CRISP-DM beserta porsi usaha tiap tahap. Sajikan sebagai tabel
+    dan diagram.
+  - 8. Susun **daftar risiko** minimal lima butir beserta peluang, dampak, prioritas, dan langkah pencegahannya.
+  - 9. Isi **daftar periksa etika** enam butir. Untuk butir yang menuntut tindakan, jelaskan tindakan
+    yang akan Anda ambil.
+  - 10. Lakukan **pemeriksaan keadilan** antar-kelompok pada minimal satu peubah pengelompokan. Laporkan
+    selisih kinerjanya dan bahas akibatnya bila model diterapkan.
+  - '11. Susun proposal sebagai laporan R Markdown yang memuat seluruh butir di atas. Tutup dengan **ringkasan
+    eksekutif (maksimal 300 kata)** yang dapat dibaca pimpinan tanpa latar belakang teknis, memuat: persoalan,
+    manfaat yang diharapkan, kelayakan, risiko utama, dan penegasan bahwa data merupakan simulasi.'
+  tambahan:
+  - |
+    Bagian ini menyajikan templat piagam proyek, yaitu ringkasan satu halaman yang menjadi rujukan seluruh pihak selama proyek berjalan. Piagam berbeda dari proposal: proposal menjelaskan dan meyakinkan, sedangkan piagam meringkas kesepakatan agar mudah dirujuk.
+  - contoh: Menyusun piagam proyek
+    kode_r: |-
+      piagam <- data.frame(
+        butir = c("Nama proyek", "Pengguna hasil", "Persoalan",
+                  "Tugas teknis", "Sasaran utama", "Acuan pembanding",
+                  "Data", "Lingkup termasuk", "Lingkup tidak termasuk",
+                  "Durasi", "Risiko utama", "Kriteria selesai"),
+        isi = c("Penyasaran Bantuan Berbasis Data",
+                "Unit penyaluran bantuan",
+                "Bantuan sering tidak tepat sasaran",
+                "Klasifikasi biner",
+                "Recall kelas layak minimal 0,70",
+                "Aturan ambang pengeluaran yang berlaku",
+                "data_proyek.csv (simulasi, 900 amatan, 9 peubah)",
+                "pemodelan, penilaian, rekomendasi ambang",
+                "penerapan sistem, pelatihan petugas",
+                "13 minggu",
+                "mutu data lebih buruk dari dugaan",
+                "laporan disetujui dan ambang disepakati"))
+      print(piagam, right = FALSE)
+    judul_r: tabel piagam proyek
+    eval: true
+    penjelasan: |
+      Piagam disusun sebagai tabel dua kolom berisi dua belas butir yang mencakup seluruh kesepakatan pokok, dari nama proyek sampai kriteria selesai.
+    interpretasi: |
+      Dua butir yang paling sering diabaikan adalah lingkup yang **tidak** termasuk dan kriteria selesai. Butir pertama mencegah pelebaran pekerjaan --- tanpa pernyataan tegas bahwa penerapan sistem berada di luar lingkup, permintaan itu hampir pasti muncul di tengah jalan. Butir kedua menetapkan kapan proyek boleh dinyatakan selesai, sehingga tidak berlarut tanpa ujung.
+  - contoh: Menaksir kebutuhan sumber daya
+    kode_r: |-
+      sumber_daya <- data.frame(
+        tahap = c("Business", "Data Understanding", "Data Preparation",
+                  "Modeling", "Evaluation", "Deployment"),
+        orang_minggu = c(1.0, 1.5, 5.0, 3.5, 1.5, 1.0),
+        keterampilan = c("komunikasi, domain", "eksplorasi data",
+                         "pemrograman, domain", "pemodelan",
+                         "statistika, domain", "pelaporan"))
+      sumber_daya$porsi <- round(100 * sumber_daya$orang_minggu /
+                                   sum(sumber_daya$orang_minggu), 1)
+      print(sumber_daya, right = FALSE)
+      cat("\ntotal:", sum(sumber_daya$orang_minggu), "orang-minggu\n")
+    judul_r: tabel taksiran sumber daya
+    eval: true
+    penjelasan: |
+      Kebutuhan tenaga ditaksir dalam satuan orang-minggu bagi tiap tahap, disertai keterampilan yang diperlukan. Porsinya dihitung sebagai persentase terhadap total.
+    interpretasi: |
+      Kolom keterampilan sama pentingnya dengan kolom beban kerja. Perhatikan bahwa keterampilan pemodelan hanya diperlukan pada satu tahap, sedangkan pemahaman bidang diperlukan pada empat tahap. Taksiran semacam ini membantu memutuskan susunan tim, dan sekaligus mengoreksi anggapan bahwa proyek data mining terutama menuntut keahlian pemodelan.
+  - |-
+    \begin{kotaktips}
+    Simpan piagam proyek sebagai berkas terpisah yang dapat dirujuk kapan saja, dan tinjau ulang pada setiap peralihan tahap. Bila ada butir yang sudah tidak sesuai, ubahlah secara tertulis dan sahkan bersama --- perubahan yang tidak dicatat adalah sumber perselisihan yang paling lazim pada akhir proyek.
+    \end{kotaktips}
+  - contoh: Menyusun kerangka laporan akhir
+    kode_r: |-
+      kerangka <- data.frame(
+        bagian = c("1 Ringkasan Eksekutif", "2 Latar dan Persoalan",
+                   "3 Data dan Penyiapan", "4 Metode",
+                   "5 Hasil", "6 Pembahasan", "7 Keterbatasan",
+                   "8 Rekomendasi", "Lampiran"),
+        isi = c("temuan pokok dan rekomendasi dalam 300 kata",
+                "kebutuhan pengguna, pertanyaan, kriteria sukses",
+                "sumber, inventarisasi, penanganan cacat",
+                "model, resep, skema validasi, penalaan",
+                "kinerja terhadap acuan, ambang terpilih",
+                "makna hasil bagi pengguna, keadilan antar-kelompok",
+                "cakupan, keterwakilan, asumsi yang dipakai",
+                "langkah yang diusulkan beserta prasyaratnya",
+                "kode, tabel penuh, gambar tambahan"),
+        halaman = c(1, 2, 3, 3, 4, 3, 1, 2, NA))
+      print(kerangka, right = FALSE)
+      cat("\nperkiraan tebal laporan:", sum(kerangka$halaman, na.rm = TRUE),
+          "halaman di luar lampiran\n")
+    judul_r: tabel kerangka laporan
+    eval: true
+    penjelasan: |
+      Kerangka laporan disusun sebagai tabel berisi bagian, isi ringkasnya, dan perkiraan tebal tiap bagian. Nilai NA pada lampiran menyatakan tebalnya tidak dibatasi, dan diabaikan saat penjumlahan memakai na.rm.
+    interpretasi: |
+      Perhatikan bahwa ringkasan eksekutif ditempatkan paling depan meski disusun paling akhir. Pembaca yang paling menentukan --- pengambil keputusan --- kerap hanya membaca bagian itu, sehingga ia harus dapat berdiri sendiri tanpa istilah teknis. Perhatikan pula adanya bagian keterbatasan sebagai bagian tersendiri: menyembunyikan keterbatasan mungkin membuat laporan tampak lebih meyakinkan, tetapi merusak kepercayaan begitu keterbatasan itu ditemukan pihak lain.
+  - contoh: Memeriksa kelengkapan proposal
+    kode_r: |-
+      periksa_proposal <- function(butir) {
+        wajib <- c("rumusan bertingkat", "kriteria sukses", "acuan pembanding",
+                   "inventarisasi data", "kurva belajar", "matriks biaya",
+                   "jadwal", "daftar risiko", "daftar periksa etika",
+                   "pemeriksaan keadilan")
+        ada <- wajib %in% butir
+        hasil <- data.frame(butir = wajib,
+                            status = ifelse(ada, "ada", "BELUM ADA"))
+        print(hasil, right = FALSE)
+        cat("\nkelengkapan:", sum(ada), "dari", length(wajib),
+            sprintf("(%.0f persen)\n", 100 * mean(ada)))
+        invisible(all(ada))
+      }
+
+      # contoh proposal yang belum lengkap
+      punya <- c("rumusan bertingkat", "kriteria sukses", "acuan pembanding",
+                 "inventarisasi data", "kurva belajar", "matriks biaya", "jadwal")
+      periksa_proposal(punya)
+    judul_r: fungsi pemeriksa kelengkapan
+    eval: true
+    penjelasan: |
+      Fungsi menerima daftar butir yang sudah disusun lalu membandingkannya terhadap sepuluh butir wajib. Operator keanggotaan menghasilkan vektor logika yang dipakai membentuk kolom status, dan hasilnya dikembalikan secara tersembunyi berupa satu nilai logika.
+    interpretasi: |
+      Pemeriksaan otomatis semacam ini mencegah butir terlewat karena kelelahan menjelang tenggat. Perhatikan bahwa tiga butir terakhir --- risiko, etika, dan keadilan --- justru yang paling sering terlewat, padahal ketiganya menyangkut pertanggungjawaban. Jalankan fungsi ini sebelum proposal dikumpulkan, bukan sesudah dikembalikan.
+  - |
+    Proposal yang Anda susun pada Penugasan akan menjadi dasar pekerjaan pada Modul 13 dan 14. Karena itu susunlah dengan sungguh-sungguh: sasaran yang terlalu tinggi akan menyulitkan diri sendiri, sedangkan sasaran yang terlalu rendah membuat proyeknya tidak menarik untuk dikerjakan.
+  ringkasan:
+  - |-
+    \begin{kotaktujuan}
+    \textbf{Daftar periksa penguasaan:}
+    \begin{itemize}
+    \item[$\square$] Saya dapat menerjemahkan kebutuhan pengguna menjadi tugas teknis.
+    \item[$\square$] Saya menetapkan kriteria sukses dengan keempat unsurnya.
+    \item[$\square$] Saya selalu menyertakan acuan pembanding, bukan hanya angka sasaran.
+    \item[$\square$] Saya dapat menilai kecukupan data melalui kurva belajar.
+    \item[$\square$] Saya menyusun matriks biaya dan memakainya memilih ambang.
+    \item[$\square$] Saya memahami bahwa rasio biaya adalah keputusan kebijakan.
+    \item[$\square$] Saya menyusun jadwal dengan porsi realistis pada penyiapan data.
+    \item[$\square$] Saya menyusun daftar risiko beserta langkah pencegahannya.
+    \item[$\square$] Saya memeriksa kelayakan etika sebelum proyek dimulai.
+    \item[$\square$] Saya memeriksa keadilan kinerja antar-kelompok.
+    \end{itemize}
+    \end{kotaktujuan}
+  - '**Kartu Referensi Cepat.**'
+  - |-
+    \begin{kotakrumus}
+    \begin{tabular}{@{}ll@{}}
+    \textbf{Keperluan} & \textbf{Perintah}\\nAcuan mayoritas & \texttt{max(prop.table(table(y)))}\\nAturan sederhana & \texttt{quantile(x, 0.2)} lalu \texttt{ifelse()}\\nMatriks kekeliruan & \texttt{table(duga, benar)}\\nBiaya total & \texttt{sum(cm * matriks\_biaya)}\\nAmbang terbaik & \texttt{ambang{[}which.min(biaya){]}}\\nKurva belajar & latih pada beberapa ukuran, nilai pada uji sama\\nPeran penanda & \texttt{update\_role(id, new\_role = "penanda")}\\nDiagram jadwal & \texttt{plot(NA)} lalu \texttt{rect()}\\nKeadilan kelompok & bandingkan recall antar-taraf\\
+    \end{tabular}
+    \end{kotakrumus}
+  - 'Modul ini menutup paruh pertama mata kuliah dengan mengembalikan perhatian pada pertanyaan yang mendahului
+    seluruh keterampilan teknis. Prinsip yang perlu dibawa: rumuskan persoalan sebelum memilih algoritma,
+    sertakan acuan pada setiap kriteria, nyatakan biaya kekeliruan dalam angka, periksa kecukupan data
+    sebelum berjanji, dan libatkan pengguna sejak awal. Modul berikutnya memulai paruh kedua dengan membangun
+    model klasifikasi pertama.'
+  referensi:
+  - 'Wirth, R., & Hipp, J. (2000). CRISP-DM: Towards a standard process model for data mining. *PAKDD
+    2000*, 29-39.'
+  - Provost, F., & Fawcett, T. (2013). *Data Science for Business*. O'Reilly Media.
+  - Kuhn, M., & Johnson, K. (2013). *Applied Predictive Modeling*. Springer.
+  - Barocas, S., Hardt, M., & Narayanan, A. (2023). *Fairness and Machine Learning*. MIT Press.
+  - Elkan, C. (2001). The foundations of cost-sensitive learning. *IJCAI 2001*, 973-978.
+exercises:
+- id: L7.1
+  points: 15
+  solution: 'Tingkat Dasar: acuan pembanding, matriks biaya, dan inventarisasi peubah.'
+  judul_r: Solusi Tingkat Dasar (R)
+  solusi_r: |
+    proyek <- read.csv("data/data_proyek.csv", stringsAsFactors = TRUE)
+    proyek$penerima_bantuan <- factor(proyek$penerima_bantuan,
+                                      levels = c("ya", "tidak"))
+
+    prop <- prop.table(table(proyek$penerima_bantuan))
+    cat("acuan mayoritas:", round(max(prop), 4), "\n")
+    ambang_lama <- quantile(proyek$pengeluaran, 0.2)
+
+    biaya_sp <- 500; biaya_sn <- 5000
+    m <- matrix(c(0, biaya_sp, biaya_sn, 0), nrow = 2,
+                dimnames = list(dugaan = c("ya","tidak"),
+                                sebenarnya = c("ya","tidak")))
+    print(m)
+    cat("rasio:", biaya_sn / biaya_sp, "\n")
+
+    inv <- data.frame(
+      peubah = names(proyek),
+      tipe = sapply(proyek, function(x) class(x)[1]),
+      hilang = colSums(is.na(proyek)),
+      row.names = NULL)
+    print(inv, right = FALSE)
+  interpretasi: |
+    Isian yang benar berturut-turut adalah prop.table, max, quantile, matrix, 2, names, class, dan colSums. Perlu diperhatikan bahwa acuan mayoritas dihitung dari seluruh data atau data latih, tidak pernah dari data uji --- menghitungnya dari data uji berarti memakai informasi yang seharusnya disisihkan. Rasio biaya sepuluh berbanding satu menyatakan bahwa melewatkan kasus dianggap sepuluh kali lebih merugikan, dan angka itu berasal dari kebijakan, bukan dari data.
+- id: L7.2
+  points: 25
+  solution: 'Tingkat Menengah dan Lanjut: kurva belajar dan perumusan persoalan sendiri.'
+  judul_r: Solusi Menengah dan Lanjut (R)
+  solusi_r: |
+    suppressPackageStartupMessages({
+      library(recipes); library(rsample); library(parsnip)
+      library(workflows); library(yardstick); library(dplyr)})
+
+    set.seed(2026)
+    bagi <- initial_split(proyek, prop = 0.75, strata = penerima_bantuan)
+    lat <- training(bagi); uji <- testing(bagi)
+    rec <- recipe(penerima_bantuan ~ ., data = lat) |>
+      update_role(id, new_role = "penanda") |>
+      step_dummy(all_nominal_predictors()) |>
+      step_normalize(all_numeric_predictors())
+    wf <- workflow() |> add_recipe(rec) |>
+      add_model(logistic_reg() |> set_engine("glm"))
+
+    ukuran <- c(50, 100, 200, 350, 500, nrow(lat))
+    kurva <- t(sapply(ukuran, function(m) {
+      set.seed(1); s <- lat[sample(nrow(lat), m), ]
+      fm <- fit(wf, data = s)
+      du <- predict(fm, uji, type = "prob") |>
+        bind_cols(uji |> select(penerima_bantuan))
+      c(n = m, auc = roc_auc(du, penerima_bantuan, .pred_ya)$.estimate)
+    }))
+    print(round(kurva, 4))
+
+    plot(kurva[, "n"], kurva[, "auc"], type = "b", pch = 19, lwd = 2,
+         col = "#0B6FB4", ylim = c(0.4, 1),
+         xlab = "Ukuran data latih", ylab = "ROC-AUC pada data uji",
+         main = "Kurva Belajar")
+    abline(h = 0.5, col = "#C0392B", lty = 2, lwd = 2)
+    abline(h = 0.7, col = "#00A651", lty = 3, lwd = 2)
+
+    # selisih antar-ukuran sebagai petunjuk kedataran
+    cat("\nselisih AUC antar-ukuran berturutan:\n")
+    print(round(diff(kurva[, "auc"]), 4))
+  interpretasi: |
+    Selisih AUC antar-ukuran berturutan adalah cara membaca kedataran kurva secara kuantitatif, bukan sekadar dari bentuk gambarnya. Bila selisihnya sudah mendekati nol pada ukuran terbesar, menambah data tidak akan menolong dan usulan pengumpulan data tambahan tidak dapat dibenarkan. Pada data yang peubahnya dibangkitkan saling bebas terhadap sasaran, kurva akan mendatar jauh di bawah sasaran 0,70 --- dan tanggapan yang jujur adalah merevisi sasaran atau mengubah perumusan persoalan, bukan memaksakan model yang lebih rumit. Untuk perumusan persoalan sendiri, ketiga tingkat wajib dituliskan seluruhnya, dan rasio biaya wajib disertai alasan mengapa satu jenis kekeliruan dianggap lebih merugikan.
+- id: L7.D
+  points: 10
+  solution: 'Membetulkan kode: acuan dari data uji, kurva dinilai pada latih, ambang bawaan, dan penanda
+    ikut dimodelkan.'
+  judul_r: Solusi Membetulkan Kode (R)
+  solusi_r: |
+    suppressPackageStartupMessages({
+      library(recipes); library(parsnip); library(workflows)
+      library(yardstick); library(dplyr)})
+
+    # (a) acuan dihitung dari data latih, bukan data uji
+    acuan <- max(prop.table(table(lat$penerima_bantuan)))
+
+    # (d) penanda diubah perannya lebih dahulu
+    rec <- recipe(penerima_bantuan ~ ., data = lat) |>
+      update_role(id, new_role = "penanda") |>
+      step_dummy(all_nominal_predictors()) |>
+      step_normalize(all_numeric_predictors())
+    wf <- workflow() |> add_recipe(rec) |>
+      add_model(logistic_reg() |> set_engine("glm"))
+
+    # (b) kurva belajar dinilai pada data UJI yang sama
+    kurva <- sapply(c(50, 100, 200), function(m) {
+      set.seed(1); s <- lat[sample(nrow(lat), m), ]
+      fm <- fit(wf, data = s)
+      d <- predict(fm, uji, type = "prob") |>
+        bind_cols(uji |> select(penerima_bantuan))
+      roc_auc(d, penerima_bantuan, .pred_ya)$.estimate
+    })
+
+    # (c) ambang dipilih berdasarkan biaya
+    model <- fit(wf, data = lat)
+    du <- predict(model, uji, type = "prob") |>
+      bind_cols(uji |> select(penerima_bantuan))
+    biaya_sp <- 500; biaya_sn <- 5000
+    ambang <- seq(0.05, 0.95, by = 0.05)
+    biaya <- sapply(ambang, function(t) {
+      dg <- ifelse(du$.pred_ya > t, "ya", "tidak")
+      sum(dg == "ya" & du$penerima_bantuan == "tidak") * biaya_sp +
+        sum(dg == "tidak" & du$penerima_bantuan == "ya") * biaya_sn
+    })
+    t_terbaik <- ambang[which.min(biaya)]
+
+    # pemeriksaan wajib
+    t_terbaik != 0.5
+    "id" %in% names(bake(prep(rec, training = lat), new_data = NULL))
+  interpretasi: |
+    Empat kesalahan diperbaiki. Kesalahan (a) memakai data uji untuk menetapkan acuan, yang berarti informasi data uji sudah ikut memengaruhi perencanaan. Kesalahan (b) paling menyesatkan: kurva belajar yang dinilai pada data latih akan selalu menanjak atau tetap tinggi, sehingga tidak dapat menjawab pertanyaan apakah datanya cukup. Kesalahan (c) membiarkan ambang pada nilai bawaan padahal biaya kekeliruannya jauh dari simetris, sehingga peluang penghematan terbesar terlewat begitu saja. Kesalahan (d) membiarkan penanda ikut dimodelkan; pada data yang penandanya berurutan, model dapat tampak sangat baik semata karena menghafal nomor --- kekeliruan yang tidak menimbulkan galat sama sekali.
+- id: T7.1
+  points: 50
+  solution: 'Penugasan: proposal proyek lengkap berdasarkan kerangka CRISP-DM.'
+  judul_r: Solusi Penugasan (R)
+  solusi_r: |
+    suppressPackageStartupMessages({
+      library(recipes); library(rsample); library(parsnip)
+      library(workflows); library(yardstick); library(dplyr)})
+    proyek <- read.csv("data/data_proyek.csv", stringsAsFactors = TRUE)
+    proyek$penerima_bantuan <- factor(proyek$penerima_bantuan,
+                                      levels = c("ya", "tidak"))
+
+    # 1) rumusan bertingkat
+    print(data.frame(
+      tingkat = c("Kebutuhan", "Pertanyaan", "Tugas teknis", "Pengguna", "Pemakaian"),
+      isi = c("bantuan sering tidak tepat sasaran",
+              "rumah tangga mana yang paling mungkin layak?",
+              "klasifikasi biner, dinilai dengan recall",
+              "unit penyaluran bantuan",
+              "menyaring daftar calon sebelum verifikasi lapangan")),
+      right = FALSE)
+
+    # 2) dua acuan
+    prop <- prop.table(table(proyek$penerima_bantuan))
+    ambang_lama <- quantile(proyek$pengeluaran, 0.2)
+    aturan <- factor(ifelse(proyek$pengeluaran <= ambang_lama, "ya", "tidak"),
+                     levels = c("ya", "tidak"))
+    cm_lama <- table(duga = aturan, benar = proyek$penerima_bantuan)
+    recall_lama <- cm_lama[1, 1] / sum(cm_lama[, 1])
+    cat("acuan mayoritas:", round(max(prop), 4),
+        "| recall aturan lama:", round(recall_lama, 4), "\n")
+
+    # 4) inventarisasi
+    inv <- data.frame(peubah = names(proyek),
+                      tipe = sapply(proyek, function(x) class(x)[1]),
+                      hilang = colSums(is.na(proyek)),
+                      unik = sapply(proyek, function(x) length(unique(x))),
+                      row.names = NULL)
+    inv$peran <- c("penanda", rep("prediktor", 7), "sasaran")
+    print(inv, right = FALSE)
+
+    # 5) kurva belajar
+    set.seed(2026)
+    bagi <- initial_split(proyek, prop = 0.75, strata = penerima_bantuan)
+    lat <- training(bagi); uji <- testing(bagi)
+    rec <- recipe(penerima_bantuan ~ ., data = lat) |>
+      update_role(id, new_role = "penanda") |>
+      step_dummy(all_nominal_predictors()) |>
+      step_normalize(all_numeric_predictors())
+    wf <- workflow() |> add_recipe(rec) |>
+      add_model(logistic_reg() |> set_engine("glm"))
+    ukuran <- c(50, 100, 200, 350, 500, nrow(lat))
+    kurva <- t(sapply(ukuran, function(m) {
+      set.seed(1); s <- lat[sample(nrow(lat), m), ]
+      du <- predict(fit(wf, data = s), uji, type = "prob") |>
+        bind_cols(uji |> select(penerima_bantuan))
+      c(n = m, auc = roc_auc(du, penerima_bantuan, .pred_ya)$.estimate)
+    }))
+    print(round(kurva, 4))
+
+    # 6) biaya dan ambang
+    model <- fit(wf, data = lat)
+    du <- predict(model, uji, type = "prob") |>
+      bind_cols(uji |> select(penerima_bantuan))
+    biaya_sp <- 500; biaya_sn <- 5000
+    ambang <- seq(0.05, 0.95, by = 0.05)
+    biaya <- sapply(ambang, function(t) {
+      dg <- ifelse(du$.pred_ya > t, "ya", "tidak")
+      sum(dg == "ya" & du$penerima_bantuan == "tidak") * biaya_sp +
+        sum(dg == "tidak" & du$penerima_bantuan == "ya") * biaya_sn
+    })
+    t_baik <- ambang[which.min(biaya)]
+    cat("ambang terbaik:", t_baik, "| penghematan:",
+        round(100 * (biaya[ambang == 0.5] - min(biaya)) / biaya[ambang == 0.5], 1),
+        "persen\n")
+
+    # 10) keadilan antar-kelompok
+    du$wilayah <- uji$wilayah
+    du$dg <- factor(ifelse(du$.pred_ya > t_baik, "ya", "tidak"),
+                    levels = c("ya", "tidak"))
+    adil <- do.call(rbind, lapply(levels(du$wilayah), function(w) {
+      s <- du[du$wilayah == w, ]
+      cm <- table(duga = s$dg, benar = s$penerima_bantuan)
+      data.frame(wilayah = w, n = nrow(s),
+                 ditandai = round(mean(s$dg == "ya"), 4),
+                 recall = round(cm[1, 1] / max(sum(cm[, 1]), 1), 4))
+    }))
+    print(adil, right = FALSE)
+  interpretasi: |
+    Nomor 2 adalah bagian yang paling menentukan mutu proposal: acuan aturan lama jauh lebih bermakna daripada acuan mayoritas, sebab itulah pesaing sesungguhnya. Bila model tidak melampaui aturan sederhana yang sudah berjalan, penggantiannya tidak dapat dibenarkan betapapun canggihnya. Nomor 5 menuntut kejujuran: pada data simulasi ini kurva akan mendatar rendah, dan tanggapan yang benar adalah merevisi sasaran pada proposal, bukan menyembunyikan temuan itu. Nomor 6 memperlihatkan bahwa penghematan terbesar kerap datang dari keputusan ambang, bukan dari pemilihan model. Nomor 10 wajib dilaporkan apa adanya; selisih kinerja antar-wilayah yang besar berarti penerapan model akan memperlebar ketimpangan, dan temuan itu harus disampaikan meski melemahkan usulan sendiri. Ringkasan eksekutif wajib menegaskan bahwa data merupakan simulasi sehingga seluruh angka kinerja tidak menggambarkan keadaan sebenarnya.
+references:
+- 'Wirth, R., & Hipp, J. (2000). CRISP-DM: Towards a standard process model for data mining. PAKDD 2000,
+  29-39.'
+- Provost, F., & Fawcett, T. (2013). Data Science for Business. O'Reilly Media.
+- Kuhn, M., & Johnson, K. (2013). Applied Predictive Modeling. Springer.
+- Barocas, S., Hardt, M., & Narayanan, A. (2023). Fairness and Machine Learning. MIT Press.
+- Elkan, C. (2001). The foundations of cost-sensitive learning. IJCAI 2001, 973-978.
+

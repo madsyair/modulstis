@@ -141,8 +141,17 @@ AnswerKeyBuilder <- R6::R6Class("AnswerKeyBuilder", inherit = ContentBuilder,
                     latex_prose_safe(ex[["interpretasi"]])))
         }
       }
-      if (length(spec$exercises) == 0) {
+      ada_mentah <- !is.null(spec$body[["kunci"]]) && length(spec$body[["kunci"]]) > 0
+      if (length(spec$exercises) == 0 && !ada_mentah) {
         blocks <- c(blocks, "_(Belum ada latihan/penugasan pada spesifikasi ini.)_")
+      }
+      # Blok mentah `body$kunci`: dituliskan APA ADANYA setelah daftar
+      # exercises. Diperlukan bagi kunci yang sebagian besar isinya prosa
+      # panjang beserta kotak LaTeX -- memaksanya masuk ke medan `solution`
+      # akan meloloskan seluruh karakter khusus sehingga perintah LaTeX
+      # tercetak sebagai teks biasa.
+      if (!is.null(spec$body[["kunci"]]) && length(spec$body[["kunci"]]) > 0) {
+        blocks <- c(blocks, unlist(spec$body[["kunci"]], use.names = FALSE))
       }
       blocks <- c(blocks, "# Catatan Penskoran untuk Pengajar",
         "\\begin{kotakinfo}\nToleransi: perbedaan pembulatan dan arah tanda komponen dapat diterima selama interpretasi konsisten.\n\\end{kotakinfo}")

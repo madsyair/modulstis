@@ -1,0 +1,963 @@
+number: 5
+title: Prapemrosesan Data
+short_code: prapemrosesan
+topic: Prapemrosesan
+pertemuan: 5
+sub_cpmk: |
+  Sub-CPMK 5: Mahasiswa mampu melakukan pembersihan, integrasi, reduksi, dan transformasi data memakai kerangka resep yang dapat diulang, serta menghindari kebocoran data pada seluruh tahapannya.
+packages:
+- recipes
+- rsample
+- themis
+- dplyr
+contoh_title: Contoh Praktikum dengan R
+tambahan_title: 'Tambahan: Menakar Akibat Kebocoran Data'
+course:
+  matkul: Data Mining dan Big Data
+  matkul_besar: DATA MINING DAN BIG DATA
+  kode: K202505
+  semester: 6 (Genap)
+  prodi: D-IV Statistika
+  penyusun:
+  - Achmad Syahrul Choir
+datasets:
+- name: data_kotor
+  role: contoh
+  recipe:
+    kind: tabular
+    n: 600
+    seed: 2026
+    columns:
+      id:
+        type: integer
+        min: 1
+        max: 600
+      wilayah:
+        type: category
+        levels:
+        - Perkotaan
+        - Perdesaan
+        probs:
+        - 0.55
+        - 0.45
+      pendidikan:
+        type: category
+        levels:
+        - SD
+        - SMP
+        - SMA
+        - PT
+        probs:
+        - 0.2
+        - 0.25
+        - 0.35
+        - 0.2
+      umur:
+        type: integer
+        min: 17
+        max: 70
+      pendapatan:
+        type: numeric
+        min: 500
+        max: 25000
+        digits: 2
+      pengeluaran:
+        type: numeric
+        min: 400
+        max: 15000
+        digits: 2
+      lama_sekolah:
+        type: numeric
+        min: 0
+        max: 18
+        digits: 1
+      skor_literasi:
+        type: numeric
+        min: 0
+        max: 100
+        digits: 1
+      target:
+        type: category
+        levels:
+        - ya
+        - tidak
+        probs:
+        - 0.25
+        - 0.75
+- name: data_referensi
+  role: contoh
+  recipe:
+    kind: tabular
+    n: 2
+    seed: 2026
+    columns:
+      wilayah:
+        type: balanced
+        levels:
+        - Perkotaan
+        - Perdesaan
+        each: 1
+      indeks_wilayah:
+        type: numeric
+        min: 60
+        max: 90
+        digits: 1
+body:
+  deskripsi:
+  - |
+    Dalam CRISP-DM, tahap penyiapan data lazimnya menyita porsi waktu terbesar, kerap disebut mencapai tiga perempat keseluruhan pekerjaan. Angka itu bukan pertanda ketidakefisienan, melainkan cerminan kenyataan bahwa data lapangan hampir selalu tidak siap pakai.
+  - |
+    Modul ini membahas empat pekerjaan pada tahap tersebut: pembersihan, penggabungan, reduksi, dan transformasi. Yang membedakannya dari pengolahan biasa adalah kerangka yang dipakai. Seluruh langkah disusun sebagai **resep**, yaitu rangkaian tindakan yang dapat diperiksa, diulang, dan yang terpenting dipelajari dari data latih saja lalu diterapkan ke data uji.
+  - |
+    Perbedaan terakhir itu tampak sepele tetapi menentukan. Menghitung nilai tengah untuk imputasi dari seluruh data, bukan dari data latih saja, membuat kinerja model tampak lebih baik daripada sebenarnya. Bagian Tambahan menakar besarnya akibat itu dengan angka, dan hasilnya mungkin mengejutkan.
+  - |-
+    \begin{kotakperhatian}[Tentang data]
+    Berkas data pada modul ini adalah \textbf{data simulasi} (\texttt{set.seed(2026)}), \textbf{bukan data nyata} dan \textbf{bukan data resmi} instansi mana pun. Data sengaja dibuat memuat cacat agar dapat dilatih penanganannya.
+    \end{kotakperhatian}
+  tujuan:
+  - 'Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:'
+  - '1. **Mengenali** empat jenis cacat data: nilai hilang, pencilan, ketidakkonsistenan, dan duplikasi.'
+  - 2. **Menyusun** resep prapemrosesan sebagai rangkaian langkah yang dapat diperiksa.
+  - 3. **Memilih** cara imputasi yang sesuai dengan tipe peubah.
+  - 4. **Menerapkan** transformasi untuk menangani kemencengan dan perbedaan skala.
+  - 5. **Menggabungkan** data dari beberapa sumber dengan kunci yang tepat.
+  - 6. **Menjelaskan** apa itu kebocoran data dan menakar akibatnya.
+  - 7. **Mencegah** kebocoran dengan menempatkan seluruh langkah di dalam resep.
+  alat:
+  - 'Perangkat dan bahan yang diperlukan:'
+  - '- **R** (RStudio) dengan paket `recipes`, `rsample`, `themis`, dan `dplyr`.'
+  - '- Pasang dengan `install.packages(c("recipes", "rsample", "themis", "dplyr"))`.'
+  - '- Berkas data: `data/data_kotor.csv` dan `data/data_referensi.csv`.'
+  instruksi:
+  - 'Ikuti tahapan berikut:'
+  - '**Sebelum praktikum:** pasang ketiga paket; siapkan kedua berkas data pada subfolder `data/`; baca
+    bagian Teori mengenai kebocoran data.'
+  - '**Selama praktikum:** kerjakan Contoh berurutan. Perhatikan bahwa urutan langkah pada resep berpengaruh
+    terhadap hasil, sehingga jangan mengubahnya tanpa alasan.'
+  - |-
+    **Pembagian kerja:** Contoh dan Latihan dikerjakan di kelas; **Penugasan dikerjakan di luar sesi**.
+
+    **Pengumpulan:** susun laporan R Markdown, render ke PDF atau HTML, kumpulkan melalui Google Classroom.
+  teori:
+  - '### Kedudukan pada CRISP-DM'
+  - |
+    Modul ini menempati tahap ketiga, yaitu Data Preparation. Tahap ini menerima hasil pengenalan data dari tahap kedua dan menyerahkan data siap pakai ke tahap pemodelan. Perlu diingat bahwa panah CRISP-DM berjalan dua arah: kegagalan pada tahap evaluasi kerap mengembalikan pekerjaan ke tahap ini, bukan ke pemilihan model.
+  - '### Empat Jenis Cacat Data'
+  - |-
+    \begin{kotakinfo}[Cacat dan cara mengenalinya]\par\smallskip
+    \begin{tabular}{@{}p{3.2cm}p{4.4cm}p{6.6cm}@{}}
+    \textbf{Cacat} & \textbf{Cara mengenali} & \textbf{Pertimbangan}\\
+    \hline
+    Nilai hilang & \texttt{colSums(is.na())} & pola hilangnya acak atau tidak?\\[2pt]
+    Pencilan & IQR, skor-z, boxplot & kekeliruan atau amatan sah?\\[2pt]
+    Tidak konsisten & \texttt{table()}, rentang & ejaan, satuan, kategori bertaut\\[2pt]
+    Duplikasi & \texttt{duplicated()} & ganda sungguhan atau kebetulan sama?\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Keempatnya menuntut keputusan, bukan sekadar penerapan rumus. Pencilan misalnya tidak otomatis dibuang: pendapatan yang jauh di atas lainnya bisa saja sah dan justru paling menarik. Membuangnya tanpa alasan berarti membuang informasi sekaligus membiaskan hasil.
+  - '### Pola Nilai Hilang'
+  - |-
+    \begin{kotakinfo}[Tiga pola dan akibatnya]\par\smallskip
+    \begin{tabular}{@{}p{2.2cm}p{5.2cm}p{6.8cm}@{}}
+    \textbf{MCAR} & hilang sepenuhnya acak & imputasi sederhana memadai\\[3pt]
+    \textbf{MAR} & hilang bergantung peubah lain yang teramati & imputasi berbasis model lebih tepat\\[3pt]
+    \textbf{MNAR} & hilang bergantung nilainya sendiri & imputasi apa pun berisiko bias\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Pembedaan ini penting karena menentukan sah tidaknya penanganan. Pendapatan yang tidak dijawab justru oleh mereka yang berpendapatan sangat tinggi adalah contoh MNAR; mengimputasinya dengan nilai tengah akan menarik dugaan ke bawah secara sistematis. Sayangnya MNAR tidak dapat diperiksa dari data itu sendiri, sehingga penilaiannya bersandar pada pengetahuan bidang.
+  - '### Gagasan Resep'
+  - |
+    Paket recipes memisahkan **penetapan langkah** dari **pelaksanaannya**. Resep disusun lebih dahulu sebagai rangkaian langkah, lalu dipelajari dari data latih melalui prep, baru diterapkan melalui bake. Pemisahan inilah yang mencegah kebocoran secara rancangan, bukan mengandalkan kedisiplinan penulis kode.
+  - |-
+    \begin{kotakinfo}[Tiga tahap pemakaian resep]\par\smallskip
+    \begin{tabular}{@{}p{2.6cm}p{4.0cm}p{7.8cm}@{}}
+    \texttt{recipe()} & menetapkan peran peubah & belum ada perhitungan\\[3pt]
+    \texttt{prep()} & mempelajari dari data latih & nilai tengah, simpangan baku, taraf faktor dihitung di sini\\[3pt]
+    \texttt{bake()} & menerapkan ke data mana pun & memakai nilai yang sudah dipelajari\\
+    \end{tabular}
+    \end{kotakinfo}
+  - '### Urutan Langkah Berpengaruh'
+  - |
+    Urutan pada resep bukan soal selera. Imputasi harus mendahului pembakuan, sebab nilai hilang membuat rata-rata dan simpangan baku tak terdefinisi. Pengodean peubah kategori harus mendahului pembakuan bila kolom hasilnya ikut dibakukan. Transformasi pengurang kemencengan sebaiknya mendahului pembakuan agar pembakuannya bekerja pada sebaran yang sudah lebih simetris.
+  - |-
+    \begin{kotaktips}
+    Urutan yang lazim dan aman: tangani nilai hilang, tangani peubah berkelas jarang, transformasikan kemencengan, kodekan kategori, buang peubah berragam nol, lalu bakukan. Bila ragu, jalankan \texttt{prep()} lalu periksa hasil \texttt{bake()} pada beberapa baris pertama.
+    \end{kotaktips}
+  - '### Ketidakseimbangan Kelas'
+  - |
+    Ketika kelas sasaran sangat timpang --- misalnya hanya lima belas persen amatan berkelas positif --- model cenderung memihak kelas mayoritas. Akurasi menjadi ukuran yang menyesatkan, sebab menebak seluruhnya sebagai mayoritas sudah menghasilkan delapan puluh lima persen tanpa mempelajari apa pun.
+  - |-
+    \begin{kotakinfo}[Tiga cara menangani ketimpangan]\par\smallskip
+    \begin{tabular}{@{}p{3.2cm}p{4.6cm}p{6.6cm}@{}}
+    \textbf{Cara} & \textbf{Tindakan} & \textbf{Risiko}\\
+    \hline
+    Penyusutan & mengurangi kelas mayoritas & informasi terbuang\\[2pt]
+    Penggandaan & memperbanyak kelas minoritas & pemodelan berlebih (\emph{overfitting}) pada salinan\\[2pt]
+    SMOTE & membuat amatan minoritas sintetis & amatan buatan bisa tak masuk akal\\[2pt]
+    Pembobotan & memberi bobot lebih pada minoritas & tidak semua model mendukung\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotaksalah}[Menyeimbangkan seluruh data]
+    Penyeimbangan kelas \textbf{hanya boleh dikenakan pada data latih}. Bila dikenakan sebelum pembagian, salinan atau amatan sintetis dari data latih dapat muncul di data uji, sehingga model menilai dirinya atas amatan yang sudah dipelajarinya. Data uji harus tetap mencerminkan keadaan sesungguhnya, termasuk ketimpangannya --- sebab begitulah data baru kelak akan datang.
+    \end{kotaksalah}
+  - '### Menangani Taraf Kategori yang Jarang'
+  - |
+    Peubah kategori kerap memuat taraf yang hanya dimiliki segelintir amatan. Taraf semacam itu menimbulkan dua persoalan: kolom bonekanya nyaris seluruhnya nol sehingga tak informatif, dan taraf itu dapat sama sekali tidak muncul pada data latih sehingga model gagal ketika menemuinya di data baru.
+  - |-
+    \begin{kotaktips}
+    Langkah \texttt{step\_other()} menggabungkan taraf yang proporsinya di bawah ambang menjadi satu taraf bernama \emph{other}. Yang penting, penggabungan itu dipelajari dari data latih, sehingga taraf tak terduga pada data uji otomatis masuk ke \emph{other} alih-alih menimbulkan galat. Inilah salah satu keunggulan resep yang sukar ditiru dengan penulisan langkah secara manual.
+    \end{kotaktips}
+  - '### Kebocoran Data'
+  - |
+    Kebocoran data terjadi ketika informasi dari data uji ikut memengaruhi pembentukan model. Akibatnya kinerja pada data uji menjadi terlalu bagus, dan kekecewaan baru muncul ketika model dipakai pada data sungguhan.
+  - |-
+    \begin{kotaksalah}[Tiga sumber kebocoran yang paling sering]
+    \begin{enumerate}
+    \item \textbf{Prapemrosesan sebelum pembagian.} Menghitung nilai tengah, simpangan baku, atau taraf faktor dari seluruh data.
+    \item \textbf{Seleksi peubah memakai seluruh data.} Memilih peubah yang paling berkorelasi dengan sasaran sebelum data dibagi --- inilah bentuk yang paling parah akibatnya.
+    \item \textbf{Penyeimbangan kelas pada seluruh data.} Menerapkan SMOTE atau penggandaan sebelum pembagian, sehingga salinan amatan latih muncul di data uji.
+    \end{enumerate}
+    \end{kotaksalah}
+  - |
+    Ketiganya memiliki ciri yang sama: seluruhnya tampak wajar bila dibaca sepintas, dan seluruhnya menghasilkan angka yang menyenangkan. Justru karena itulah kebocoran sukar terdeteksi --- ia tidak menimbulkan galat, hanya menghasilkan kesimpulan yang keliru.
+  contoh:
+  - contoh: Mengenali cacat pada data
+    kode_r: |-
+      kotor <- read.csv("data/data_kotor.csv", stringsAsFactors = TRUE)
+      dim(kotor)
+
+      # empat pemeriksaan sekaligus
+      cat("nilai hilang total :", sum(is.na(kotor)), "\n")
+      cat("baris ganda        :", sum(duplicated(kotor)), "\n")
+      cat("id ganda           :", sum(duplicated(kotor$id)), "\n")
+
+      q <- quantile(kotor$pendapatan, c(.25, .75), na.rm = TRUE)
+      batas <- q[2] + 1.5 * diff(q)
+      cat("pencilan pendapatan:", sum(kotor$pendapatan > batas, na.rm = TRUE),
+          sprintf("(%.1f persen)\n", 100 * mean(kotor$pendapatan > batas, na.rm = TRUE)))
+    judul_r: pemeriksaan empat jenis cacat
+    eval: true
+    penjelasan: |
+      Empat pemeriksaan dijalankan berurutan. Fungsi is.na yang dijumlahkan menghasilkan cacah nilai hilang seluruh tabel. Fungsi duplicated dikenakan dua kali: pada seluruh baris untuk mencari baris kembar, dan pada kolom id untuk mencari penanda ganda. Batas pencilan ditetapkan dengan aturan simpangan kuartil.
+    interpretasi: |
+      Pemeriksaan pada kolom id perlu dibedakan dari pemeriksaan baris kembar. Baris yang seluruhnya sama boleh jadi memang pencatatan ganda, sedangkan id yang sama pada baris berbeda menandakan persoalan yang lebih serius pada sumber datanya. Adapun pencilan dicacah dan dilaporkan persentasenya lebih dahulu, sebelum diputuskan apa yang hendak dilakukan terhadapnya.
+  - contoh: Memeriksa pola nilai hilang
+    kode_r: |-
+      hilang <- colSums(is.na(kotor))
+      print(hilang[hilang > 0])
+
+      # apakah hilangnya berkaitan dengan peubah lain?
+      kotor$ada_pendapatan <- !is.na(kotor$pendapatan)
+      if (any(!kotor$ada_pendapatan)) {
+        print(round(prop.table(table(kotor$wilayah, kotor$ada_pendapatan), 1), 3))
+      } else {
+        cat("tidak ada nilai hilang pada pendapatan\n")
+      }
+
+      # proporsi hilang per kolom
+      round(sort(hilang[hilang > 0] / nrow(kotor), decreasing = TRUE), 4)
+    judul_r: colSums dan tabel silang keterisian
+    eval: true
+    penjelasan: |
+      Cacah nilai hilang per kolom dihitung lalu disaring agar hanya kolom bermasalah yang tampil. Peubah penanda keterisian dibentuk, lalu ditabulasikan silang terhadap wilayah untuk memeriksa apakah kehilangannya merata. Proporsi hilang dihitung dan diurutkan menurun.
+    interpretasi: |
+      Tabel silang inilah cara memeriksa dugaan MAR: bila proporsi terisi berbeda nyata antar-wilayah, kehilangannya bergantung pada wilayah dan tergolong MAR, sehingga imputasi sebaiknya memperhatikan wilayah. Perlu diingat bahwa MNAR tidak dapat diperiksa dengan cara ini --- ketiadaan bukti MAR bukan bukti MCAR.
+  - contoh: Membagi data sebelum melakukan apa pun
+    kode_r: |-
+      suppressPackageStartupMessages({library(recipes); library(rsample)})
+      kotor$ada_pendapatan <- NULL          # buang kolom bantu
+
+      set.seed(2026)
+      bagi <- initial_split(kotor, prop = 0.75, strata = target)
+      lat  <- training(bagi)
+      uji  <- testing(bagi)
+
+      cat("latih:", nrow(lat), "| uji:", nrow(uji), "\n")
+      round(rbind(latih = prop.table(table(lat$target)),
+                  uji   = prop.table(table(uji$target))), 4)
+    judul_r: initial_split dengan strata
+    eval: true
+    penjelasan: |
+      Data dibagi menjadi tiga perempat latih dan seperempat uji. Argumen strata memastikan proporsi kelas sasaran terjaga pada kedua bagian, yang penting ketika kelasnya tidak seimbang.
+    interpretasi: |
+      Perhatikan bahwa pembagian dilakukan **sebelum** prapemrosesan apa pun. Inilah urutan yang benar dan tidak boleh dibalik. Perhatikan pula bahwa proporsi kelas pada kedua bagian nyaris sama berkat penstrataan; tanpa itu, bagian uji dapat kebetulan memuat terlalu sedikit kelas minoritas sehingga penilaiannya menjadi tidak stabil.
+  - contoh: Menyusun resep bertahap
+    kode_r: |-
+      rec <- recipe(target ~ ., data = lat) |>
+        update_role(id, new_role = "penanda") |>          # id bukan prediktor
+        step_impute_median(all_numeric_predictors()) |>    # 1. nilai hilang numerik
+        step_impute_mode(all_nominal_predictors()) |>      # 2. nilai hilang kategori
+        step_YeoJohnson(all_numeric_predictors()) |>       # 3. kurangi kemencengan
+        step_other(all_nominal_predictors(), threshold = 0.05) |>  # 4. kelas jarang
+        step_dummy(all_nominal_predictors()) |>            # 5. pengodean
+        step_zv(all_predictors()) |>                       # 6. buang ragam nol
+        step_normalize(all_numeric_predictors())           # 7. pembakuan
+
+      rec
+    judul_r: recipe dengan tujuh langkah
+    eval: true
+    penjelasan: |
+      Resep disusun dengan sasaran target dan seluruh kolom lain sebagai calon prediktor. Kolom id diubah perannya menjadi penanda agar tidak ikut dimodelkan. Tujuh langkah ditambahkan berurutan, masing-masing memakai pemilih yang menargetkan kelompok kolom tertentu, bukan menyebut namanya satu per satu.
+    interpretasi: |
+      Perhatikan bahwa mencetak resep hanya menampilkan **rencana**; belum ada perhitungan yang dijalankan. Perhatikan pula pemakaian pemilih seperti all_numeric_predictors, yang membuat resep tetap sah meski kolomnya bertambah atau berkurang. Mengubah peran id sangat penting: penanda yang ikut dimodelkan dapat menghasilkan model yang seolah sangat baik padahal hanya menghafal nomor.
+  - contoh: Mempelajari resep dan menerapkannya
+    kode_r: |-
+      siap <- prep(rec, training = lat)     # DIPELAJARI dari data latih saja
+
+      lat_siap <- bake(siap, new_data = lat)
+      uji_siap <- bake(siap, new_data = uji)
+
+      cat("latih:", nrow(lat_siap), "x", ncol(lat_siap),
+          "| uji:", nrow(uji_siap), "x", ncol(uji_siap), "\n")
+      cat("NA tersisa - latih:", anyNA(lat_siap), "| uji:", anyNA(uji_siap), "\n")
+      cat("kolom sama:", identical(names(lat_siap), names(uji_siap)), "\n")
+
+      # pembakuan dipelajari dari LATIH, sehingga rata uji tidak persis nol
+      num <- names(lat_siap)[sapply(lat_siap, is.numeric)][1:3]
+      round(rbind(latih = sapply(lat_siap[num], mean),
+                  uji   = sapply(uji_siap[num], mean)), 4)
+    judul_r: prep lalu bake
+    eval: true
+    penjelasan: |
+      Resep dipelajari dari data latih memakai prep; di sinilah nilai tengah, modus, dan simpangan baku dihitung. Kedua bagian data lalu diterapkan resep tersebut memakai bake. Rata-rata beberapa kolom numerik dibandingkan antara kedua bagian.
+    interpretasi: |
+      Inilah bukti bahwa kebocoran tidak terjadi. Rata-rata kolom yang dibakukan pada data latih bernilai persis nol karena pembakuannya memang dipelajari dari sana. Pada data uji nilainya **tidak persis nol** --- dan justru itulah yang benar. Bila rata-rata data uji juga persis nol, itu pertanda pembakuannya dihitung dari seluruh data, yang berarti telah terjadi kebocoran.
+  - contoh: Memeriksa apa yang dipelajari resep
+    kode_r: |-
+      # nilai yang dipelajari pada langkah imputasi
+      tidy(siap, number = 1)
+
+      # parameter transformasi Yeo-Johnson
+      tidy(siap, number = 3)
+    judul_r: tidy untuk memeriksa langkah
+    eval: true
+    penjelasan: |
+      Fungsi tidy yang dikenakan pada resep terlatih menampilkan nilai yang dipelajari pada langkah tertentu. Argumen number merujuk urutan langkah pada resep.
+    interpretasi: |
+      Kemampuan memeriksa isi resep inilah salah satu keunggulannya dibanding prapemrosesan manual. Nilai tengah yang dipakai untuk imputasi dapat dilihat dan dilaporkan, sehingga hasil dapat direproduksi orang lain. Perhatikan pula parameter lambda pada Yeo-Johnson: nilai mendekati satu berarti transformasinya hampir tidak mengubah apa pun, sedangkan nilai mendekati nol menyerupai transformasi logaritma.
+  - contoh: Menangani kemencengan dan skala
+    kode_r: |-
+      par(mfrow = c(2, 2))
+      hist(lat$pendapatan, main = "Pendapatan asli", col = "#0B6FB4",
+           border = "white", xlab = "pendapatan")
+      hist(lat_siap$pendapatan, main = "Setelah YJ + baku", col = "#00A651",
+           border = "white", xlab = "pendapatan (baku)")
+      boxplot(lat$pendapatan, main = "Pencilan sebelum", col = "#0B6FB4", horizontal = TRUE)
+      boxplot(lat_siap$pendapatan, main = "Pencilan sesudah", col = "#00A651", horizontal = TRUE)
+      par(mfrow = c(1, 1))
+
+      kemencengan <- function(x) mean((x - mean(x))^3) / sd(x)^3
+      round(c(sebelum = kemencengan(lat$pendapatan[!is.na(lat$pendapatan)]),
+              sesudah = kemencengan(lat_siap$pendapatan)), 4)
+    judul_r: membandingkan sebaran sebelum dan sesudah
+    eval: true
+    penjelasan: |
+      Empat gambar disajikan berdampingan untuk membandingkan sebaran sebelum dan sesudah prapemrosesan, masing-masing sebagai histogram dan diagram kotak-garis. Fungsi kemencengan dihitung sendiri sebagai momen ketiga terbakukan.
+    interpretasi: |
+      Bandingkan angka kemencengan sebelum dan sesudah. Transformasi Yeo-Johnson bekerja mengurangi kemencengan, sedangkan pembakuan hanya menggeser dan menskalakan tanpa mengubah bentuk. Perhatikan bahwa pencilan **tidak hilang** oleh pembakuan --- ia hanya berpindah skala. Menghilangkan pencilan menuntut keputusan tersendiri, bukan efek samping transformasi.
+  - contoh: Menangani taraf kategori yang jarang
+    kode_r: |-
+      cat("sebaran pendidikan pada data latih:\n")
+      print(round(prop.table(table(lat$pendidikan)), 4))
+
+      rec_other <- recipe(target ~ pendidikan + wilayah, data = lat) |>
+        step_other(all_nominal_predictors(), threshold = 0.25)
+      siap_other <- prep(rec_other, training = lat)
+      hasil_other <- bake(siap_other, new_data = NULL)
+
+      cat("\ntaraf sebelum:", nlevels(lat$pendidikan),
+          "| sesudah:", nlevels(hasil_other$pendidikan), "\n")
+      print(table(hasil_other$pendidikan))
+
+      cat("\ntaraf yang digabung:\n")
+      print(tidy(siap_other, number = 1))
+    judul_r: step_other dan pemeriksaannya
+    eval: true
+    penjelasan: |
+      Sebaran taraf diperiksa lebih dahulu. Ambang seperempat dipakai agar penggabungan benar-benar terjadi pada data ini sehingga akibatnya terlihat. Fungsi tidy menampilkan taraf mana saja yang dipertahankan.
+    interpretasi: |
+      Ambang harus dipilih berdasarkan sebaran, bukan angka baku. Ambang yang terlalu besar menggabungkan taraf yang sesungguhnya bermakna, sedangkan yang terlalu kecil membiarkan taraf jarang tetap ada. Keunggulan pokoknya adalah taraf yang dipertahankan dipelajari dari data latih, sehingga taraf tak terduga pada data baru otomatis masuk ke kelompok lainnya alih-alih menghentikan program.
+  - contoh: Memeriksa ketimpangan kelas sasaran
+    kode_r: |-
+      prop <- prop.table(table(lat$target))
+      print(round(prop, 4))
+      cat("rasio mayoritas terhadap minoritas:",
+          round(max(prop) / min(prop), 2), "berbanding 1\n")
+      cat("akurasi bila menebak seluruhnya mayoritas:", round(max(prop), 4), "\n")
+
+      bp <- barplot(prop, col = c("#0B6FB4", "#F58220"), border = "white",
+                    ylim = c(0, max(prop) * 1.2), ylab = "Proporsi",
+                    main = "Sebaran Kelas Sasaran (data latih)")
+      text(bp, prop, round(prop, 3), pos = 3, cex = .9)
+    judul_r: memeriksa proporsi kelas
+    eval: true
+    penjelasan: |
+      Proporsi tiap kelas dihitung, lalu rasio mayoritas terhadap minoritas ditampilkan. Akurasi acuan dihitung sebagai proporsi kelas terbesar, yaitu kinerja yang diperoleh tanpa memodelkan apa pun.
+    interpretasi: |
+      Angka acuan inilah yang wajib dibandingkan terhadap akurasi model. Model yang berakurasi delapan puluh persen pada data timpang delapan puluh berbanding dua puluh sesungguhnya tidak lebih baik daripada menebak. Karena itu pada data timpang, ukuran seperti F1, presisi, dan recall lebih informatif daripada akurasi --- dan pembahasannya menjadi bagian Modul 6.
+  - contoh: Menyeimbangkan kelas hanya pada data latih
+    kode_r: |-
+      suppressPackageStartupMessages(library(themis))
+
+      rec_seimbang <- recipe(target ~ ., data = lat) |>
+        update_role(id, new_role = "penanda") |>
+        step_impute_median(all_numeric_predictors()) |>
+        step_dummy(all_nominal_predictors()) |>
+        step_downsample(target)          # HANYA berlaku saat melatih
+
+      siap_s <- prep(rec_seimbang, training = lat)
+      lat_s <- bake(siap_s, new_data = NULL)   # NULL berarti data latih
+      uji_s <- bake(siap_s, new_data = uji)    # data uji TIDAK diseimbangkan
+
+      cat("latih asli   :", nrow(lat), "\n")
+      cat("latih seimbang:", nrow(lat_s), "\n")
+      print(table(lat_s$target))
+      cat("\nuji (tetap timpang):", nrow(uji_s), "\n")
+      print(table(uji_s$target))
+    judul_r: step_downsample dan perilakunya
+    eval: true
+    penjelasan: |
+      Langkah penyusutan ditambahkan pada resep. Argumen new_data bernilai NULL pada bake berarti mengambil data latih yang sudah diolah saat prep, sehingga penyeimbangan ikut diterapkan. Ketika bake dikenakan pada data uji, penyeimbangan sengaja dilewati oleh recipes.
+    interpretasi: |
+      Inilah perilaku yang benar dan sukar dicapai bila langkah ditulis manual: data latih diseimbangkan sedangkan data uji dibiarkan timpang. Perhatikan bahwa penyusutan membuang sebagian amatan mayoritas, sehingga data latih menyusut cukup banyak. Bila kehilangan itu terasa berat, penggandaan atau SMOTE menjadi pilihan lain --- dengan risikonya masing-masing sebagaimana dibahas pada Teori.
+  - contoh: Membandingkan beberapa cara imputasi
+    kode_r: |-
+      asli <- kotor$pendapatan
+      set.seed(2026)
+      buat_hilang <- asli
+      idx <- sample(length(asli), round(0.15 * length(asli)))
+      buat_hilang[idx] <- NA
+
+      imp_median <- ifelse(is.na(buat_hilang), median(buat_hilang, na.rm = TRUE), buat_hilang)
+      imp_rata   <- ifelse(is.na(buat_hilang), mean(buat_hilang, na.rm = TRUE), buat_hilang)
+
+      rmse <- function(a, b) sqrt(mean((a - b)^2))
+      round(c(rmse_median = rmse(imp_median[idx], asli[idx]),
+              rmse_rata   = rmse(imp_rata[idx], asli[idx]),
+              sb_asli     = sd(asli),
+              sb_median   = sd(imp_median),
+              sb_rata     = sd(imp_rata)), 2)
+    judul_r: menilai imputasi terhadap nilai sebenarnya
+    eval: true
+    penjelasan: |
+      Lima belas persen nilai sengaja dihilangkan dari peubah yang lengkap, sehingga nilai sebenarnya diketahui dan hasil imputasi dapat dinilai. Dua cara imputasi dibandingkan memakai akar rerata kuadrat galat, dan simpangan bakunya dibandingkan terhadap data asli.
+    interpretasi: |
+      Dua hal patut diperhatikan. Pertama, kedua cara menghasilkan galat yang serupa pada sebaran yang cukup simetris, tetapi median lebih unggul pada sebaran miring. Kedua, dan lebih penting: simpangan baku setelah imputasi **lebih kecil** daripada aslinya. Imputasi dengan satu nilai selalu mengecilkan keragaman, sehingga selang kepercayaan yang dihitung setelahnya menjadi terlalu sempit. Inilah alasan imputasi ganda dianjurkan ketika ketelitian pendugaan menjadi perhatian utama.
+  - contoh: Menggambarkan akibat prapemrosesan pada seluruh peubah
+    kode_r: |-
+      num_asli <- lat[, c("umur", "pendapatan", "pengeluaran",
+                          "lama_sekolah", "skor_literasi")]
+      num_siap <- lat_siap[, c("umur", "pendapatan", "pengeluaran",
+                               "lama_sekolah", "skor_literasi")]
+
+      par(mfrow = c(1, 2), mar = c(7, 4, 3, 1))
+      boxplot(num_asli, las = 2, col = "#6FB3E0", main = "Sebelum prapemrosesan",
+              ylab = "nilai asli")
+      boxplot(num_siap, las = 2, col = "#00A651", main = "Sesudah prapemrosesan",
+              ylab = "nilai terbakukan")
+      par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
+
+      round(rbind(sebelum = sapply(num_asli, function(x) sd(x, na.rm = TRUE)),
+                  sesudah = sapply(num_siap, sd)), 3)
+    judul_r: boxplot berdampingan sebelum dan sesudah
+    eval: true
+    penjelasan: |
+      Lima peubah numerik digambar sebagai diagram kotak-garis sebelum dan sesudah prapemrosesan. Argumen las bernilai dua memutar label sumbu agar terbaca, dan batas bawah margin diperbesar agar nama peubah tidak terpotong.
+    interpretasi: |
+      Gambar kiri memperlihatkan persoalan yang paling sering diabaikan: kelima peubah berskala sangat berbeda sehingga peubah bersatuan besar akan mendominasi setiap perhitungan jarak. Gambar kanan memperlihatkan bahwa setelah pembakuan seluruhnya sebanding. Perhatikan tabel simpangan baku di bawahnya --- seluruh nilai sesudah bernilai satu, sebagaimana definisi pembakuan.
+  - contoh: Membandingkan transformasi pengurang kemencengan
+    kode_r: |-
+      x <- lat$pendapatan[!is.na(lat$pendapatan)]
+      kem <- function(v) mean((v - mean(v))^3) / sd(v)^3
+
+      log_x  <- log(x)
+      akar_x <- sqrt(x)
+      yj <- bake(prep(recipe(~ pendapatan, data = lat) |>
+                        step_impute_median(pendapatan) |>
+                        step_YeoJohnson(pendapatan), training = lat),
+                 new_data = NULL)$pendapatan
+
+      round(c(asli = kem(x), log = kem(log_x),
+              akar = kem(akar_x), yeo_johnson = kem(yj)), 4)
+
+      par(mfrow = c(2, 2), mar = c(4, 4, 3, 1))
+      for (p in list(list(x, "Asli"), list(log_x, "Logaritma"),
+                     list(akar_x, "Akar"), list(yj, "Yeo-Johnson")))
+        hist(p[[1]], main = p[[2]], col = "#0B6FB4", border = "white", xlab = "")
+      par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
+    judul_r: membandingkan empat bentuk sebaran
+    eval: true
+    penjelasan: |
+      Empat versi peubah dibandingkan: asli, logaritma, akar kuadrat, dan Yeo-Johnson yang parameternya dipelajari dari data. Kemencengan dihitung bagi masing-masing, lalu keempat histogramnya disajikan berdampingan.
+    interpretasi: |
+      Bandingkan keempat angka kemencengan dan keempat gambarnya. Logaritma paling agresif mengurangi kemencengan tetapi hanya sah bagi nilai positif, sedangkan Yeo-Johnson menyesuaikan diri terhadap data dan tetap sah bagi nilai nol maupun negatif. Perlu diingat bahwa transformasi mengubah satuan, sehingga koefisien model yang dihasilkan tidak lagi dapat dibaca dalam satuan aslinya --- harga yang harus dibayar dan wajib disebutkan dalam pelaporan.
+  - contoh: Menggabungkan data dari sumber lain
+    kode_r: |-
+      suppressPackageStartupMessages(library(dplyr))
+      referensi <- read.csv("data/data_referensi.csv", stringsAsFactors = TRUE)
+      print(referensi)
+
+      gabung <- lat |> left_join(referensi, by = "wilayah")
+      cat("baris sebelum:", nrow(lat), "| sesudah:", nrow(gabung), "\n")
+      cat("gagal berpasangan:", sum(is.na(gabung$indeks_wilayah)), "\n")
+    judul_r: left_join dan pemeriksaannya
+    eval: true
+    penjelasan: |
+      Tabel referensi dibaca lalu digabungkan memakai left_join dengan kunci wilayah. Penggabungan jenis kiri mempertahankan seluruh baris tabel utama. Dua pemeriksaan dijalankan setelahnya: apakah banyaknya baris berubah, dan apakah ada baris yang gagal berpasangan.
+    interpretasi: |
+      Kedua pemeriksaan itu wajib, bukan pilihan. Bertambahnya baris setelah penggabungan menandakan kunci tidak unik pada tabel referensi --- kekeliruan yang menggandakan amatan tanpa disadari. Adapun nilai hilang pada kolom hasil gabungan menandakan ada nilai kunci yang tidak ditemukan padanannya, misalnya karena perbedaan ejaan.
+  - |-
+    \begin{kotaksalah}[Menggabungkan sebelum membagi]
+    Bila tabel referensi diturunkan dari data itu sendiri --- misalnya rata-rata pendapatan per wilayah --- maka menggabungkannya sebelum pembagian menimbulkan kebocoran, sebab rata-rata itu memuat informasi dari amatan yang kelak menjadi data uji. Tabel referensi yang berasal dari sumber luar dan tidak diturunkan dari data ini aman digabungkan kapan saja.
+    \end{kotaksalah}
+  latihan:
+  - Kerjakan bertahap. Gunakan `data/data_kotor.csv` dan `data/data_referensi.csv`.
+  - '#### Tingkat Dasar (melengkapi kode)'
+  - \latihan{Pemeriksaan cacat}
+  - |-
+    ```{r eval=FALSE}
+    kotor <- read.csv("data/data_kotor.csv", stringsAsFactors = TRUE)
+    sum(____(kotor))                    # cacah nilai hilang seluruh tabel
+    sum(____(kotor))                    # cacah baris kembar
+    q <- ____(kotor$pendapatan, c(.25, .75), na.rm = TRUE)
+    batas <- q[2] + 1.5 * ____(q)       # batas pencilan atas
+    ```
+  - \latihan{Pembagian data}
+  - |-
+    ```{r eval=FALSE}
+    library(rsample)
+    set.seed(2026)
+    bagi <- ____(kotor, prop = 0.75, strata = target)
+    lat <- ____(bagi); uji <- ____(bagi)
+    ```
+  - \latihan{Resep sederhana}
+  - |-
+    ```{r eval=FALSE}
+    library(recipes)
+    rec <- ____(target ~ ., data = lat) |>
+      step_impute_median(____()) |>     # semua prediktor numerik
+      step_dummy(all_nominal_predictors()) |>
+      step_normalize(all_numeric_predictors())
+    siap <- ____(rec, training = lat)   # pelajari dari data latih
+    hasil <- ____(siap, new_data = uji) # terapkan ke data uji
+    ```
+  - '#### Tingkat Menengah (menulis sendiri)'
+  - \latihan{Resep lengkap beserta pemeriksaannya}
+  - 'Susun resep yang menangani nilai hilang, kemencengan, kelas jarang, pengodean, dan pembakuan. Tulis
+    pula fungsi `periksa_alur(rec, lat, uji)` yang memastikan: (a) tidak ada NA tersisa pada kedua bagian;
+    (b) nama kolom keduanya identik; (c) rata-rata kolom numerik pada data latih mendekati nol. Fungsi
+    harus menghentikan program dengan pesan jelas bila salah satu gagal.'
+  - \latihan{Membetulkan kode yang salah}
+  - Kode berikut memuat empat kesalahan (pembakuan sebelum pembagian, imputasi memakai seluruh data, urutan
+    langkah terbalik, dan `bake` memakai data latih untuk `prep`). Temukan dan perbaiki, lalu jelaskan
+    mengapa masing-masing menimbulkan kebocoran atau galat.
+  - |-
+    ```{r eval=FALSE}
+    library(recipes); library(rsample)
+    kotor <- read.csv("data/data_kotor.csv", stringsAsFactors = TRUE)
+
+    # (a) pembakuan dilakukan SEBELUM pembagian
+    kotor$pendapatan <- scale(kotor$pendapatan)[, 1]
+
+    # (b) imputasi memakai nilai tengah SELURUH data
+    kotor$umur[is.na(kotor$umur)] <- median(kotor$umur, na.rm = TRUE)
+
+    set.seed(2026)
+    bagi <- initial_split(kotor, prop = 0.75, strata = target)
+    lat <- training(bagi); uji <- testing(bagi)
+
+    # (c) pembakuan mendahului imputasi
+    rec <- recipe(target ~ ., data = lat) |>
+      step_normalize(all_numeric_predictors()) |>
+      step_impute_median(all_numeric_predictors())
+
+    # (d) prep memakai data uji
+    siap <- prep(rec, training = uji)
+    ```
+  - |-
+    **Keluaran yang benar.** Setelah diperbaiki, kode yang dipakai adalah sebagai berikut.
+
+    ```
+    # (a) dan (b) DIHAPUS -- seluruh prapemrosesan masuk ke dalam resep
+    kotor <- read.csv("data/data_kotor.csv", stringsAsFactors = TRUE)
+
+    set.seed(2026)
+    bagi <- initial_split(kotor, prop = 0.75, strata = target)
+    lat <- training(bagi); uji <- testing(bagi)
+
+    # (c) imputasi mendahului pembakuan
+    rec <- recipe(target ~ ., data = lat) |>
+      step_impute_median(all_numeric_predictors()) |>
+      step_dummy(all_nominal_predictors()) |>
+      step_normalize(all_numeric_predictors())
+
+    # (d) prep memakai data LATIH
+    siap <- prep(rec, training = lat)
+    uji_siap <- bake(siap, new_data = uji)
+    ```
+
+    Pemeriksaan yang wajib berhasil: `anyNA(bake(siap, new_data = lat))` bernilai **FALSE**, dan `abs(mean(bake(siap, new_data = lat)$umur)) < 1e-8` bernilai **TRUE**.
+  - \latihan{Ketimpangan kelas}
+  - Hitung proporsi kelas `target` pada data latih, rasio mayoritas terhadap minoritas, dan akurasi acuan
+    bila seluruhnya ditebak mayoritas. Lalu terapkan `step_downsample()` dan buktikan bahwa **hanya data
+    latih** yang diseimbangkan sedangkan data uji tetap timpang.
+  - \latihan{Menilai imputasi}
+  - Hilangkan 20 persen nilai `pengeluaran` secara sengaja, lalu bandingkan imputasi median dan rata-rata
+    terhadap nilai sebenarnya memakai akar rerata kuadrat galat. Laporkan pula simpangan baku sebelum
+    dan sesudah imputasi, lalu jelaskan mengapa keragaman selalu mengecil.
+  - '#### Tingkat Lanjut (keputusan)'
+  - \latihan{Memutuskan penanganan cacat}
+  - 'Untuk masing-masing keadaan berikut, tentukan penanganan yang Anda pilih beserta alasannya, dan sebutkan
+    **satu risiko** dari pilihan itu: (a) pendapatan hilang pada 12 persen amatan, dan yang hilang lebih
+    banyak pada kelompok berpendidikan tinggi; (b) tiga amatan berpendapatan seratus kali lipat lainnya;
+    (c) kolom pendidikan memuat nilai `SMA`, `sma`, dan `S.M.A`; (d) kolom skor literasi memuat nilai
+    999 pada beberapa baris.'
+  penugasan:
+  - |-
+    \begin{kotaktugas}
+    Sebagai calon analis pada instansi statistik, susun laporan prapemrosesan atas \texttt{data\_kotor.csv} (\emph{data simulasi}) yang menghasilkan data siap model, lengkap dengan pembuktian bahwa tidak terjadi kebocoran.
+    \end{kotaktugas}
+  - '**Konteks.** Sebuah unit menerima data hasil pencacahan yang belum dibersihkan. Data akan dipakai
+    memodelkan peubah `target`, dan pimpinan meminta jaminan bahwa penilaian kinerjanya kelak dapat dipercaya.'
+  - \tugas{Diagnosis}
+  - 1. Periksa **keempat jenis cacat**. Laporkan temuan tiap jenis beserta besarannya.
+  - '2. Periksa **pola nilai hilang**: apakah tampak MCAR atau MAR? Sajikan bukti berupa tabel silang
+    keterisian terhadap minimal dua peubah lain, lalu jelaskan mengapa MNAR tidak dapat disingkirkan.'
+  - 3. Periksa kemencengan dan perbedaan skala antar-peubah numerik. Sajikan tabel yang memuat rata-rata,
+    simpangan baku, dan kemencengan tiap peubah.
+  - \tugas{Penyusunan Resep}
+  - 4. Bagi data dengan penstrataan, lalu susun resep yang menangani seluruh cacat temuan Anda. **Jelaskan
+    alasan urutan langkah** yang Anda pilih.
+  - 5. Pelajari resep dan terapkan ke kedua bagian. Sajikan dimensi hasil, cacah NA tersisa, dan rata-rata
+    beberapa kolom numerik pada kedua bagian.
+  - 6. Tulis fungsi `periksa_alur()` yang memeriksa minimal empat hal dan menghentikan program dengan
+    pesan jelas bila gagal. Jalankan dan tunjukkan hasilnya.
+  - \tugas{Ketimpangan dan Imputasi}
+  - 6b. Periksa **ketimpangan kelas** sasaran. Laporkan proporsi, rasio, dan akurasi acuan. Terapkan penyeimbangan
+    pada resep, lalu buktikan bahwa data uji tidak ikut diseimbangkan.
+  - 6c. Nilai mutu imputasi dengan **menghilangkan nilai secara sengaja** dari peubah yang lengkap. Bandingkan
+    minimal dua cara imputasi, laporkan galatnya, dan bahas akibatnya terhadap keragaman data.
+  - 6d. Tangani **taraf kategori jarang** dengan `step_other()`. Tentukan ambang berdasarkan sebaran,
+    laporkan taraf mana yang digabung, dan jelaskan mengapa penggabungan itu melindungi model dari taraf
+    tak terduga pada data baru.
+  - \tugas{Pembuktian}
+  - 7. Buktikan bahwa **tidak terjadi kebocoran** dengan menunjukkan bahwa rata-rata kolom terbakukan
+    pada data uji tidak persis nol, lalu jelaskan mengapa hal itu justru menjadi bukti yang benar.
+  - 8. Gabungkan `data_referensi.csv` dan lakukan **dua pemeriksaan** setelah penggabungan. Jelaskan mengapa
+    tabel referensi ini aman digabungkan sebelum pembagian.
+  - '9. Susun laporan R Markdown berisi kode, keluaran, gambar, dan interpretasi. Tutup dengan **ringkasan
+    (maksimal 300 kata)** memuat: cacat yang ditemukan, penanganan beserta alasannya, bukti ketiadaan
+    kebocoran, dan penegasan bahwa data merupakan simulasi.'
+  tambahan:
+  - |
+    Bagian ini menakar akibat kebocoran dengan angka. Peragaan dirancang seekstrem mungkin agar akibatnya terlihat jelas, tetapi bentuk kekeliruannya persis sama dengan yang lazim terjadi pada pekerjaan sungguhan.
+  - |-
+    \begin{kotakperhatian}[Data tanpa sinyal sama sekali]
+    Peragaan ini memakai data yang \textbf{seluruhnya derau}: lima ratus peubah acak dan sasaran yang juga acak. Menurut rancangannya, tidak ada hubungan apa pun antara peubah dan sasaran, sehingga akurasi yang sah tidak boleh melampaui tebakan mayoritas. Apa pun yang melampauinya adalah tanda kekeliruan.
+    \end{kotakperhatian}
+  - contoh: Kebocoran akibat seleksi peubah
+    kode_r: |-
+      set.seed(2026)
+      n <- 200; p <- 500
+      X <- matrix(rnorm(n * p), n, p)          # SELURUHNYA derau
+      y <- factor(sample(c("ya", "tidak"), n, TRUE))
+      lipat <- sample(rep(1:5, length.out = n))
+
+      # --- CARA SALAH: peubah dipilih memakai SELURUH data ---
+      kor <- apply(X, 2, function(v) abs(cor(v, as.numeric(y))))
+      pilih <- order(kor, decreasing = TRUE)[1:10]
+
+      akur_bocor <- mean(sapply(1:5, function(k) {
+        tr <- lipat != k
+        m <- suppressWarnings(glm(y[tr] ~ ., data = data.frame(X[tr, pilih]),
+                                  family = binomial))
+        pr <- predict(m, newdata = data.frame(X[!tr, pilih]), type = "response")
+        mean(ifelse(pr > .5, levels(y)[2], levels(y)[1]) == y[!tr])
+      }))
+
+      # --- CARA BENAR: peubah dipilih DI DALAM tiap lipatan ---
+      akur_benar <- mean(sapply(1:5, function(k) {
+        tr <- lipat != k
+        kk <- apply(X[tr, ], 2, function(v) abs(cor(v, as.numeric(y[tr]))))
+        pl <- order(kk, decreasing = TRUE)[1:10]
+        m <- suppressWarnings(glm(y[tr] ~ ., data = data.frame(X[tr, pl]),
+                                  family = binomial))
+        pr <- predict(m, newdata = data.frame(X[!tr, pl]), type = "response")
+        mean(ifelse(pr > .5, levels(y)[2], levels(y)[1]) == y[!tr])
+      }))
+
+      round(c(dengan_kebocoran = akur_bocor,
+              tanpa_kebocoran = akur_benar,
+              tebak_mayoritas = max(prop.table(table(y)))), 3)
+    judul_r: menakar akibat kebocoran seleksi peubah
+    eval: true
+    penjelasan: |
+      Data dibangkitkan tanpa hubungan apa pun antara peubah dan sasaran. Dua cara dibandingkan. Cara pertama memilih sepuluh peubah paling berkorelasi memakai seluruh data, lalu memvalidasi silang. Cara kedua melakukan seleksi terpisah di dalam tiap lipatan, sehingga data uji tiap lipatan tidak ikut menentukan peubah mana yang dipilih.
+    interpretasi: |
+      Perhatikan selisihnya. Cara yang bocor menghasilkan akurasi jauh di atas tebakan mayoritas, padahal datanya sama sekali tidak memuat sinyal. Angka itu murni hasil kebocoran: peubah dipilih justru karena kebetulan berkorelasi dengan sasaran pada seluruh data, termasuk pada bagian yang kemudian dipakai menguji. Cara yang benar menghasilkan akurasi mendekati tebakan mayoritas --- yang memang seharusnya, sebab tidak ada yang dapat dipelajari dari derau.
+  - |-
+    \begin{kotaksalah}[Mengapa bentuk kebocoran ini paling berbahaya]
+    Kebocoran akibat seleksi peubah tidak menimbulkan galat, tidak menghasilkan peringatan, dan justru menghasilkan angka yang menyenangkan. Ia paling sering terjadi pada data berdimensi tinggi, tepat ketika seleksi peubah paling dibutuhkan. Pencegahannya hanya satu: seluruh keputusan yang memakai sasaran --- termasuk seleksi peubah --- harus berada \textbf{di dalam} lipatan validasi silang.
+    \end{kotaksalah}
+  - contoh: Kebocoran akibat pembakuan sebelum pembagian
+    kode_r: |-
+      set.seed(2026)
+      d <- data.frame(x = c(rnorm(150, 10, 2), rnorm(50, 30, 2)))  # dua kelompok
+
+      # CARA SALAH: dibakukan sebelum dibagi
+      d$x_bocor <- scale(d$x)[, 1]
+
+      # CARA BENAR: dibakukan memakai statistik data latih saja
+      idx <- 1:150
+      mu <- mean(d$x[idx]); sd_ <- sd(d$x[idx])
+      d$x_benar <- (d$x - mu) / sd_
+
+      round(rbind(
+        `rata bagian uji (bocor)` = mean(d$x_bocor[-idx]),
+        `rata bagian uji (benar)` = mean(d$x_benar[-idx]),
+        `simpangan baku uji (bocor)` = sd(d$x_bocor[-idx]),
+        `simpangan baku uji (benar)` = sd(d$x_benar[-idx])), 4)
+    judul_r: membandingkan dua cara pembakuan
+    eval: true
+    penjelasan: |
+      Data dibentuk dari dua kelompok bersebaran berbeda agar akibatnya terlihat. Pembakuan pertama memakai rata-rata dan simpangan baku seluruh data. Pembakuan kedua hanya memakai statistik dari seratus lima puluh amatan pertama yang berperan sebagai data latih.
+    interpretasi: |
+      Perbedaannya besar. Pada cara yang benar, bagian uji berrata-rata jauh dari nol --- dan itu memang seharusnya, sebab bagian uji berasal dari sebaran yang berbeda. Cara yang bocor menyembunyikan perbedaan itu, sehingga model tidak pernah tahu bahwa data barunya berbeda. Dalam penerapan nyata, model semacam ini akan berkinerja buruk tanpa sebab yang jelas.
+  - |-
+    \begin{kotaktips}
+    Satu pemeriksaan sederhana dapat menangkap sebagian besar kebocoran: setelah prapemrosesan, periksa rata-rata kolom terbakukan pada data uji. Bila nilainya \textbf{persis nol}, hampir dapat dipastikan pembakuannya dihitung dari seluruh data. Nilai yang sedikit menyimpang dari nol justru pertanda alur kerja Anda benar.
+    \end{kotaktips}
+  - |
+    Kesimpulan bagian ini sederhana tetapi menuntut kedisiplinan. Setiap keputusan yang memakai data --- imputasi, pembakuan, seleksi peubah, penyeimbangan kelas, bahkan penetapan taraf faktor --- harus dipelajari dari data latih saja. Paket recipes menegakkan aturan itu secara rancangan, dan itulah alasan utama memakainya alih-alih menuliskan langkah prapemrosesan satu per satu.
+  ringkasan:
+  - |-
+    \begin{kotaktujuan}
+    \textbf{Daftar periksa penguasaan:}
+    \begin{itemize}
+    \item[$\square$] Saya dapat mengenali empat jenis cacat data beserta cara memeriksanya.
+    \item[$\square$] Saya dapat membedakan pola MCAR, MAR, dan MNAR beserta akibatnya.
+    \item[$\square$] Saya membagi data \emph{sebelum} melakukan prapemrosesan apa pun.
+    \item[$\square$] Saya dapat menyusun resep dan menjelaskan alasan urutan langkahnya.
+    \item[$\square$] Saya memahami pembagian peran \texttt{recipe}, \texttt{prep}, dan \texttt{bake}.
+    \item[$\square$] Saya memeriksa hasil penggabungan data terhadap penggandaan dan kegagalan pasangan.
+    \item[$\square$] Saya dapat menyebutkan tiga sumber kebocoran yang paling sering.
+    \item[$\square$] Saya tahu bahwa rata-rata data uji yang persis nol adalah tanda kebocoran.
+    \end{itemize}
+    \end{kotaktujuan}
+  - '**Kartu Referensi Cepat.**'
+  - |-
+    \begin{kotakrumus}
+    \begin{tabular}{@{}ll@{}}
+    \textbf{Keperluan} & \textbf{Perintah}\\nMembagi data & \texttt{initial\_split(d, prop =, strata =)}\\nMengambil bagian & \texttt{training(bagi)}, \texttt{testing(bagi)}\\nMenetapkan resep & \texttt{recipe(y \textasciitilde{} ., data = lat)}\\nMengubah peran & \texttt{update\_role(id, new\_role = "penanda")}\\nImputasi & \texttt{step\_impute\_median()}, \texttt{step\_impute\_mode()}\\nKemencengan & \texttt{step\_YeoJohnson()}, \texttt{step\_log()}\\nKelas jarang & \texttt{step\_other(threshold = 0.05)}\\nPengodean & \texttt{step\_dummy(all\_nominal\_predictors())}\\nRagam nol & \texttt{step\_zv(all\_predictors())}\\nPembakuan & \texttt{step\_normalize(all\_numeric\_predictors())}\\nMempelajari & \texttt{prep(rec, training = lat)}\\nMenerapkan & \texttt{bake(siap, new\_data = uji)}\\nMemeriksa langkah & \texttt{tidy(siap, number = k)}\\
+    \end{tabular}
+    \end{kotakrumus}
+  - '**Peta keputusan prapemrosesan.** Tabel berikut merangkum keputusan yang perlu diambil beserta pertimbangannya.'
+  - |-
+    \begin{kotakinfo}[Delapan keputusan dan pertimbangannya]\par\smallskip
+    \begin{tabular}{@{}p{3.4cm}p{5.0cm}p{6.0cm}@{}}
+    \textbf{Keputusan} & \textbf{Pilihan} & \textbf{Pertimbangan utama}\\
+    \hline
+    Nilai hilang & buang, imputasi, model & pola MCAR/MAR/MNAR\\[2pt]
+    Cara imputasi & median, modus, berbasis model & tipe peubah dan pola hilangnya\\[2pt]
+    Pencilan & pertahankan, transformasi, buang & sah atau keliru catat\\[2pt]
+    Kemencengan & biarkan, log, Yeo-Johnson & kepekaan model terhadap bentuk\\[2pt]
+    Taraf jarang & biarkan, gabung ke lainnya & risiko taraf tak terduga\\[2pt]
+    Pengodean & boneka, ordinal, target & sifat kategori dan model\\[2pt]
+    Pembakuan & perlu atau tidak & apakah model berbasis jarak\\[2pt]
+    Ketimpangan & biarkan, seimbangkan, bobot & ukuran penilaian yang dipakai\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotakcatatan}[Catat setiap keputusan]
+    Setiap baris pada tabel di atas menuntut keputusan, dan setiap keputusan mengubah hasil. Karena itu laporan wajib memuat bukan hanya apa yang dikerjakan melainkan juga \textbf{mengapa}. Resep yang tersimpan sebagai kode sudah mencatat apa yang dikerjakan; alasannya harus ditulis penyusunnya sendiri.
+    \end{kotakcatatan}
+  - 'Modul ini menempati tahap yang menyita waktu terbesar dalam CRISP-DM, dan alasannya kini jelas: setiap
+    penanganan cacat menuntut keputusan, dan setiap keputusan berisiko membocorkan informasi. Prinsip
+    yang perlu dibawa: bagi data lebih dahulu, tempatkan seluruh langkah di dalam resep, periksa apa yang
+    dipelajari resep, dan curigai hasil yang terlalu bagus. Modul berikutnya membahas konsep supervised
+    learning, tempat data hasil prapemrosesan ini akhirnya dipakai memodelkan.'
+  referensi:
+  - 'Kuhn, M., & Johnson, K. (2019). *Feature Engineering and Selection: A Practical Approach for Predictive
+    Models*. Chapman and Hall/CRC.'
+  - Kuhn, M., & Silge, J. (2022). *Tidy Modeling with R*. O'Reilly Media.
+  - 'Han, J., Kamber, M., & Pei, J. (2011). *Data Mining: Concepts and Techniques* (3rd ed.). Morgan Kaufmann.'
+  - Little, R. J. A., & Rubin, D. B. (2019). *Statistical Analysis with Missing Data* (3rd ed.). Wiley.
+  - 'Kaufman, S., Rosset, S., & Perlich, C. (2011). Leakage in data mining: Formulation, detection, and
+    avoidance. *ACM SIGKDD 2011*, 556-563.'
+exercises:
+- id: L5.1
+  points: 15
+  solution: 'Tingkat Dasar: pemeriksaan cacat, pembagian data, dan resep sederhana.'
+  judul_r: Solusi Tingkat Dasar (R)
+  solusi_r: |
+    suppressPackageStartupMessages({library(recipes); library(rsample)})
+    kotor <- read.csv("data/data_kotor.csv", stringsAsFactors = TRUE)
+
+    sum(is.na(kotor))                 # cacah nilai hilang
+    sum(duplicated(kotor))            # cacah baris kembar
+    q <- quantile(kotor$pendapatan, c(.25, .75), na.rm = TRUE)
+    batas <- q[2] + 1.5 * diff(q)
+
+    set.seed(2026)
+    bagi <- initial_split(kotor, prop = 0.75, strata = target)
+    lat <- training(bagi); uji <- testing(bagi)
+
+    rec <- recipe(target ~ ., data = lat) |>
+      step_impute_median(all_numeric_predictors()) |>
+      step_dummy(all_nominal_predictors()) |>
+      step_normalize(all_numeric_predictors())
+    siap  <- prep(rec, training = lat)
+    hasil <- bake(siap, new_data = uji)
+  interpretasi: |
+    Isian yang benar berturut-turut adalah is.na, duplicated, quantile, diff, initial_split, training, testing, recipe, all_numeric_predictors, prep, dan bake. Perhatikan bahwa prep memakai data latih sedangkan bake dapat dikenakan pada data mana pun. Pemakaian pemilih all_numeric_predictors lebih baik daripada menyebut nama kolom, sebab resep tetap sah meski susunan kolomnya berubah.
+- id: L5.2
+  points: 25
+  solution: 'Tingkat Menengah dan Lanjut: resep lengkap, fungsi pemeriksa, dan keputusan penanganan.'
+  judul_r: Solusi Menengah dan Lanjut (R)
+  solusi_r: |
+    suppressPackageStartupMessages({library(recipes); library(rsample)})
+    kotor <- read.csv("data/data_kotor.csv", stringsAsFactors = TRUE)
+    set.seed(2026)
+    bagi <- initial_split(kotor, prop = 0.75, strata = target)
+    lat <- training(bagi); uji <- testing(bagi)
+
+    rec <- recipe(target ~ ., data = lat) |>
+      update_role(id, new_role = "penanda") |>
+      step_impute_median(all_numeric_predictors()) |>
+      step_impute_mode(all_nominal_predictors()) |>
+      step_YeoJohnson(all_numeric_predictors()) |>
+      step_other(all_nominal_predictors(), threshold = 0.05) |>
+      step_dummy(all_nominal_predictors()) |>
+      step_zv(all_predictors()) |>
+      step_normalize(all_numeric_predictors())
+
+    periksa_alur <- function(rec, lat, uji) {
+      siap <- prep(rec, training = lat)
+      a <- bake(siap, new_data = lat)
+      b <- bake(siap, new_data = uji)
+      # kolom berperan penanda tidak dibakukan, sehingga dikecualikan
+      num <- setdiff(names(a)[sapply(a, is.numeric)], "id")
+      stopifnot(
+        "masih ada NA pada data latih"   = !anyNA(a),
+        "masih ada NA pada data uji"     = !anyNA(b),
+        "nama kolom latih dan uji beda"  = identical(names(a), names(b)),
+        "rata kolom latih tidak nol"     = all(abs(sapply(a[num], mean)) < 1e-8)
+      )
+      message("Alur prapemrosesan lolos empat pemeriksaan.")
+      invisible(list(latih = a, uji = b))
+    }
+    hasil <- periksa_alur(rec, lat, uji)
+  interpretasi: |
+    Fungsi pemeriksa memakai stopifnot dengan pesan bernama, sehingga kegagalan langsung menunjuk penyebabnya alih-alih menampilkan ekspresi yang gagal. Ambang satu per sepuluh pangkat delapan dipakai karena pembakuan tidak menghasilkan nol persis akibat keterbatasan ketelitian mesin. Untuk keputusan penanganan cacat: kehilangan yang lebih banyak pada kelompok berpendidikan tinggi menandakan MAR sehingga imputasi sebaiknya memperhatikan pendidikan, dengan risiko memperkecil keragaman yang sesungguhnya; pendapatan seratus kali lipat sebaiknya diperiksa kewajarannya lebih dahulu dan bila sah dipertahankan dengan transformasi, sebab membuangnya membiaskan dugaan ke bawah; kategori bertaut dibakukan ejaannya; sedangkan nilai 999 pada skor literasi hampir pasti merupakan sandi nilai hilang dan harus diubah menjadi NA sebelum diimputasi.
+- id: L5.D
+  points: 10
+  solution: 'Membetulkan kode: prapemrosesan sebelum pembagian, urutan langkah, dan prep memakai data
+    uji.'
+  judul_r: Solusi Membetulkan Kode (R)
+  solusi_r: |
+    suppressPackageStartupMessages({library(recipes); library(rsample)})
+    kotor <- read.csv("data/data_kotor.csv", stringsAsFactors = TRUE)
+
+    # (a) dan (b) DIHAPUS: pembakuan dan imputasi tidak boleh dilakukan
+    #     sebelum pembagian; keduanya dipindahkan ke dalam resep
+
+    set.seed(2026)
+    bagi <- initial_split(kotor, prop = 0.75, strata = target)
+    lat <- training(bagi); uji <- testing(bagi)
+
+    # (c) imputasi mendahului pembakuan
+    rec <- recipe(target ~ ., data = lat) |>
+      step_impute_median(all_numeric_predictors()) |>
+      step_dummy(all_nominal_predictors()) |>
+      step_normalize(all_numeric_predictors())
+
+    # (d) prep memakai data LATIH
+    siap <- prep(rec, training = lat)
+    uji_siap <- bake(siap, new_data = uji)
+
+    # pemeriksaan wajib
+    anyNA(bake(siap, new_data = lat))                              # FALSE
+    abs(mean(bake(siap, new_data = lat)$umur)) < 1e-8              # TRUE
+  interpretasi: |
+    Empat kesalahan diperbaiki. Kesalahan (a) dan (b) sama-sama menghitung besaran dari seluruh data sebelum pembagian, sehingga informasi bagian uji ikut memengaruhi hasilnya --- inilah kebocoran, dan keduanya tidak menimbulkan galat sehingga sukar terdeteksi. Kesalahan (c) bersifat teknis: pembakuan atas kolom yang masih memuat NA menghasilkan NA pula, sehingga imputasi berikutnya kehilangan artinya. Kesalahan (d) paling parah akibatnya: mempelajari resep dari data uji berarti seluruh nilai tengah dan simpangan baku berasal dari data yang seharusnya hanya dipakai menilai, sehingga penilaian kinerjanya sama sekali tidak valid.
+- id: T5.1
+  points: 50
+  solution: 'Penugasan: diagnosis cacat, penyusunan resep, pembuktian ketiadaan kebocoran, dan penggabungan.'
+  judul_r: Solusi Penugasan (R)
+  solusi_r: |
+    suppressPackageStartupMessages({library(recipes); library(rsample); library(dplyr)})
+    kotor <- read.csv("data/data_kotor.csv", stringsAsFactors = TRUE)
+
+    # 1) diagnosis empat jenis cacat
+    cat("NA total:", sum(is.na(kotor)),
+        "| baris kembar:", sum(duplicated(kotor)),
+        "| id ganda:", sum(duplicated(kotor$id)), "\n")
+    num <- names(kotor)[sapply(kotor, is.numeric)]
+    pencilan <- sapply(kotor[num], function(x) {
+      q <- quantile(x, c(.25,.75), na.rm = TRUE)
+      sum(x > q[2] + 1.5*diff(q) | x < q[1] - 1.5*diff(q), na.rm = TRUE)
+    })
+    print(pencilan)
+
+    # 2) pola nilai hilang: tabel silang keterisian
+    for (k in c("wilayah", "pendidikan")) {
+      ada <- !is.na(kotor$pendapatan)
+      if (any(!ada)) print(round(prop.table(table(kotor[[k]], ada), 1), 3))
+    }
+
+    # 3) kemencengan dan skala
+    kem <- function(x) { x <- x[!is.na(x)]; mean((x-mean(x))^3)/sd(x)^3 }
+    ringkas <- data.frame(
+      rata = sapply(kotor[num], mean, na.rm = TRUE),
+      sb   = sapply(kotor[num], sd,   na.rm = TRUE),
+      kemencengan = sapply(kotor[num], kem))
+    print(round(ringkas, 3))
+
+    # 4-5) pembagian dan resep
+    set.seed(2026)
+    bagi <- initial_split(kotor, prop = 0.75, strata = target)
+    lat <- training(bagi); uji <- testing(bagi)
+    rec <- recipe(target ~ ., data = lat) |>
+      update_role(id, new_role = "penanda") |>
+      step_impute_median(all_numeric_predictors()) |>
+      step_impute_mode(all_nominal_predictors()) |>
+      step_YeoJohnson(all_numeric_predictors()) |>
+      step_other(all_nominal_predictors(), threshold = 0.05) |>
+      step_dummy(all_nominal_predictors()) |>
+      step_zv(all_predictors()) |>
+      step_normalize(all_numeric_predictors())
+    siap <- prep(rec, training = lat)
+    a <- bake(siap, new_data = lat); b <- bake(siap, new_data = uji)
+    cat("latih:", dim(a), "| uji:", dim(b), "| NA:", anyNA(a), anyNA(b), "\n")
+
+    # 6) fungsi pemeriksa
+    periksa_alur <- function(a, b) {
+      nm <- setdiff(names(a)[sapply(a, is.numeric)], "id")
+      stopifnot("NA pada latih" = !anyNA(a), "NA pada uji" = !anyNA(b),
+                "kolom beda" = identical(names(a), names(b)),
+                "rata latih tidak nol" = all(abs(sapply(a[nm], mean)) < 1e-8))
+      message("lolos empat pemeriksaan"); invisible(TRUE)
+    }
+    periksa_alur(a, b)
+
+    # 7) BUKTI ketiadaan kebocoran
+    nm <- setdiff(names(a)[sapply(a, is.numeric)], "id")[1:4]
+    round(rbind(latih = sapply(a[nm], mean), uji = sapply(b[nm], mean)), 5)
+
+    # 8) penggabungan dan dua pemeriksaan
+    referensi <- read.csv("data/data_referensi.csv", stringsAsFactors = TRUE)
+    gab <- lat |> left_join(referensi, by = "wilayah")
+    cat("baris tetap:", nrow(gab) == nrow(lat),
+        "| gagal berpasangan:", sum(is.na(gab$indeks_wilayah)), "\n")
+  interpretasi: |
+    Nomor 2 menuntut bukti berupa tabel, bukan pernyataan; bila proporsi keterisian berbeda antar-kelompok maka MAR didukung, tetapi MNAR tetap tidak dapat disingkirkan sebab pemeriksaannya menuntut nilai yang justru tidak teramati. Nomor 7 adalah inti penugasan dan kerap disalahpahami: rata-rata kolom terbakukan pada data uji yang **tidak persis nol** justru merupakan bukti bahwa pembakuannya dipelajari dari data latih saja. Mahasiswa yang melaporkan nilai persis nol pada kedua bagian sesungguhnya sedang melaporkan kebocoran tanpa menyadarinya. Pada nomor 8, tabel referensi aman digabungkan sebelum pembagian karena nilainya berasal dari sumber luar dan tidak diturunkan dari data ini; seandainya kolom indeks wilayah dihitung sebagai rata-rata pendapatan per wilayah dari data yang sama, penggabungan sebelum pembagian justru akan menimbulkan kebocoran.
+references:
+- Kuhn, M., & Johnson, K. (2019). Feature Engineering and Selection. Chapman and Hall/CRC.
+- Kuhn, M., & Silge, J. (2022). Tidy Modeling with R. O'Reilly Media.
+- 'Han, J., Kamber, M., & Pei, J. (2011). Data Mining: Concepts and Techniques (3rd ed.). Morgan Kaufmann.'
+- Little, R. J. A., & Rubin, D. B. (2019). Statistical Analysis with Missing Data (3rd ed.). Wiley.
+- Kaufman, S., Rosset, S., & Perlich, C. (2011). Leakage in data mining. ACM SIGKDD 2011, 556-563.
+

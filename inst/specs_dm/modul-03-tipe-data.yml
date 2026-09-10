@@ -1,0 +1,918 @@
+number: 3
+title: Tipe Data pada Big Data
+short_code: tipe_data
+topic: Tipe Data
+pertemuan: 3
+sub_cpmk: |
+  Sub-CPMK 3: Mahasiswa mampu mengenali ragam tipe data pada big data serta menentukan perlakuan yang sesuai bagi data berdimensi tinggi, data jaringan, dan data teks.
+packages:
+- igraph
+- cluster
+- dplyr
+contoh_title: Contoh Praktikum dengan R
+course:
+  matkul: Data Mining dan Big Data
+  matkul_besar: DATA MINING DAN BIG DATA
+  kode: K202505
+  semester: 6 (Genap)
+  prodi: D-IV Statistika
+  penyusun:
+  - Achmad Syahrul Choir
+datasets:
+- name: data_dimensi
+  role: contoh
+  recipe:
+    kind: tabular
+    n: 150
+    seed: 2026
+    columns:
+      unit:
+        type: integer
+        min: 1
+        max: 150
+      kelompok:
+        type: category
+        levels:
+        - A
+        - B
+        - C
+        probs:
+        - 0.4
+        - 0.35
+        - 0.25
+      x1:
+        type: numeric
+        min: 0
+        max: 100
+        digits: 2
+      x2:
+        type: numeric
+        min: 0
+        max: 100
+        digits: 2
+      x3:
+        type: numeric
+        min: 0
+        max: 100
+        digits: 2
+      x4:
+        type: numeric
+        min: 0
+        max: 100
+        digits: 2
+      x5:
+        type: numeric
+        min: 0
+        max: 100
+        digits: 2
+      x6:
+        type: numeric
+        min: 0
+        max: 100
+        digits: 2
+      x7:
+        type: numeric
+        min: 0
+        max: 100
+        digits: 2
+      x8:
+        type: numeric
+        min: 0
+        max: 100
+        digits: 2
+- name: data_relasi
+  role: contoh
+  recipe:
+    kind: tabular
+    n: 120
+    seed: 2026
+    columns:
+      dari:
+        type: integer
+        min: 1
+        max: 30
+      ke:
+        type: integer
+        min: 1
+        max: 30
+      bobot:
+        type: numeric
+        min: 1
+        max: 10
+        digits: 1
+body:
+  deskripsi:
+  - |
+    Dua modul sebelumnya bekerja pada data tabular, yaitu tabel berbaris amatan dan berkolom peubah. Bentuk itu paling akrab dan paling mudah diolah, tetapi tidak mencakup seluruh data yang dihadapi dalam praktik. Modul ini memperluas cakrawala ke tiga bentuk yang lazim ditemui pada big data.
+  - |
+    Ketiganya dipilih bukan karena kebetulan. Data berdimensi tinggi menghadirkan persoalan yang bertentangan dengan intuisi: menambah peubah tidak selalu menambah informasi, dan pada titik tertentu justru merusak kemampuan mengukur kemiripan. Data jaringan menyimpan informasi pada hubungan antar-unit, bukan pada unitnya sendiri. Data teks tidak berbentuk angka sama sekali sehingga memerlukan penerjemahan sebelum dapat dimodelkan.
+  - |
+    Materi dibahas dari pengenalan hingga penanganan: kutukan dimensi dan penanggulangannya lewat analisis komponen utama, ukuran sentralitas serta penemuan komunitas pada data jaringan, dan penyusunan matriks dokumen-istilah beserta analisis sentimen sederhana pada data teks.
+  - |-
+    \begin{kotakperhatian}[Tentang data]
+    Berkas data pada modul ini adalah \textbf{data simulasi} (\texttt{set.seed(2026)}), \textbf{bukan data nyata} dan \textbf{bukan data resmi} instansi mana pun. Peubah dibangkitkan saling bebas, sehingga hubungan yang lemah adalah hasil yang wajar.
+    \end{kotakperhatian}
+  tujuan:
+  - 'Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:'
+  - 1. **Mengenali** ragam tipe data pada big data beserta perlakuan yang sesuai.
+  - 2. **Memperagakan** kutukan dimensi dan menjelaskan akibatnya bagi ukuran jarak.
+  - 3. **Menerapkan** analisis komponen utama sebagai cara mereduksi dimensi.
+  - 4. **Menyusun** graf dari data relasi dan menghitung ukuran kesentralannya.
+  - 5. **Menemukan** komunitas pada data jaringan serta menafsirkannya.
+  - 6. **Mengubah** data teks menjadi matriks dokumen-istilah.
+  - 7. **Menghitung** skor sentimen sederhana berbasis leksikon dan menyebut keterbatasannya.
+  alat:
+  - 'Perangkat dan bahan yang diperlukan:'
+  - '- **R** (RStudio) dengan paket `igraph` dan `dplyr`.'
+  - '- Berkas data: `data/data_dimensi.csv` dan `data/data_relasi.csv`.'
+  - '- Data teks disediakan langsung di dalam kode contoh, sehingga tidak memerlukan berkas terpisah.'
+  instruksi:
+  - 'Ikuti tahapan berikut:'
+  - '**Sebelum praktikum:** pasang paket `igraph` dengan `install.packages("igraph")`; siapkan kedua berkas
+    data pada subfolder `data/`.'
+  - '**Selama praktikum:** kerjakan Contoh berurutan. Bagian data berdimensi tinggi menuntut perhatian
+    khusus karena hasilnya kerap berlawanan dengan dugaan awal.'
+  - |-
+    **Pembagian kerja:** Contoh dan Latihan dikerjakan di kelas; **Penugasan dikerjakan di luar sesi**.
+
+    **Pengumpulan:** susun laporan R Markdown, render ke PDF atau HTML, kumpulkan melalui Google Classroom.
+  teori:
+  - '### Kedudukan pada CRISP-DM'
+  - |
+    Modul ini berada pada tahap Data Understanding. Sebelum memutuskan bagaimana menyiapkan dan memodelkan data, kita perlu mengenali bentuknya lebih dahulu. Salah mengenali bentuk data berakibat salah memilih seluruh perlakuan berikutnya, dan kekeliruan itu sukar diperbaiki di tahap akhir.
+  - '### Ragam Tipe Data'
+  - |-
+    \begin{kotakinfo}[Enam bentuk data dan perlakuannya]\par\smallskip
+    \begin{tabular}{@{}p{3.0cm}p{4.6cm}p{6.6cm}@{}}
+    \textbf{Bentuk} & \textbf{Ciri} & \textbf{Perlakuan khas}\\
+    \hline
+    Tabular & baris amatan, kolom peubah & pengodean, pembakuan\\[2pt]
+    Dimensi tinggi & banyak kolom, sedikit baris & reduksi dimensi, regularisasi\\[2pt]
+    Jaringan & simpul dan sisi & ukuran sentralitas, komunitas\\[2pt]
+    Teks & untaian kata & tokenisasi, pembobotan istilah\\[2pt]
+    Runtun waktu & terurut menurut waktu & pembedaan, jendela geser\\[2pt]
+    Spasial & berkoordinat & bobot ketetanggaan\\
+    \end{tabular}
+    \end{kotakinfo}
+  - '### Data Runtun Waktu'
+  - |
+    Data runtun waktu berbeda dari data tabular karena urutannya bermakna. Amatan berdekatan lazimnya berkorelasi, sehingga anggapan saling bebas yang mendasari banyak metode menjadi tidak berlaku. Akibat paling langsungnya adalah pembagian data latih dan uji tidak boleh dilakukan secara acak.
+  - |-
+    \begin{kotakinfo}[Tiga komponen runtun waktu]\par\smallskip
+    \begin{tabular}{@{}p{2.8cm}p{4.6cm}p{6.8cm}@{}}
+    \textbf{Komponen} & \textbf{Ciri} & \textbf{Penanganan}\\
+    \hline
+    Kecenderungan & naik atau turun jangka panjang & pembedaan, penghalusan\\[2pt]
+    Musiman & berulang pada periode tetap & peubah boneka musim, pembedaan musiman\\[2pt]
+    Sisaan & sisanya setelah keduanya & dimodelkan atau dianggap derau\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotaksalah}[Membagi runtun waktu secara acak]
+    Membagi data runtun waktu secara acak membuat amatan masa depan masuk ke data latih, sehingga model seolah dapat meramal padahal ia sekadar menghafal tetangganya. Pembagian yang benar mengikuti urutan waktu: periode awal untuk melatih, periode akhir untuk menguji.
+    \end{kotaksalah}
+  - '### Data Spasial'
+  - |
+    Pada data spasial berlaku hukum pertama geografi: hal yang berdekatan cenderung lebih mirip daripada yang berjauhan. Akibatnya, sebagaimana runtun waktu, anggapan saling bebas gugur --- hanya saja kedekatannya bersifat ruang, bukan waktu. Penanganannya memakai bobot ketetanggaan yang menyatakan seberapa dekat tiap pasangan wilayah.
+  - '### Data Berdimensi Tinggi dan Kutukan Dimensi'
+  - |
+    Data disebut berdimensi tinggi ketika banyaknya peubah mendekati atau melampaui banyaknya amatan. Keadaan ini lazim pada data genomika, data teks, dan data sensor. Persoalannya bukan sekadar perhitungan menjadi lambat, melainkan gagasan kemiripan itu sendiri mulai kehilangan makna.
+  - |
+    Sebabnya begini. Pada ruang berdimensi tinggi, isi ruang terpusat di permukaannya, sehingga hampir semua titik berjarak hampir sama satu sama lain. Akibatnya selisih antara tetangga terdekat dan terjauh menyusut. Padahal justru selisih itulah yang dipakai algoritma berbasis jarak seperti KNN dan K-Means untuk membedakan.
+  - |-
+    \begin{kotakrumus}
+    \textbf{Kontras jarak} sebagai ukuran kutukan dimensi:\\[4pt]
+    $\text{kontras} = \dfrac{d_{\max} - d_{\min}}{d_{\min}}$\\[4pt]
+    Makin kecil nilainya, makin sukar membedakan dekat dari jauh.
+    \end{kotakrumus}
+  - |-
+    \begin{kotaksalah}[Menambah peubah tidak selalu menambah informasi]
+    Intuisi kita mengatakan makin banyak peubah makin baik, sebab informasi bertambah. Pada dimensi tinggi anggapan itu keliru. Peubah yang tidak relevan menambah derau tanpa menambah sinyal, sehingga jarak antar-amatan makin didominasi kebetulan. Inilah alasan reduksi dimensi bukan sekadar penghematan perhitungan, melainkan syarat agar model berbasis jarak tetap bermakna.
+    \end{kotaksalah}
+  - |
+    Dua jalan keluar yang lazim adalah seleksi peubah, yaitu memilih sebagian peubah asli, dan ekstraksi ciri, yaitu membentuk peubah baru dari gabungan peubah lama. Analisis komponen utama termasuk cara kedua: ia menyusun kombinasi linier peubah asli yang berurutan menurut besarnya keragaman yang diterangkan.
+  - '### Data Jaringan'
+  - |
+    Pada data jaringan, informasi tidak terletak pada unit melainkan pada hubungan antar-unit. Sebuah jaringan tersusun dari simpul yang mewakili unit dan sisi yang mewakili hubungan. Sisi dapat berarah atau tak berarah, dan dapat berbobot maupun tidak.
+  - |-
+    \begin{kotakinfo}[Tiga ukuran sentralitas]\par\smallskip
+    \begin{tabular}{@{}p{3.4cm}p{4.2cm}p{6.6cm}@{}}
+    \textbf{Ukuran} & \textbf{Menghitung} & \textbf{Menjawab pertanyaan}\\
+    \hline
+    Derajat & banyaknya tetangga & siapa yang paling banyak berhubungan?\\[2pt]
+    Kedekatan & rata-rata jarak ke simpul lain & siapa yang paling mudah menjangkau semua?\\[2pt]
+    Keperantaraan & seberapa sering menjadi jalur & siapa yang menjadi penghubung antar-kelompok?\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Ketiganya menjawab pertanyaan berbeda dan dapat menunjuk simpul yang berlainan. Simpul berderajat tinggi belum tentu berperan sebagai penghubung; sebaliknya simpul berderajat rendah dapat berkeperantaraan tinggi bila ia satu-satunya jembatan antara dua kelompok.
+  - '### Data Teks'
+  - |
+    Teks tidak berbentuk angka sehingga harus diterjemahkan lebih dahulu. Alurnya lazimnya berupa pembersihan, tokenisasi, pembuangan kata henti, lalu penyusunan matriks dokumen-istilah yang barisnya dokumen dan kolomnya istilah.
+  - |-
+    \begin{kotakinfo}[Dua cara membobot istilah]\par\smallskip
+    \begin{tabular}{@{}p{3.4cm}p{11.0cm}@{}}
+    \textbf{Frekuensi} & banyaknya kemunculan istilah pada dokumen; sederhana tetapi memihak istilah umum\\[3pt]
+    \textbf{TF-IDF} & frekuensi dikalikan kebalikan frekuensi dokumen; menaikkan bobot istilah yang khas bagi sedikit dokumen\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotaksalah}[Keterbatasan sentimen berbasis leksikon]
+    Menghitung sentimen dengan mencacah kata positif dan negatif memang sederhana, tetapi buta terhadap konteks. Kalimat ``tidak buruk'' terhitung negatif padahal maknanya positif, dan sindiran terhitung positif padahal maksudnya sebaliknya. Karena itu skor leksikon layak dipakai sebagai penjajakan awal, bukan sebagai kesimpulan.
+    \end{kotaksalah}
+  contoh:
+  - contoh: Memperagakan kutukan dimensi
+    kode_r: |-
+      set.seed(2026)
+      kontras <- function(p, n = 200) {
+        X <- matrix(runif(n * p), n, p)
+        d <- as.matrix(dist(X))
+        d <- d[upper.tri(d)]
+        (max(d) - min(d)) / min(d)
+      }
+      dimensi <- c(2, 5, 10, 50, 100, 200)
+      hasil <- sapply(dimensi, kontras)
+      round(data.frame(dimensi, kontras = hasil), 3)
+    judul_r: kontras jarak menurut dimensi
+    eval: true
+    penjelasan: |
+      Fungsi buatan membangkitkan matriks acak berukuran n kali p, menghitung seluruh jarak antar-titik, lalu mengambil bagian segitiga atasnya agar tiap pasangan dihitung sekali. Kontras dihitung sebagai selisih jarak terjauh dan terdekat dibagi jarak terdekat. Fungsi sapply menerapkannya ke beberapa nilai dimensi.
+    interpretasi: |
+      Perhatikan penurunan kontras yang tajam seiring bertambahnya dimensi. Pada dimensi rendah, jarak terjauh berkali lipat jarak terdekat sehingga dekat dan jauh mudah dibedakan. Pada dimensi tinggi, keduanya nyaris sama sehingga gagasan tetangga terdekat kehilangan makna. Inilah kutukan dimensi dalam wujud angka, dan inilah alasan KNN maupun K-Means memburuk pada data berdimensi tinggi.
+  - contoh: Menggambarkan penurunan kontras
+    kode_r: |-
+      plot(dimensi, hasil, type = "b", pch = 19, col = "#0B6FB4", lwd = 2,
+           log = "xy",
+           xlab = "Banyaknya dimensi (skala log)",
+           ylab = "Kontras jarak (skala log)",
+           main = "Kontras Jarak Menyusut Seiring Bertambahnya Dimensi")
+      grid(col = "grey85")
+      abline(h = 1, col = "#F58220", lty = 2, lwd = 2)
+      text(x = 100, y = 1.3, "kontras = 1", col = "#F58220", cex = 0.8)
+    judul_r: plot dengan skala log ganda
+    eval: true
+    penjelasan: |
+      Grafik digambar dengan tipe b sehingga titik dan garis muncul bersamaan. Argumen log bernilai xy memakai skala logaritma pada kedua sumbu, karena penurunannya berlangsung berlipat, bukan menurun tetap. Garis acuan mendatar pada nilai satu ditambahkan sebagai penanda.
+    interpretasi: |
+      Skala logaritma dipilih karena penurunan kontras bersifat berlipat; pada skala biasa seluruh titik dimensi tinggi akan menumpuk mendekati nol dan polanya tak terbaca. Garis acuan pada nilai satu menandai keadaan ketika jarak terjauh hanya dua kali jarak terdekat, yang sudah tergolong sukar dibedakan.
+  - contoh: Mereduksi dimensi dengan analisis komponen utama
+    kode_r: |-
+      dim_data <- read.csv("data/data_dimensi.csv", stringsAsFactors = TRUE)
+      X <- dim_data[, paste0("x", 1:8)]
+
+      pc <- prcomp(X, scale. = TRUE)     # WAJIB dibakukan karena skala dapat berbeda
+      ragam <- pc$sdev^2 / sum(pc$sdev^2)
+      round(data.frame(komponen = 1:8,
+                       proporsi = ragam,
+                       kumulatif = cumsum(ragam)), 4)
+    judul_r: prcomp dan proporsi keragaman
+    eval: true
+    penjelasan: |
+      Delapan kolom numerik diambil, lalu analisis komponen utama dijalankan dengan argumen scale bernilai TRUE agar peubah dibakukan lebih dahulu. Kuadrat simpangan baku tiap komponen dibagi jumlahnya menghasilkan proporsi keragaman, dan cumsum menghasilkan proporsi kumulatifnya.
+    interpretasi: |
+      Pembakuan pada analisis komponen utama bukan pilihan melainkan keharusan ketika satuan peubah berbeda, sebab tanpa itu peubah bersatuan besar akan mendominasi komponen pertama semata karena satuannya. Perhatikan proporsi kumulatif: pada data yang peubahnya dibangkitkan saling bebas, keragaman terbagi hampir merata sehingga reduksi dimensi tidak banyak menolong --- dan temuan itu sendiri informatif.
+  - contoh: Membaca diagram scree
+    kode_r: |-
+      par(mfrow = c(1, 2))
+      plot(ragam, type = "b", pch = 19, col = "#0B6FB4", lwd = 2,
+           xlab = "Komponen", ylab = "Proporsi keragaman", main = "Diagram Scree")
+      abline(h = 1/ncol(X), col = "#F58220", lty = 2, lwd = 2)
+      plot(cumsum(ragam), type = "b", pch = 19, col = "#0B6FB4", lwd = 2, ylim = c(0, 1),
+           xlab = "Komponen", ylab = "Kumulatif", main = "Keragaman Kumulatif")
+      abline(h = 0.8, col = "#F58220", lty = 2, lwd = 2)
+      par(mfrow = c(1, 1))
+    judul_r: diagram scree dan kumulatif
+    eval: true
+    penjelasan: |
+      Dua grafik ditampilkan berdampingan. Diagram scree memuat proporsi keragaman tiap komponen dengan garis acuan pada satu dibagi banyaknya peubah, yaitu proporsi yang diharapkan bila keragaman terbagi merata. Grafik kedua memuat proporsi kumulatif dengan garis acuan pada 80 persen.
+    interpretasi: |
+      Dua aturan praktis dipakai membaca kedua grafik. Pertama, ambil komponen yang proporsinya di atas garis merata, sebab komponen di bawahnya menerangkan lebih sedikit daripada satu peubah asli rata-rata. Kedua, ambil komponen secukupnya hingga keragaman kumulatif mencapai ambang yang ditetapkan, lazimnya 80 persen. Kedua aturan dapat memberi jawaban berbeda, dan pemilihannya merupakan keputusan yang harus dijelaskan dalam laporan.
+  - contoh: Menyusun graf dari data relasi
+    kode_r: |-
+      suppressPackageStartupMessages(library(igraph))
+      rel <- read.csv("data/data_relasi.csv")
+      rel <- rel[rel$dari != rel$ke, ]            # buang gelang
+
+      g <- graph_from_data_frame(rel[, c("dari", "ke")], directed = FALSE)
+      g <- simplify(g)                            # buang sisi ganda
+      cat("simpul:", vcount(g), "| sisi:", ecount(g), "\n")
+      cat("kerapatan:", round(edge_density(g), 4), "\n")
+      cat("komponen terhubung:", components(g)$no, "\n")
+    judul_r: graph_from_data_frame dan ringkasannya
+    eval: true
+    penjelasan: |
+      Data relasi dibaca lalu baris yang menghubungkan simpul dengan dirinya sendiri dibuang. Graf dibentuk dari dua kolom pertama sebagai pasangan simpul, dengan directed bernilai FALSE karena hubungannya dianggap timbal balik. Fungsi simplify membuang sisi ganda. Kerapatan menyatakan rasio (*ratio*) sisi yang ada terhadap sisi yang mungkin.
+    interpretasi: |
+      Tiga besaran ini adalah pemeriksaan awal wajib pada data jaringan. Kerapatan rendah menandakan jaringan renggang, yang lazim pada jaringan sosial nyata. Banyaknya komponen terhubung menunjukkan apakah jaringan menyatu atau terpecah menjadi kelompok yang saling terpisah --- hal yang menentukan apakah ukuran kedekatan dapat dihitung bermakna.
+  - contoh: Menghitung tiga ukuran sentralitas
+    kode_r: |-
+      sentral <- data.frame(
+        simpul = V(g)$name,
+        derajat = degree(g),
+        kedekatan = round(closeness(g), 5),
+        keperantaraan = round(betweenness(g), 2))
+
+      # tiga teratas menurut masing-masing ukuran
+      for (u in c("derajat", "kedekatan", "keperantaraan")) {
+        atas <- sentral[order(-sentral[[u]]), c("simpul", u)][1:3, ]
+        cat("Teratas menurut", u, ":", paste(atas$simpul, collapse = ", "), "\n")
+      }
+    judul_r: degree, closeness, betweenness
+    eval: true
+    penjelasan: |
+      Ketiga ukuran sentralitas dihitung sekaligus dan disusun sebagai data frame. Perulangan menampilkan tiga simpul teratas menurut masing-masing ukuran, dengan pengurutan menurun memakai tanda negatif pada order.
+    interpretasi: |
+      Bandingkan ketiga daftar teratas. Bila simpul yang muncul berbeda-beda, itu menegaskan bahwa ketiga ukuran menjawab pertanyaan berlainan. Dalam penerapan nyata, simpul berkeperantaraan tinggi sering paling penting secara strategis: menghilangkannya dapat memutus jaringan menjadi beberapa bagian, meski derajatnya biasa saja.
+  - contoh: Menemukan komunitas pada jaringan
+    kode_r: |-
+      set.seed(2026)
+      kom <- cluster_louvain(g)
+      cat("banyaknya komunitas:", length(sizes(kom)), "\n")
+      print(sizes(kom))
+      cat("modularitas:", round(modularity(kom), 4), "\n")
+
+      plot(g, vertex.color = membership(kom), vertex.size = 10,
+           vertex.label.cex = 0.6, edge.color = "grey70",
+           main = "Komunitas pada Jaringan")
+    judul_r: cluster_louvain dan modularitas
+    eval: true
+    penjelasan: |
+      Algoritma Louvain mencari pengelompokan simpul yang memaksimumkan modularitas. Fungsi sizes menampilkan ukuran tiap komunitas, sedangkan modularity mengukur seberapa baik pengelompokannya. Warna simpul pada gambar ditentukan oleh keanggotaan komunitas.
+    interpretasi: |
+      Modularitas berkisar dari negatif setengah sampai satu; nilai di atas 0,3 lazim dianggap menandakan struktur komunitas yang nyata. Pada jaringan yang dibangkitkan acak, modularitasnya cenderung rendah dan komunitas yang ditemukan lebih mencerminkan kebetulan daripada struktur sesungguhnya. Perlu diingat bahwa algoritma penemuan komunitas **selalu** mengembalikan pengelompokan, bahkan pada jaringan tanpa struktur --- karena itu modularitas wajib diperiksa.
+  - contoh: Mengubah teks menjadi matriks dokumen-istilah
+    kode_r: |-
+      ulasan <- c("layanan sangat baik dan cepat",
+                  "pelayanan lambat sekali mengecewakan",
+                  "aplikasi mudah digunakan dan baik",
+                  "sangat lambat dan sulit digunakan",
+                  "cepat mudah dan memuaskan",
+                  "antrean panjang pelayanan lambat")
+
+      henti <- c("dan", "yang", "di", "ke", "dari", "sangat", "sekali")
+      token <- lapply(strsplit(tolower(ulasan), "[^a-z]+"),
+                      function(x) setdiff(x[nchar(x) > 2], henti))
+
+      kosakata <- sort(unique(unlist(token)))
+      dtm <- t(sapply(token, function(t) as.integer(kosakata %in% t)))
+      colnames(dtm) <- kosakata
+      rownames(dtm) <- paste0("dok", seq_along(ulasan))
+      cat("DTM:", nrow(dtm), "dokumen x", ncol(dtm), "istilah\n")
+      dtm[1:3, 1:8]
+    judul_r: tokenisasi dan penyusunan DTM
+    eval: true
+    penjelasan: |
+      Teks diubah ke huruf kecil lalu dipecah pada setiap karakter bukan huruf. Potongan berpanjang dua huruf atau kurang dibuang, begitu pula kata henti melalui setdiff. Kosakata disusun dari seluruh istilah unik, lalu tiap dokumen diubah menjadi baris berisi nol dan satu menurut ada tidaknya istilah.
+    interpretasi: |
+      Inilah penerjemahan teks menjadi angka. Perhatikan bahwa matriksnya sangat jarang, yaitu didominasi nol --- ciri khas data teks yang menjadi alasan penyimpanan jarang dipakai pada data nyata. Perhatikan pula bahwa banyaknya kolom sama dengan besarnya kosakata, sehingga data teks hampir selalu berdimensi tinggi dan tunduk pada kutukan dimensi yang dibahas di awal modul.
+  - contoh: Menafsirkan muatan komponen utama
+    kode_r: |-
+      muatan <- round(pc$rotation[, 1:3], 3)
+      print(muatan)
+
+      cat("\nPeubah penyumbang terbesar pada tiap komponen:\n")
+      for (k in 1:3) {
+        m <- abs(pc$rotation[, k])
+        cat(sprintf("  PC%d: %s (muatan %.3f)\n", k,
+                    names(which.max(m)), pc$rotation[which.max(m), k]))
+      }
+    judul_r: muatan komponen dan penafsirannya
+    eval: true
+    penjelasan: |
+      Matriks muatan menyatakan bobot tiap peubah asli pada tiap komponen. Tiga komponen pertama ditampilkan, lalu peubah bermuatan mutlak terbesar pada masing-masing dicari memakai which.max atas nilai mutlaknya.
+    interpretasi: |
+      Nilai mutlak dipakai karena tanda muatan hanya menyatakan arah, bukan besarnya sumbangan; membalik tanda seluruh komponen menghasilkan komponen yang setara. Penafsiran komponen utama menuntut kehati-hatian: komponen yang muatannya tersebar merata pada banyak peubah sukar diberi nama, dan memaksakan nama justru menyesatkan. Pada data yang peubahnya saling bebas, muatan memang cenderung merata --- yang berarti komponennya memang tidak bermakna substantif.
+  - contoh: Membandingkan reduksi dimensi terhadap seleksi peubah
+    kode_r: |-
+      X <- dim_data[, paste0("x", 1:8)]
+      Xs <- scale(X)
+
+      # cara 1: ekstraksi ciri lewat komponen utama
+      skor <- pc$x[, 1:3]
+
+      # cara 2: seleksi tiga peubah berragam terbesar
+      pilih <- names(sort(apply(Xs, 2, var), decreasing = TRUE))[1:3]
+      terpilih <- Xs[, pilih]
+
+      kontras <- function(M) {
+        d <- as.matrix(dist(M)); v <- d[upper.tri(d)]
+        (max(v) - min(v)) / min(v)
+      }
+      round(c(delapan_peubah = kontras(Xs),
+              tiga_komponen = kontras(skor),
+              tiga_terpilih = kontras(terpilih)), 3)
+      cat("peubah terpilih:", paste(pilih, collapse = ", "), "\n")
+    judul_r: membandingkan dua cara reduksi
+    eval: true
+    penjelasan: |
+      Dua cara mereduksi dimensi dibandingkan pada data yang sama. Cara pertama memakai skor tiga komponen utama, yaitu peubah baru hasil gabungan. Cara kedua memilih tiga peubah asli berragam terbesar. Kontras jarak dihitung bagi ketiganya.
+    interpretasi: |
+      Kedua cara sama-sama menaikkan kontras dibandingkan memakai seluruh delapan peubah, sebagaimana diharapkan dari pengurangan dimensi. Perbedaan pokoknya terletak pada penafsiran: peubah terpilih tetap bermakna asli sehingga hasil model mudah dijelaskan, sedangkan komponen utama adalah gabungan yang kerap sukar dinamai. Pada penerapan yang menuntut penjelasan kepada pengambil keputusan, seleksi peubah kerap lebih dipilih meski secara teknis kalah efisien.
+  - contoh: Membentuk graf berbobot dan memeriksanya
+    kode_r: |-
+      rel_bobot <- rel
+      names(rel_bobot)[3] <- "weight"          # igraph mengenali nama ini
+      gb <- simplify(graph_from_data_frame(rel_bobot, directed = FALSE),
+                     edge.attr.comb = list(weight = "sum"))
+
+      cat("sisi:", ecount(gb), "| berbobot:", is_weighted(gb), "\n")
+      cat("bobot: min", round(min(E(gb)$weight), 2),
+          "| median", round(median(E(gb)$weight), 2),
+          "| maks", round(max(E(gb)$weight), 2), "\n")
+
+      # sentralitas derajat berbobot memperhitungkan kekuatan hubungan
+      banding <- data.frame(
+        simpul = V(gb)$name,
+        derajat = degree(gb),
+        kekuatan = round(strength(gb), 1))
+      print(utils::head(banding[order(-banding$kekuatan), ], 5), row.names = FALSE)
+    judul_r: graf berbobot dan strength
+    eval: true
+    penjelasan: |
+      Kolom ketiga diberi nama weight agar dikenali igraph sebagai bobot sisi. Ketika sisi ganda disederhanakan, bobotnya dijumlahkan lewat argumen edge.attr.comb. Fungsi strength menghitung derajat berbobot, yaitu jumlah bobot sisi yang menempel pada tiap simpul.
+    interpretasi: |
+      Bandingkan urutan menurut derajat terhadap urutan menurut kekuatan. Simpul berderajat sedang tetapi berhubungan kuat dapat lebih penting daripada simpul berderajat tinggi dengan hubungan lemah. Mengabaikan bobot berarti membuang informasi, dan pada jaringan nyata --- seperti nilai transaksi antar-rekening --- bobot justru merupakan informasi utamanya.
+  - contoh: Memeriksa kekokohan jaringan
+    kode_r: |-
+      # apa yang terjadi bila simpul terpenting dihilangkan?
+      urut <- order(betweenness(g), decreasing = TRUE)
+      nama_urut <- V(g)$name[urut]
+
+      hasil <- data.frame(dihapus = 0:5, komponen = NA_integer_,
+                          ukuran_terbesar = NA_integer_)
+      g_kini <- g
+      for (i in 0:5) {
+        komp <- components(g_kini)
+        hasil$komponen[i + 1] <- komp$no
+        hasil$ukuran_terbesar[i + 1] <- max(komp$csize)
+        if (i < 5) g_kini <- delete_vertices(g_kini, nama_urut[i + 1])
+      }
+      print(hasil, right = FALSE)
+    judul_r: delete_vertices dan components
+    eval: true
+    penjelasan: |
+      Simpul diurutkan menurut keperantaraan (*betweenness*) menurun, lalu dihapus satu per satu. Pada tiap tahap, banyaknya komponen terhubung dan ukuran komponen terbesar dicatat. Perulangan menahan penghapusan pada iterasi terakhir agar tabelnya lengkap.
+    interpretasi: |
+      Bertambahnya komponen menandakan jaringan terpecah. Bila menghapus beberapa simpul berkeperantaraan tinggi sudah memecah jaringan, berarti jaringan itu rapuh dan bergantung pada sedikit penghubung. Analisis kekokohan semacam ini dipakai menilai ketahanan jaringan infrastruktur maupun mengenali titik kritis penyebaran informasi.
+  - contoh: Membandingkan tiga ukuran jarak
+    kode_r: |-
+      suppressPackageStartupMessages(library(cluster))
+      set.seed(2026)
+      campur <- data.frame(
+        numerik_kecil = rnorm(60, 0, 1),
+        numerik_besar = runif(60, 0, 10000),
+        kategori = factor(sample(c("A", "B", "C"), 60, TRUE)))
+
+      # Euclidean TANPA pembakuan -- didominasi peubah berskala besar
+      e_tanpa <- dist(campur[, 1:2])
+      # Euclidean DENGAN pembakuan
+      e_baku  <- dist(scale(campur[, 1:2]))
+      # Gower -- menerima peubah campuran sekaligus
+      gower   <- daisy(campur, metric = "gower")
+
+      round(rbind(
+        `Euclidean tanpa baku` = range(e_tanpa),
+        `Euclidean dibakukan`  = range(e_baku),
+        `Gower (campuran)`     = range(gower)), 3)
+
+      cat("\nkorelasi Euclidean-tanpa-baku vs dibakukan:",
+          round(cor(as.vector(e_tanpa), as.vector(e_baku)), 3), "\n")
+    judul_r: dist dan daisy
+    eval: true
+    penjelasan: |
+      Tiga ukuran jarak dihitung atas data yang sama. Dua yang pertama memakai jarak Euclidean dengan dan tanpa pembakuan, hanya atas kolom numerik. Yang ketiga memakai jarak Gower dari paket cluster, yang menerima peubah numerik dan kategori sekaligus dan menghasilkan nilai antara nol dan satu.
+    interpretasi: |
+      Perhatikan rentang jarak Euclidean tanpa pembakuan --- besarnya hampir seluruhnya ditentukan peubah berskala ribuan, sedangkan peubah berskala satuan nyaris tak berpengaruh. Korelasi terhadap versi yang dibakukan memperlihatkan seberapa jauh keduanya berbeda. Gower menjadi pilihan ketika data bercampur, sebab ia membakukan tiap peubah menurut jenisnya sendiri. Ukuran jarak inilah yang akan dipakai pada modul pengelompokan.
+  - contoh: Menggambarkan komponen utama sebagai biplot
+    kode_r: |-
+      par(mfrow = c(1, 2))
+      plot(pc$x[, 1], pc$x[, 2], pch = 19, cex = .6,
+           col = c("#0B6FB4", "#F58220", "#00A651")[dim_data$kelompok],
+           xlab = sprintf("PC1 (%.1f persen)", 100 * ragam[1]),
+           ylab = sprintf("PC2 (%.1f persen)", 100 * ragam[2]),
+           main = "Skor Dua Komponen Pertama")
+      abline(h = 0, v = 0, col = "grey80", lty = 2)
+      legend("topright", levels(dim_data$kelompok), bty = "n", cex = .8,
+             col = c("#0B6FB4", "#F58220", "#00A651"), pch = 19)
+
+      biplot(pc, choices = 1:2, cex = c(.4, .7), col = c("grey60", "#C0392B"),
+             main = "Biplot")
+      par(mfrow = c(1, 1))
+    judul_r: plot skor dan biplot
+    eval: true
+    penjelasan: |
+      Gambar kiri menyajikan skor dua komponen pertama dengan warna menurut kelompok, dan persentase keragaman dicantumkan pada nama sumbu. Gambar kanan berupa biplot yang menampilkan skor amatan bersama arah muatan tiap peubah asli.
+    interpretasi: |
+      Bila titik antar-kelompok bertumpang tindih, berarti dua komponen pertama tidak memisahkan kelompok --- dan pada data yang dibangkitkan saling bebas itu memang yang diharapkan. Pada biplot, panah yang berdekatan menandakan peubah yang berkorelasi, sedangkan panah yang panjang menandakan peubah yang banyak menyumbang pada kedua komponen tersebut. Perlu diingat bahwa biplot hanya menampilkan sebagian keragaman, sehingga kesimpulan darinya bersifat terbatas.
+  - contoh: Menggambarkan jaringan beserta ukuran sentralitas
+    kode_r: |-
+      set.seed(2026)
+      tata <- layout_with_fr(g)
+      ukuran <- 4 + 12 * (degree(g) - min(degree(g))) /
+                    (max(degree(g)) - min(degree(g)) + 1e-9)
+
+      par(mfrow = c(1, 2), mar = c(1, 1, 3, 1))
+      plot(g, layout = tata, vertex.size = ukuran, vertex.label = NA,
+           vertex.color = "#0B6FB4", edge.color = "grey75",
+           main = "Ukuran simpul menurut derajat")
+
+      ukuran2 <- 4 + 12 * (betweenness(g) - min(betweenness(g))) /
+                     (max(betweenness(g)) - min(betweenness(g)) + 1e-9)
+      plot(g, layout = tata, vertex.size = ukuran2, vertex.label = NA,
+           vertex.color = "#F58220", edge.color = "grey75",
+           main = "Ukuran simpul menurut keperantaraan")
+      par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
+    judul_r: layout_with_fr dan pemetaan ukuran simpul
+    eval: true
+    penjelasan: |
+      Tata letak dihitung sekali memakai algoritma Fruchterman-Reingold lalu dipakai pada kedua gambar, sehingga posisi simpul tetap sama dan perbandingannya adil. Ukuran simpul dipetakan dari nilai sentralitas yang diskalakan ke rentang empat sampai enam belas.
+    interpretasi: |
+      Memakai tata letak yang sama pada kedua gambar adalah kunci perbandingannya; bila tata letak dihitung ulang, posisi simpul berubah dan perbedaan ukurannya menjadi sukar ditelusuri. Perhatikan simpul yang besar pada gambar kanan tetapi kecil pada gambar kiri --- itulah penghubung berderajat rendah namun bernilai strategis tinggi.
+  - contoh: Menggambarkan frekuensi istilah
+    kode_r: |-
+      frek <- sort(colSums(dtm), decreasing = TRUE)
+      atas <- utils::head(frek, 10)
+
+      par(mar = c(4, 8, 3, 2))
+      bp <- barplot(rev(atas), horiz = TRUE, las = 1, col = "#0B6FB4",
+                    border = "white", xlab = "Cacah dokumen",
+                    main = "Sepuluh Istilah Paling Sering",
+                    xlim = c(0, max(atas) * 1.15))
+      text(rev(atas), bp, rev(atas), pos = 4, cex = .8)
+      par(mar = c(5, 4, 4, 2) + 0.1)
+
+      cat("kejarangan matriks:", round(100 * mean(dtm == 0), 1), "persen\n")
+      cat("istilah muncul sekali saja:", sum(colSums(dtm) == 1),
+          "dari", ncol(dtm), "\n")
+    judul_r: barplot mendatar frekuensi istilah
+    eval: true
+    penjelasan: |
+      Frekuensi tiap istilah dijumlahkan lalu diurutkan menurun. Sepuluh teratas digambar sebagai batang mendatar dengan las bernilai satu agar label terbaca tegak. Batas kiri diperlebar melalui mar agar nama istilah tidak terpotong.
+    interpretasi: |
+      Diagram batang mendatar lebih sesuai daripada awan kata untuk pelaporan resmi, sebab panjang batang dapat dibandingkan secara tepat sedangkan ukuran huruf tidak. Perhatikan pula banyaknya istilah yang muncul sekali saja: pada data teks nyata proporsinya sangat besar, dan istilah semacam itu lazim dibuang karena tidak menyumbang pembeda sekaligus memperbesar dimensi.
+  - contoh: Membobot istilah dengan TF-IDF
+    kode_r: |-
+      tf <- dtm                                   # frekuensi kemunculan
+      n_dok <- nrow(dtm)
+      df <- colSums(dtm > 0)                      # cacah dokumen memuat istilah
+      idf <- log(n_dok / df)
+      tfidf <- t(t(tf) * idf)
+
+      cat("istilah paling KHAS (idf tertinggi):\n")
+      print(round(sort(idf, decreasing = TRUE)[1:5], 3))
+      cat("\nistilah paling UMUM (idf terendah):\n")
+      print(round(sort(idf)[1:5], 3))
+
+      cat("\nbobot TF-IDF tiga dokumen pertama (lima istilah pertama):\n")
+      print(round(tfidf[1:3, 1:5], 3))
+    judul_r: menghitung TF-IDF
+    eval: true
+    penjelasan: |
+      Frekuensi dokumen dihitung sebagai cacah dokumen yang memuat tiap istilah. Kebalikan frekuensi dokumen diperoleh dari logaritma rasio banyaknya dokumen terhadap frekuensi dokumen. Bobot akhir adalah hasil kali keduanya, dihitung dengan transpos ganda agar perkalian terjadi per kolom.
+    interpretasi: |
+      Istilah yang muncul di hampir semua dokumen memperoleh bobot mendekati nol, sebab ia tidak membedakan apa pun. Sebaliknya istilah yang hanya muncul di sedikit dokumen memperoleh bobot tinggi karena khas. Inilah keunggulan TF-IDF dibandingkan frekuensi biasa, dan inilah pembobotan baku pada penambangan teks. Perlu dicatat bahwa pada kumpulan dokumen yang sangat kecil seperti ini, nilai idf menjadi kasar dan kurang dapat diandalkan.
+  - contoh: Menghitung skor sentimen berbasis leksikon
+    kode_r: |-
+      positif <- c("baik", "cepat", "mudah", "memuaskan", "ramah")
+      negatif <- c("lambat", "sulit", "mengecewakan", "panjang", "buruk")
+
+      skor <- sapply(token, function(t) sum(t %in% positif) - sum(t %in% negatif))
+      hasil_sentimen <- data.frame(
+        dokumen = paste0("dok", seq_along(ulasan)),
+        skor = skor,
+        label = ifelse(skor > 0, "positif", ifelse(skor < 0, "negatif", "netral")),
+        teks = substr(ulasan, 1, 34))
+      print(hasil_sentimen, right = FALSE)
+      table(hasil_sentimen$label)
+    judul_r: leksikon sederhana dan pelabelan
+    eval: true
+    penjelasan: |
+      Dua daftar kata acuan disusun. Skor tiap dokumen dihitung sebagai selisih cacah kata positif dan negatif memakai operator keanggotaan. Label ditetapkan dengan ifelse bersarang, lalu hasilnya disajikan bersama potongan teks aslinya agar dapat diperiksa langsung.
+    interpretasi: |
+      Bandingkan label yang dihasilkan dengan teks aslinya; pada contoh sederhana ini hasilnya masuk akal. Namun cobalah menambahkan kalimat seperti tidak buruk atau sebuah sindiran, dan cara ini akan keliru. Keterbatasan itu bukan cacat kecil melainkan sifat mendasar pendekatan leksikon, sehingga hasilnya layak dipakai sebagai penjajakan awal saja.
+  latihan:
+  - Kerjakan bertahap. Gunakan `data/data_dimensi.csv` dan `data/data_relasi.csv`.
+  - '#### Tingkat Dasar (melengkapi kode)'
+  - \latihan{Komponen utama}
+  - |-
+    ```{r eval=FALSE}
+    dim_data <- read.csv("data/data_dimensi.csv")
+    X <- dim_data[, paste0("x", 1:8)]
+    pc <- ____(X, scale. = ____)          # analisis komponen utama, dibakukan
+    ragam <- pc$sdev^2 / ____(pc$sdev^2)  # proporsi keragaman
+    ```
+  - \latihan{Ukuran jaringan}
+  - |-
+    ```{r eval=FALSE}
+    library(igraph)
+    rel <- read.csv("data/data_relasi.csv")
+    rel <- rel[rel$dari != rel$ke, ]
+    g <- ____(rel[, c("dari","ke")], directed = FALSE)
+    cat("simpul:", ____(g), "sisi:", ____(g), "
+    ")
+    ```
+  - \latihan{Matriks dokumen-istilah}
+  - |-
+    ```{r eval=FALSE}
+    teks <- c("pelayanan cepat dan baik", "antrean lambat sekali")
+    token <- lapply(strsplit(____(teks), "[^a-z]+"), function(x) x[nchar(x) > 2])
+    kosakata <- sort(____(unlist(token)))     # istilah unik, terurut
+    ```
+  - '#### Tingkat Menengah (menulis sendiri)'
+  - \latihan{Kutukan dimensi pada data nyata}
+  - Ambil kolom `x1` sampai `x8` dari `data_dimensi.csv`. Hitung kontras jarak ketika hanya memakai dua
+    kolom pertama, lalu empat, enam, dan seluruh delapan kolom. Sajikan sebagai tabel dan grafik, lalu
+    jelaskan apakah polanya sejalan dengan peragaan pada Contoh 3.1 dan mengapa besarnya bisa berbeda.
+  - \latihan{Membetulkan kode yang salah}
+  - Kode berikut memuat empat kesalahan (PCA tanpa pembakuan, proporsi keragaman memakai simpangan baku
+    bukan kuadratnya, graf berarah padahal hubungan timbal balik, dan kata henti tidak dibuang). Temukan
+    dan perbaiki, lalu jelaskan tiap kesalahannya.
+  - |-
+    ```{r eval=FALSE}
+    dim_data <- read.csv("data/data_dimensi.csv")
+    X <- dim_data[, paste0("x", 1:8)]
+
+    # (a) PCA tanpa pembakuan padahal skala peubah dapat berbeda
+    pc <- prcomp(X)
+
+    # (b) proporsi keragaman memakai sdev, bukan kuadratnya
+    ragam <- pc$sdev / sum(pc$sdev)
+
+    # (c) hubungan bersifat timbal balik tetapi graf dibuat berarah
+    library(igraph)
+    rel <- read.csv("data/data_relasi.csv")
+    g <- graph_from_data_frame(rel[, c("dari","ke")], directed = TRUE)
+
+    # (d) kata henti tidak dibuang sehingga mendominasi kosakata
+    teks <- c("pelayanan cepat dan baik", "antrean lambat dan panjang")
+    token <- lapply(strsplit(tolower(teks), "[^a-z]+"), function(x) x[nchar(x) > 2])
+    ```
+  - |-
+    **Keluaran yang benar.** Setelah diperbaiki, kode yang dipakai adalah sebagai berikut.
+
+    ```
+    # (a) pembakuan wajib bila satuan peubah berbeda
+    pc <- prcomp(X, scale. = TRUE)
+
+    # (b) proporsi keragaman memakai KUADRAT simpangan baku
+    ragam <- pc$sdev^2 / sum(pc$sdev^2)
+
+    # (c) hubungan timbal balik -> graf tak berarah, lalu buang gelang dan sisi ganda
+    rel <- rel[rel$dari != rel$ke, ]
+    g <- simplify(graph_from_data_frame(rel[, c("dari","ke")], directed = FALSE))
+
+    # (d) kata henti dibuang dengan setdiff
+    henti <- c("dan", "yang", "di", "ke", "dari")
+    token <- lapply(strsplit(tolower(teks), "[^a-z]+"),
+                    function(x) setdiff(x[nchar(x) > 2], henti))
+    ```
+
+    Pemeriksaan yang wajib berhasil: `round(sum(ragam), 8)` bernilai **1**, dan `is_directed(g)` bernilai **FALSE**.
+  - \latihan{Muatan komponen}
+  - Tafsirkan komponen utama pertama dan kedua dengan memeriksa muatannya. Sebutkan tiga peubah penyumbang
+    terbesar pada masing-masing, lalu nilai apakah komponen itu dapat diberi nama yang bermakna --- dan
+    bila tidak, jelaskan mengapa.
+  - \latihan{Kekokohan jaringan}
+  - Hapus lima simpul berkeperantaraan tertinggi satu per satu dari graf. Pada tiap tahap laporkan banyaknya
+    komponen terhubung dan ukuran komponen terbesarnya. Bandingkan terhadap penghapusan lima simpul **acak**,
+    lalu jelaskan perbedaannya.
+  - '#### Tingkat Lanjut (kasus kecil)'
+  - \latihan{Menentukan perlakuan menurut tipe data}
+  - 'Untuk masing-masing keadaan berikut, tentukan tipe datanya, sebutkan **dua perlakuan** yang sesuai,
+    dan jelaskan **satu jebakan** yang mengintai: (a) data ekspresi gen 20.000 peubah pada 80 pasien;
+    (b) catatan saling-mengikuti antar 50.000 akun media sosial; (c) 100.000 ulasan produk berbahasa Indonesia;
+    (d) pembacaan sensor suhu tiap menit selama setahun pada 200 titik.'
+  penugasan:
+  - |-
+    \begin{kotaktugas}
+    Sebagai calon analis pada instansi statistik, susun laporan pengenalan tipe data atas tiga bentuk data yang berbeda: berdimensi tinggi, jaringan, dan teks. Untuk masing-masing, tentukan perlakuan yang sesuai beserta alasannya.
+    \end{kotaktugas}
+  - '**Konteks.** Sebuah unit menerima tiga sumber data sekaligus: tabel indikator berpeubah banyak, catatan
+    relasi antar-unit, dan kumpulan teks aduan masyarakat. Ketiganya perlu dinilai sebelum direncanakan
+    pengolahannya.'
+  - \tugas{Data Berdimensi Tinggi}
+  - 1. Peragakan kutukan dimensi pada `data_dimensi.csv` dengan menghitung kontras jarak untuk 2, 4, 6,
+    dan 8 peubah. Sajikan tabel dan grafik, lalu tafsirkan.
+  - 2. Terapkan analisis komponen utama. Sajikan diagram scree dan keragaman kumulatif, lalu **tentukan
+    berapa komponen yang Anda pertahankan** beserta alasannya. Bandingkan keputusan menurut aturan garis
+    merata dan aturan 80 persen.
+  - 3. Tafsirkan komponen pertama dengan memeriksa muatannya (`pc$rotation[, 1]`). Peubah mana yang paling
+    menyumbang?
+  - \tugas{Data Jaringan}
+  - 4. Susun graf dari `data_relasi.csv`. Laporkan banyaknya simpul, sisi, kerapatan, dan komponen terhubung.
+  - 5. Hitung **ketiga ukuran sentralitas**. Sajikan lima simpul teratas menurut masing-masing, lalu jelaskan
+    mengapa daftarnya dapat berbeda dan simpul mana yang paling penting secara strategis.
+  - 6. Temukan komunitas dan laporkan modularitasnya. **Nilai apakah struktur komunitas yang ditemukan
+    bermakna atau sekadar kebetulan**, disertai alasan.
+  - \tugas{Analisis Jaringan Lanjut}
+  - 6b. Bentuk **graf berbobot** memakai kolom bobot. Bandingkan lima simpul teratas menurut derajat biasa
+    dan menurut derajat berbobot, lalu jelaskan mengapa urutannya dapat berbeda.
+  - '6c. Lakukan **analisis kekokohan**: hapus lima simpul berkeperantaraan tertinggi berturut-turut dan
+    catat perubahan struktur jaringannya. Bandingkan terhadap penghapusan acak.'
+  - \tugas{Data Teks}
+  - 7. Susun sendiri sepuluh kalimat ulasan berbahasa Indonesia. Bentuk matriks dokumen-istilah, laporkan
+    tingkat kejarangannya, lalu hitung skor sentimen berbasis leksikon.
+  - 8. Sertakan **minimal dua kalimat yang sengaja menjebak** (misalnya bernegasi atau bersindir). Laporkan
+    apakah skornya keliru dan jelaskan mengapa.
+  - 8b. Hitung bobot **TF-IDF** atas kumpulan ulasan Anda. Laporkan lima istilah paling khas dan lima
+    paling umum, lalu jelaskan mengapa keduanya berbeda dari sekadar frekuensi.
+  - '9. Susun laporan R Markdown berisi kode, keluaran, gambar, dan interpretasi. Tutup dengan **ringkasan
+    (maksimal 300 kata)** memuat: perlakuan yang direkomendasikan bagi ketiga tipe data, jebakan yang
+    perlu diwaspadai, dan penegasan bahwa data merupakan simulasi.'
+  ringkasan:
+  - |-
+    \begin{kotaktujuan}
+    \textbf{Daftar periksa penguasaan:}
+    \begin{itemize}
+    \item[$\square$] Saya dapat menyebutkan enam bentuk data beserta perlakuan yang sesuai.
+    \item[$\square$] Saya dapat memperagakan kutukan dimensi dan menjelaskan akibatnya.
+    \item[$\square$] Saya memahami bahwa menambah peubah tidak selalu menambah informasi.
+    \item[$\square$] Saya dapat menerapkan analisis komponen utama beserta pembakuannya.
+    \item[$\square$] Saya dapat membaca diagram scree dan menentukan banyaknya komponen.
+    \item[$\square$] Saya dapat menghitung tiga ukuran sentralitas dan membedakan maknanya.
+    \item[$\square$] Saya dapat menemukan komunitas dan menilai kebermaknaannya lewat modularitas.
+    \item[$\square$] Saya dapat menyusun matriks dokumen-istilah dari teks mentah.
+    \item[$\square$] Saya menyadari keterbatasan sentimen berbasis leksikon.
+    \end{itemize}
+    \end{kotaktujuan}
+  - '**Kartu Referensi Cepat.**'
+  - |-
+    \begin{kotakrumus}
+    \begin{tabular}{@{}ll@{}}
+    \textbf{Keperluan} & \textbf{Perintah}\\nMatriks jarak & \texttt{dist(X)}, \texttt{as.matrix(dist(X))}\\nKomponen utama & \texttt{prcomp(X, scale. = TRUE)}\\nProporsi keragaman & \texttt{pc\$sdev\^{}2 / sum(pc\$sdev\^{}2)}\\nMuatan komponen & \texttt{pc\$rotation}\\nMembentuk graf & \texttt{graph\_from\_data\_frame()}\\nUkuran graf & \texttt{vcount()}, \texttt{ecount()}, \texttt{edge\_density()}\\nKesentralan & \texttt{degree()}, \texttt{closeness()}, \texttt{betweenness()}\\nKomunitas & \texttt{cluster\_louvain()}, \texttt{modularity()}\\nTokenisasi & \texttt{strsplit(tolower(x), "{[}\^{}a-z{]}+")}\\nBuang kata henti & \texttt{setdiff(token, henti)}\\
+    \end{tabular}
+    \end{kotakrumus}
+  - 'Modul ini memperluas cakrawala dari data tabular ke bentuk lain yang lazim pada big data. Prinsip
+    yang perlu dibawa: kenali bentuk data sebelum memilih perlakuan, waspadai bahwa dimensi tinggi merusak
+    ukuran jarak, dan ingat bahwa algoritma pengelompokan maupun sentimen selalu memberi jawaban meski
+    datanya tidak berstruktur. Modul berikutnya membahas cara memperoleh data dari internet beserta pertimbangan
+    etikanya.'
+  referensi:
+  - 'Han, J., Kamber, M., & Pei, J. (2011). *Data Mining: Concepts and Techniques* (3rd ed.). Morgan Kaufmann.'
+  - Aggarwal, C. C., Hinneburg, A., & Keim, D. A. (2001). On the surprising behavior of distance metrics
+    in high dimensional space. *ICDT 2001*, 420-434.
+  - Newman, M. E. J. (2018). *Networks* (2nd ed.). Oxford University Press.
+  - 'Silge, J., & Robinson, D. (2017). *Text Mining with R: A Tidy Approach*. O''Reilly Media.'
+  - Csardi, G., & Nepusz, T. (2006). The igraph software package for complex network research. *InterJournal
+    Complex Systems*, 1695.
+exercises:
+- id: L3.1
+  points: 15
+  solution: 'Tingkat Dasar: prcomp, ukuran graf, dan tokenisasi.'
+  judul_r: Solusi Tingkat Dasar (R)
+  solusi_r: |
+    dim_data <- read.csv("data/data_dimensi.csv")
+    X <- dim_data[, paste0("x", 1:8)]
+    pc <- prcomp(X, scale. = TRUE)          # dibakukan
+    ragam <- pc$sdev^2 / sum(pc$sdev^2)     # proporsi keragaman
+
+    suppressPackageStartupMessages(library(igraph))
+    rel <- read.csv("data/data_relasi.csv")
+    rel <- rel[rel$dari != rel$ke, ]
+    g <- graph_from_data_frame(rel[, c("dari","ke")], directed = FALSE)
+    cat("simpul:", vcount(g), "sisi:", ecount(g), "\n")
+
+    teks <- c("pelayanan cepat dan baik", "antrean lambat sekali")
+    token <- lapply(strsplit(tolower(teks), "[^a-z]+"),
+                    function(x) x[nchar(x) > 2])
+    kosakata <- sort(unique(unlist(token)))
+  interpretasi: |
+    Isian yang benar berturut-turut adalah prcomp, TRUE, sum, graph_from_data_frame, vcount, ecount, tolower, dan unique. Argumen scale bernilai TRUE menjalankan analisis atas matriks korelasi, bukan matriks ragam-peragam; keduanya memberi hasil berbeda ketika satuan peubah tidak sama. Fungsi tolower wajib mendahului pemecahan agar huruf besar tidak menghasilkan istilah yang terhitung berbeda.
+- id: L3.2
+  points: 25
+  solution: 'Tingkat Menengah dan Lanjut: kontras jarak pada data nyata dan penentuan perlakuan.'
+  judul_r: Solusi Menengah dan Lanjut (R)
+  solusi_r: |
+    dim_data <- read.csv("data/data_dimensi.csv")
+
+    kontras_kolom <- function(d, p) {
+      X <- scale(d[, paste0("x", 1:p)])     # dibakukan agar sebanding
+      m <- as.matrix(dist(X)); v <- m[upper.tri(m)]
+      (max(v) - min(v)) / min(v)
+    }
+    p_uji <- c(2, 4, 6, 8)
+    hasil <- sapply(p_uji, function(p) kontras_kolom(dim_data, p))
+    tabel <- data.frame(peubah = p_uji, kontras = round(hasil, 3))
+    print(tabel, right = FALSE)
+
+    plot(p_uji, hasil, type = "b", pch = 19, col = "#0B6FB4", lwd = 2,
+         xlab = "Banyaknya peubah", ylab = "Kontras jarak",
+         main = "Kontras Jarak pada Data Dimensi")
+    grid(col = "grey85")
+  interpretasi: |
+    Pembakuan dilakukan lebih dahulu agar perbandingan antar-banyaknya peubah adil; tanpa itu, peubah bersatuan besar akan mendominasi jarak. Polanya sejalan dengan peragaan pada Contoh 3.1 --- kontras menyusut seiring bertambahnya peubah --- tetapi besarnya berbeda karena delapan peubah masih tergolong sedikit, sedangkan peragaan awal mencapai dua ratus dimensi. Penurunan yang tampak landai pada rentang kecil inilah yang menjelaskan mengapa kutukan dimensi kerap tidak disadari sampai peubahnya benar-benar banyak.
+- id: L3.D
+  points: 10
+  solution: 'Membetulkan kode: pembakuan PCA, kuadrat sdev, graf tak berarah, dan kata henti.'
+  judul_r: Solusi Membetulkan Kode (R)
+  solusi_r: |
+    suppressPackageStartupMessages(library(igraph))
+    dim_data <- read.csv("data/data_dimensi.csv")
+    X <- dim_data[, paste0("x", 1:8)]
+
+    # (a) pembakuan wajib bila satuan peubah berbeda
+    pc <- prcomp(X, scale. = TRUE)
+
+    # (b) proporsi keragaman memakai KUADRAT simpangan baku
+    ragam <- pc$sdev^2 / sum(pc$sdev^2)
+
+    # (c) hubungan timbal balik -> tak berarah, gelang dan sisi ganda dibuang
+    rel <- read.csv("data/data_relasi.csv")
+    rel <- rel[rel$dari != rel$ke, ]
+    g <- simplify(graph_from_data_frame(rel[, c("dari","ke")], directed = FALSE))
+
+    # (d) kata henti dibuang
+    teks <- c("pelayanan cepat dan baik", "antrean lambat dan panjang")
+    henti <- c("dan", "yang", "di", "ke", "dari")
+    token <- lapply(strsplit(tolower(teks), "[^a-z]+"),
+                    function(x) setdiff(x[nchar(x) > 2], henti))
+
+    # pemeriksaan wajib
+    round(sum(ragam), 8)        # 1
+    is_directed(g)              # FALSE
+  interpretasi: |
+    Empat kesalahan diperbaiki. Pertama, prcomp tanpa pembakuan bekerja atas matriks ragam-peragam sehingga peubah bersatuan besar mendominasi komponen pertama semata karena satuannya. Kedua, proporsi keragaman dihitung dari ragam, yaitu kuadrat simpangan baku; memakai simpangan baku langsung menghasilkan angka yang tetap berjumlah satu tetapi maknanya keliru sehingga kekeliruannya sukar terdeteksi. Ketiga, graf berarah pada hubungan timbal balik menggandakan sisi dan mengacaukan seluruh ukuran sentralitas. Keempat, kata henti yang tidak dibuang mendominasi kosakata tanpa menyumbang makna.
+- id: T3.1
+  points: 50
+  solution: 'Penugasan: dimensi tinggi, jaringan, dan teks beserta penilaian perlakuannya.'
+  judul_r: Solusi Penugasan (R)
+  solusi_r: |
+    suppressPackageStartupMessages(library(igraph))
+    dim_data <- read.csv("data/data_dimensi.csv")
+
+    # 1) kontras jarak menurut banyaknya peubah
+    kontras_kolom <- function(d, p) {
+      X <- scale(d[, paste0("x", 1:p)])
+      m <- as.matrix(dist(X)); v <- m[upper.tri(m)]
+      (max(v) - min(v)) / min(v)
+    }
+    p_uji <- c(2, 4, 6, 8)
+    k <- sapply(p_uji, function(p) kontras_kolom(dim_data, p))
+    print(data.frame(peubah = p_uji, kontras = round(k, 3)), right = FALSE)
+
+    # 2) PCA, scree, dan kumulatif
+    X <- dim_data[, paste0("x", 1:8)]
+    pc <- prcomp(X, scale. = TRUE)
+    ragam <- pc$sdev^2 / sum(pc$sdev^2)
+    par(mfrow = c(1, 2))
+    plot(ragam, type = "b", pch = 19, col = "#0B6FB4", main = "Scree",
+         xlab = "Komponen", ylab = "Proporsi")
+    abline(h = 1/ncol(X), col = "#F58220", lty = 2)
+    plot(cumsum(ragam), type = "b", pch = 19, col = "#0B6FB4", ylim = c(0,1),
+         main = "Kumulatif", xlab = "Komponen", ylab = "Kumulatif")
+    abline(h = 0.8, col = "#F58220", lty = 2)
+    par(mfrow = c(1, 1))
+    c(aturan_merata = sum(ragam > 1/ncol(X)),
+      aturan_80persen = which(cumsum(ragam) >= 0.8)[1])
+
+    # 3) muatan komponen pertama
+    round(sort(abs(pc$rotation[, 1]), decreasing = TRUE), 3)
+
+    # 4-5) jaringan dan sentralitas
+    rel <- read.csv("data/data_relasi.csv")
+    rel <- rel[rel$dari != rel$ke, ]
+    g <- simplify(graph_from_data_frame(rel[, c("dari","ke")], directed = FALSE))
+    cat("simpul:", vcount(g), "sisi:", ecount(g),
+        "kerapatan:", round(edge_density(g), 4),
+        "komponen:", components(g)$no, "\n")
+    sentral <- data.frame(simpul = V(g)$name, derajat = degree(g),
+                          kedekatan = closeness(g), keperantaraan = betweenness(g))
+    for (u in c("derajat","kedekatan","keperantaraan"))
+      cat(u, ":", paste(sentral$simpul[order(-sentral[[u]])][1:5], collapse=", "), "\n")
+
+    # 6) komunitas dan modularitas
+    set.seed(2026)
+    kom <- cluster_louvain(g)
+    cat("komunitas:", length(sizes(kom)),
+        "| modularitas:", round(modularity(kom), 4), "\n")
+
+    # 7-8) teks, termasuk kalimat menjebak
+    ulasan <- c("pelayanan cepat dan ramah", "antrean panjang sangat lambat",
+                "aplikasi mudah digunakan", "petugas sulit dihubungi",
+                "prosesnya memuaskan sekali", "sistem sering bermasalah",
+                "hasilnya baik walau agak lama", "tidak buruk untuk ukuran gratis",
+                "wah cepat sekali sampai tiga hari", "layanan ramah dan cepat")
+    henti <- c("dan","yang","di","ke","dari","sangat","sekali","untuk","agak","walau")
+    token <- lapply(strsplit(tolower(ulasan), "[^a-z]+"),
+                    function(x) setdiff(x[nchar(x) > 2], henti))
+    kosakata <- sort(unique(unlist(token)))
+    dtm <- t(sapply(token, function(t) as.integer(kosakata %in% t)))
+    colnames(dtm) <- kosakata
+    cat("DTM:", nrow(dtm), "x", ncol(dtm),
+        "| kejarangan:", round(mean(dtm == 0) * 100, 1), "persen\n")
+
+    positif <- c("cepat","ramah","mudah","memuaskan","baik")
+    negatif <- c("panjang","lambat","sulit","bermasalah","buruk","lama")
+    skor <- sapply(token, function(t) sum(t %in% positif) - sum(t %in% negatif))
+    print(data.frame(skor, teks = substr(ulasan, 1, 32)), right = FALSE)
+  interpretasi: |
+    Nomor 2 sengaja meminta kedua aturan dihitung sekaligus, sebab keduanya kerap memberi jawaban berbeda dan pemilihannya harus dijelaskan, bukan dipilih diam-diam. Nomor 3 memakai nilai mutlak muatan karena tanda hanya menyatakan arah, bukan besarnya sumbangan. Pada nomor 6, modularitas rendah pada jaringan yang dibangkitkan acak justru merupakan temuan yang benar dan wajib dilaporkan apa adanya --- algoritma Louvain selalu mengembalikan pengelompokan, sehingga keberadaan komunitas tidak boleh disimpulkan dari keluarannya saja. Nomor 8 adalah inti pelajaran modul: kalimat kedelapan bernegasi dan kesembilan bersindir, dan keduanya akan disalahlabeli oleh pendekatan leksikon. Kekeliruan itu bukan cacat kode melainkan batas pendekatannya, dan menyadari batas itu jauh lebih penting daripada memperoleh skor yang tampak rapi.
+references:
+- 'Han, J., Kamber, M., & Pei, J. (2011). Data Mining: Concepts and Techniques (3rd ed.). Morgan Kaufmann.'
+- Aggarwal, C. C., Hinneburg, A., & Keim, D. A. (2001). On the surprising behavior of distance metrics
+  in high dimensional space. ICDT 2001, 420-434.
+- Newman, M. E. J. (2018). Networks (2nd ed.). Oxford University Press.
+- 'Silge, J., & Robinson, D. (2017). Text Mining with R: A Tidy Approach. O''Reilly Media.'
+- Csardi, G., & Nepusz, T. (2006). The igraph software package for complex network research. InterJournal
+  Complex Systems, 1695.
+

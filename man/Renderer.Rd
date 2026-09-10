@@ -4,74 +4,75 @@
 \alias{Renderer}
 \title{Renderer (antarmuka Strategy)}
 \description{
+Renderer (antarmuka Strategy)
+
+Renderer (antarmuka Strategy)
+}
+\details{
 Semua renderer menyediakan \verb{$render(doc, output_dir)} yang mengubah
 \link{Document} abstrak menjadi PDF. Implementasi dapat saling menggantikan.
 }
 \section{Methods}{
 \subsection{Public methods}{
-  \itemize{
-    \item \href{#method-Renderer-initialize}{\code{Renderer$new()}}
-    \item \href{#method-Renderer-render}{\code{Renderer$render()}}
-    \item \href{#method-Renderer-clone}{\code{Renderer$clone()}}
-  }
+\itemize{
+\item \href{#method-Renderer-new}{\code{Renderer$new()}}
+\item \href{#method-Renderer-render}{\code{Renderer$render()}}
+\item \href{#method-Renderer-clone}{\code{Renderer$clone()}}
+}
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Renderer-initialize"></a>}}
-\if{latex}{\out{\hypertarget{method-Renderer-initialize}{}}}
-\subsection{\code{Renderer$new()}}{
-  Buat renderer
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Renderer$new(theme, logger = NULL)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{theme}}{\link{LatexTheme}}
-      \item{\code{logger}}{\link{Logger}}
-    }
-    \if{html}{\out{</div>}}
-  }
+\if{html}{\out{<a id="method-Renderer-new"></a>}}
+\if{latex}{\out{\hypertarget{method-Renderer-new}{}}}
+\subsection{Method \code{new()}}{
+Buat renderer
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Renderer$new(theme, logger = NULL)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{theme}}{\link{LatexTheme}}
+
+\item{\code{logger}}{\link{Logger}}
+}
+\if{html}{\out{</div>}}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Renderer-render"></a>}}
 \if{latex}{\out{\hypertarget{method-Renderer-render}{}}}
-\subsection{\code{Renderer$render()}}{
-  Render dokumen (di-override)
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Renderer$render(doc, output_dir)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{doc}}{\link{Document}}
-      \item{\code{output_dir}}{direktori keluaran}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{render()}}{
+Render dokumen (di-override)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Renderer$render(doc, output_dir)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{doc}}{\link{Document}}
+
+\item{\code{output_dir}}{direktori keluaran}
+}
+\if{html}{\out{</div>}}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Renderer-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-Renderer-clone}{}}}
-\subsection{\code{Renderer$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Renderer$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Renderer$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
 }

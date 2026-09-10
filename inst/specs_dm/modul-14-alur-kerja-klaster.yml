@@ -1,0 +1,571 @@
+number: 14
+title: Alur Kerja Pengelompokan, CLARA/CLARANS, dan Kajian Terkendali
+short_code: alur_kerja_klaster
+topic: Alur Kerja Pengelompokan
+pertemuan: 14
+sub_cpmk: 'Sub-CPMK 14: Mahasiswa mampu menjalankan alur kerja pengelompokan secara utuh --- dari memeriksa
+  kecenderungan berklaster, prapemrosesan, pemilihan ukuran jarak, hingga profiling --- memilih varian
+  k-Medoid yang sesuai ukuran data, serta membandingkan metode berbasis jarak dan berbasis kepadatan dengan
+  prosedur yang sah.'
+packages:
+- clustMixType
+- cluster
+- dbscan
+- factoextra
+- fpc
+- mclust
+contoh_title: Contoh Praktikum dengan R
+course:
+  matkul: Data Mining dan Big Data
+  matkul_besar: DATA MINING DAN BIG DATA
+  kode: K202505
+  ta: 2025/2026
+  semester: 6 (Genap)
+  prodi: D-IV Statistika
+  penyusun:
+  - Achmad Syahrul Choir
+body:
+  deskripsi:
+  - 'Modul 12 memperkenalkan metode pengelompokan satu per satu. Modul ini merangkainya menjadi **alur
+    kerja yang utuh**, lalu menambahkan dua hal yang diperlukan ketika pengelompokan dipakai pada pekerjaan
+    sungguhan: **varian k-Medoid untuk data besar** dan **prosedur membandingkan metode secara sah**.'
+  - 'Tiga bagian isinya:'
+  - '**Pertama, alur kerja enam tahap** --- memeriksa kecenderungan berklaster, prapemrosesan, memilih
+    ukuran jarak, memilih metode, validasi, dan profiling. Tahap pertama berperan sebagai penjaga: bila
+    data tidak memiliki kecenderungan berklaster, lima tahap berikutnya hanya menghasilkan pembagian yang
+    rapi tetapi hampa.'
+  - '**Kedua, CLARA dan CLARANS** --- dua varian k-Medoid yang membuat pengelompokan tetap mungkin ketika
+    PAM tidak lagi praktis karena matriks jaraknya terlalu besar.'
+  - '**Ketiga, kajian terkendali** --- pembuktian dengan data berpola diketahui bahwa siluet dan indeks
+    Dunn **tidak sah** dipakai menghakimi antar-keluarga metode, beserta prosedur perbandingan yang benar.'
+  - |-
+    \begin{kotakperhatian}[Kedudukan modul ini]
+    Modul ini bersifat \textbf{pelengkap} bagi Modul 12 dan memakai data yang sama (\texttt{data\_wilayah.csv}) ditambah data buatan yang dibangkitkan di dalam modul. Ia dapat dikerjakan sebagai sesi tersendiri, sebagai bahan pengayaan, atau sebagai sumber soal ujian praktik. Data bersifat \textbf{ilustratif hasil simulasi}, \textbf{bukan angka resmi} instansi mana pun.
+    \end{kotakperhatian}
+  - \vspace{1.2em}
+  alat:
+  - |-
+    - **R** (RStudio) dengan paket `cluster`, `clustMixType`, `dbscan`, `fpc`, dan `factoextra`.
+    - Pasang dengan `install.packages(c("cluster","clustMixType","dbscan","fpc","factoextra"))`.
+    - Berkas data: `data/data_wilayah.csv`.
+  - |-
+    ```{r siapkan}
+    suppressPackageStartupMessages({library(cluster); library(clustMixType)
+                                    library(dbscan); library(fpc); library(factoextra)})
+    wil <- read.csv("data/data_wilayah.csv", stringsAsFactors = TRUE)
+    num <- c("kepadatan", "pengeluaran", "akses_air", "akses_listrik", "lama_sekolah")
+    X   <- scale(wil[num])                       # pembakuan: wajib bagi jarak Euclidean
+    wil_c <- wil[, -1]                           # termasuk peubah kategorik
+    wil_z <- wil_c; wil_z[, num] <- scale(wil_z[, num])
+    G     <- daisy(wil_c, metric = "gower")
+  - |-
+    set.seed(2026)
+    pam3   <- pam(X, 3)                          # pembanding berbasis jarak
+    pam_g  <- pam(G, 3, diss = TRUE)
+    kp_baku <- kproto(wil_z, k = 3, verbose = FALSE)
+  - |-
+    ari <- function(a, b) { tb <- table(a, b); n <- sum(tb)
+      s_ij <- sum(choose(tb, 2)); s_i <- sum(choose(rowSums(tb), 2))
+      s_j <- sum(choose(colSums(tb), 2)); h <- s_i * s_j / choose(n, 2)
+      (s_ij - h) / ((s_i + s_j) / 2 - h) }
+    cat("objek siap:", nrow(wil), "wilayah,", length(num), "peubah numerik +2 kategorik\n")
+    ```
+  - |-
+    Bab ini bersifat **pelengkap** dan tidak wajib dikerjakan selama praktikum. Isinya dua hal:
+    alur kerja pengelompokan dari awal hingga profiling, dan varian k-Medoid untuk data besar
+    (**CLARA** dan **CLARANS**).
+  contoh:
+  - |-
+    \begin{kotaktujuan}
+    \textbf{Enam tahap yang sebaiknya dilalui berurutan}
+    \begin{enumerate}
+    \item \textbf{Memeriksa kecenderungan berklaster} --- apakah data memang layak dikelompokkan?
+    \item \textbf{Prapemrosesan} --- pembakuan; PCA bila peubah berkorelasi kuat.
+    \item \textbf{Memilih ukuran jarak} --- sesuai jenis peubah.
+    \item \textbf{Memilih metode} --- sesuai bentuk klaster yang diduga dan keberadaan derau.
+    \item \textbf{Validasi} --- ukuran internal, kestabilan, dan cakupan.
+    \item \textbf{Profiling} --- memerikan klaster dalam satuan asli agar dapat ditindaklanjuti.
+    \end{enumerate}
+    Tahap 1 adalah penjaga: bila gagal, lima tahap berikutnya hanya menghasilkan pembagian yang rapi tetapi hampa.
+    \end{kotaktujuan}
+  - contoh: Tahap 1 --- Memeriksa kecenderungan berklaster
+    narasi: |-
+      \kode{statistik Hopkins dan pembanding data acak}
+
+      ```{r alur-1}
+      suppressPackageStartupMessages(library(factoextra))
+      set.seed(2026)
+      h_data <- get_clust_tendency(X, n = 40, graph = FALSE)$hopkins_stat
+
+      # pembanding: data acak seragam pada rentang yang sama
+      set.seed(2026)
+      U <- apply(X, 2, function(x) runif(length(x), min(x), max(x)))
+      h_acak <- get_clust_tendency(U, n = 40, graph = FALSE)$hopkins_stat
+
+      round(c(hopkins_data = h_data, hopkins_acak = h_acak), 3)
+      ```
+
+      \begin{kotakinterpretasi}
+      Statistik Hopkins membandingkan jarak titik amatan ke tetangga terdekatnya dengan jarak titik acak ke tetangga terdekatnya. Nilai mendekati \textbf{0,5} berarti sebaran data tidak dapat dibedakan dari acak seragam; nilai mendekati 1 menandakan pengumpulan.
+
+      Hasilnya menohok: data wilayah memberi \textbf{0,501}, sedangkan data acak buatan memberi 0,511 --- praktis sama. \textbf{Data ini tidak memiliki kecenderungan berklaster sama sekali.}
+
+      Temuan ini menjelaskan seluruh angka rendah yang muncul sepanjang modul: siluet 0,09--0,19, ARI antar-metode 0,08, dan ketidaksepakatan antar-metode yang besar. Semuanya bukan kegagalan metode, melainkan cerminan setia dari data yang memang tidak berkelompok.
+
+      \textbf{Keputusan yang benar pada tahap ini: berhenti.} Melanjutkan ke lima tahap berikutnya boleh saja dilakukan --- sebagaimana modul ini melakukannya untuk keperluan pembelajaran --- tetapi hasilnya \textbf{tidak boleh} dilaporkan sebagai penemuan kelompok wilayah. Yang dilaporkan adalah: "pemeriksaan kecenderungan berklaster tidak menemukan struktur; pengelompokan tidak dilanjutkan".
+
+      Pada pekerjaan sungguhan, melewatkan tahap ini adalah sumber kekeliruan yang paling mahal --- sebab seluruh tahap berikutnya akan berjalan mulus dan menghasilkan tabel profil yang tampak meyakinkan.
+      \end{kotakinterpretasi}
+  - contoh: 'Tahap 2 --- Prapemrosesan: pembakuan dan PCA bila berkorelasi'
+    narasi: |-
+      \kode{memeriksa korelasi sebelum memutuskan PCA}
+
+      ```{r alur-2}
+      R <- cor(wil[, num])
+      round(R, 2)
+      cat("korelasi mutlak terbesar di luar diagonal:",
+          round(max(abs(R[upper.tri(R)])), 3), "\n")
+
+      pk <- prcomp(X)                                   # X sudah dibakukan
+      round(pk$sdev^2 / ncol(X), 3)                     # proporsi keragaman tiap komponen
+      cat("kumulatif dua komponen pertama:",
+          round(sum((pk$sdev^2 / ncol(X))[1:2]), 3), "\n")
+      ```
+
+      \begin{kotakinterpretasi}
+      \textbf{Pembakuan} hampir selalu diperlukan bila satuan peubah berbeda --- sudah dibahas pada awal modul. \textbf{PCA} berbeda: ia hanya berguna pada keadaan tertentu, dan memakainya secara membabi buta justru merugikan.
+
+      PCA membantu ketika peubah \textbf{berkorelasi kuat}. Jarak Euclidean memperlakukan tiap peubah sebagai arah tersendiri, sehingga dua peubah yang mengukur hal serupa akan memberi suara ganda pada perhitungan jarak. PCA menghilangkan korelasi itu dan sekaligus memampatkan dimensi.
+
+      Pada data ini korelasi mutlak terbesar hanya \textbf{0,13} --- kelima peubah praktis saling bebas. Akibatnya PCA tidak memampatkan apa pun: kelima komponen menyumbang $0{,}16$ sampai $0{,}24$ keragaman, dan dua komponen pertama hanya menampung $45\%$. Memakai dua komponen pertama di sini berarti \textbf{membuang lebih dari separuh informasi} tanpa memperoleh manfaat.
+
+      \textbf{Kaidah:} periksa matriks korelasi lebih dahulu. Bila ada korelasi kuat (katakanlah $|r| > 0{,}7$) pada beberapa pasangan, pertimbangkan PCA dan pertahankan komponen sampai $80\%$--$90\%$ keragaman. Bila tidak, kelompokkan pada peubah asli yang sudah dibakukan --- hasilnya lebih mudah ditafsirkan pada tahap profiling.
+      \end{kotakinterpretasi}
+  - contoh: Tahap 3 dan 4 --- Memilih ukuran jarak dan metode
+    narasi: |-
+      \kode{kerangka keputusan}
+
+      ```{r alur-34}
+      jenis_peubah <- sapply(wil[, -1], class)
+      table(jenis_peubah)
+
+      pilihan <- data.frame(
+        jenis_data = c("numerik saja", "kategorik saja", "campuran", "campuran"),
+        jarak      = c("Euclidean (data baku)", "cocok/tak cocok (Hamming)",
+                       "Gower", "Euclidean + ketidakcocokan"),
+        metode     = c("PAM, DBSCAN, OPTICS", "PAM atas matriks jarak",
+                       "PAM atas Gower", "k-Prototype"),
+        catatan    = c("bakukan lebih dahulu", "k-Modes juga dapat dipakai",
+                       "jangan dibakukan lebih dahulu", "bakukan bagian numerik"))
+      print(pilihan, row.names = FALSE)
+      ```
+
+      \begin{kotakinterpretasi}
+      Dua keputusan ini saling terkait dan sebaiknya diambil bersama.
+
+      \textbf{Ukuran jarak mengikuti jenis peubah.} Data wilayah memuat lima peubah numerik dan dua kategorik, sehingga pilihannya jatuh pada baris ketiga atau keempat tabel: PAM atas jarak Gower, atau k-Prototype. Keduanya sah, dan sebagaimana ditunjukkan Contoh 12.15 keduanya dapat memberi hasil yang berbeda --- sehingga pilihannya harus dinyatakan beserta alasannya.
+
+      \textbf{Metode mengikuti dugaan bentuk klaster dan keberadaan derau.} Bila klaster diduga membulat dan setiap amatan harus masuk suatu kelompok, pakai PAM. Bila bentuknya diduga tidak teratur atau ada amatan yang memang tidak termasuk kelompok mana pun, pakai DBSCAN atau OPTICS --- dengan konsekuensi sebagian amatan menjadi derau.
+
+      Pertanyaan yang menentukan bukan "metode mana yang paling canggih" melainkan \textbf{"apakah setiap wilayah harus masuk suatu kelompok?"}. Pada penetapan sasaran program, jawabannya sering \emph{ya} --- setiap wilayah harus dapat ditempatkan --- dan itu mengarahkan pada PAM atau k-Prototype, bukan pada metode berbasis kepadatan.
+      \end{kotakinterpretasi}
+  - contoh: Tahap 5 dan 6 --- Validasi dan profiling
+    narasi: |-
+      \kode{profil klaster dalam satuan asli}
+
+      ```{r alur-56}
+      kel <- pam_g$clustering                            # contoh: hasil PAM-Gower
+
+      # validasi ringkas
+      suppressPackageStartupMessages(library(fpc))
+      st <- cluster.stats(G, kel)
+      round(c(klaster = st$cluster.number, siluet = st$avg.silwidth,
+              dalam = st$average.within, antar = st$average.between), 3)
+
+      # profiling peubah numerik: satuan ASLI, bukan skor baku
+      profil <- aggregate(wil[, num], by = list(klaster = kel), FUN = mean)
+      profil[, num] <- round(profil[, num], 1)
+      profil$n <- as.numeric(table(kel))
+      print(profil, row.names = FALSE)
+
+      # profiling peubah kategorik: proporsi di dalam tiap klaster
+      round(prop.table(table(klaster = kel, status = wil$status), margin = 1), 3)
+      round(prop.table(table(klaster = kel, pulau = wil$pulau), margin = 1), 3)
+      ```
+
+      \begin{kotakinterpretasi}
+      \textbf{Validasi} sudah dibahas panjang pada Contoh 12.8 dan 12.9; yang perlu ditegaskan di sini adalah bahwa ia mendahului profiling. Memerikan klaster yang siluetnya 0,19 --- sebagaimana di sini --- tanpa menyebutkan angka itu berarti menyajikan pembagian yang tidak tegas seolah-olah tegas.
+
+      \textbf{Profiling} adalah tahap yang menghubungkan hasil dengan penggunanya, dan tiga hal wajib diperhatikan.
+
+      \textbf{Pertama, pakai satuan asli.} Pengguna memahami pengeluaran dalam rupiah dan lama sekolah dalam tahun, bukan dalam simpangan baku. Skor baku dipakai untuk menghitung, satuan asli untuk melaporkan.
+
+      \textbf{Kedua, sertakan ukuran klaster.} Profil rata-rata yang berdasar 12 wilayah tidak setara dengan yang berdasar 82 wilayah, dan pembaca berhak mengetahuinya.
+
+      \textbf{Ketiga, perikan peubah kategorik dengan proporsi \emph{di dalam} klaster.} Tabel proporsi baris memperlihatkan komposisi tiap klaster --- dan pada data ini memperlihatkan sesuatu yang penting: klaster terbentuk sebagian besar mengikuti \texttt{pulau}, yakni peubah kategorik mendominasi jarak Gower.
+
+      \textbf{Penamaan klaster} adalah pekerjaan analis, bukan keluaran algoritma. Nama seperti "wilayah tertinggal" membawa muatan kebijakan dan wajib disertai catatan bahwa penamaan itu berasal dari penafsiran, bukan dari data --- terlebih pada data yang, sebagaimana ditunjukkan Tahap 1, tidak memiliki kecenderungan berklaster.
+      \end{kotakinterpretasi}
+
+      # Varian k-Medoid untuk Data Besar: CLARA dan CLARANS
+
+      \begin{kotakrumus}
+      \textbf{Masalahnya.} PAM harus menghitung dan menyimpan seluruh $n(n-1)/2$ jarak berpasangan, dan tiap iterasi mencoba menukar tiap medoid dengan tiap bukan-medoid --- berbiaya sekitar $O(k(n-k)^2)$ per iterasi. Pada $n = 100.000$, matriks jaraknya saja memerlukan puluhan gigabita.
+
+      \textbf{CLARA} (\emph{Clustering LARge Applications}): tarik beberapa sampel berukuran kecil, jalankan PAM pada masing-masing, lalu pilih himpunan medoid yang memberi jarak rata-rata terkecil atas \emph{seluruh} data.
+
+      \textbf{CLARANS} (\emph{Clustering Large Applications based upon RANdomized Search}): alih-alih menarik sampel amatan, ia mengacak \emph{penukaran} yang dicoba. Dari satu himpunan medoid, ia memeriksa sejumlah tetangga acak (\texttt{maxneighbor}); bila ada yang lebih baik ia berpindah, bila tidak ia berhenti pada optimum lokal --- lalu diulang beberapa kali (\texttt{numlocal}).
+      \end{kotakrumus}
+  - contoh: CLARA dibandingkan dengan PAM
+    narasi: |-
+      \kode{clara pada data kecil dan pada data besar}
+
+      ```{r clara}
+      set.seed(2026)
+      cl <- clara(X, k = 3, samples = 50, pamLike = TRUE)
+      round(c(CLARA = cl$silinfo$avg.width, PAM = pam3$silinfo$avg.width), 4)
+      table(CLARA = cl$clustering, PAM = pam3$clustering)
+      cat("ARI CLARA vs PAM:", round(ari(cl$clustering, pam3$clustering), 3), "\n")
+
+      # pada data besar, PAM tidak lagi praktis
+      set.seed(2026)
+      besar <- matrix(rnorm(20000 * 5), 20000, 5)
+      waktu <- system.time(clara(besar, k = 4, samples = 50, pamLike = TRUE))[["elapsed"]]
+      cat("CLARA pada n = 20.000:", round(waktu, 2), "detik\n")
+      cat("PAM memerlukan matriks jarak sebesar:",
+          round(20000^2 * 8 / 2 / 1024^3, 1), "GB\n")
+      ```
+
+      \begin{kotakinterpretasi}
+      Pada data wilayah yang hanya berisi 200 amatan, CLARA justru memberi siluet sedikit lebih tinggi daripada PAM --- tetapi keanggotaannya \textbf{berbeda jauh} (ARI rendah). Perbedaan itu bukan pertanda CLARA lebih baik: CLARA hanya melihat sebagian data pada tiap sampel, sehingga pada $n$ kecil ia justru \textbf{kehilangan informasi} tanpa memperoleh manfaat kecepatan. \textbf{Pada $n$ kecil, pakailah PAM.}
+
+      Manfaat CLARA muncul pada ukuran yang membuat PAM tidak lagi praktis. Pada $n = 20.000$, CLARA selesai dalam hitungan detik, sedangkan PAM memerlukan matriks jarak berukuran sekitar 1,5 GB --- dan biaya penukarannya tumbuh kuadratik. Pada $n = 100.000$, matriks jaraknya sekitar 37 GB: PAM tidak dapat dijalankan sama sekali pada mesin biasa.
+
+      \textbf{Harga yang dibayar:} CLARA hanya dapat menemukan medoid yang \textbf{kebetulan tertarik ke dalam salah satu sampel}. Klaster kecil yang jarang tertarik akan luput. Karena itu perbesar \texttt{samples} bila klaster kecil diduga ada, dan laporkan berapa sampel yang dipakai.
+      \end{kotakinterpretasi}
+  - contoh: 'CLARANS: mengacak penukaran, bukan mengacak amatan'
+    narasi: |-
+      \kode{penerapan ringkas CLARANS}
+
+      ```{r clarans}
+      clarans <- function(D, k, numlocal = 5, maxneighbor = 40, seed = 2026) {
+        set.seed(seed); n <- attr(D, "Size"); M <- as.matrix(D)
+        biaya <- function(med) sum(apply(M[, med, drop = FALSE], 1, min))
+        terbaik <- NULL; biaya_terbaik <- Inf
+        for (l in seq_len(numlocal)) {
+          med <- sample(n, k); b <- biaya(med)
+          for (j in seq_len(maxneighbor)) {
+            calon <- med
+            calon[sample(k, 1)] <- sample(setdiff(seq_len(n), med), 1)
+            bc <- biaya(calon)
+            if (bc < b) { med <- calon; b <- bc }        # berpindah ke tetangga lebih baik
+          }
+          if (b < biaya_terbaik) { biaya_terbaik <- b; terbaik <- med }
+        }
+        list(medoid = terbaik, biaya = biaya_terbaik,
+             klaster = apply(M[, terbaik, drop = FALSE], 1, which.min))
+      }
+
+      D <- dist(X)
+      hasil <- clarans(D, k = 3)
+      cat("biaya CLARANS:", round(hasil$biaya, 2),
+          " | biaya PAM:", round(sum(pam3$clusinfo[, "av_diss"] * pam3$clusinfo[, "size"]), 2), "\n")
+      cat("ARI CLARANS vs PAM:", round(ari(hasil$klaster, pam3$clustering), 3), "\n")
+      table(CLARANS = hasil$klaster, PAM = pam3$clustering)
+      ```
+
+      \begin{kotakinterpretasi}
+      CLARANS ditulis di sini secara ringkas agar mekanismenya terlihat --- pada penggunaan sungguhan pakailah paket yang teruji. Perhatikan bedanya dengan CLARA: CLARA mengacak \textbf{amatan mana yang dilihat}, CLARANS melihat \textbf{seluruh} amatan tetapi mengacak \textbf{penukaran mana yang dicoba}.
+
+      Akibatnya berlawanan arah. CLARA dapat melewatkan klaster kecil karena tidak pernah menariknya ke dalam sampel; CLARANS tidak pernah melewatkan amatan, tetapi dapat berhenti pada \textbf{optimum lokal} karena tidak mencoba seluruh penukaran. Parameter \texttt{numlocal} mengendalikan berapa kali pencarian diulang dari titik awal berbeda --- persis peran \texttt{nstart} pada k-Means.
+
+      Biaya CLARANS di sini mendekati biaya PAM, dan ARI-nya menunjukkan kesepakatan yang wajar. Pada $n$ kecil hal itu wajar --- 40 tetangga acak sudah cukup menjelajahi ruang penukaran yang tidak besar. Pada $n$ besar, keduanya menjadi hampiran yang mutunya bergantung pada parameter, dan \textbf{parameter itu wajib dilaporkan}.
+
+      \textbf{Kaidah pemilihan:} $n$ kecil (sampai ribuan) $\rightarrow$ PAM; $n$ besar dengan klaster berukuran seimbang $\rightarrow$ CLARA; $n$ besar dengan klaster kecil yang penting $\rightarrow$ CLARANS atau CLARA dengan \texttt{samples} besar.
+      \end{kotakinterpretasi}
+
+      # Kajian Terkendali: Membandingkan Berbasis Jarak dan Berbasis Kepadatan
+
+      Bagian ini membuktikan pernyataan pada Contoh 12.17 --- bahwa siluet dan Dunn tidak sah menjadi hakim antar-keluarga metode --- dengan cara yang hanya mungkin dilakukan pada data buatan: memakai tiga data uji yang **polanya sudah diketahui**, sehingga jawaban benarnya tersedia untuk dicocokkan.
+  - contoh: Menyiapkan tiga data uji berpola diketahui
+    narasi: |-
+      \kode{membangkitkan data berlabel diketahui}
+
+      ```{r}
+      set.seed(2026)
+
+      # A: tiga gumpalan membulat
+      A <- rbind(cbind(rnorm(80, 0, .6),   rnorm(80, 0, .6)),
+                 cbind(rnorm(80, 5, .6),   rnorm(80, 0, .6)),
+                 cbind(rnorm(80, 2.5, .6), rnorm(80, 4, .6)))
+      lab_A <- rep(1:3, each = 80)
+
+      # B: dua cincin sepusat
+      sud <- runif(240, 0, 2 * pi)
+      B <- rbind(cbind(1.0 * cos(sud[1:120])   + rnorm(120, 0, .08),
+                       1.0 * sin(sud[1:120])   + rnorm(120, 0, .08)),
+                 cbind(3.0 * cos(sud[121:240]) + rnorm(120, 0, .08),
+                       3.0 * sin(sud[121:240]) + rnorm(120, 0, .08)))
+      lab_B <- rep(1:2, each = 120)
+
+      par(mfrow = c(1, 2), mar = c(4, 4, 3, 1))
+      plot(A, col = c("#0B6FB4","#F58220","#00A651")[lab_A], pch = 19, cex = .5,
+           xlab = "x1", ylab = "x2", main = "A: gumpalan membulat")
+      plot(B, col = c("#0B6FB4","#F58220")[lab_B], pch = 19, cex = .5,
+           xlab = "x1", ylab = "x2", main = "B: cincin sepusat")
+      par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
+      ```
+
+      \begin{kotakpenjelasan}
+      Dua data uji dibangkitkan dengan struktur yang sudah diketahui: tiga gumpalan membulat dan dua cincin sepusat. Label sebenarnya disimpan agar hasil pengelompokan dapat dinilai terhadap kebenaran. Keduanya digambar berdampingan.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Memakai data berlabel diketahui adalah satu-satunya cara menguji apakah suatu ukuran mutu sungguh dapat dipercaya. Pada pekerjaan nyata label semacam ini tidak tersedia --- justru itulah alasan pengelompokan dipakai --- sehingga percobaan terkendali seperti ini menjadi cara memeriksa alat sebelum memakainya pada data yang tidak diketahui jawabannya.
+
+      \end{kotakinterpretasi}
+  - contoh: Membandingkan kedua keluarga metode pada data bergumpal
+    narasi: |-
+      \kode{fungsi pembanding dua keluarga metode}
+
+      ```{r}
+      suppressPackageStartupMessages({library(dbscan); library(mclust)})
+
+      banding <- function(M, lab, k, eps, minpts = 5) {
+        Xs <- scale(M); D <- dist(Xs)
+        p  <- pam(Xs, k)                                  # berbasis jarak
+        db <- dbscan::dbscan(Xs, eps = eps, minPts = minpts)   # berbasis kepadatan
+        ii <- db$cluster > 0
+        data.frame(
+          metode   = c("berbasis jarak", "berbasis kepadatan"),
+          klaster  = c(k, length(setdiff(unique(db$cluster), 0))),
+          cakupan  = round(c(100, 100 * mean(ii)), 1),
+          ARI      = round(c(adjustedRandIndex(p$clustering, lab),
+                             adjustedRandIndex(db$cluster, lab)), 3))
+      }
+      print(banding(A, lab_A, k = 3, eps = 0.50), row.names = FALSE)
+      ```
+
+      \begin{kotakpenjelasan}
+      Sebuah fungsi disusun agar perbandingan dapat diulang pada data lain dengan perlakuan yang persis sama. Kedua metode menerima data terbakukan yang sama. Cakupan dihitung sebagai persentase amatan yang dikelompokkan, dan Adjusted Rand Index membandingkan hasil terhadap label sebenarnya.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Pada data bergumpal membulat, kedua keluarga metode sama-sama memulihkan struktur dengan baik dan nilai ARI keduanya berdekatan. Inilah keadaan tempat pemilihan metode tidak banyak berpengaruh, sehingga metode yang lebih sederhana dan lebih murah dapat dipilih tanpa kerugian.
+
+      \end{kotakinterpretasi}
+  - contoh: Membandingkan pada data berbentuk cincin
+    narasi: |-
+      \kode{membandingkan pada struktur tidak membulat}
+
+      ```{r}
+      print(banding(B, lab_B, k = 2, eps = 0.50), row.names = FALSE)
+
+      # menelusuri pengaruh Eps pada data cincin
+      for (e in c(0.20, 0.30, 0.40, 0.50)) {
+        Xs <- scale(B)
+        h  <- dbscan::dbscan(Xs, eps = e, minPts = 5)
+        cat(sprintf("eps=%.2f | klaster=%2d | derau=%4.1f%% | ARI=%.3f\n",
+                    e, length(setdiff(unique(h$cluster), 0)),
+                    100 * mean(h$cluster == 0),
+                    adjustedRandIndex(h$cluster, lab_B)))
+      }
+      ```
+
+      \begin{kotakpenjelasan}
+      Fungsi pembanding yang sama dijalankan pada data cincin. Setelah itu pengaruh Eps ditelusuri pada empat nilai, masing-masing dilaporkan banyaknya klaster, persentase derau, dan ARI-nya.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Di sinilah perbedaan kedua keluarga menjadi tajam. Metode berbasis jarak gagal hampir sepenuhnya --- ARI-nya mendekati nol, yang berarti hasilnya tidak lebih baik daripada pengelompokan acak --- sebab cincin dalam dan cincin luar tidak dapat dipisahkan oleh batas berbentuk bulat. Metode berbasis kepadatan memulihkannya dengan baik pada Eps yang tepat. Perhatikan pula bahwa ARI naik seiring Eps membesar sampai kedua cincin tergabung benar, lalu akan jatuh bila Eps terlalu besar dan keduanya melebur.
+
+      \end{kotakinterpretasi}
+  - contoh: Membuktikan siluet tidak sah sebagai hakim antar-keluarga
+    narasi: |-
+      \kode{menilai siluet atas pengelompokan yang benar}
+
+      ```{r}
+      Xs <- scale(B); D <- dist(Xs)
+      set.seed(2026)
+      p_cincin <- pam(Xs, 2)
+
+      sil_benar <- mean(silhouette(lab_B, D)[, 3])              # pengelompokan SEBENARNYA
+      sil_pam   <- mean(silhouette(p_cincin$clustering, D)[, 3]) # pengelompokan KELIRU
+
+      hasil <- data.frame(
+        pengelompokan = c("SEBENARNYA (dua cincin)", "berbasis jarak (keliru)"),
+        siluet = round(c(sil_benar, sil_pam), 4),
+        ARI    = round(c(1, adjustedRandIndex(p_cincin$clustering, lab_B)), 4))
+      print(hasil, right = FALSE)
+
+      cat("\nsiluet pengelompokan keliru lebih tinggi:",
+          sil_pam > sil_benar, "\n")
+      ```
+
+      \begin{kotakpenjelasan}
+      Indeks siluet dihitung dua kali atas data cincin yang sama: sekali bagi pengelompokan yang sungguh benar menurut label, dan sekali bagi pengelompokan berbasis jarak yang diketahui keliru. Keduanya disandingkan bersama nilai ARI-nya.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Inilah bukti pokok kajian ini. Pengelompokan yang sungguh benar memperoleh siluet \textbf{lebih rendah} daripada pengelompokan yang sepenuhnya keliru, sementara ARI-nya berlawanan arah. Sebabnya bukan kekeliruan perhitungan melainkan sifat ukurannya: siluet menghargai klaster yang rapat dan membulat, dan cincin bukan keduanya. Kesimpulannya tegas --- memilih keluarga metode berdasarkan siluet dapat menuntun pada pilihan yang justru salah, dan ukuran internal semacam ini hanya sah dipakai membandingkan pengelompokan \textbf{di dalam} keluarga yang sama.
+
+      \end{kotakinterpretasi}
+  - contoh: Menerapkan prosedur perbandingan yang adil
+    narasi: |-
+      \kode{menjalankan lima langkah perbandingan}
+
+      ```{r}
+      set.seed(2026)
+      # C: dua gumpalan disertai 10 persen derau seragam
+      Cd <- rbind(cbind(rnorm(90, 0, .5), rnorm(90, 0, .5)),
+                  cbind(rnorm(90, 4, .5), rnorm(90, 0, .5)),
+                  cbind(runif(20, -3, 7), runif(20, -3, 3)))
+      lab_C <- c(rep(1, 90), rep(2, 90), rep(0, 20))     # 0 = derau sebenarnya
+
+      Xc <- scale(Cd)
+      p_c  <- pam(Xc, 2)
+      db_c <- dbscan::dbscan(Xc, eps = 0.35, minPts = 5)
+      ii   <- db_c$cluster > 0
+
+      cat("== langkah 2: cakupan ==\n")
+      cat("berbasis jarak    : 100,0 persen\n")
+      cat("berbasis kepadatan:", round(100 * mean(ii), 1), "persen\n")
+
+      cat("\n== ketepatan penandaan derau ==\n")
+      cat("derau sebenarnya  :", sum(lab_C == 0), "\n")
+      cat("dikenali benar    :", sum(db_c$cluster == 0 & lab_C == 0), "\n")
+      cat("salah ditandai    :", sum(db_c$cluster == 0 & lab_C != 0), "\n")
+
+      cat("\n== langkah 4: ARI atas SELURUH amatan ==\n")
+      cat("berbasis jarak    :", round(adjustedRandIndex(p_c$clustering, lab_C), 3), "\n")
+      cat("berbasis kepadatan:", round(adjustedRandIndex(db_c$cluster, lab_C), 3), "\n")
+
+      cat("\n== langkah 3: ARI pada HIMPUNAN BAGIAN yang sama ==\n")
+      cat("berbasis jarak    :", round(adjustedRandIndex(p_c$clustering[ii], lab_C[ii]), 3), "\n")
+      cat("berbasis kepadatan:", round(adjustedRandIndex(db_c$cluster[ii], lab_C[ii]), 3), "\n")
+      ```
+
+      \begin{kotakpenjelasan}
+      Data ketiga dibentuk berupa dua gumpalan disertai sepersepuluh amatan derau seragam. Kedua metode dijalankan atas data terbakukan yang sama. Cakupan dilaporkan, ketepatan penandaan derau diperiksa, lalu ARI dihitung dua kali: atas seluruh amatan dan atas himpunan bagian yang dikelompokkan kedua metode.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Perbandingan dua ARI terakhir adalah inti prosedur ini. Atas seluruh amatan, metode berbasis kepadatan tampak unggul --- tetapi pada himpunan bagian yang sama, keduanya nyaris setara. Artinya keunggulan itu \textbf{sepenuhnya berasal dari kemampuan menandai derau}, bukan dari pengelompokan titik intinya yang lebih baik. Kesimpulan sepresisi itu hanya dapat diperoleh bila kedua ARI dilaporkan bersama-sama; melaporkan yang pertama saja akan melebih-lebihkan keunggulannya, sedangkan melaporkan yang kedua saja akan menyembunyikan manfaat nyatanya.
+
+      \end{kotakinterpretasi}
+  - contoh: Merangkum hasil kajian
+    narasi: |-
+      \kode{tabel rangkuman kajian}
+
+      ```{r}
+      rangkuman <- data.frame(
+        data = c("A gumpalan membulat", "B cincin sepusat", "C gumpalan + derau"),
+        cocok_jarak = c("ya", "tidak", "sebagian"),
+        cocok_kepadatan = c("ya", "ya", "ya"),
+        ukuran_yang_sah = c("ARI atau siluet", "ARI saja", "ARI pada himpunan sama"),
+        catatan = c("pilih yang lebih sederhana",
+                    "siluet menyesatkan",
+                    "laporkan cakupan"))
+      print(rangkuman, right = FALSE)
+      ```
+
+      \begin{kotakpenjelasan}
+      Ketiga percobaan dirangkum sebagai tabel yang memuat kesesuaian tiap keluarga metode, ukuran penilaian yang sah dipakai, dan catatan pokoknya.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Baris kedua adalah peringatan yang perlu dibawa ke pekerjaan nyata: ketika struktur data tidak membulat, ukuran internal berbasis kerapatan dan keterpisahan akan menyesatkan. Baris ketiga menegaskan bahwa cakupan wajib dilaporkan agar pembaca mengetahui atas berapa banyak amatan angka mutu itu dihitung. Adapun baris pertama mengingatkan bahwa ketika kedua metode sama baiknya, kesederhanaan menjadi alasan yang sah untuk memilih.
+
+      \end{kotakinterpretasi}
+  kunci:
+  - '# Angka Acuan dan Pembahasan'
+  - |-
+    Modul 13 bersifat pelengkap dan tidak memuat latihan berjenjang seperti modul lain; seluruh
+    contohnya dapat dijalankan langsung. Kunci ini memuat **angka acuan** yang seharusnya diperoleh
+    mahasiswa beserta pembahasan atas butir-butir yang paling sering disalahpahami.
+  - |-
+    ```{r acuan}
+    suppressPackageStartupMessages({library(cluster); library(dbscan); library(fpc)
+                                    library(factoextra)})
+    wil <- read.csv("data/data_wilayah.csv", stringsAsFactors = TRUE)
+    num <- c("kepadatan", "pengeluaran", "akses_air", "akses_listrik", "lama_sekolah")
+    X <- scale(wil[num])
+  - |-
+    set.seed(2026)                                                        # Tahap 1
+    h_data <- get_clust_tendency(X, n = 40, graph = FALSE)$hopkins_stat
+    set.seed(2026)
+    U <- apply(X, 2, function(x) runif(length(x), min(x), max(x)))
+    h_acak <- get_clust_tendency(U, n = 40, graph = FALSE)$hopkins_stat
+    round(c(hopkins_data = h_data, hopkins_acak = h_acak), 3)
+  - |-
+    R <- cor(wil[num])                                                    # Tahap 2
+    cat("korelasi mutlak terbesar:", round(max(abs(R[upper.tri(R)])), 3), "\n")
+    round((prcomp(X)$sdev^2 / ncol(X)), 3)
+  - |-
+    set.seed(2026); pam3 <- pam(X, 3); cl <- clara(X, 3, samples = 50, pamLike = TRUE)
+    ari <- function(a, b) { tb <- table(a, b); n <- sum(tb)
+      s_ij <- sum(choose(tb, 2)); s_i <- sum(choose(rowSums(tb), 2))
+      s_j <- sum(choose(colSums(tb), 2)); h <- s_i * s_j / choose(n, 2)
+      (s_ij - h) / ((s_i + s_j) / 2 - h) }
+    round(c(siluet_PAM = pam3$silinfo$avg.width, siluet_CLARA = cl$silinfo$avg.width,
+            ARI_CLARA_PAM = ari(cl$clustering, pam3$clustering)), 3)
+    ```
+  - |-
+    \begin{kotakkunci}
+    \textbf{Tahap 1 --- kecenderungan berklaster.} Hopkins data $0{,}501$ berbanding data acak
+    $0{,}511$. Keduanya praktis sama, sehingga \textbf{data tidak memiliki kecenderungan berklaster}.
+    Inilah butir terpenting seluruh modul: keputusan yang benar pada tahap ini adalah \textbf{berhenti},
+    dan melaporkan bahwa pemeriksaan tidak menemukan struktur.
+  - |-
+    Mahasiswa yang melanjutkan sampai profiling lalu menamai klaster --- tanpa menyebut hasil Tahap 1
+    --- dikenai pengurangan nilai meskipun seluruh kodenya benar. Sebaliknya, mahasiswa yang berhenti
+    di Tahap 1 dan menjelaskan alasannya memperoleh nilai penuh.
+  - |-
+    \textbf{Tahap 2 --- prapemrosesan.} Korelasi mutlak terbesar hanya $0{,}129$ dan kelima komponen
+    utama menyumbang $0{,}16$--$0{,}24$ keragaman. PCA karena itu \textbf{tidak berguna} di sini: dua
+    komponen pertama hanya menampung $45\%$, sehingga memakainya berarti membuang lebih dari separuh
+    informasi tanpa memperoleh apa pun. Jawaban yang menjalankan PCA "karena prosedurnya begitu"
+    menunjukkan kesalahpahaman --- PCA adalah alat bagi peubah yang \emph{berkorelasi}.
+  - |-
+    \textbf{CLARA versus PAM.} Siluet CLARA sedikit lebih tinggi ($0{,}155$ berbanding $0{,}127$),
+    tetapi ARI keduanya hanya $0{,}202$ --- keanggotaannya berbeda jauh. Kesimpulan yang benar:
+    \textbf{pada $n$ kecil pakailah PAM}; CLARA kehilangan informasi karena hanya melihat sebagian
+    data pada tiap sampel, tanpa memperoleh manfaat kecepatan yang berarti. Siluet yang lebih tinggi
+    \textbf{bukan} alasan memilih CLARA di sini.
+  - |-
+    \textbf{CLARANS.} Perbedaannya dengan CLARA sering tertukar. CLARA mengacak \textbf{amatan yang
+    dilihat} (sehingga dapat melewatkan klaster kecil); CLARANS melihat seluruh amatan tetapi
+    mengacak \textbf{penukaran yang dicoba} (sehingga dapat berhenti pada optimum lokal). Parameter
+    \texttt{numlocal} berperan seperti \texttt{nstart} pada k-Means.
+  - |-
+    \textbf{Kajian terkendali.} Butir yang wajib dipahami: pada data cincin, metode berbasis kepadatan
+    menemukan struktur yang benar sedangkan metode berbasis jarak gagal --- tetapi \textbf{siluet
+    justru memenangkan yang gagal}. Sebabnya, siluet mengandaikan klaster membulat, sehingga ia bukan
+    hakim yang netral. Yang sah dipakai lintas keluarga adalah kesepakatan (ARI terhadap label yang
+    diketahui), cakupan, dan kestabilan.
+    \end{kotakkunci}
+  - '# Catatan Penskoran untuk Pengajar'
+  - |-
+    \begin{kotakinfo}
+    \begin{itemize}
+    \item \textbf{Nilai penuh} bila: Tahap 1 dijalankan \emph{dan} kesimpulannya dipakai untuk
+          memutuskan apakah analisis dilanjutkan; keputusan memakai atau tidak memakai PCA didasarkan
+          pada matriks korelasi; pemilihan varian k-Medoid dikaitkan dengan ukuran data, bukan dengan
+          siluet; serta perbandingan antar-keluarga memakai ukuran yang sah beserta alasannya.
+    \item \textbf{Pengurangan nilai} bila: profiling disajikan tanpa menyebut hasil pemeriksaan
+          kecenderungan; PCA dijalankan pada peubah yang praktis tidak berkorelasi; CLARA dipilih pada
+          $n$ kecil dengan alasan siluet lebih tinggi; atau siluet dipakai membandingkan hasil DBSCAN
+          dengan hasil PAM.
+    \item Mahasiswa yang menjalankan uji kendali sendiri --- membangkitkan data acak berukuran sama
+          lalu menunjukkan bahwa metode tetap mengembalikan klaster --- layak memperoleh nilai
+          tambahan.
+    \end{itemize}
+    \end{kotakinfo}
+exercises: []
+

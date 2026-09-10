@@ -4,80 +4,79 @@
 \alias{ValidationReport}
 \title{Laporan hasil validasi}
 \description{
+Laporan hasil validasi
+
+Laporan hasil validasi
+}
+\details{
 Objek nilai sederhana berisi status dan pesan.
 }
 \section{Public fields}{
-  \if{html}{\out{<div class="r6-fields">}}
-  \describe{
-    \item{\code{ok}}{logis, TRUE bila valid}
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{ok}}{logis, TRUE bila valid}
 
-    \item{\code{messages}}{vektor pesan galat}
-  }
-  \if{html}{\out{</div>}}
+\item{\code{messages}}{vektor pesan galat}
+}
+\if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
-  \itemize{
-    \item \href{#method-ValidationReport-add}{\code{ValidationReport$add()}}
-    \item \href{#method-ValidationReport-print}{\code{ValidationReport$print()}}
-    \item \href{#method-ValidationReport-clone}{\code{ValidationReport$clone()}}
-  }
+\itemize{
+\item \href{#method-ValidationReport-add}{\code{ValidationReport$add()}}
+\item \href{#method-ValidationReport-print}{\code{ValidationReport$print()}}
+\item \href{#method-ValidationReport-clone}{\code{ValidationReport$clone()}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ValidationReport-add"></a>}}
 \if{latex}{\out{\hypertarget{method-ValidationReport-add}{}}}
-\subsection{\code{ValidationReport$add()}}{
-  Tambah galat
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{ValidationReport$add(msg)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{msg}}{pesan}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{add()}}{
+Tambah galat
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ValidationReport$add(msg)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{msg}}{pesan}
+}
+\if{html}{\out{</div>}}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ValidationReport-print"></a>}}
 \if{latex}{\out{\hypertarget{method-ValidationReport-print}{}}}
-\subsection{\code{ValidationReport$print()}}{
-  Cetak laporan
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{ValidationReport$print(...)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{...}}{diabaikan}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{print()}}{
+Cetak laporan
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ValidationReport$print(...)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{...}}{diabaikan}
+}
+\if{html}{\out{</div>}}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ValidationReport-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-ValidationReport-clone}{}}}
-\subsection{\code{ValidationReport$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{ValidationReport$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ValidationReport$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
 }

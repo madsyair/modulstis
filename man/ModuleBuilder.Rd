@@ -5,61 +5,61 @@
 \title{Pembangun modul (menampilkan soal)}
 \description{
 Pembangun modul (menampilkan soal)
+
+Pembangun modul (menampilkan soal)
 }
 \section{Super class}{
-\code{\link[modulstis:ContentBuilder]{ContentBuilder}} -> \code{ModuleBuilder}
+\code{\link[modulstis:ContentBuilder]{modulstis::ContentBuilder}} -> \code{ModuleBuilder}
 }
 \section{Methods}{
 \subsection{Public methods}{
-  \itemize{
-    \item \href{#method-ModuleBuilder-build}{\code{ModuleBuilder$build()}}
-    \item \href{#method-ModuleBuilder-clone}{\code{ModuleBuilder$clone()}}
-  }
+\itemize{
+\item \href{#method-ModuleBuilder-build}{\code{ModuleBuilder$build()}}
+\item \href{#method-ModuleBuilder-clone}{\code{ModuleBuilder$clone()}}
 }
-\if{html}{\out{<details open><summary>Inherited methods</summary>
+}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
 <ul>
-  <li><span class="pkg-link" data-pkg="modulstis" data-topic="ContentBuilder" data-id="initialize"><a href='../../modulstis/html/ContentBuilder.html#method-ContentBuilder-initialize'><code>ContentBuilder$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="modulstis" data-topic="ContentBuilder" data-id="initialize"><a href='../../modulstis/html/ContentBuilder.html#method-ContentBuilder-initialize'><code>modulstis::ContentBuilder$initialize()</code></a></span></li>
 </ul>
-</details>}}
+</details>
+}}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ModuleBuilder-build"></a>}}
 \if{latex}{\out{\hypertarget{method-ModuleBuilder-build}{}}}
-\subsection{\code{ModuleBuilder$build()}}{
-  Bangun Document modul
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{ModuleBuilder$build(spec)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{spec}}{\link{ModuleSpec}}
-    }
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    objek \link{Document}
-  }
+\subsection{Method \code{build()}}{
+Bangun Document modul
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ModuleBuilder$build(spec)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{spec}}{\link{ModuleSpec}}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+objek \link{Document}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ModuleBuilder-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-ModuleBuilder-clone}{}}}
-\subsection{\code{ModuleBuilder$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{ModuleBuilder$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ModuleBuilder$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
 }

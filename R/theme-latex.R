@@ -11,7 +11,7 @@ bps_palette <- function() {
   )
 }
 
-#' Tema LaTeX bergaya BPS
+#' Tema LaTeX bernuansa warna logo BPS
 #'
 #' Memusatkan seluruh keputusan tampilan sebagai design token dan
 #' menghasilkan preamble LaTeX untuk modul maupun kunci jawaban.

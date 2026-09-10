@@ -4,77 +4,84 @@
 \alias{Document}
 \title{Dokumen abstrak backend-agnostik}
 \description{
+Dokumen abstrak backend-agnostik
+
+Dokumen abstrak backend-agnostik
+}
+\details{
 Hasil \code{ContentBuilder$build()}: memuat metadata + badan Markdown/Rmd
 yang dapat diserialisasi oleh renderer bookdown atau Quarto.
 }
 \section{Public fields}{
-  \if{html}{\out{<div class="r6-fields">}}
-  \describe{
-    \item{\code{number}}{nomor modul}
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{number}}{nomor modul}
 
-    \item{\code{kind}}{"modul" atau "kunci"}
+\item{\code{kind}}{"modul" atau "kunci"}
 
-    \item{\code{short_code}}{kode singkat}
+\item{\code{short_code}}{kode singkat}
 
-    \item{\code{topic}}{topik header}
+\item{\code{topic}}{topik header}
 
-    \item{\code{cover}}{string LaTeX cover}
+\item{\code{cover}}{string LaTeX cover}
 
-    \item{\code{body}}{badan Markdown/Rmd}
+\item{\code{body}}{badan Markdown/Rmd}
 
-    \item{\code{preamble}}{preamble LaTeX}
-  }
-  \if{html}{\out{</div>}}
+\item{\code{preamble}}{preamble LaTeX}
+}
+\if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
-  \itemize{
-    \item \href{#method-Document-initialize}{\code{Document$new()}}
-    \item \href{#method-Document-clone}{\code{Document$clone()}}
-  }
+\itemize{
+\item \href{#method-Document-new}{\code{Document$new()}}
+\item \href{#method-Document-clone}{\code{Document$clone()}}
+}
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Document-initialize"></a>}}
-\if{latex}{\out{\hypertarget{method-Document-initialize}{}}}
-\subsection{\code{Document$new()}}{
-  Buat dokumen
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Document$new(number, kind, short_code, topic, cover, body, preamble)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{number}}{nomor modul}
-      \item{\code{kind}}{\code{"modul"} atau \code{"kunci"}}
-      \item{\code{short_code}}{kode singkat untuk nama berkas}
-      \item{\code{topic}}{topik untuk header halaman}
-      \item{\code{cover}}{string LaTeX sampul pembatas}
-      \item{\code{body}}{badan dokumen (Markdown/Rmd)}
-      \item{\code{preamble}}{preamble LaTeX}
-    }
-    \if{html}{\out{</div>}}
-  }
+\if{html}{\out{<a id="method-Document-new"></a>}}
+\if{latex}{\out{\hypertarget{method-Document-new}{}}}
+\subsection{Method \code{new()}}{
+Buat dokumen
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Document$new(number, kind, short_code, topic, cover, body, preamble)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{number}}{nomor modul}
+
+\item{\code{kind}}{\code{"modul"} atau \code{"kunci"}}
+
+\item{\code{short_code}}{kode singkat untuk nama berkas}
+
+\item{\code{topic}}{topik untuk header halaman}
+
+\item{\code{cover}}{string LaTeX sampul pembatas}
+
+\item{\code{body}}{badan dokumen (Markdown/Rmd)}
+
+\item{\code{preamble}}{preamble LaTeX}
+}
+\if{html}{\out{</div>}}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Document-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-Document-clone}{}}}
-\subsection{\code{Document$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Document$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Document$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
 }

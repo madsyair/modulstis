@@ -4,61 +4,64 @@
 \alias{GlossarySection}
 \title{Bagian Daftar Istilah (Section)}
 \description{
+Bagian Daftar Istilah (Section)
+
+Bagian Daftar Istilah (Section)
+}
+\details{
 Bila \code{content} kosong, otomatis memakai bank istilah bawaan (disaring
 menurut \code{spec$topic} bila relevan).
 }
 \section{Super class}{
-\code{\link[modulstis:Section]{Section}} -> \code{GlossarySection}
+\code{\link[modulstis:Section]{modulstis::Section}} -> \code{GlossarySection}
 }
 \section{Methods}{
 \subsection{Public methods}{
-  \itemize{
-    \item \href{#method-GlossarySection-render_body}{\code{GlossarySection$render_body()}}
-    \item \href{#method-GlossarySection-clone}{\code{GlossarySection$clone()}}
-  }
+\itemize{
+\item \href{#method-GlossarySection-render_body}{\code{GlossarySection$render_body()}}
+\item \href{#method-GlossarySection-clone}{\code{GlossarySection$clone()}}
 }
-\if{html}{\out{<details open><summary>Inherited methods</summary>
+}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
 <ul>
-  <li><span class="pkg-link" data-pkg="modulstis" data-topic="Section" data-id="initialize"><a href='../../modulstis/html/Section.html#method-Section-initialize'><code>Section$initialize()</code></a></span></li>
-  <li><span class="pkg-link" data-pkg="modulstis" data-topic="Section" data-id="render"><a href='../../modulstis/html/Section.html#method-Section-render'><code>Section$render()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="modulstis" data-topic="Section" data-id="initialize"><a href='../../modulstis/html/Section.html#method-Section-initialize'><code>modulstis::Section$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="modulstis" data-topic="Section" data-id="render"><a href='../../modulstis/html/Section.html#method-Section-render'><code>modulstis::Section$render()</code></a></span></li>
 </ul>
-</details>}}
+</details>
+}}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-GlossarySection-render_body"></a>}}
 \if{latex}{\out{\hypertarget{method-GlossarySection-render_body}{}}}
-\subsection{\code{GlossarySection$render_body()}}{
-  Render isi daftar istilah
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{GlossarySection$render_body(ctx)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{ctx}}{\link{RenderContext}}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{render_body()}}{
+Render isi daftar istilah
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{GlossarySection$render_body(ctx)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{ctx}}{\link{RenderContext}}
+}
+\if{html}{\out{</div>}}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-GlossarySection-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-GlossarySection-clone}{}}}
-\subsection{\code{GlossarySection$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{GlossarySection$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{GlossarySection$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
 }

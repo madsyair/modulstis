@@ -62,29 +62,44 @@ latex_prose_safe <- function(x) {
   if (is.null(x) || length(x) == 0) return(x)
   one <- function(s) {
     s <- as.character(s)
-    # pisahkan menjadi token: `...` (kode) atau teks biasa
+    # Langkah 1: LINDUNGI rumus matematika $...$ (yang tanda dolarnya belum
+    # di-escape) dengan penanda sementara. Tanpa ini, tanda dolarnya ikut
+    # di-escape sehingga "$\\mathbf{...}$" gagal dikompilasi dengan pesan
+    # "\\mathbf allowed only in math mode".
+    m <- gregexpr("(?<!\\\\)\\$[^$]+(?<!\\\\)\\$", s, perl = TRUE)
+    rumus <- regmatches(s, m)[[1]]
+    if (length(rumus)) {
+      regmatches(s, m) <- list(sprintf("@@RUMUS%03d@@", seq_along(rumus)))
+    }
+    # Langkah 2: pisahkan kode `...` dari teks biasa, lalu escape keduanya.
     pieces <- regmatches(s, gregexpr("`[^`]+`|[^`]+", s, perl = TRUE))[[1]]
     out <- vapply(pieces, function(p) {
       if (startsWith(p, "`") && endsWith(p, "`")) {
         inner <- substr(p, 2, nchar(p) - 1)
         inner <- gsub("(?<!\\\\)([_%$&#])", "\\\\\\1", inner, perl = TRUE)
-        # ^ dan ~ bukan sekadar karakter khusus: keduanya berdiri sendiri
-        # sebagai perintah, sehingga menuntut bentuk \\textasciicircum{}
-        # dan \\textasciitilde{} --- bukan penambahan garis miring.
         inner <- gsub("(?<!\\\\)\\^", "\\\\textasciicircum{}", inner, perl = TRUE)
         inner <- gsub("(?<!\\\\)~", "\\\\textasciitilde{}", inner, perl = TRUE)
         paste0("\\texttt{", inner, "}")
       } else {
-        # escape karakter khusus LaTeX yang belum ter-escape
+        # penebalan gaya markdown tidak diproses pandoc di dalam lingkungan
+        # LaTeX, sehingga diubah lebih dahulu menjadi \textbf{}
+        p <- gsub("\\*\\*([^*]+)\\*\\*", "\\\\textbf{\\1}", p, perl = TRUE)
         p <- gsub("(?<!\\\\)([_%$&#])", "\\\\\\1", p, perl = TRUE)
         p <- gsub("(?<!\\\\)\\^", "\\\\textasciicircum{}", p, perl = TRUE)
         gsub("(?<!\\\\)~", "\\\\textasciitilde{}", p, perl = TRUE)
       }
     }, character(1), USE.NAMES = FALSE)
-    paste0(out, collapse = "")
+    hasil <- paste0(out, collapse = "")
+    # Langkah 3: kembalikan rumus apa adanya.
+    for (k in seq_along(rumus)) {
+      hasil <- sub(sprintf("@@RUMUS%03d@@", k), rumus[k], hasil, fixed = TRUE)
+    }
+    hasil
   }
   vapply(x, one, character(1), USE.NAMES = FALSE)
 }
+
+
 
 # data.table memeriksa penanda ini pada paket pemanggil sebelum mengaktifkan
 # sintaks khasnya (mis. `dt[, list(...), by = ...]`). Tanpa penanda, `[` jatuh

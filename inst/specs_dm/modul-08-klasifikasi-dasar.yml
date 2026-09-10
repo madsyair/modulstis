@@ -1,0 +1,913 @@
+number: 8
+title: Klasifikasi Dasar
+short_code: klasifikasi_dasar
+topic: Klasifikasi Dasar
+pertemuan: 8
+sub_cpmk: |
+  Sub-CPMK 8: Mahasiswa mampu membangun, menala, dan menafsirkan model klasifikasi dasar --- pohon keputusan, Naive Bayes, dan regresi logistik terregularisasi --- serta memilih di antaranya berdasarkan sifat data dan kebutuhan penjelasan.
+packages:
+- caret
+- rpart
+- rpart.plot
+- naivebayes
+- glmnet
+contoh_title: Contoh Praktikum dengan R
+tambahan_title: 'Tambahan: Menafsirkan Model kepada Pengguna'
+course:
+  matkul: Data Mining dan Big Data
+  matkul_besar: DATA MINING DAN BIG DATA
+  kode: K202505
+  semester: 6 (Genap)
+  prodi: D-IV Statistika
+  penyusun:
+  - Achmad Syahrul Choir
+datasets:
+- name: data_nasabah
+  role: contoh
+  recipe:
+    kind: tabular
+    n: 900
+    seed: 2026
+    columns:
+      id:
+        type: integer
+        min: 1
+        max: 900
+      umur:
+        type: integer
+        min: 21
+        max: 68
+      pendapatan:
+        type: numeric
+        min: 1500
+        max: 28000
+        digits: 2
+      lama_kerja:
+        type: numeric
+        min: 0
+        max: 32
+        digits: 1
+      rasio_cicilan:
+        type: numeric
+        min: 0
+        max: 0.85
+        digits: 3
+      jumlah_kartu:
+        type: integer
+        min: 0
+        max: 7
+      riwayat_telat:
+        type: integer
+        min: 0
+        max: 12
+      pendidikan:
+        type: category
+        levels:
+        - SMP
+        - SMA
+        - D3
+        - S1
+        - S2
+        probs:
+        - 0.08
+        - 0.42
+        - 0.18
+        - 0.26
+        - 0.06
+      status_rumah:
+        type: category
+        levels:
+        - Milik
+        - Sewa
+        - Keluarga
+        probs:
+        - 0.45
+        - 0.35
+        - 0.2
+      gagal_bayar:
+        type: category
+        levels:
+        - ya
+        - tidak
+        probs:
+        - 0.22
+        - 0.78
+body:
+  deskripsi:
+  - |
+    Modul 6 membangun kerangka penilaian dan Modul 7 merumuskan persoalan. Modul ini akhirnya membangun modelnya. Tiga keluarga model dipilih sebagai pembuka karena ketiganya mewakili cara berpikir yang berbeda dalam menduga kelas.
+  - |
+    Pohon keputusan membelah ruang peubah menjadi kotak-kotak; Naive Bayes menghitung peluang berdasarkan anggapan kebebasan; regresi logistik menduga peluang melalui kombinasi linier peubah. Ketiganya mudah dijelaskan kepada pengguna, dan justru itulah alasan keduanya diajarkan lebih dahulu daripada model yang lebih kuat tetapi lebih tertutup.
+  - |
+    Modul ini memakai `caret` karena satu pemanggilan fungsi sudah menangani prapemrosesan, validasi silang, dan penalaan sekaligus. Beban teknisnya rendah sehingga perhatian dapat dipusatkan pada gagasan model. Mulai Modul 9, pembahasan beralih ke `tidymodels` ketika kebutuhan prapemrosesan menjadi lebih rumit.
+  - |-
+    \begin{kotakperhatian}[Tentang data]
+    Berkas data pada modul ini adalah \textbf{data simulasi} (\texttt{set.seed(2026)}), \textbf{bukan data nyata} dan \textbf{bukan data resmi} instansi mana pun. Peubah dibangkitkan saling bebas terhadap sasaran, sehingga kinerja mendekati tebakan acak adalah hasil yang benar dan wajib dilaporkan apa adanya.
+    \end{kotakperhatian}
+  tujuan:
+  - 'Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:'
+  - 1. **Menjelaskan** cara kerja pohon keputusan beserta ukuran ketidakmurniannya.
+  - 2. **Membangun** dan **menggambar** pohon keputusan serta membacanya sebagai aturan.
+  - 3. **Menala** parameter kerumitan pohon dan menjelaskan akibat pemangkasan.
+  - 4. **Menerapkan** Naive Bayes serta menyebutkan anggapan yang mendasarinya.
+  - 5. **Menerapkan** regresi logistik terregularisasi dan menafsirkan koefisiennya.
+  - 6. **Membandingkan** ketiga model pada lipatan yang sama secara adil.
+  - 7. **Memilih** model berdasarkan sifat data dan kebutuhan penjelasan, bukan akurasi semata.
+  - 8. **Menjelaskan** hasil model kepada pengguna tanpa istilah teknis.
+  alat:
+  - 'Perangkat dan bahan yang diperlukan:'
+  - '- **R** (RStudio) dengan paket `caret`, `rpart`, `rpart.plot`, `naivebayes`, dan `glmnet`.'
+  - '- Pasang dengan `install.packages(c("caret","rpart","rpart.plot","naivebayes","glmnet"))`.'
+  - '- Berkas data: `data/data_nasabah.csv`.'
+  instruksi:
+  - 'Ikuti tahapan berikut:'
+  - '**Sebelum praktikum:** pasang seluruh paket; siapkan berkas data; baca kembali bagian ukuran penilaian
+    pada Modul 6.'
+  - '**Selama praktikum:** kerjakan Contoh berurutan. Perhatikan bahwa ketiga model menuntut prapemrosesan
+    yang berbeda --- ini menjadi sorotan utama modul.'
+  - |-
+    **Pembagian kerja:** Contoh dan Latihan dikerjakan di kelas; **Penugasan dikerjakan di luar sesi**.
+
+    **Pengumpulan:** susun laporan R Markdown, render ke PDF atau HTML, kumpulkan melalui Google Classroom.
+  teori:
+  - '### Kedudukan pada CRISP-DM'
+  - |
+    Modul ini menempati tahap Modeling. Perlu diingat bahwa pemilihan model bukan langkah pertama melainkan kelanjutan dari perumusan persoalan dan penyiapan data --- keduanya sudah menentukan model mana yang masuk akal dipertimbangkan.
+  - '### Pohon Keputusan'
+  - |
+    Pohon keputusan membelah data secara berulang berdasarkan satu peubah pada setiap simpul, memilih pembelahan yang paling memurnikan kelompok hasilnya. Proses berhenti ketika penambahan pembelahan tidak lagi memperbaiki kemurnian secara berarti.
+  - |-
+    \begin{kotakrumus}
+    \textbf{Dua ukuran ketidakmurnian} pada simpul dengan proporsi kelas $p_{k}$:\\[6pt]
+    Gini: $\;G = 1 - \sum_{k} p_{k}^{2}$\\[6pt]
+    Entropi: $\;H = -\sum_{k} p_{k} \log_{2} p_{k}$\\[6pt]
+    Keduanya bernilai nol ketika simpul murni dan memuncak ketika kelas berimbang.
+    \end{kotakrumus}
+  - |
+    Pembelahan dipilih yang paling menurunkan ketidakmurnian tertimbang. Kedua ukuran umumnya menghasilkan pohon yang mirip; Gini sedikit lebih cepat dihitung sehingga menjadi bawaan pada banyak perangkat lunak.
+  - |-
+    \begin{kotakinfo}[Sifat pohon keputusan]\par\smallskip
+    \begin{tabular}{@{}p{4.2cm}p{10.2cm}@{}}
+    \textbf{Tidak perlu dibakukan} & pembelahan hanya membandingkan urutan, bukan jarak\\[3pt]
+    \textbf{Menerima kategori} & tanpa pengodean boneka\\[3pt]
+    \textbf{Tahan pencilan} & pencilan hanya memengaruhi satu daun\\[3pt]
+    \textbf{Mudah dijelaskan} & dapat dibaca sebagai rangkaian aturan\\[3pt]
+    \textbf{Tidak stabil} & perubahan kecil data dapat mengubah pohon\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Sifat terakhir adalah kelemahan pokoknya. Ketidakstabilan itulah yang kelak diatasi hutan acak pada Modul 9 dengan merata-ratakan banyak pohon.
+  - '### Pemangkasan dan Parameter Kerumitan'
+  - |
+    Pohon yang dibiarkan tumbuh penuh akan menghafal data latih. Pemangkasan mengendalikannya melalui parameter kerumitan: pembelahan hanya dipertahankan bila memperbaiki kemurnian melebihi ambang tersebut.
+  - |-
+    \begin{kotaktips}
+    Parameter kerumitan bekerja terbalik dengan besarnya pohon. Nilai yang besar menghasilkan pohon kecil yang mungkin kurang luwes (\emph{underfitting}), sedangkan nilai mendekati nol menghasilkan pohon besar yang cenderung mengalami \emph{overfitting}. Nilainya karena itu wajib ditala, bukan dibiarkan pada nilai bawaan.
+    \end{kotaktips}
+  - '### Naive Bayes'
+  - |
+    Naive Bayes menghitung peluang kelas memakai kaidah Bayes, dengan satu anggapan penyederhana: seluruh peubah saling bebas apabila kelasnya diketahui.
+  - |-
+    \begin{kotakrumus}
+    $P(y \mid x_{1}, \ldots, x_{p}) \propto P(y) \prod_{j=1}^{p} P(x_{j} \mid y)$\\[6pt]
+    Anggapan kebebasan mengubah peluang gabungan yang sukar diduga menjadi hasil kali peluang tunggal yang mudah diduga.
+    \end{kotakrumus}
+  - |-
+    \begin{kotaksalah}[Anggapan kebebasan hampir selalu keliru]
+    Peubah pada data nyata jarang benar-benar saling bebas; pendapatan dan lama bekerja jelas berkaitan. Menariknya, Naive Bayes tetap kerap bekerja baik meski anggapannya dilanggar --- sebab untuk \emph{menggolongkan} yang diperlukan hanya urutan peluang antar-kelas, bukan besarnya yang tepat. Namun peluang keluarannya menjadi tidak dapat dipercaya sebagai peluang, dan karena itu tidak layak dipakai menetapkan ambang berbasis biaya.
+    \end{kotaksalah}
+  - '### Regresi Logistik dan Regularisasi'
+  - |
+    Regresi logistik menduga peluang melalui fungsi logistik atas kombinasi linier peubah. Keunggulan pokoknya terletak pada koefisien yang dapat ditafsirkan sebagai rasio odds.
+  - |-
+    \begin{kotakrumus}
+    $\log \dfrac{P(y=1)}{1 - P(y=1)} = \beta_{0} + \beta_{1}x_{1} + \cdots + \beta_{p}x_{p}$\\[6pt]
+    Kenaikan satu satuan $x_{j}$ mengalikan odds dengan $e^{\beta_{j}}$, dengan peubah lain ditahan tetap.
+    \end{kotakrumus}
+  - |
+    Regularisasi menambahkan hukuman atas besarnya koefisien sehingga model tidak terlalu bergantung pada satu peubah. Ridge mengecilkan seluruh koefisien, Lasso dapat menolkan sebagian sehingga sekaligus menyeleksi peubah, sedangkan Elastic Net menggabungkan keduanya.
+  - |-
+    \begin{kotakinfo}[Tiga bentuk regularisasi]\par\smallskip
+    \begin{tabular}{@{}p{2.6cm}p{3.0cm}p{8.8cm}@{}}
+    \textbf{Bentuk} & \textbf{alpha} & \textbf{Sifat}\\
+    \hline
+    Ridge & 0 & seluruh koefisien mengecil, tak ada yang nol\\[2pt]
+    Lasso & 1 & sebagian koefisien tepat nol; menyeleksi peubah\\[2pt]
+    Elastic Net & 0 sampai 1 & gabungan; baik saat peubah berkorelasi\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotakperhatian}[Regularisasi menuntut pembakuan]
+    Hukuman dikenakan atas besarnya koefisien, sedangkan besar koefisien bergantung satuan peubah. Tanpa pembakuan, peubah bersatuan besar memperoleh koefisien kecil sehingga nyaris tidak terhukum, dan sebaliknya. Pembakuan karena itu \textbf{wajib} bagi Ridge, Lasso, maupun Elastic Net --- berbeda dari pohon keputusan yang tidak memerlukannya sama sekali.
+    \end{kotakperhatian}
+  - '### Memilih di Antara Ketiganya'
+  - |-
+    \begin{kotakinfo}[Perbandingan tiga model dasar]\par\smallskip
+    \begin{tabular}{@{}p{3.0cm}p{3.4cm}p{3.4cm}p{3.6cm}@{}}
+     & \textbf{Pohon} & \textbf{Naive Bayes} & \textbf{Log. terregularisasi}\\
+    \hline
+    Pembakuan & tidak perlu & tidak perlu & \textbf{wajib}\\[2pt]
+    Pengodean & tidak perlu & tidak perlu & wajib\\[2pt]
+    Pencilan & tahan & cukup tahan & peka\\[2pt]
+    Peluang & kasar & tak terkalibrasi & terkalibrasi baik\\[2pt]
+    Penjelasan & aturan & peluang bersyarat & rasio odds\\[2pt]
+    Kestabilan & rendah & tinggi & tinggi\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Baris keempat menentukan ketika ambang hendak ditetapkan berdasarkan biaya sebagaimana dibahas pada Modul 7. Peluang yang tidak terkalibrasi membuat perhitungan biaya menjadi keliru meski penggolongannya tepat.
+  contoh:
+  - contoh: Menyiapkan data dan memeriksa sasaran
+    kode_r: |-
+      nasabah <- read.csv("data/data_nasabah.csv", stringsAsFactors = TRUE)
+      nasabah$gagal_bayar <- factor(nasabah$gagal_bayar, levels = c("ya", "tidak"))
+      nasabah$id <- NULL                      # penanda tidak dimodelkan
+      str(nasabah)
+
+      prop <- prop.table(table(nasabah$gagal_bayar))
+      cat("proporsi kelas:", round(prop, 4), "\n")
+      cat("acuan tebakan mayoritas:", round(max(prop), 4), "\n")
+    judul_r: membaca data dan menetapkan acuan
+    eval: true
+    penjelasan: |
+      Data dibaca lalu taraf sasaran diurutkan agar kelas yang diperhatikan berada di depan. Kolom penanda dibuang seluruhnya karena caret tidak mengenal peran penanda sebagaimana recipes. Proporsi kelas dan acuan tebakan mayoritas dihitung.
+    interpretasi: |
+      Membuang penanda secara tegas adalah langkah wajib pada caret. Bila dibiarkan, nomor urut ikut dimodelkan dan pohon dapat membelah berdasarkan nomor itu, menghasilkan model yang tampak sangat baik pada data latih semata karena menghafal. Kekeliruan ini tidak menimbulkan galat sehingga hanya ketahuan bila kita memeriksa peubah mana yang dipakai model.
+  - contoh: Membagi data dan menetapkan skema penilaian
+    kode_r: |-
+      suppressPackageStartupMessages(library(caret))
+      set.seed(2026)
+      idx <- createDataPartition(nasabah$gagal_bayar, p = 0.75, list = FALSE)
+      lat <- nasabah[idx, ]; uji <- nasabah[-idx, ]
+
+      kendali <- trainControl(method = "cv", number = 5,
+                              classProbs = TRUE,
+                              summaryFunction = twoClassSummary,
+                              savePredictions = "final")
+
+      round(rbind(latih = prop.table(table(lat$gagal_bayar)),
+                  uji   = prop.table(table(uji$gagal_bayar))), 4)
+    judul_r: createDataPartition dan trainControl
+    eval: true
+    penjelasan: |
+      Fungsi createDataPartition membagi data dengan penstrataan otomatis pada peubah sasaran. Objek kendali menetapkan skema validasi silang lima lipatan, meminta dugaan peluang dihitung, dan menyimpan dugaan pada lipatan terbaik untuk pemeriksaan lanjutan.
+    interpretasi: |
+      Argumen savePredictions bernilai final berguna karena memungkinkan matriks kekeliruan dan kurva ROC dihitung dari hasil validasi silang, bukan dari data uji. Dengan begitu data uji tetap tersimpan utuh sampai akhir. Perhatikan pula bahwa summaryFunction diganti agar ROC menjadi ukuran pemilihan, bukan akurasi yang menyesatkan pada data timpang.
+  - contoh: Membangun pohon keputusan
+    kode_r: |-
+      suppressPackageStartupMessages({library(rpart); library(rpart.plot)})
+      set.seed(2026)
+      m_pohon <- train(gagal_bayar ~ ., data = lat, method = "rpart",
+                       tuneLength = 8, trControl = kendali, metric = "ROC")
+
+      print(m_pohon$results[order(-m_pohon$results$ROC), c("cp","ROC","Sens","Spec")][1:5, ],
+            row.names = FALSE)
+      cat("\ncp terbaik:", signif(m_pohon$bestTune$cp, 4),
+          "| ROC:", round(max(m_pohon$results$ROC), 4), "\n")
+    judul_r: train dengan method rpart
+    eval: true
+    penjelasan: |
+      Pohon dilatih dengan delapan nilai parameter kerumitan yang dicoba otomatis melalui tuneLength. Hasilnya diurutkan menurun berdasarkan ROC dan lima teratas ditampilkan bersama sensitivitas serta spesifisitasnya.
+    interpretasi: |
+      Perhatikan bahwa tidak ada argumen preProcess sama sekali --- pohon memang tidak memerlukan pembakuan maupun pengodean. Perhatikan pula hubungan terbalik antara parameter kerumitan dan ukuran pohon: nilai kecil menghasilkan pohon besar. Bila nilai terbaik jatuh pada ujung rentang yang dicoba, rentangnya perlu diperluas.
+  - contoh: Menggambar dan membaca pohon sebagai aturan
+    kode_r: |-
+      rpart.plot(m_pohon$finalModel, type = 2, extra = 104,
+                 box.palette = "BuGn", branch.lty = 3, shadow.col = "grey85",
+                 main = "Pohon Keputusan Gagal Bayar")
+
+      cat("banyaknya daun:", sum(m_pohon$finalModel$frame$var == "<leaf>"), "\n")
+      cat("kedalaman maksimum:",
+          max(rpart:::tree.depth(as.numeric(rownames(m_pohon$finalModel$frame)))), "\n")
+    judul_r: rpart.plot dan pembacaan struktur
+    eval: true
+    penjelasan: |
+      Pohon digambar dengan tipe dua yang menampilkan label pada tiap cabang. Argumen extra bernilai 104 menampilkan proporsi kelas beserta persentase amatan pada tiap simpul. Banyaknya daun dihitung dari kerangka model, dan kedalamannya dihitung dari penomoran simpulnya.
+    interpretasi: |
+      Setiap jalur dari akar ke daun dapat dibaca sebagai satu aturan bersyarat, dan justru kemampuan itulah keunggulan utama pohon. Perhatikan persentase amatan pada tiap daun: daun yang hanya memuat sedikit amatan menghasilkan dugaan yang tidak stabil, sehingga aturan darinya tidak layak disampaikan sebagai temuan.
+  - contoh: Menala parameter kerumitan secara terarah
+    kode_r: |-
+      set.seed(2026)
+      kisi_cp <- data.frame(cp = c(0.001, 0.003, 0.005, 0.01, 0.02, 0.05, 0.1))
+      m_pohon2 <- train(gagal_bayar ~ ., data = lat, method = "rpart",
+                        tuneGrid = kisi_cp, trControl = kendali, metric = "ROC")
+
+      hasil_cp <- m_pohon2$results[, c("cp", "ROC", "ROCSD")]
+      print(round(hasil_cp, 4), row.names = FALSE)
+
+      plot(hasil_cp$cp, hasil_cp$ROC, type = "b", pch = 19, lwd = 2, log = "x",
+           col = "#0B6FB4", ylim = range(c(hasil_cp$ROC - hasil_cp$ROCSD,
+                                           hasil_cp$ROC + hasil_cp$ROCSD)),
+           xlab = "Parameter kerumitan cp (skala log)", ylab = "ROC (validasi silang)",
+           main = "Penalaan Parameter Kerumitan")
+      arrows(hasil_cp$cp, hasil_cp$ROC - hasil_cp$ROCSD,
+             hasil_cp$cp, hasil_cp$ROC + hasil_cp$ROCSD,
+             angle = 90, code = 3, length = 0.05, col = "grey50")
+      grid(col = "grey88")
+    judul_r: tuneGrid dan palang simpangan baku
+    eval: true
+    penjelasan: |
+      Rentang parameter kerumitan ditetapkan sendiri agar mencakup nilai yang sangat kecil sampai besar. Hasilnya digambar pada skala logaritma karena nilainya berlipat, dilengkapi palang simpangan baku antar-lipatan.
+    interpretasi: |
+      Panjang palang menyatakan seberapa besar hasil berubah antar-lipatan. Bila palang antar-nilai saling bertumpang tindih, selisih rata-ratanya tidak berarti dan memilih yang tertinggi menjadi sembarang. Dalam keadaan demikian, memilih parameter kerumitan yang lebih besar --- yakni pohon yang lebih sederhana --- lebih dapat dipertanggungjawabkan.
+  - contoh: Membangun model Naive Bayes
+    kode_r: |-
+      suppressPackageStartupMessages(library(naivebayes))
+      set.seed(2026)
+      m_nb <- train(gagal_bayar ~ ., data = lat, method = "naive_bayes",
+                    trControl = kendali, metric = "ROC")
+
+      print(m_nb$results[, c("usekernel", "laplace", "ROC", "Sens", "Spec")],
+            row.names = FALSE)
+      cat("\nROC terbaik:", round(max(m_nb$results$ROC), 4),
+          "| pemulusan kernel:", m_nb$bestTune$usekernel, "\n")
+    judul_r: train dengan method naive_bayes
+    eval: true
+    penjelasan: |
+      Naive Bayes dilatih dengan dua pilihan yang dicoba otomatis: pendugaan kepekatan memakai sebaran normal atau memakai pemulusan kernel, serta koreksi Laplace bagi kategori yang tak muncul.
+    interpretasi: |
+      Pemulusan kernel biasanya unggul ketika peubah numerik tidak menyebar normal, dengan biaya perhitungan yang lebih besar. Koreksi Laplace mencegah persoalan peluang nol: bila suatu taraf kategori tak pernah muncul bersama suatu kelas pada data latih, tanpa koreksi seluruh hasil kali peluangnya menjadi nol sehingga kelas itu mustahil terpilih.
+  - contoh: Membangun regresi logistik terregularisasi
+    kode_r: |-
+      suppressPackageStartupMessages(library(glmnet))
+      set.seed(2026)
+      m_glm <- train(gagal_bayar ~ ., data = lat, method = "glmnet",
+                     preProcess = c("center", "scale"),   # WAJIB bagi regularisasi
+                     tuneLength = 5, trControl = kendali, metric = "ROC")
+
+      cat("alpha terbaik:", round(m_glm$bestTune$alpha, 3),
+          "| lambda terbaik:", signif(m_glm$bestTune$lambda, 4), "\n")
+      cat("ROC terbaik:", round(max(m_glm$results$ROC), 4), "\n")
+
+      bentuk <- ifelse(m_glm$bestTune$alpha == 0, "Ridge",
+                ifelse(m_glm$bestTune$alpha == 1, "Lasso", "Elastic Net"))
+      cat("bentuk regularisasi terpilih:", bentuk, "\n")
+    judul_r: train dengan method glmnet dan pembakuan
+    eval: true
+    penjelasan: |
+      Model dilatih dengan pembakuan yang ditetapkan lewat preProcess. Argumen tuneLength meminta caret mencoba beberapa nilai alpha dan lambda secara otomatis. Bentuk regularisasi disimpulkan dari nilai alpha terpilih.
+    interpretasi: |
+      Bandingkan dengan kedua model sebelumnya yang tidak memakai preProcess sama sekali. Perbedaan ini bukan soal selera melainkan keharusan: tanpa pembakuan, hukuman regularisasi dikenakan secara tidak adil antar-peubah yang satuannya berbeda. Inilah wujud nyata prinsip kesesuaian prapemrosesan dengan model.
+  - contoh: Menafsirkan koefisien sebagai rasio odds
+    kode_r: |-
+      koef <- coef(m_glm$finalModel, s = m_glm$bestTune$lambda)
+      koef_df <- data.frame(peubah = rownames(koef), koefisien = as.numeric(koef))
+      koef_df <- koef_df[koef_df$peubah != "(Intercept)", ]
+      koef_df$odds_ratio <- round(exp(koef_df$koefisien), 4)
+      koef_df$koefisien <- round(koef_df$koefisien, 4)
+
+      aktif <- koef_df[koef_df$koefisien != 0, ]
+      aktif <- aktif[order(-abs(aktif$koefisien)), ]
+      print(utils::head(aktif, 8), row.names = FALSE)
+
+      cat("\npeubah dinolkan regularisasi:", sum(koef_df$koefisien == 0),
+          "dari", nrow(koef_df), "\n")
+    judul_r: coef dan exp untuk rasio odds
+    eval: true
+    penjelasan: |
+      Koefisien diambil pada nilai lambda terpilih. Intersep dikeluarkan karena tidak ditafsirkan sebagai rasio odds. Rasio odds diperoleh dengan mengeksponenkan koefisien, lalu peubah yang tidak dinolkan diurutkan menurut besarnya pengaruh.
+    interpretasi: |
+      Rasio odds di atas satu menaikkan peluang kelas yang diperhatikan, sedangkan di bawah satu menurunkannya. Perlu ditekankan bahwa karena peubah sudah dibakukan, koefisien menyatakan pengaruh kenaikan satu simpangan baku --- bukan satu satuan asli. Menafsirkannya dalam satuan asli adalah kekeliruan yang sering terjadi. Perhatikan pula banyaknya peubah yang dinolkan: itulah seleksi peubah yang dikerjakan Lasso secara otomatis.
+  - contoh: Memperagakan ketidakstabilan pohon
+    kode_r: |-
+      set.seed(2026)
+      pohon_kecil <- lapply(1:4, function(i) {
+        s <- lat[sample(nrow(lat), round(0.9 * nrow(lat))), ]
+        rpart::rpart(gagal_bayar ~ ., data = s,
+                     control = rpart::rpart.control(cp = 0.01))
+      })
+
+      par(mfrow = c(2, 2), mar = c(1, 1, 3, 1))
+      for (i in 1:4)
+        rpart.plot(pohon_kecil[[i]], type = 2, extra = 0, cex = 0.55,
+                   box.palette = "BuGn", main = paste("Contoh acak", i))
+      par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
+
+      akar <- sapply(pohon_kecil, function(p)
+        as.character(p$frame$var[1]))
+      cat("peubah pada simpul akar:", paste(akar, collapse = ", "), "\n")
+      cat("banyaknya peubah akar berbeda:", length(unique(akar)), "dari 4\n")
+    judul_r: empat pohon dari contoh yang sedikit berbeda
+    eval: true
+    penjelasan: |
+      Empat pohon dibangun dari empat contoh acak berukuran sembilan puluh persen data latih. Keempatnya digambar berdampingan, lalu peubah pada simpul akar masing-masing dibandingkan.
+    interpretasi: |
+      Bila peubah akarnya berbeda-beda padahal datanya nyaris sama, itulah wujud ketidakstabilan pohon yang disebut pada Teori. Akibatnya serius bagi penafsiran: aturan yang disampaikan kepada pengguna dapat berubah total hanya karena beberapa amatan berganti. Justru kelemahan inilah yang diatasi hutan acak pada Modul 9 dengan merata-ratakan banyak pohon --- dengan harga kehilangan kemudahan penjelasan.
+  - contoh: Membandingkan kebutuhan prapemrosesan antar-model
+    kode_r: |-
+      set.seed(2026)
+      tanpa_baku <- train(gagal_bayar ~ ., data = lat, method = "glmnet",
+                          tuneLength = 5, trControl = kendali, metric = "ROC")
+      set.seed(2026)
+      pohon_baku <- train(gagal_bayar ~ ., data = lat, method = "rpart",
+                          preProcess = c("center", "scale"),
+                          tuneLength = 8, trControl = kendali, metric = "ROC")
+
+      banding_pp <- data.frame(
+        model = c("glmnet dibakukan", "glmnet TANPA baku",
+                  "rpart tanpa baku", "rpart dibakukan"),
+        ROC = round(c(max(m_glm$results$ROC), max(tanpa_baku$results$ROC),
+                      max(m_pohon2$results$ROC), max(pohon_baku$results$ROC)), 4))
+      print(banding_pp, right = FALSE)
+
+      cat("\nselisih pada glmnet:",
+          round(max(m_glm$results$ROC) - max(tanpa_baku$results$ROC), 4), "\n")
+      cat("selisih pada rpart :",
+          round(max(m_pohon2$results$ROC) - max(pohon_baku$results$ROC), 4), "\n")
+    judul_r: menguji akibat pembakuan pada dua model
+    eval: true
+    penjelasan: |
+      Dua model dilatih ulang dengan perlakuan prapemrosesan yang dibalik: regularisasi tanpa pembakuan, dan pohon dengan pembakuan. Keempat hasilnya disandingkan, lalu selisihnya dihitung bagi tiap model.
+    interpretasi: |
+      Selisih pada pohon seharusnya mendekati nol, sebab pembelahan hanya membandingkan urutan nilai dan urutan tidak berubah oleh pembakuan --- pembakuan pada pohon tidak merugikan, hanya sia-sia. Sebaliknya selisih pada regularisasi lazimnya nyata, sebab hukuman menjadi tidak adil antar-peubah yang satuannya berbeda. Peragaan ini mengubah aturan kesesuaian prapemrosesan dari hafalan menjadi sesuatu yang terbukti angkanya.
+  - contoh: Membandingkan ketiga model pada lipatan yang sama
+    kode_r: |-
+      hasil_banding <- resamples(list(Pohon = m_pohon2,
+                                      NaiveBayes = m_nb,
+                                      LogRegularisasi = m_glm))
+      ringkas <- summary(hasil_banding)
+      print(round(ringkas$statistics$ROC[, c("Min.", "Mean", "Max.")], 4))
+
+      cat("\nselisih rata-rata ROC terhadap model terbaik:\n")
+      rata <- ringkas$statistics$ROC[, "Mean"]
+      print(round(max(rata) - rata, 4))
+    judul_r: resamples untuk perbandingan adil
+    eval: true
+    penjelasan: |
+      Fungsi resamples menyandingkan ketiga model yang dilatih pada lipatan validasi silang yang sama. Ringkasannya memuat nilai terkecil, rata-rata, dan terbesar ROC antar-lipatan. Selisih terhadap model terbaik dihitung sebagai pembanding.
+    interpretasi: |
+      Kunci keadilan perbandingan adalah benih acak yang sama sehingga lipatannya identik bagi ketiga model; bila lipatannya berbeda, selisih yang terlihat boleh jadi hanya akibat pembagian. Perhatikan rentang antara nilai terkecil dan terbesar --- rentang lebar menandakan model tidak stabil antar-lipatan, dan model semacam itu berisiko meski rata-ratanya tinggi.
+  - contoh: Menggambarkan perbandingan model
+    kode_r: |-
+      bwplot(hasil_banding, metric = "ROC",
+             main = "Sebaran ROC antar-Lipatan Validasi Silang")
+    judul_r: bwplot atas objek resamples
+    eval: true
+    penjelasan: |
+      Diagram kotak-garis digambar dari objek hasil perbandingan, menampilkan sebaran ROC tiap model pada kelima lipatan.
+    interpretasi: |
+      Diagram ini lebih informatif daripada tabel rata-rata karena memperlihatkan sebarannya. Model dengan rata-rata sedikit lebih rendah tetapi sebaran sempit kerap lebih layak dipilih daripada model bermata-rata tinggi dengan sebaran lebar --- terutama bila hasilnya akan dipakai berulang pada data baru yang bermacam-macam.
+  - contoh: Menilai model terpilih pada data uji
+    kode_r: |-
+      terbaik <- list(Pohon = m_pohon2, NaiveBayes = m_nb, LogRegularisasi = m_glm)[[
+        names(which.max(rata))]]
+      cat("model terpilih:", names(which.max(rata)), "\n\n")
+
+      duga_kelas <- predict(terbaik, uji)
+      duga_prob  <- predict(terbaik, uji, type = "prob")
+
+      cm <- confusionMatrix(duga_kelas, uji$gagal_bayar, positive = "ya")
+      print(cm$table)
+      cat("\nakurasi:", round(cm$overall["Accuracy"], 4),
+          "| acuan mayoritas:", round(max(prop.table(table(uji$gagal_bayar))), 4), "\n")
+      cat("sensitivitas:", round(cm$byClass["Sensitivity"], 4),
+          "| presisi:", round(cm$byClass["Precision"], 4),
+          "| F1:", round(cm$byClass["F1"], 4), "\n")
+    judul_r: confusionMatrix pada data uji
+    eval: true
+    penjelasan: |
+      Model berata-rata ROC tertinggi dipilih secara terprogram, lalu dipakai menduga pada data uji. Fungsi confusionMatrix menghitung matriks kekeliruan beserta belasan ukuran turunannya sekaligus, dengan kelas yang diperhatikan ditetapkan lewat argumen positive.
+    interpretasi: |
+      Menetapkan argumen positive secara tegas adalah keharusan; bila dibiarkan, caret memilih taraf pertama menurut abjad dan seluruh ukuran dapat mengukur kelas yang keliru. Bandingkan akurasi terhadap acuan mayoritas --- bila berdekatan, model belum menyumbang apa pun betapapun rumitnya.
+  - contoh: Memeriksa kalibrasi peluang
+    kode_r: |-
+      kelompok <- cut(duga_prob$ya, breaks = seq(0, 1, by = 0.1), include.lowest = TRUE)
+      kalibrasi <- data.frame(
+        selang = levels(kelompok),
+        n = as.numeric(table(kelompok)),
+        rata_dugaan = round(tapply(duga_prob$ya, kelompok, mean), 4),
+        proporsi_nyata = round(tapply(uji$gagal_bayar == "ya", kelompok, mean), 4))
+      kalibrasi <- kalibrasi[!is.na(kalibrasi$rata_dugaan) & kalibrasi$n >= 5, ]
+      print(kalibrasi, row.names = FALSE)
+
+      plot(kalibrasi$rata_dugaan, kalibrasi$proporsi_nyata, type = "b", pch = 19,
+           lwd = 2, col = "#0B6FB4", xlim = c(0, 1), ylim = c(0, 1),
+           xlab = "Rata-rata peluang dugaan", ylab = "Proporsi sebenarnya",
+           main = "Kurva Kalibrasi")
+      abline(0, 1, col = "#C0392B", lty = 2, lwd = 2)
+      grid(col = "grey88")
+    judul_r: membandingkan peluang dugaan dan proporsi nyata
+    eval: true
+    penjelasan: |
+      Peluang dugaan dipotong menjadi sepuluh selang. Pada tiap selang dihitung rata-rata peluang dugaan dan proporsi kejadian yang sesungguhnya. Selang beranggota kurang dari lima dibuang karena proporsinya tidak stabil.
+    interpretasi: |
+      Model yang terkalibrasi baik menghasilkan titik yang berimpit dengan garis diagonal: ketika model menduga peluang tiga puluh persen, kira-kira tiga puluh persen di antaranya memang terjadi. Kalibrasi menentukan ketika ambang hendak ditetapkan berdasarkan biaya --- peluang yang tidak terkalibrasi membuat perhitungan biaya menjadi keliru meski penggolongannya tepat. Inilah alasan Naive Bayes kurang sesuai untuk keperluan itu.
+  latihan:
+  - Kerjakan bertahap. Gunakan `data/data_nasabah.csv`.
+  - '#### Tingkat Dasar (melengkapi kode)'
+  - \latihan{Menyiapkan dan membagi data}
+  - |-
+    ```{r eval=FALSE}
+    library(caret)
+    nasabah <- read.csv("data/data_nasabah.csv", stringsAsFactors = TRUE)
+    nasabah$id <- ____                       # buang penanda
+    set.seed(2026)
+    idx <- ____(nasabah$gagal_bayar, p = 0.75, list = FALSE)
+    lat <- nasabah[idx, ]; uji <- nasabah[____, ]
+    ```
+  - \latihan{Pohon keputusan}
+  - |-
+    ```{r eval=FALSE}
+    library(rpart); library(rpart.plot)
+    kendali <- trainControl(method = "cv", number = 5, classProbs = ____,
+                            summaryFunction = twoClassSummary)
+    m <- ____(gagal_bayar ~ ., data = lat, method = "____",
+              tuneLength = 8, trControl = kendali, metric = "ROC")
+    ____(m$finalModel, type = 2, extra = 104)   # gambar pohon
+    ```
+  - \latihan{Regresi terregularisasi}
+  - |-
+    ```{r eval=FALSE}
+    library(glmnet)
+    m2 <- train(gagal_bayar ~ ., data = lat, method = "glmnet",
+                preProcess = c("____", "____"),   # pembakuan WAJIB
+                tuneLength = 5, trControl = kendali, metric = "ROC")
+    koef <- ____(m2$finalModel, s = m2$bestTune$lambda)
+    ```
+  - '#### Tingkat Menengah (menulis sendiri)'
+  - \latihan{Membandingkan tiga model}
+  - Latih ketiga model --- pohon, Naive Bayes, dan regresi terregularisasi --- pada lipatan validasi silang
+    yang sama. Sajikan perbandingannya sebagai tabel dan diagram kotak-garis. Tentukan model yang Anda
+    pilih, dan **jelaskan mengapa rata-rata tertinggi belum tentu menjadi alasan yang cukup**.
+  - \latihan{Membetulkan kode yang salah}
+  - Kode berikut memuat empat kesalahan (penanda ikut dimodelkan, `glmnet` tanpa pembakuan, ukuran pemilihan
+    memakai akurasi pada data timpang, dan `confusionMatrix` tanpa menetapkan kelas positif). Temukan
+    dan perbaiki, lalu jelaskan akibat masing-masing.
+  - |-
+    ```{r eval=FALSE}
+    library(caret)
+    nasabah <- read.csv("data/data_nasabah.csv", stringsAsFactors = TRUE)
+
+    # (a) kolom penanda dibiarkan ikut dimodelkan
+    idx <- createDataPartition(nasabah$gagal_bayar, p = 0.75, list = FALSE)
+    lat <- nasabah[idx, ]; uji <- nasabah[-idx, ]
+
+    # (b) regularisasi tanpa pembakuan
+    m <- train(gagal_bayar ~ ., data = lat, method = "glmnet",
+               tuneLength = 5, trControl = trainControl(method = "cv", number = 5))
+
+    # (c) pemilihan model memakai akurasi pada data timpang
+    kendali <- trainControl(method = "cv", number = 5)
+    m2 <- train(gagal_bayar ~ ., data = lat, method = "rpart",
+                trControl = kendali, metric = "Accuracy")
+
+    # (d) kelas positif tidak ditetapkan
+    confusionMatrix(predict(m, uji), uji$gagal_bayar)
+    ```
+  - |-
+    **Keluaran yang benar.** Setelah diperbaiki, kode yang dipakai adalah sebagai berikut.
+
+    ```
+    # (a) penanda dibuang sebelum pemodelan
+    nasabah$id <- NULL
+    nasabah$gagal_bayar <- factor(nasabah$gagal_bayar, levels = c("ya", "tidak"))
+    idx <- createDataPartition(nasabah$gagal_bayar, p = 0.75, list = FALSE)
+    lat <- nasabah[idx, ]; uji <- nasabah[-idx, ]
+
+    # (b) pembakuan wajib bagi regularisasi
+    kendali <- trainControl(method = "cv", number = 5, classProbs = TRUE,
+                            summaryFunction = twoClassSummary)
+    m <- train(gagal_bayar ~ ., data = lat, method = "glmnet",
+               preProcess = c("center", "scale"),
+               tuneLength = 5, trControl = kendali, metric = "ROC")
+
+    # (c) ukuran pemilihan memakai ROC, bukan akurasi
+    m2 <- train(gagal_bayar ~ ., data = lat, method = "rpart",
+                tuneLength = 8, trControl = kendali, metric = "ROC")
+
+    # (d) kelas positif ditetapkan secara tegas
+    confusionMatrix(predict(m, uji), uji$gagal_bayar, positive = "ya")
+    ```
+
+    Pemeriksaan yang wajib berhasil: `!("id" %in% names(lat))` bernilai **TRUE**, dan `"ROC" %in% names(m$results)` bernilai **TRUE**.
+  - '#### Tingkat Lanjut (pemilihan)'
+  - \latihan{Memilih model menurut kebutuhan}
+  - 'Untuk masing-masing keadaan berikut, tentukan model yang Anda pilih dari ketiganya beserta alasannya,
+    dan sebutkan **satu kelemahan** dari pilihan itu: (a) hasil harus dijelaskan kepada petugas lapangan
+    sebagai aturan sederhana; (b) peluang keluaran akan dipakai menetapkan ambang berdasarkan biaya; (c)
+    data memuat banyak peubah kategori bertaraf banyak; (d) data memuat pencilan ekstrem yang diyakini
+    sah.'
+  penugasan:
+  - |-
+    \begin{kotaktugas}
+    Sebagai calon analis pada instansi statistik, bangun dan bandingkan tiga model klasifikasi dasar atas \texttt{data\_nasabah.csv} (\emph{data simulasi}), lalu pilih satu model beserta alasan yang mempertimbangkan bukan hanya kinerja melainkan juga kebutuhan penjelasan.
+    \end{kotaktugas}
+  - '**Konteks.** Sebuah unit hendak menduga risiko gagal bayar. Selain kinerja, pimpinan menuntut agar
+    hasilnya dapat dijelaskan kepada petugas yang tidak berlatar statistika.'
+  - \tugas{Penyiapan}
+  - '1. Siapkan data: buang penanda, tetapkan urutan taraf sasaran, dan laporkan **acuan tebakan mayoritas**.'
+  - 2. Bagi data dengan penstrataan dan tetapkan skema validasi silang lima lipatan berukuran ROC. Jelaskan
+    mengapa ROC dipilih alih-alih akurasi.
+  - \tugas{Pemodelan}
+  - 3. Bangun **pohon keputusan** dengan penalaan parameter kerumitan pada minimal tujuh nilai. Sajikan
+    tabel hasil beserta simpangan bakunya dan grafik penalaannya.
+  - 4. **Gambar pohon terpilih** dan tuliskan **minimal tiga aturan** yang dapat dibaca darinya dalam
+    bahasa sehari-hari. Sebutkan berapa persen amatan yang tercakup tiap aturan.
+  - 5. Bangun **Naive Bayes**. Laporkan apakah pemulusan kernel terpilih, dan jelaskan anggapan yang mendasari
+    model ini beserta apakah anggapan itu masuk akal pada data ini.
+  - 6. Bangun **regresi logistik terregularisasi** dengan pembakuan. Laporkan bentuk regularisasi terpilih,
+    banyaknya peubah yang dinolkan, dan **lima rasio odds terbesar** beserta tafsirannya.
+  - \tugas{Perbandingan dan Pemilihan}
+  - 7. Bandingkan ketiganya pada **lipatan yang sama**. Sajikan tabel ringkasan dan diagram kotak-garis
+    sebaran ROC antar-lipatan.
+  - '8. Nilai model terpilih pada **data uji**: matriks kekeliruan, minimal lima ukuran, dan perbandingan
+    terhadap acuan.'
+  - 9. Periksa **kalibrasi peluang** model terpilih. Jelaskan akibatnya bila peluang itu dipakai menetapkan
+    ambang berbasis biaya.
+  - 10. Tentukan model yang Anda rekomendasikan. **Pertimbangkan bukan hanya ROC** melainkan juga kestabilan
+    antar-lipatan, kebutuhan prapemrosesan, kalibrasi, dan kemudahan penjelasan.
+  - '11. Susun laporan R Markdown berisi kode, keluaran, gambar, dan interpretasi. Tutup dengan **ringkasan
+    (maksimal 300 kata)** memuat: model yang direkomendasikan beserta alasannya, kinerja terhadap acuan,
+    keterbatasan, dan penegasan bahwa data merupakan simulasi sehingga kinerja mendekati tebakan acak
+    adalah hasil yang wajar.'
+  tambahan:
+  - |
+    Model yang tidak dapat dijelaskan sukar dipakai, betapapun tinggi kinerjanya. Bagian ini membahas cara menyampaikan hasil ketiga model kepada pengguna yang tidak berlatar statistika.
+  - contoh: Menerjemahkan pohon menjadi aturan tertulis
+    kode_r: |-
+      aturan <- rpart.rules(m_pohon2$finalModel, cover = TRUE, style = "tall")
+      print(aturan)
+    judul_r: rpart.rules
+    eval: true
+    penjelasan: |
+      Fungsi rpart.rules menerjemahkan struktur pohon menjadi daftar aturan bersyarat. Argumen cover menampilkan persentase amatan yang tercakup tiap aturan, dan gaya tall membuat tiap aturan ditampilkan pada barisnya sendiri.
+    interpretasi: |
+      Keluaran ini dapat disalin nyaris apa adanya ke dalam laporan bagi pengguna. Yang perlu ditambahkan hanyalah penerjemahan nama peubah menjadi istilah sehari-hari. Perhatikan kolom cakupan: aturan yang hanya mencakup beberapa persen amatan sebaiknya tidak disampaikan sebagai temuan, sebab dugaan darinya tidak stabil.
+  - contoh: Menyusun ringkasan pengaruh peubah
+    kode_r: |-
+      penting <- varImp(m_glm)$importance
+      penting$peubah <- rownames(penting)
+      penting <- penting[order(-penting$Overall), ]
+      penting <- penting[penting$Overall > 0, ]
+      penting$Overall <- round(penting$Overall, 2)
+      print(utils::head(penting[, c("peubah", "Overall")], 8), row.names = FALSE)
+
+      par(mar = c(4, 9, 3, 2))
+      atas <- utils::head(penting, 8)
+      barplot(rev(atas$Overall), names.arg = rev(atas$peubah), horiz = TRUE,
+              las = 1, col = "#0B6FB4", border = "white",
+              xlab = "Kepentingan relatif", main = "Peubah Paling Berpengaruh")
+      par(mar = c(5, 4, 4, 2) + 0.1)
+    judul_r: varImp dan barplot mendatar
+    eval: true
+    penjelasan: |
+      Fungsi varImp menghitung kepentingan relatif tiap peubah pada skala nol sampai seratus. Peubah berkepentingan nol --- yang dinolkan regularisasi --- disaring keluar, lalu delapan teratas digambar sebagai batang mendatar.
+    interpretasi: |
+      Grafik semacam ini kerap menjadi satu-satunya bagian laporan yang dibaca pengambil keputusan, sehingga ketepatannya penting. Perlu ditegaskan dalam keterangan bahwa kepentingan menyatakan sumbangan terhadap dugaan, **bukan sebab-akibat**. Menyimpulkan bahwa mengubah suatu peubah akan mengubah hasilnya adalah kekeliruan penafsiran yang sering terjadi dan berakibat pada kebijakan yang salah sasaran.
+  - |-
+    \begin{kotaksalah}[Kepentingan peubah bukan hubungan sebab-akibat]
+    Model dugaan menemukan kaitan, bukan sebab. Peubah riwayat telat boleh jadi paling berpengaruh dalam menduga gagal bayar, tetapi itu tidak berarti mengurangi catatan keterlambatan akan mengurangi risiko --- keduanya boleh jadi sama-sama disebabkan hal lain. Menyampaikan kepentingan peubah tanpa peringatan ini berisiko melahirkan kebijakan yang keliru.
+    \end{kotaksalah}
+  - contoh: Menyusun kalimat penjelasan bagi pengguna
+    kode_r: |-
+      contoh_nasabah <- uji[1:3, ]
+      p <- predict(terbaik, contoh_nasabah, type = "prob")$ya
+
+      for (i in 1:3) {
+        tingkat <- ifelse(p[i] > 0.5, "tinggi", ifelse(p[i] > 0.25, "sedang", "rendah"))
+        cat(sprintf("Nasabah %d: peluang dugaan %.1f persen (risiko %s).\n",
+                    i, 100 * p[i], tingkat))
+        cat(sprintf("  Umur %d tahun, pendapatan %.0f, rasio cicilan %.2f, telat %d kali.\n",
+                    contoh_nasabah$umur[i], contoh_nasabah$pendapatan[i],
+                    contoh_nasabah$rasio_cicilan[i], contoh_nasabah$riwayat_telat[i]))
+        cat(sprintf("  Status sebenarnya: %s\n\n", contoh_nasabah$gagal_bayar[i]))
+      }
+    judul_r: menyusun kalimat dugaan
+    eval: true
+    penjelasan: |
+      Tiga amatan pertama data uji diambil sebagai contoh. Peluang dugaan diubah menjadi tingkatan risiko, lalu disusun sebagai kalimat bersama ciri pokok nasabahnya dan status sebenarnya.
+    interpretasi: |
+      Menyertakan ciri pokok bersama dugaan membuat hasilnya dapat diperiksa kewajarannya oleh petugas yang memahami lapangan. Menyertakan status sebenarnya --- yang tentu hanya mungkin pada data uji --- berguna saat memperagakan model kepada pengguna, sebab memperlihatkan bahwa model kadang keliru. Menyembunyikan kekeliruan saat peragaan menumbuhkan kepercayaan berlebihan yang berbahaya.
+  - |-
+    \begin{kotaktips}
+    Ketika menyampaikan hasil kepada pengguna, sertakan tiga hal: dugaan beserta tingkat keyakinannya, ciri yang mendasarinya, dan contoh kasus ketika model keliru. Ketiganya membangun kepercayaan yang tepat --- bukan terlalu tinggi, bukan pula terlalu rendah.
+    \end{kotaktips}
+  ringkasan:
+  - |-
+    \begin{kotaktujuan}
+    \textbf{Daftar periksa penguasaan:}
+    \begin{itemize}
+    \item[$\square$] Saya dapat menjelaskan cara kerja pohon beserta ukuran ketidakmurniannya.
+    \item[$\square$] Saya dapat membaca pohon sebagai rangkaian aturan bersyarat.
+    \item[$\square$] Saya menala parameter kerumitan dan memperhatikan simpangan bakunya.
+    \item[$\square$] Saya tahu bahwa pohon dan Naive Bayes tidak memerlukan pembakuan.
+    \item[$\square$] Saya tahu bahwa regularisasi \emph{wajib} disertai pembakuan.
+    \item[$\square$] Saya dapat menyebutkan anggapan Naive Bayes dan akibat pelanggarannya.
+    \item[$\square$] Saya menafsirkan koefisien terbakukan sebagai rasio odds per simpangan baku.
+    \item[$\square$] Saya membandingkan model pada lipatan yang sama.
+    \item[$\square$] Saya memeriksa kalibrasi sebelum memakai peluang untuk keputusan biaya.
+    \item[$\square$] Saya menyadari bahwa kepentingan peubah bukan hubungan sebab-akibat.
+    \end{itemize}
+    \end{kotaktujuan}
+  - '**Kartu Referensi Cepat.**'
+  - |-
+    \begin{kotakrumus}
+    \begin{tabular}{@{}ll@{}}
+    \textbf{Keperluan} & \textbf{Perintah}\\
+    Membagi berstrata & \texttt{createDataPartition(y, p =, list = FALSE)}\\
+    Skema penilaian & \texttt{trainControl(method = "cv", number = 5)}\\
+    Ukuran ROC & \texttt{summaryFunction = twoClassSummary}\\
+    Pohon keputusan & \texttt{train(..., method = "rpart")}\\
+    Menggambar pohon & \texttt{rpart.plot(m\$finalModel, extra = 104)}\\
+    Aturan pohon & \texttt{rpart.rules(m\$finalModel)}\\
+    Naive Bayes & \texttt{train(..., method = "naive\_bayes")}\\
+    Regularisasi & \texttt{train(..., method = "glmnet")}\\
+    Pembakuan & \texttt{preProcess = c("center", "scale")}\\
+    Koefisien & \texttt{coef(m\$finalModel, s = m\$bestTune\$lambda)}\\
+    Kepentingan peubah & \texttt{varImp(m)}\\
+    Banding model & \texttt{resamples(list(...))}, \texttt{bwplot()}\\
+    Matriks kekeliruan & \texttt{confusionMatrix(duga, benar, positive =)}\\
+    \end{tabular}
+    \end{kotakrumus}
+  - 'Modul ini membangun tiga model dasar yang seluruhnya mudah dijelaskan. Prinsip yang perlu dibawa:
+    sesuaikan prapemrosesan dengan kebutuhan model --- pohon tidak menuntut apa pun, regularisasi menuntut
+    pembakuan; bandingkan model pada lipatan yang sama; perhatikan kestabilan antar-lipatan, bukan rata-rata
+    semata; periksa kalibrasi sebelum memakai peluang untuk keputusan; dan ingat bahwa kepentingan peubah
+    menyatakan kaitan, bukan sebab. Modul berikutnya membahas model yang lebih kuat tetapi lebih sukar
+    dijelaskan.'
+  referensi:
+  - Breiman, L., Friedman, J., Olshen, R., & Stone, C. (1984). *Classification and Regression Trees*.
+    Wadsworth.
+  - Kuhn, M., & Johnson, K. (2013). *Applied Predictive Modeling*. Springer.
+  - James, G., Witten, D., Hastie, T., & Tibshirani, R. (2021). *An Introduction to Statistical Learning*
+    (2nd ed.). Springer.
+  - 'Hastie, T., Tibshirani, R., & Wainwright, M. (2015). *Statistical Learning with Sparsity: The Lasso
+    and Generalizations*. CRC Press.'
+  - 'Hand, D. J., & Yu, K. (2001). Idiot''s Bayes: Not so stupid after all? *International Statistical
+    Review*, 69(3), 385-398.'
+exercises:
+- id: L8.1
+  points: 15
+  solution: 'Tingkat Dasar: penyiapan data, pohon keputusan, dan regresi terregularisasi.'
+  judul_r: Solusi Tingkat Dasar (R)
+  solusi_r: |-
+    suppressPackageStartupMessages({
+      library(caret); library(rpart); library(rpart.plot); library(glmnet)})
+
+    nasabah <- read.csv("data/data_nasabah.csv", stringsAsFactors = TRUE)
+    nasabah$id <- NULL                                  # buang penanda
+    nasabah$gagal_bayar <- factor(nasabah$gagal_bayar, levels = c("ya", "tidak"))
+    set.seed(2026)
+    idx <- createDataPartition(nasabah$gagal_bayar, p = 0.75, list = FALSE)
+    lat <- nasabah[idx, ]; uji <- nasabah[-idx, ]
+
+    kendali <- trainControl(method = "cv", number = 5, classProbs = TRUE,
+                            summaryFunction = twoClassSummary)
+    m <- train(gagal_bayar ~ ., data = lat, method = "rpart",
+               tuneLength = 8, trControl = kendali, metric = "ROC")
+    rpart.plot(m$finalModel, type = 2, extra = 104)
+
+    m2 <- train(gagal_bayar ~ ., data = lat, method = "glmnet",
+                preProcess = c("center", "scale"),
+                tuneLength = 5, trControl = kendali, metric = "ROC")
+    koef <- coef(m2$finalModel, s = m2$bestTune$lambda)
+  interpretasi: |
+    Isian yang benar berturut-turut adalah NULL, createDataPartition, -idx, TRUE, train, rpart, rpart.plot, center, scale, dan coef. Dua hal patut ditekankan. Pertama, penanda dibuang dengan menetapkannya NULL, bukan sekadar tidak disebut pada formula --- sebab formula titik menyertakan seluruh kolom. Kedua, pembakuan hanya diberikan pada glmnet dan tidak pada rpart; memberikannya pada pohon tidak merugikan tetapi memperlihatkan bahwa penyusunnya belum memahami kebutuhan tiap model.
+- id: L8.2
+  points: 25
+  solution: 'Tingkat Menengah dan Lanjut: perbandingan tiga model dan pemilihan menurut kebutuhan.'
+  judul_r: Solusi Menengah dan Lanjut (R)
+  solusi_r: |-
+    suppressPackageStartupMessages({
+      library(caret); library(naivebayes); library(glmnet)})
+
+    set.seed(2026)
+    m_pohon <- train(gagal_bayar ~ ., data = lat, method = "rpart",
+                     tuneLength = 8, trControl = kendali, metric = "ROC")
+    set.seed(2026)
+    m_nb <- train(gagal_bayar ~ ., data = lat, method = "naive_bayes",
+                  trControl = kendali, metric = "ROC")
+    set.seed(2026)
+    m_glm <- train(gagal_bayar ~ ., data = lat, method = "glmnet",
+                   preProcess = c("center", "scale"),
+                   tuneLength = 5, trControl = kendali, metric = "ROC")
+
+    banding <- resamples(list(Pohon = m_pohon, NaiveBayes = m_nb,
+                              LogRegularisasi = m_glm))
+    s <- summary(banding)
+    print(round(s$statistics$ROC[, c("Min.", "Mean", "Max.")], 4))
+    bwplot(banding, metric = "ROC")
+
+    # rentang antar-lipatan sebagai ukuran kestabilan
+    rentang <- s$statistics$ROC[, "Max."] - s$statistics$ROC[, "Min."]
+    print(round(rentang, 4))
+  interpretasi: |
+    Benih acak yang sama ditetapkan sebelum tiap pemanggilan train agar lipatannya identik; tanpa itu perbandingannya tidak adil. Kolom rentang antar-lipatan adalah alasan mengapa rata-rata tertinggi belum tentu cukup: model bermata-rata sedikit lebih rendah tetapi berentang sempit lebih dapat diandalkan pada data baru. Untuk pemilihan menurut kebutuhan: penjelasan sebagai aturan menuntut pohon; peluang untuk keputusan biaya menuntut regresi terregularisasi karena kalibrasinya paling baik; peubah kategori bertaraf banyak sesuai bagi Naive Bayes maupun pohon yang menanganinya tanpa pengodean; sedangkan pencilan ekstrem yang sah menuntut pohon karena paling tahan --- masing-masing dengan kelemahannya, yaitu pohon tidak stabil, Naive Bayes berpeluang tak terkalibrasi, dan regresi peka pencilan.
+- id: L8.D
+  points: 10
+  solution: 'Membetulkan kode: penanda, pembakuan regularisasi, ukuran pemilihan, dan kelas positif.'
+  judul_r: Solusi Membetulkan Kode (R)
+  solusi_r: |-
+    suppressPackageStartupMessages({library(caret); library(glmnet)})
+    nasabah <- read.csv("data/data_nasabah.csv", stringsAsFactors = TRUE)
+
+    # (a) penanda dibuang sebelum pemodelan
+    nasabah$id <- NULL
+    nasabah$gagal_bayar <- factor(nasabah$gagal_bayar, levels = c("ya", "tidak"))
+    set.seed(2026)
+    idx <- createDataPartition(nasabah$gagal_bayar, p = 0.75, list = FALSE)
+    lat <- nasabah[idx, ]; uji <- nasabah[-idx, ]
+
+    # (c) ukuran pemilihan memakai ROC pada data timpang
+    kendali <- trainControl(method = "cv", number = 5, classProbs = TRUE,
+                            summaryFunction = twoClassSummary)
+
+    # (b) pembakuan wajib bagi regularisasi
+    m <- train(gagal_bayar ~ ., data = lat, method = "glmnet",
+               preProcess = c("center", "scale"),
+               tuneLength = 5, trControl = kendali, metric = "ROC")
+    m2 <- train(gagal_bayar ~ ., data = lat, method = "rpart",
+                tuneLength = 8, trControl = kendali, metric = "ROC")
+
+    # (d) kelas positif ditetapkan secara tegas
+    print(confusionMatrix(predict(m, uji), uji$gagal_bayar, positive = "ya"))
+
+    # pemeriksaan wajib
+    !("id" %in% names(lat))
+    "ROC" %in% names(m$results)
+  interpretasi: |
+    Empat kesalahan diperbaiki. Kesalahan (a) membiarkan nomor urut ikut dimodelkan; pada data yang penandanya berurutan, pohon dapat membelah berdasarkan nomor sehingga tampak sangat baik pada data latih semata karena menghafal. Kesalahan (b) menjalankan regularisasi tanpa pembakuan sehingga hukuman dikenakan tidak adil antar-peubah yang satuannya berbeda --- peubah bersatuan besar nyaris tak terhukum. Kesalahan (c) memilih model berdasarkan akurasi pada data timpang, sehingga model yang menebak seluruhnya mayoritas dapat terpilih. Kesalahan (d) membiarkan caret memilih kelas positif menurut abjad, sehingga sensitivitas dan presisi yang dilaporkan boleh jadi mengukur kelas yang keliru.
+- id: T8.1
+  points: 50
+  solution: 'Penugasan: membangun, membandingkan, dan memilih tiga model klasifikasi dasar.'
+  judul_r: Solusi Penugasan (R)
+  solusi_r: |-
+    suppressPackageStartupMessages({
+      library(caret); library(rpart); library(rpart.plot)
+      library(naivebayes); library(glmnet)})
+
+    # 1-2) penyiapan dan pembagian
+    nasabah <- read.csv("data/data_nasabah.csv", stringsAsFactors = TRUE)
+    nasabah$id <- NULL
+    nasabah$gagal_bayar <- factor(nasabah$gagal_bayar, levels = c("ya", "tidak"))
+    prop <- prop.table(table(nasabah$gagal_bayar))
+    cat("acuan mayoritas:", round(max(prop), 4), "\n")
+
+    set.seed(2026)
+    idx <- createDataPartition(nasabah$gagal_bayar, p = 0.75, list = FALSE)
+    lat <- nasabah[idx, ]; uji <- nasabah[-idx, ]
+    kendali <- trainControl(method = "cv", number = 5, classProbs = TRUE,
+                            summaryFunction = twoClassSummary)
+
+    # 3-4) pohon beserta penalaan dan aturannya
+    set.seed(2026)
+    kisi <- data.frame(cp = c(0.001, 0.003, 0.005, 0.01, 0.02, 0.05, 0.1))
+    m_pohon <- train(gagal_bayar ~ ., data = lat, method = "rpart",
+                     tuneGrid = kisi, trControl = kendali, metric = "ROC")
+    print(round(m_pohon$results[, c("cp","ROC","ROCSD")], 4), row.names = FALSE)
+    rpart.plot(m_pohon$finalModel, type = 2, extra = 104,
+               main = "Pohon Keputusan Gagal Bayar")
+    print(rpart.rules(m_pohon$finalModel, cover = TRUE))
+
+    # 5) Naive Bayes
+    set.seed(2026)
+    m_nb <- train(gagal_bayar ~ ., data = lat, method = "naive_bayes",
+                  trControl = kendali, metric = "ROC")
+    cat("pemulusan kernel terpilih:", m_nb$bestTune$usekernel, "\n")
+
+    # 6) regresi terregularisasi
+    set.seed(2026)
+    m_glm <- train(gagal_bayar ~ ., data = lat, method = "glmnet",
+                   preProcess = c("center", "scale"),
+                   tuneLength = 5, trControl = kendali, metric = "ROC")
+    koef <- coef(m_glm$finalModel, s = m_glm$bestTune$lambda)
+    kd <- data.frame(peubah = rownames(koef), koef = as.numeric(koef))
+    kd <- kd[kd$peubah != "(Intercept)", ]
+    kd$odds <- round(exp(kd$koef), 4)
+    cat("peubah dinolkan:", sum(kd$koef == 0), "dari", nrow(kd), "\n")
+    print(utils::head(kd[order(-abs(kd$koef)), ], 5), row.names = FALSE)
+
+    # 7) perbandingan
+    banding <- resamples(list(Pohon = m_pohon, NaiveBayes = m_nb,
+                              LogRegularisasi = m_glm))
+    s <- summary(banding)
+    print(round(s$statistics$ROC[, c("Min.","Mean","Max.")], 4))
+    bwplot(banding, metric = "ROC")
+
+    # 8) penilaian pada data uji
+    rata <- s$statistics$ROC[, "Mean"]
+    terbaik <- list(Pohon = m_pohon, NaiveBayes = m_nb,
+                    LogRegularisasi = m_glm)[[names(which.max(rata))]]
+    cm <- confusionMatrix(predict(terbaik, uji), uji$gagal_bayar, positive = "ya")
+    print(cm$table)
+    cat("akurasi:", round(cm$overall["Accuracy"], 4),
+        "| acuan:", round(max(prop.table(table(uji$gagal_bayar))), 4), "\n")
+
+    # 9) kalibrasi
+    pr <- predict(terbaik, uji, type = "prob")$ya
+    kel <- cut(pr, breaks = seq(0, 1, by = 0.1), include.lowest = TRUE)
+    kal <- data.frame(n = as.numeric(table(kel)),
+                      dugaan = round(tapply(pr, kel, mean), 4),
+                      nyata = round(tapply(uji$gagal_bayar == "ya", kel, mean), 4))
+    print(kal[!is.na(kal$dugaan) & kal$n >= 5, ])
+  interpretasi: |
+    Nomor 4 adalah bagian yang paling menuntut kejujuran: aturan yang cakupannya hanya beberapa persen tidak layak disampaikan sebagai temuan, dan mahasiswa harus menyebutkan cakupannya, bukan hanya aturannya. Nomor 6 menuntut penafsiran yang tepat --- karena peubah sudah dibakukan, rasio odds menyatakan pengaruh kenaikan satu simpangan baku, bukan satu satuan asli; menafsirkannya dalam satuan asli adalah kekeliruan yang lazim. Nomor 10 adalah inti penugasan: rekomendasi wajib mempertimbangkan kestabilan antar-lipatan, kebutuhan prapemrosesan, kalibrasi, dan kemudahan penjelasan --- bukan ROC semata. Pada data simulasi ini ketiga model akan berkinerja mendekati tebakan acak, dan menyatakannya apa adanya justru merupakan jawaban yang benar; memaksakan kesimpulan bahwa suatu model unggul berarti mengarang.
+references:
+- Breiman, L., Friedman, J., Olshen, R., & Stone, C. (1984). Classification and Regression Trees. Wadsworth.
+- Kuhn, M., & Johnson, K. (2013). Applied Predictive Modeling. Springer.
+- James, G., Witten, D., Hastie, T., & Tibshirani, R. (2021). An Introduction to Statistical Learning
+  (2nd ed.). Springer.
+- Hastie, T., Tibshirani, R., & Wainwright, M. (2015). Statistical Learning with Sparsity. CRC Press.
+- 'Hand, D. J., & Yu, K. (2001). Idiot''s Bayes: Not so stupid after all? International Statistical Review,
+  69(3), 385-398.'
+

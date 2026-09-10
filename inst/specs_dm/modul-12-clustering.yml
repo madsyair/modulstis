@@ -1,0 +1,1576 @@
+number: 12
+title: 'Pengelompokan: k-Medoid, k-Prototype, DBSCAN, OPTICS, dan Bi-clustering'
+short_code: clustering
+topic: Pengelompokan
+pertemuan: 12
+sub_cpmk: 'Sub-CPMK 12: Mahasiswa mampu menerapkan beragam metode pengelompokan --- k-Medoid termasuk
+  untuk data kategorik dan campuran, k-Prototype, DBSCAN, OPTICS, serta bi-clustering --- mengevaluasi
+  hasilnya dengan ukuran internal maupun eksternal, menentukan banyaknya klaster, serta membandingkan
+  antar-keluarga metode secara valid.'
+packages:
+- biclust
+- clustMixType
+- cluster
+- dbscan
+- fpc
+contoh_title: Contoh Praktikum dengan R
+course:
+  matkul: Data Mining dan Big Data
+  matkul_besar: DATA MINING DAN BIG DATA
+  kode: K202505
+  ta: 2025/2026
+  semester: 6 (Genap)
+  prodi: D-IV Statistika
+  penyusun:
+  - Achmad Syahrul Choir
+body:
+  deskripsi:
+  - 'Sembilan modul sebelumnya bekerja pada tugas supervised, yaitu ketika sasaran diketahui dan model
+    dinilai terhadapnya. Modul ini berpindah ke tugas unsupervised: tidak ada sasaran, dan yang dicari
+    adalah struktur alami di dalam data itu sendiri.'
+  - Perpindahan itu membawa akibat mendasar pada cara menilai. Tidak ada kunci jawaban, sehingga tidak
+    ada akurasi yang dapat dihitung. Kebermaknaan hasil bersandar pada ukuran internal --- seberapa rapat
+    anggota satu klaster dan seberapa terpisah antar-klaster --- serta pada penafsiran yang masuk akal
+    menurut pengetahuan bidang.
+  - 'Materi mencakup empat keluarga metode. **Pertama**, metode berbasis medoid: **k-Medoid (PAM)** untuk
+    peubah numerik, serta penerapannya pada **data kategorik dan campuran** lewat jarak **Gower**. **Kedua**,
+    **k-Prototype** yang menggabungkan k-Means dan k-Modes untuk data campuran, beserta parameter $\lambda$
+    yang menimbang kedua jenis peubah. **Ketiga**, metode berbasis kepadatan --- **DBSCAN** dan **OPTICS**
+    --- yang mampu menemukan klaster berbentuk tidak teratur sekaligus menandai derau; keduanya dibandingkan
+    pada data berkepadatan **bersarang** yang memperlihatkan kapan DBSCAN tidak lagi memadai. **Keempat**,
+    **bi-clustering** yang mengelompokkan baris dan kolom sekaligus, sehingga dapat menemukan pola yang
+    hanya berlaku pada sebagian peubah.'
+  - 'Selain metode, modul menekankan **evaluasi**: ukuran mutu bagi keempat metode, penentuan banyaknya
+    klaster, serta **ukuran yang sah dipakai lintas keluarga** --- kesepakatan, cakupan, dan kestabilan
+    --- sebab siluet dan Dunn tidak sebanding bila dihitung atas himpunan amatan yang berbeda. Bagian
+    penutup memuat **kajian terkendali** yang membuktikan hal itu pada data berpola diketahui.'
+  - Tiga hal yang bersifat pelengkap --- alur kerja pengelompokan dari memeriksa kecenderungan berklaster
+    hingga profiling, varian k-Medoid untuk data besar (**CLARA** dan **CLARANS**), serta **kajian terkendali**
+    yang membuktikan mengapa siluet dan Dunn tidak sah menjadi hakim antar-keluarga metode --- dipindahkan
+    ke **Modul 13** agar modul ini tetap seukuran satu sesi praktikum.
+  - 'Perlu ditegaskan apa yang **tidak** dibahas modul ini: teori jarak, pengelompokan hierarki, dan k-Means.
+    Ketiganya diandaikan sudah dikenal; k-Medoid dan PAM hadir sebagai wakil keluarga berbasis jarak,
+    dan k-Means disebut hanya sebagai pembanding konseptual.'
+  - |-
+    \begin{kotakperhatian}[Tentang data]
+    Berkas data pada modul ini adalah \textbf{data simulasi} (\texttt{set.seed(2026)}), \textbf{bukan data nyata} dan \textbf{bukan data resmi} instansi mana pun. Peubah dibangkitkan tanpa struktur klaster yang disengaja, sehingga hasil pengelompokan yang lemah adalah temuan yang benar dan wajib dilaporkan apa adanya.
+    \end{kotakperhatian}
+  - \vspace{1.2em}
+  tujuan:
+  - 'Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:'
+  - 1. **Menjelaskan** gagasan titik inti, titik batas, dan derau pada metode kepadatan.
+  - 2. **Menerapkan** DBSCAN beserta penetapan parameter Eps dan MinPts secara terarah.
+  - 3. **Memeriksa** kepekaan hasil DBSCAN terhadap pemilihan parameternya.
+  - 4. **Menerapkan** OPTICS dan membaca diagram jangkauannya.
+  - 5. **Mengevaluasi** hasil pengelompokan dengan indeks siluet dan indeks Dunn.
+  - 6. **Menentukan** banyaknya klaster dengan metode siku dan siluet rata-rata.
+  - 7. **Menjelaskan** mengapa ukuran internal tidak sah dipakai membandingkan antar-keluarga metode.
+  - 8. **Menerapkan** prosedur perbandingan yang adil beserta pelaporan cakupannya.
+  - 9. **Memakai** ukuran eksternal (ARI) ketika label sebenarnya tersedia.
+  - 10. **Mengenali** gagasan bi-clustering beserta keadaan yang menuntutnya.
+  - \vspace{1.2em}
+  alat:
+  - 'Perangkat dan bahan yang diperlukan:'
+  - '- **R** (RStudio) dengan paket `dbscan`, `cluster`, `fpc`, `mclust`, dan `factoextra`.'
+  - '- Paket `biclust` untuk bagian bi-clustering.'
+  - '- Pasang dengan `install.packages(c("dbscan","cluster","fpc","clustMixType","biclust","factoextra"))`.'
+  - '- Berkas data: `data/data_wilayah.csv`, `data/titik_pemantauan.csv`, dan `data/data_ekspresi.csv`.'
+  - '- Paket `cluster` dipakai untuk indeks siluet dan sebagai pembanding berbasis jarak, bukan sebagai
+    bahasan tersendiri.'
+  - \vspace{1.2em}
+  instruksi:
+  - 'Ikuti tahapan berikut:'
+  - '**Sebelum praktikum:** pasang seluruh paket; siapkan kedua berkas data; tinjau kembali bagian jarak
+    pada Modul 3.'
+  - '**Selama praktikum:** kerjakan Contoh berurutan. Perhatikan bahwa pembakuan menjadi penentu pada
+    hampir seluruh metode di modul ini --- ini menjadi sorotan utama.'
+  - '**Selama praktikum:** kerjakan Contoh berurutan. Bagian kajian perbandingan (Contoh 12.10 sampai
+    11.15) memakai data buatan berlabel diketahui, sebab hanya dengan begitu ketepatan suatu ukuran mutu
+    dapat diuji.'
+  - \vspace{1.2em}
+  teori:
+  - '### Kedudukan pada CRISP-DM'
+  - Modul ini menempati tahap Modeling dan Evaluation, tetapi dengan watak yang berbeda dari modul supervised.
+    Tanpa sasaran, tahap evaluasi tidak dapat membandingkan dugaan terhadap kebenaran; yang dinilai adalah
+    mutu struktur yang ditemukan beserta kebermaknaannya menurut pengetahuan bidang.
+  - |-
+    \begin{kotakperhatian}[Pembakuan mendahului pengelompokan]
+    Seluruh metode pada modul ini bersandar pada jarak antar-amatan. Bila satuan peubah berbeda jauh --- kepadatan penduduk bersatuan ribuan berdampingan dengan lama sekolah bersatuan belasan --- maka peubah bersatuan besar akan menentukan hampir seluruh jarak, sehingga pengelompokan yang dihasilkan sesungguhnya hanya mencerminkan satu peubah. Pembakuan karena itu \textbf{wajib} dilakukan lebih dahulu.
+    \end{kotakperhatian}
+  - '### Metode Berbasis Kepadatan'
+  - 'Metode partisi seperti PAM mengandaikan klaster berbentuk kurang lebih bulat dan mengharuskan setiap
+    amatan masuk salah satu klaster. Metode berbasis kepadatan melepaskan kedua anggapan itu: klaster
+    didefinisikan sebagai daerah berkepadatan tinggi yang dipisahkan daerah berkepadatan rendah, dan amatan
+    yang tidak termasuk mana pun ditandai sebagai **derau**.'
+  - |-
+    \begin{kotakinfo}[Tiga jenis titik pada DBSCAN]\par\smallskip
+    \begin{tabular}{@{}p{3.0cm}p{11.4cm}@{}}
+    \textbf{Titik inti} & memiliki setidaknya MinPts tetangga dalam radius Eps\\[3pt]
+    \textbf{Titik batas} & bukan titik inti, tetapi berada dalam Eps dari suatu titik inti\\[3pt]
+    \textbf{Derau} & bukan keduanya; tidak dimasukkan ke klaster mana pun\\
+    \end{tabular}
+    \end{kotakinfo}
+  - Dua gagasan penghubungnya adalah **density-reachable** --- titik dapat dicapai melalui rantai titik
+    inti --- dan **density-connected**, yaitu dua titik yang keduanya dapat dicapai dari titik inti yang
+    sama. Sebuah klaster DBSCAN adalah himpunan maksimal titik yang saling density-connected.
+  - |-
+    \begin{kotakinfo}[Keunggulan dan kelemahan DBSCAN]\par\smallskip
+    \begin{tabular}{@{}p{4.0cm}p{10.0cm}@{}}
+    \textbf{Bentuk bebas} & menemukan klaster tidak bulat, misalnya memanjang atau melengkung\\[3pt]
+    \textbf{Menandai derau} & pencilan tidak dipaksa masuk klaster\\[3pt]
+    \textbf{Tanpa menetapkan k} & banyaknya klaster muncul sendiri\\[3pt]
+    \textbf{Kepadatan beragam} & \emph{gagal} bila klaster berkepadatan sangat berbeda\\[3pt]
+    \textbf{Dimensi tinggi} & memburuk karena kutukan dimensi\\
+    \end{tabular}
+    \end{kotakinfo}
+  - '### Menetapkan Eps dan MinPts'
+  - 'Kedua parameter itu menentukan hasil sepenuhnya. MinPts lazim ditetapkan sekitar dua kali banyaknya
+    dimensi. Adapun Eps dicari secara grafis: jarak tiap titik ke tetangga terdekat ke-k diurutkan lalu
+    digambar, dan titik belok pada kurva itu menjadi calon nilai Eps.'
+  - |-
+    \begin{kotaktips}
+    Alasan cara grafis itu bekerja sederhana: bagi titik yang berada di dalam klaster, jarak ke tetangga ke-k relatif kecil dan seragam; bagi titik derau, jaraknya jauh lebih besar. Titik belok menandai peralihan antara keduanya.
+    \end{kotaktips}
+  - '### OPTICS: Mengurutkan Alih-alih Memartisi'
+  - OPTICS tidak menghasilkan pengelompokan tunggal melainkan **urutan** titik beserta jarak jangkauannya.
+    Dari urutan itu, pengelompokan pada berbagai nilai Eps dapat diperoleh tanpa menghitung ulang.
+  - |-
+    \begin{kotakinfo}[Dua besaran pokok OPTICS]\par\smallskip
+    \begin{tabular}{@{}p{3.8cm}p{10.6cm}@{}}
+    \textbf{Jarak inti} & jarak terkecil yang membuat suatu titik menjadi titik inti\\[3pt]
+    \textbf{Jarak jangkauan} & jarak terkecil yang membuat suatu titik dapat dicapai dari titik lain\\
+    \end{tabular}
+    \end{kotakinfo}
+  - Diagram jangkauan menggambarkan jarak jangkauan menurut urutan tersebut. Lembah pada diagram menandai
+    klaster, sedangkan puncak menandai batas antar-klaster. Keunggulan pokoknya adalah kemampuan menangani
+    klaster berkepadatan berbeda --- tepat kelemahan DBSCAN.
+  - '### Evaluasi Hasil Pengelompokan'
+  - Tanpa sasaran, mutu pengelompokan dinilai dengan ukuran internal yang membandingkan kerapatan di dalam
+    klaster terhadap keterpisahan antar-klaster.
+  - |-
+    \begin{kotakrumus}
+    \textbf{Indeks siluet} bagi amatan $i$:\\[6pt]
+    $s(i) = \dfrac{b(i) - a(i)}{\max\{a(i),\, b(i)\}}$\\[6pt]
+    dengan $a(i)$ rata-rata jarak ke sesama anggota klaster dan $b(i)$ rata-rata jarak ke anggota klaster tetangga terdekat. Nilainya berkisar dari $-1$ sampai $1$.
+    \end{kotakrumus}
+  - |-
+    \begin{kotakinfo}[Membaca nilai siluet]\par\smallskip
+    \begin{tabular}{@{}p{3.2cm}p{11.2cm}@{}}
+    $0{,}71$ sampai $1{,}00$ & struktur kuat\\[2pt]
+    $0{,}51$ sampai $0{,}70$ & struktur cukup\\[2pt]
+    $0{,}26$ sampai $0{,}50$ & struktur lemah, mungkin semu\\[2pt]
+    $\leq 0{,}25$ & tidak ada struktur berarti\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotakrumus}
+    \textbf{Indeks Dunn} bagi seluruh pengelompokan:\\[6pt]
+    $D = \dfrac{\min_{\text{antar-klaster}} \text{jarak}}{\max_{\text{dalam klaster}} \text{diameter}}$\\[6pt]
+    Makin besar makin baik. Dunn sangat peka terhadap pencilan karena memakai nilai ekstrem.
+    \end{kotakrumus}
+  - '### Membandingkan Pengelompokan Berbasis Jarak dan Berbasis Kepadatan'
+  - 'Dua keluarga metode pengelompokan bertolak dari gagasan yang berbeda. Metode berbasis jarak --- K-Means,
+    K-Medoids, K-Prototypes --- mencari partisi yang meminimumkan jarak anggota terhadap pusat klasternya.
+    Metode berbasis kepadatan mencari daerah padat yang dipisahkan daerah renggang. Perbedaan itu bukan
+    sekadar teknis: keduanya menjawab pertanyaan yang berlainan, sehingga membandingkannya menuntut kehati-hatian.'
+  - |-
+    \begin{kotakinfo}[Perbedaan pokok dua keluarga metode]\par\smallskip
+    \begin{tabular}{@{}p{3.4cm}p{4.8cm}p{5.8cm}@{}}
+     & \textbf{Berbasis jarak} & \textbf{Berbasis kepadatan}\\
+    \hline
+    Bentuk klaster & cenderung membulat & bebas, dapat melengkung\\[2pt]
+    Banyaknya klaster & ditetapkan di muka & muncul dari data\\[2pt]
+    Cakupan amatan & seluruhnya masuk klaster & sebagian dapat menjadi derau\\[2pt]
+    Parameter utama & $k$ & Eps dan MinPts\\[2pt]
+    Kepadatan beragam & tidak menjadi soal & menyulitkan DBSCAN\\[2pt]
+    Dimensi tinggi & memburuk & memburuk lebih cepat\\
+    \end{tabular}
+    \end{kotakinfo}
+  - '#### Tiga Halangan dalam Membandingkannya'
+  - Baris ketiga pada tabel di atas menimbulkan halangan pertama. Metode berbasis jarak menempatkan seluruh
+    amatan ke dalam klaster, sedangkan metode berbasis kepadatan menyisakan sebagian sebagai derau. Membandingkan
+    ukuran mutu keduanya secara langsung berarti membandingkan hasil atas himpunan amatan yang berbeda
+    --- perbandingan yang tidak sepadan.
+  - Halangan kedua terletak pada banyaknya klaster. Ukuran internal seperti siluet bergantung pada $k$,
+    sehingga dua pengelompokan dengan banyak klaster berbeda tidak otomatis dapat diperbandingkan nilainya.
+  - 'Halangan ketiga yang paling menentukan: **ukuran internal yang lazim dipakai mengandaikan klaster
+    membulat**. Indeks siluet membandingkan jarak rata-rata ke sesama anggota terhadap jarak ke klaster
+    tetangga, sehingga klaster memanjang atau melengkung dihukum meski pengelompokannya benar. Akibatnya
+    siluet **tidak sah** dipakai memutuskan keluarga metode mana yang lebih baik.'
+  - |-
+    \begin{kotaksalah}[Siluet bukan hakim yang adil antar-keluarga metode]\par\smallskip
+    Pada data berbentuk cincin sepusat, pengelompokan yang \textbf{sungguh benar} dapat bernilai siluet lebih rendah daripada pengelompokan yang sepenuhnya keliru. Sebabnya bukan kekeliruan perhitungan melainkan sifat ukurannya: siluet memberi nilai tinggi kepada klaster yang rapat dan membulat, dan cincin bukan keduanya. Contoh 12.13 memperagakan hal ini dengan angka.
+    \end{kotaksalah}
+  - '#### Prosedur Perbandingan yang Sahih'
+  - |-
+    \begin{kotakinfo}[Lima langkah membandingkan secara adil]\par\smallskip
+    \begin{tabular}{@{}p{0.7cm}p{13.7cm}@{}}
+    \textbf{1} & Samakan prapemrosesan: pembakuan dan ukuran jarak yang sama bagi keduanya\\[3pt]
+    \textbf{2} & Laporkan \emph{cakupan}, yaitu persentase amatan yang dikelompokkan tiap metode\\[3pt]
+    \textbf{3} & Bandingkan pada \emph{himpunan bagian yang sama}, yakni amatan yang dikelompokkan keduanya\\[3pt]
+    \textbf{4} & Bila label sebenarnya tersedia, pakai ukuran \emph{eksternal} seperti Adjusted Rand Index\\[3pt]
+    \textbf{5} & Bila tidak tersedia, jangan mengadu ukuran internal; pakai kestabilan, gambar, dan penafsiran bidang\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotakrumus}
+    \textbf{Adjusted Rand Index} membandingkan dua pengelompokan atas amatan yang sama:\\[6pt]
+    $ARI = \dfrac{RI - E[RI]}{\max(RI) - E[RI]}$\\[6pt]
+    Bernilai $1$ bila kedua pengelompokan identik, dan sekitar $0$ bila kesesuaiannya tidak lebih baik daripada kebetulan. Nilai negatif menandakan kesesuaian lebih buruk daripada kebetulan.
+    \end{kotakrumus}
+  - 'Keunggulan ARI atas ukuran internal terletak pada ketidakbergantungannya terhadap bentuk klaster.
+    Ia hanya memeriksa pasangan amatan: apakah dua amatan yang sekelompok menurut kebenaran juga sekelompok
+    menurut model. Karena itu ARI sah dipakai membandingkan keluarga metode mana pun --- asalkan label
+    sebenarnya memang tersedia.'
+  - |-
+    \begin{kotaktips}
+    Pada pekerjaan nyata, label sebenarnya hampir tidak pernah tersedia --- itulah sebabnya pengelompokan dipakai. Karena itu langkah kelima menjadi yang paling sering terpakai: jalankan kedua keluarga metode, gambarkan hasilnya, periksa kestabilannya terhadap perubahan kecil data, dan pilih berdasarkan mana yang menghasilkan kelompok yang dapat dijelaskan dan dipakai. Keputusan itu bersifat substantif, bukan semata angka.
+    \end{kotaktips}
+  - '### Menentukan Banyaknya Klaster'
+  - |-
+    \begin{kotakinfo}[Tiga cara yang lazim]\par\smallskip
+    \begin{tabular}{@{}p{3.4cm}p{4.8cm}p{6.0cm}@{}}
+    \textbf{Cara} & \textbf{Yang diamati} & \textbf{Kelemahan}\\
+    \hline
+    Siku & jumlah kuadrat dalam klaster & titik siku kerap kabur\\[2pt]
+    Siluet rata-rata & nilai siluet menurut $k$ & memihak klaster bulat\\[2pt]
+    Empiris & $k \approx \sqrt{n/2}$ & kasar, hanya awalan\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotaksalah}[Algoritma selalu memberi jawaban]
+    Seluruh algoritma pengelompokan akan mengembalikan klaster meski data sama sekali tidak berstruktur --- persis sebagaimana algoritma penemuan komunitas pada Modul 3. Karena itu langkah wajib setelah pengelompokan adalah memeriksa apakah strukturnya \textbf{berarti}, bukan sekadar melaporkan hasilnya. Nilai siluet rata-rata di bawah $0{,}25$ pada seluruh nilai $k$ adalah pertanda kuat bahwa data memang tidak berklaster.
+    \end{kotaksalah}
+  - \newpage
+  - '### Bi-clustering'
+  - Seluruh metode di atas mengelompokkan **baris**. Bi-clustering mengelompokkan baris dan kolom secara
+    bersamaan, sehingga menemukan himpunan bagian amatan yang berperilaku serupa hanya pada himpunan bagian
+    peubah tertentu.
+  - Kebutuhan itu muncul ketika sebuah kelompok amatan hanya mirip pada sebagian peubah saja. Pada data
+    ekspresi gen, sekelompok gen dapat terekspresi serupa hanya pada beberapa contoh dan tidak pada yang
+    lain --- pola yang tak akan ditemukan pengelompokan baris biasa.
+  - |-
+    \begin{kotakinfo}[Pengelompokan baris dibandingkan bi-clustering]\par\smallskip
+    \begin{tabular}{@{}p{3.6cm}p{5.0cm}p{5.6cm}@{}}
+     & \textbf{Pengelompokan baris} & \textbf{Bi-clustering}\\
+    \hline
+    Yang dikelompokkan & baris saja & baris dan kolom\\[2pt]
+    Cakupan peubah & seluruh peubah & sebagian peubah\\[2pt]
+    Tumpang tindih & lazimnya tidak & boleh\\[2pt]
+    Penerapan khas & segmentasi & ekspresi gen, sistem rekomendasi\\
+    \end{tabular}
+    \end{kotakinfo}
+  - '**Algoritma Cheng-Church.** Diperkenalkan pada tahun 2000, algoritma ini mencari submatriks yang
+    **skor sisaan rata-ratanya** rendah, yaitu submatriks yang nilainya dapat diterangkan oleh pengaruh
+    baris ditambah pengaruh kolom.'
+  - |-
+    \begin{kotakrumus}
+    \textbf{Skor sisaan rata-rata} bagi submatriks $I \times J$:\\[6pt]
+    $H(I,J) = \dfrac{1}{|I||J|} \sum_{i \in I, j \in J} \left( a_{ij} - a_{iJ} - a_{Ij} + a_{IJ} \right)^{2}$\\[6pt]
+    dengan $a_{iJ}$ rata-rata baris, $a_{Ij}$ rata-rata kolom, dan $a_{IJ}$ rata-rata submatriks. Submatriks disebut bikluster bila $H(I,J) < \delta$.
+    \end{kotakrumus}
+  - \vspace{1.2em}
+  latihan:
+  - Kerjakan bertahap. Gunakan `data/data_wilayah.csv`.
+  - '#### Tingkat Dasar (melengkapi kode)'
+  - \latihan{Pembakuan}
+  - |-
+    ```{r eval=FALSE}
+    wil <- read.csv("data/data_wilayah.csv", stringsAsFactors = TRUE)
+    num <- c("kepadatan","pengeluaran","akses_air","akses_listrik","lama_sekolah")
+    X <- ____(wil[num])                      # pembakuan WAJIB
+    round(colMeans(X), 8)                     # harus bernilai nol
+    ```
+  - \latihan{K-Medoids}
+  - |-
+    ```{r eval=FALSE}
+    library(cluster)
+    set.seed(2026)
+    p <- ____(X, k = 3)                      # K-Medoids
+    cat("siluet rata-rata:", p$silinfo$____, "\n")
+    wil[p$____, num]                          # amatan yang menjadi medoid
+    ```
+  - \latihan{DBSCAN}
+  - |-
+    ```{r eval=FALSE}
+    library(dbscan)
+    minpts <- 2 * length(num)
+    jk <- sort(dbscan::____(X, k = minpts))   # jarak ke tetangga ke-k
+    db <- dbscan::____(X, eps = 1.5, minPts = minpts)
+    cat("derau:", sum(db$cluster == ____), "\n")
+    ```
+  - '#### Tingkat Menengah (menulis sendiri)'
+  - \latihan{Menentukan banyaknya klaster}
+  - 'Tentukan banyaknya klaster dengan **dua cara**: metode siku dan siluet rata-rata, masing-masing untuk
+    k dari 2 sampai 10. Sajikan tabel dan grafik keduanya. Bandingkan jawabannya, lalu tentukan k yang
+    Anda pilih --- dan bila **kedua cara tidak memberi jawaban yang meyakinkan**, nyatakan hal itu beserta
+    alasannya.'
+  - \latihan{Membetulkan kode yang salah}
+  - Kode berikut memuat empat kesalahan (jarak dihitung tanpa pembakuan, `dbscan` tanpa penulisan nama
+    paket sehingga bentrok dengan `fpc`, siluet dihitung terhadap data tak terbakukan, dan derau DBSCAN
+    ikut dihitung sebagai klaster). Temukan dan perbaiki, lalu jelaskan akibat masing-masing.
+  - |-
+    ```{r eval=FALSE}
+    library(cluster); library(dbscan); library(fpc)
+    wil <- read.csv("data/data_wilayah.csv", stringsAsFactors = TRUE)
+    num <- c("kepadatan","pengeluaran","akses_air","akses_listrik","lama_sekolah")
+  - |-
+    # (a) jarak dihitung pada satuan asli
+    D <- dist(wil[num])
+    p <- pam(D, k = 3)
+  - |-
+    # (b) dbscan bentrok dengan fpc::dbscan
+    db <- dbscan(wil[num], eps = 1.5, minPts = 10)
+  - |-
+    # (c) siluet dihitung terhadap data TAK terbakukan
+    sil <- silhouette(p$clustering, dist(wil[num]))
+  - |-
+    # (d) derau ikut dicacah sebagai klaster
+    cat("banyaknya klaster:", length(unique(db$cluster)), "\n")
+    ```
+  - '**Keluaran yang benar.** Setelah diperbaiki, kode yang dipakai adalah sebagai berikut.'
+  - |-
+    ```
+    # (a) pembakuan mendahului perhitungan jarak
+    X <- scale(wil[num])
+    D <- dist(X)
+    p <- pam(D, k = 3)
+  - |-
+    # (b) nama paket ditulis tegas
+    minpts <- 2 * length(num)
+    db <- dbscan::dbscan(X, eps = 1.5, minPts = minpts)
+  - |-
+    # (c) siluet dihitung terhadap data yang sama dengan pengelompokannya
+    sil <- silhouette(p$clustering, dist(X))
+  - |-
+    # (d) derau (klaster 0) dikeluarkan saat mencacah
+    cat("banyaknya klaster:", length(setdiff(unique(db$cluster), 0)), "\n")
+    cat("derau:", sum(db$cluster == 0), "\n")
+    ```
+  - 'Pemeriksaan yang wajib berhasil: `all(abs(round(colMeans(X), 8)) == 0)` bernilai **TRUE**, dan `!(0
+    %in% setdiff(unique(db$cluster), 0))` bernilai **TRUE**.'
+  - \latihan{Menguji validitas siluet}
+  - Bangkitkan data dua cincin sepusat sebagaimana Contoh 12.10. Hitung indeks siluet bagi **pengelompokan
+    yang sebenarnya** dan bagi pengelompokan berbasis jarak dengan k = 2. Hitung pula ARI keduanya. Laporkan
+    mana yang bersiluet lebih tinggi, lalu jelaskan mengapa hal itu terjadi dan apa akibatnya bila siluet
+    dipakai memilih metode.
+  - \latihan{Perbandingan yang adil}
+  - 'Bangkitkan data bergumpal disertai 10 persen derau seragam. Jalankan kedua keluarga metode, lalu
+    laporkan: (a) cakupan masing-masing; (b) ARI atas seluruh amatan; (c) ARI pada himpunan bagian yang
+    dikelompokkan keduanya. Simpulkan dari mana keunggulan metode berbasis kepadatan sesungguhnya berasal.'
+  - '#### Tingkat Lanjut (pemilihan metode)'
+  - \latihan{Memilih dan membandingkan metode}
+  - 'Untuk masing-masing keadaan berikut, tentukan keluarga metode yang Anda pilih beserta alasannya,
+    dan sebutkan **ukuran penilaian yang sah** dipakai: (a) klaster diduga berbentuk memanjang dan sebagian
+    amatan merupakan pencilan yang ingin ditandai; (b) klaster diduga membulat dan seluruh amatan harus
+    masuk kelompok; (c) label sebenarnya tersedia dari sumber lain; (d) label tidak tersedia dan bentuk
+    klaster tidak diketahui sama sekali.'
+  - \newpage
+  penugasan:
+  - |-
+    \begin{kotaktugas}
+    Sebagai calon analis pada instansi statistik, lakukan pengelompokan wilayah atas \texttt{data\_wilayah.csv} (\emph{data simulasi}) memakai beberapa metode, evaluasi hasilnya, lalu simpulkan apakah data ini memang memiliki struktur klaster.
+    \end{kotaktugas}
+  - '**Konteks.** Sebuah unit hendak menyusun tipologi wilayah berdasarkan indikator sosial-ekonomi. Pimpinan
+    meminta bukan hanya hasil pengelompokan melainkan juga penilaian apakah pengelompokan itu bermakna.'
+  - \tugas{Penyiapan}
+  - 1. Periksa **perbedaan skala** antar-peubah numerik. Laporkan rasio simpangan baku terbesar terhadap
+    terkecil, lakukan pembakuan, lalu buktikan hasilnya dengan memeriksa rata-rata dan simpangan baku
+    kolomnya.
+  - \tugas{Metode Partisi}
+  - 2. Bentuk satu pengelompokan berbasis jarak dengan k = 3 sebagai **pembanding**. Laporkan ukuran klasternya
+    saja; cara kerja metodenya tidak perlu dibahas.
+  - \tugas{Metode Berbasis Kepadatan}
+  - 6. Tentukan **Eps** melalui grafik jarak tetangga ke-k dan tetapkan **MinPts** dengan aturan praktis.
+    Sajikan grafiknya beserta alasan pemilihan nilainya.
+  - 7. Terapkan **DBSCAN**. Laporkan banyaknya klaster, persentase derau, lalu periksa **kepekaannya**
+    dengan mencoba minimal delapan nilai Eps.
+  - 8. Terapkan **OPTICS** dan sajikan **diagram jangkauannya**. Bandingkan hasilnya terhadap DBSCAN,
+    lalu jelaskan keunggulan OPTICS pada data berkepadatan beragam.
+  - \tugas{Evaluasi dan Kesimpulan}
+  - 9. Hitung **indeks siluet** dan **indeks Dunn** bagi hasil K-Medoids. Sajikan diagram siluet, laporkan
+    amatan bersiluet negatif, lalu jelaskan mengapa Dunn peka terhadap pencilan.
+  - 10. Tentukan banyaknya klaster dengan **metode siku dan siluet rata-rata** untuk k dari 2 sampai 10.
+    Sajikan keduanya dan bandingkan jawabannya.
+  - 11. Susun **profil tiap klaster** dalam satuan asli beserta sebaran peubah kategorinya. Berikan nama
+    bagi tiap klaster, disertai catatan bahwa penamaan berasal dari penafsiran analis.
+  - 12. **Simpulkan apakah data ini memiliki struktur klaster yang berarti.** Dasarkan kesimpulan pada
+    nilai siluet, bentuk kurva siku, dan diagram jangkauan --- bukan pada keberhasilan algoritma menghasilkan
+    klaster.
+  - \tugas{Kajian Perbandingan Dua Keluarga Metode}
+  - '10. Bangkitkan **tiga data uji berlabel diketahui**: gumpalan membulat, cincin sepusat, dan gumpalan
+    disertai 10 persen derau. Sajikan gambar ketiganya.'
+  - 11. Jalankan **kedua keluarga metode** pada ketiga data dengan prapemrosesan yang sama. Sajikan tabel
+    memuat banyaknya klaster, cakupan, dan ARI.
+  - '12. **Buktikan bahwa indeks siluet tidak sah** dipakai membandingkan antar-keluarga: hitung siluet
+    bagi pengelompokan yang sebenarnya benar pada data cincin, lalu bandingkan terhadap siluet pengelompokan
+    berbasis jarak yang keliru. Jelaskan sebabnya.'
+  - 13. Terapkan **lima langkah perbandingan yang adil** pada data berderau. Laporkan ARI atas seluruh
+    amatan dan atas himpunan bagian yang sama, lalu jelaskan dari mana keunggulan yang terlihat sesungguhnya
+    berasal.
+  - 14. Susun **tabel rangkuman kajian** yang memuat kesesuaian tiap keluarga metode dan ukuran penilaian
+    yang sah bagi tiap keadaan data.
+  - '15. Susun laporan R Markdown berisi kode, keluaran, gambar, dan interpretasi. Tutup dengan **ringkasan
+    (maksimal 300 kata)** memuat: metode yang dipakai beserta parameternya, kesimpulan mengenai ada tidaknya
+    struktur pada data wilayah, hasil pokok kajian perbandingan, dan penegasan bahwa data merupakan simulasi.'
+  - \vspace{1.2em}
+  ringkasan:
+  - |-
+    \begin{kotaktujuan}
+    \textbf{Daftar periksa penguasaan:}
+    \begin{itemize}
+    \item[$\square$] Saya membakukan data sebelum melakukan pengelompokan apa pun.
+    \item[$\square$] Saya dapat menjelaskan titik inti, titik batas, dan derau.
+    \item[$\square$] Saya menetapkan Eps melalui grafik jarak tetangga ke-k, bukan menebak.
+    \item[$\square$] Saya memeriksa kepekaan DBSCAN terhadap Eps sebelum menyimpulkan.
+    \item[$\square$] Saya dapat membaca diagram jangkauan OPTICS.
+    \item[$\square$] Saya mengevaluasi dengan siluet dan Dunn, serta memahami kepekaan Dunn.
+    \item[$\square$] Saya menentukan banyaknya klaster dengan dua cara dan membandingkannya.
+    \item[$\square$] Saya tahu bahwa siluet \emph{tidak sah} dipakai mengadu antar-keluarga metode.
+    \item[$\square$] Saya melaporkan cakupan ketika membandingkan metode yang menandai derau.
+    \item[$\square$] Saya membandingkan pada himpunan bagian yang sama, bukan atas himpunan berbeda.
+    \item[$\square$] Saya memakai ARI ketika label sebenarnya tersedia.
+    \item[$\square$] Saya menyadari bahwa algoritma selalu memberi klaster meski data tak berstruktur.
+    \end{itemize}
+    \end{kotaktujuan}
+  - '**Kartu Referensi Cepat.**'
+  - |-
+    \begin{kotakrumus}
+    \begin{tabular}{@{}ll@{}}
+    \textbf{Keperluan} & \textbf{Perintah}\\
+    Pembakuan & \texttt{scale(X)}\\
+    Matriks jarak & \texttt{dist(X)}\\
+    Pembanding berbasis jarak & \texttt{cluster::pam(X, k = 3)}\\
+    Jarak tetangga ke-k & \texttt{dbscan::kNNdist(X, k =)}\\
+    DBSCAN & \texttt{dbscan::dbscan(X, eps =, minPts =)}\\
+    OPTICS & \texttt{dbscan::optics(X, eps =, minPts =)}\\
+    Ekstrak dari OPTICS & \texttt{dbscan::extractDBSCAN(op, eps\_cl =)}\\
+    Indeks siluet & \texttt{cluster::silhouette(klaster, dist(X))}\\
+    Indeks Dunn & \texttt{fpc::cluster.stats(dist(X), klaster)\$dunn}\\
+    Profil klaster & \texttt{aggregate(d, by = list(k), FUN = mean)}\\
+    Ukuran eksternal & \texttt{mclust::adjustedRandIndex(a, b)}\\
+    Cakupan & \texttt{mean(db\$cluster > 0)}\\
+    Bi-clustering & \texttt{biclust::biclust(M, method = BCCC())}\\
+    \end{tabular}
+    \end{kotakrumus}
+  - 'Modul ini memusatkan perhatian pada metode berbasis kepadatan dan pada cara menilai hasil pengelompokan.
+    Prinsip yang perlu dibawa: bakukan sebelum mengelompokkan; tetapkan parameter secara terarah lalu
+    laporkan seluruhnya; evaluasi dengan lebih dari satu ukuran; laporkan cakupan bila sebagian amatan
+    ditandai derau; bandingkan pada himpunan bagian yang sama; pakai ukuran eksternal bila label tersedia
+    dan jangan mengadu ukuran internal antar-keluarga metode; dan yang terpenting, periksa apakah struktur
+    yang ditemukan sungguh berarti --- sebab algoritma akan selalu memberi jawaban meski datanya tidak
+    berklaster sama sekali.'
+  - \vspace{1.2em}
+  referensi:
+  - 'Han, J., Kamber, M., & Pei, J. (2011). *Data Mining: Concepts and Techniques* (3rd ed.). Morgan Kaufmann.'
+  - 'Kaufman, L., & Rousseeuw, P. J. (1990). *Finding Groups in Data: An Introduction to Cluster Analysis*.
+    Wiley.'
+  - Ester, M., Kriegel, H.-P., Sander, J., & Xu, X. (1996). A density-based algorithm for discovering
+    clusters in large spatial databases with noise. *KDD-96*, 226-231.
+  - 'Ankerst, M., Breunig, M. M., Kriegel, H.-P., & Sander, J. (1999). OPTICS: Ordering points to identify
+    the clustering structure. *SIGMOD 1999*, 49-60.'
+  - Cheng, Y., & Church, G. M. (2000). Biclustering of expression data. *ISMB 2000*, 93-103.
+  - 'Rousseeuw, P. J. (1987). Silhouettes: A graphical aid to the interpretation and validation of cluster
+    analysis. *Journal of Computational and Applied Mathematics*, 20, 53-65.'
+  - Hubert, L., & Arabie, P. (1985). Comparing partitions. *Journal of Classification*, 2(1), 193-218.
+  contoh:
+  - contoh: Menyiapkan data, memeriksa skala, dan membakukan
+    narasi: |-
+      \kode{memeriksa skala lalu membakukan}
+
+      ```{r}
+      wil <- read.csv("data/data_wilayah.csv", stringsAsFactors = TRUE)
+      str(wil)
+
+      num <- c("kepadatan", "pengeluaran", "akses_air", "akses_listrik", "lama_sekolah")
+      ringkas <- data.frame(
+        rata = sapply(wil[num], mean),
+        sb   = sapply(wil[num], sd),
+        min  = sapply(wil[num], min),
+        maks = sapply(wil[num], max))
+      print(round(ringkas, 2))
+
+      cat("\nrasio simpangan baku terbesar terhadap terkecil:",
+          round(max(ringkas$sb) / min(ringkas$sb), 1), "\n")
+
+      # pembakuan: seluruh metode pada modul ini bersandar pada jarak
+      X <- scale(wil[num])
+      round(rbind(rata = colMeans(X), sb = apply(X, 2, sd)), 8)
+      ```
+
+      \begin{kotakpenjelasan}
+      Data dibaca lalu kelima peubah numerik diringkas rata-rata, simpangan baku, dan rentangnya. Rasio simpangan baku terbesar terhadap terkecil dihitung sebagai ukuran ketimpangan skala. Data lalu dibakukan dengan scale, dan hasilnya diperiksa: rata-rata tiap kolom harus nol dan simpangan bakunya satu.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Rasio yang besar adalah peringatan langsung. Karena seluruh metode pada modul ini bersandar pada jarak antar-amatan, peubah bersimpangan baku terbesar akan menentukan hampir seluruh jaraknya bila data tidak dibakukan --- sehingga pengelompokan yang dihasilkan sesungguhnya hanya mencerminkan satu peubah. Memeriksa rata-rata dan simpangan baku setelah pembakuan bukan formalitas melainkan pembuktian bahwa langkahnya sungguh berjalan. Objek X inilah yang dipakai seluruh contoh berikutnya.
+
+      \end{kotakinterpretasi}
+  - contoh: Mencari nilai Eps melalui grafik jarak tetangga
+    narasi: |-
+      \kode{kNNdist dan pembacaan titik belok}
+
+      ```{r}
+      suppressPackageStartupMessages(library(dbscan))
+
+      minpts <- 2 * length(num)                      # aturan praktis: 2 kali dimensi
+      jarak_k <- sort(dbscan::kNNdist(X, k = minpts))
+
+      plot(jarak_k, type = "l", lwd = 2, col = "#0B6FB4",
+           xlab = "Amatan (terurut)", ylab = paste("Jarak ke tetangga ke-", minpts),
+           main = "Menentukan Eps melalui Titik Belok")
+      grid(col = "grey88")
+
+      calon_eps <- round(quantile(jarak_k, 0.95), 3)
+      abline(h = calon_eps, col = "#F58220", lty = 2, lwd = 2)
+      cat("MinPts dipakai:", minpts, "| calon Eps (persentil 95):", calon_eps, "\n")
+      ```
+
+      \begin{kotakpenjelasan}
+      MinPts ditetapkan dua kali banyaknya dimensi sesuai aturan praktis. Jarak tiap amatan ke tetangga terdekat ke-MinPts dihitung, diurutkan, lalu digambar. Persentil ke-95 dipakai sebagai calon Eps yang objektif.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Kurva yang naik landai lalu menanjak tajam menandai peralihan dari titik di dalam klaster ke titik derau, dan titik beloknya menjadi calon Eps. Bila kurvanya menanjak mulus tanpa belok yang jelas --- sebagaimana lazim terjadi pada data tanpa struktur --- itu sendiri merupakan pertanda bahwa metode berbasis kepadatan mungkin tidak sesuai bagi data tersebut.
+
+      \end{kotakinterpretasi}
+  - contoh: Menerapkan DBSCAN
+    narasi: |-
+      \kode{dbscan::dbscan dengan penulisan tegas}
+
+      ```{r}
+      set.seed(2026)
+      db <- dbscan::dbscan(X, eps = as.numeric(calon_eps), minPts = minpts)
+
+      tab <- table(db$cluster)
+      cat("banyaknya klaster:", length(setdiff(names(tab), "0")), "\n")
+      cat("amatan derau     :", sum(db$cluster == 0),
+          sprintf("(%.1f persen)\n", 100 * mean(db$cluster == 0)))
+      print(tab)
+      ```
+
+      \begin{kotakpenjelasan}
+      DBSCAN dijalankan memakai Eps dan MinPts yang sudah ditetapkan. Klaster bernomor nol menandai derau sehingga dikeluarkan saat mencacah banyaknya klaster.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Perhatikan penulisan nama paket secara tegas. Paket fpc juga menyediakan fungsi bernama dbscan dengan argumen berbeda, sehingga tanpa penulisan tegas kode dapat gagal dengan pesan mengenai argumen tak dikenal --- bentrokan nama yang sama jenisnya dengan yang dijumpai pada Modul 6. Perhatikan pula persentase derau: nilai yang sangat besar menandakan Eps terlalu kecil, sedangkan nol derau sama sekali menandakan Eps terlalu besar.
+
+      \end{kotakinterpretasi}
+  - contoh: Memeriksa kepekaan DBSCAN terhadap Eps
+    narasi: |-
+      \kode{menjalankan DBSCAN pada beberapa nilai Eps}
+
+      ```{r}
+      kisi_eps <- round(seq(0.5, 3.0, by = 0.25), 2)
+      peka <- t(sapply(kisi_eps, function(e) {
+        h <- dbscan::dbscan(X, eps = e, minPts = minpts)
+        c(eps = e,
+          klaster = length(setdiff(unique(h$cluster), 0)),
+          derau_persen = round(100 * mean(h$cluster == 0), 1))
+      }))
+      print(peka, row.names = FALSE)
+
+      plot(peka[, "eps"], peka[, "klaster"], type = "b", pch = 19, lwd = 2,
+           col = "#0B6FB4", xlab = "Eps", ylab = "Banyaknya klaster",
+           main = "Kepekaan DBSCAN terhadap Eps")
+      grid(col = "grey88")
+      ```
+
+      \begin{kotakpenjelasan}
+      Sebelas nilai Eps dicoba. Pada tiap nilai dicatat banyaknya klaster yang terbentuk dan persentase amatan yang ditandai derau, lalu hasilnya digambar.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Grafik ini memperlihatkan bahwa hasil DBSCAN sangat bergantung pada Eps. Pada nilai kecil hampir semuanya menjadi derau; pada nilai besar seluruhnya melebur menjadi satu klaster. Melaporkan hasil DBSCAN tanpa menyebutkan Eps dan MinPts karena itu tidak bermakna --- keduanya wajib dicantumkan sebagaimana benih acak pada metode lain.
+
+      \end{kotakinterpretasi}
+  - contoh: 'Data berkepadatan bersarang: susunan yang menuntut OPTICS'
+    narasi: |-
+      \kode{membaca dan menggambarkan titik pemantauan}
+
+      ```{r optics-data, fig.cap="Dua inti padat berada di dalam gugus renggang, ditambah satu gugus terpisah", fig.width=5.6, fig.height=5.0, out.width="62%"}
+      suppressPackageStartupMessages(library(dbscan))
+      tp <- read.csv("data/titik_pemantauan.csv")
+      P  <- as.matrix(tp[, c("x", "y")])
+      table(tp$kelompok)
+
+      warna <- c(gugus_terpisah = "#8E44AD", halo_renggang = "#BDC3C7",
+                 inti_padat_1 = "#0B6FB4", inti_padat_2 = "#F58220")
+      par(family = "sans", mar = c(4, 4, 1, 1))
+      plot(P, col = warna[tp$kelompok], pch = 19, cex = 0.6, xlab = "x", ylab = "y")
+      legend("topleft", names(warna), col = warna, pch = 19, bty = "n", cex = 0.75)
+      ```
+
+      \begin{kotakinterpretasi}
+      Data memuat 380 titik dalam empat kelompok yang \textbf{kepadatannya sangat berbeda}. Dua \textbf{inti padat} --- masing-masing 80 titik dengan simpangan baku 0,20 --- berada \textbf{di dalam} sebuah \textbf{halo renggang} berisi 160 titik yang simpangan bakunya delapan kali lebih besar. Satu \textbf{gugus terpisah} berada jauh dari ketiganya.
+
+      Susunan bersarang inilah pokok bahasannya, dan ia lazim dijumpai pada data nyata: sekelompok kecil unit berperilaku sangat seragam, terbenam di dalam kelompok besar yang beragam --- misalnya beberapa kecamatan berciri sangat khas di dalam wilayah yang secara umum heterogen.
+
+      Pertanyaannya: dapatkah DBSCAN memisahkan keempatnya?
+      \end{kotakinterpretasi}
+  - contoh: 'DBSCAN gagal: tidak ada nilai Eps yang benar'
+    narasi: |-
+      \kode{tiga nilai Eps dan penelusuran menyeluruh}
+
+      ```{r optics-dbscan-gagal, fig.cap="Eps kecil membuang halo menjadi derau; Eps besar meleburkan kedua inti ke dalam halo", fig.width=8.4, fig.height=3.0, out.width="98%"}
+      ari <- function(a, b) { tb <- table(a, b); n <- sum(tb)
+        s_ij <- sum(choose(tb, 2)); s_i <- sum(choose(rowSums(tb), 2))
+        s_j <- sum(choose(colSums(tb), 2)); h <- s_i * s_j / choose(n, 2)
+        (s_ij - h) / ((s_i + s_j) / 2 - h) }
+
+      par(mfrow = c(1, 3), family = "sans", mar = c(4, 4, 2.5, 1))
+      for (e in c(0.35, 0.70, 1.30)) {
+        r <- dbscan::dbscan(P, eps = e, minPts = 10)
+        cat(sprintf("Eps %.2f -> %d klaster, %3d derau, ARI %.3f\n", e,
+            length(setdiff(unique(r$cluster), 0)), sum(r$cluster == 0),
+            ari(tp$kelompok, r$cluster)))
+        plot(P, col = ifelse(r$cluster == 0, "grey85", r$cluster + 1), pch = 19, cex = 0.5,
+             main = sprintf("Eps = %.2f", e), xlab = "x", ylab = "y")
+      }
+      par(mfrow = c(1, 1))
+
+      eps_grid <- seq(0.10, 3.00, by = 0.05)          # adakah Eps yang lebih baik?
+      telusur  <- sapply(eps_grid, function(e)
+        ari(tp$kelompok, dbscan::dbscan(P, eps = e, minPts = 10)$cluster))
+      cat("\nARI terbaik yang dapat dicapai DBSCAN:", round(max(telusur), 3),
+          "pada Eps =", eps_grid[which.max(telusur)], "\n")
+      r_terbaik <- dbscan::dbscan(P, eps = eps_grid[which.max(telusur)], minPts = 10)
+      cat("derau pada Eps terbaik itu:", sum(r_terbaik$cluster == 0),
+          sprintf("(%.1f persen)\n", 100 * mean(r_terbaik$cluster == 0)))
+      ```
+
+      \begin{kotakinterpretasi}
+      Ketiga gambar memperlihatkan kegagalan yang \textbf{tidak dapat diperbaiki dengan menala Eps}.
+
+      \textbf{Eps kecil (0,35).} Kedua inti padat ditemukan sempurna --- tetapi halo renggang tidak cukup padat untuk memenuhi syarat, sehingga sebagian besar titiknya dibuang menjadi derau. Sekitar 40\% data dinyatakan bukan anggota kelompok mana pun.
+
+      \textbf{Eps sedang (0,70) dan besar (1,30).} Halo kini terjangkau --- tetapi karena kedua inti berada \emph{di dalam} halo, ketiganya \textbf{melebur menjadi satu klaster}. Susunan bersarangnya lenyap, dan ARI justru anjlok.
+
+      Yang menentukan adalah dua baris terakhir. Seluruh nilai Eps dari 0,10 sampai 3,00 ditelusuri, dan yang terbaik pun hanya mencapai ARI \textbf{0,762} pada Eps $= 0{,}30$ --- dengan mengorbankan \textbf{163 titik (42,9\%)} sebagai derau. Kegagalan ini karena itu bukan soal salah memilih Eps: \textbf{DBSCAN secara struktural tidak mampu} menangani kelompok berkepadatan sangat berbeda, sebab ia memakai \textbf{satu} ambang kepadatan bagi seluruh data.
+
+      Perlu ditegaskan pula bahwa penelusuran semacam ini hanya mungkin di ruang kelas --- ia memakai label sebenarnya, yang pada pekerjaan nyata tidak tersedia. Pada data sungguhan, analis bahkan tidak akan mengetahui bahwa Eps terbaiknya masih buruk.
+      \end{kotakinterpretasi}
+  - contoh: 'OPTICS: satu perhitungan, seluruh tingkat kepadatan'
+    narasi: |-
+      \kode{optics dan diagram jangkauan}
+
+      ```{r optics-jalan, fig.cap="Diagram jangkauan OPTICS: lembah dalam dan sempit menandai inti padat, lembah lebar dangkal menandai halo", fig.width=8.0, fig.height=3.4, out.width="94%"}
+      op <- dbscan::optics(P, minPts = 10)
+      par(family = "sans", mar = c(4, 4, 2, 1))
+      plot(op, main = "Diagram Jangkauan OPTICS")
+      ```
+
+      ```{r optics-xi, fig.cap="Klaster hasil extractXi digambar pada bidang asal", fig.width=5.6, fig.height=5.0, out.width="62%"}
+      xi_hasil <- dbscan::extractXi(op, xi = 0.10)
+      cat("klaster ditemukan:", length(setdiff(unique(xi_hasil$cluster), 0)),
+          " derau:", sum(xi_hasil$cluster == 0), "\n")
+      print(table(sebenarnya = tp$kelompok, optics = xi_hasil$cluster))
+      cat("\nARI OPTICS:", round(ari(tp$kelompok, xi_hasil$cluster), 3),
+          " | ARI DBSCAN terbaik:", round(max(telusur), 3), "\n")
+
+      par(family = "sans", mar = c(4, 4, 1, 1))
+      plot(P, col = ifelse(xi_hasil$cluster == 0, "grey85", xi_hasil$cluster + 1),
+           pch = 19, cex = 0.6, xlab = "x", ylab = "y")
+      ```
+
+      \begin{kotakpenjelasan}
+      \texttt{optics()} tidak menghasilkan klaster melainkan \textbf{urutan} amatan beserta \emph{jarak jangkauan} tiap titik --- ukuran seberapa rapat titik itu terhubung ke bagian data yang telah dijelajahi. Dari urutan tersebut pengelompokan dapat diekstrak berulang kali tanpa perhitungan ulang: \texttt{extractDBSCAN()} untuk satu ambang tetap, atau \texttt{extractXi()} yang mencari \textbf{lembah} pada diagram jangkauan sehingga dapat menangkap beberapa tingkat kepadatan sekaligus.
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Diagram jangkauan menceritakan seluruh struktur dalam satu gambar. \textbf{Dua lembah dalam dan sempit} berpadanan dengan kedua inti padat --- jangkauannya kecil karena titiknya sangat berdekatan. \textbf{Lembah lebar yang dangkal} adalah halo renggang, dan \textbf{satu lembah terpisah} adalah gugus keempat. Puncak di antara lembah menandai batasnya.
+
+      Perhatikan bahwa kedua inti muncul sebagai lembah \textbf{di dalam} wilayah halo --- persis menggambarkan susunan bersarang pada data. Inilah yang tidak dapat diwakili keluaran DBSCAN, yang berupa daftar label datar tanpa tingkatan.
+
+      \texttt{extractXi} dengan $\xi = 0{,}10$ memulihkan \textbf{empat kelompok}: kedua inti padat masing-masing utuh (80 dari 80), gugus terpisah 59 dari 60, dan halo renggang sebagian besar (130 dari 160). ARI-nya \textbf{0,774} --- \textbf{melampaui ARI terbaik yang mungkin dicapai DBSCAN} (0,762), dan mencapainya dengan hanya \textbf{2 titik} yang ditandai derau, bukan 163.
+
+      Kesimpulan yang perlu dibawa: OPTICS tidak "lebih akurat" daripada DBSCAN pada data berkepadatan seragam --- pada data semacam itu keduanya setara dan DBSCAN lebih sederhana. Keunggulan OPTICS muncul justru ketika \textbf{kepadatan antar-kelompok berbeda jauh atau bersarang}, keadaan yang meruntuhkan gagasan "satu Eps untuk semua". Karena itu jalankan OPTICS lebih dahulu untuk \textbf{melihat} strukturnya; bila diagram jangkauannya memperlihatkan lembah berkedalaman seragam, DBSCAN sudah memadai.
+      \end{kotakinterpretasi}
+  - contoh: Mengambil beberapa nilai Eps dari satu perhitungan OPTICS
+    narasi: |-
+      \kode{extractDBSCAN pada beberapa ambang}
+
+      ```{r optics-extract}
+      for (e in c(0.35, 0.70, 1.30)) {
+        ek <- dbscan::extractDBSCAN(op, eps_cl = e)
+        cat(sprintf("eps_cl %.2f -> %d klaster, %3d derau, ARI %.3f\n", e,
+            length(setdiff(unique(ek$cluster), 0)), sum(ek$cluster == 0),
+            ari(tp$kelompok, ek$cluster)))
+      }
+      ```
+
+      \begin{kotakinterpretasi}
+      Angka-angka ini praktis \textbf{sama} dengan hasil DBSCAN pada contoh sebelumnya --- ARI 0,754 berbanding 0,753 pada Eps $0{,}35$, dan 0,200 berbanding 0,197 pada Eps $0{,}70$. Selisih beberapa titik pada cacah derau muncul karena \texttt{extractDBSCAN()} menetapkan \emph{titik batas} menurut urutan penjelajahan OPTICS, sedangkan DBSCAN menetapkannya menurut urutan asli data; keduanya sama-sama sah dan tidak mengubah kesimpulan.
+
+      Di situlah nilai praktisnya. Menala Eps dengan DBSCAN berarti menjalankan ulang algoritma bagi tiap nilai yang dicoba. Dengan OPTICS, urutannya dihitung \textbf{satu kali}, lalu berapa pun nilai Eps dapat diperiksa dengan biaya yang praktis nol. Pada data besar, selisih biaya ini menentukan apakah penalaan layak dilakukan atau tidak.
+
+      Urutan kerja yang dianjurkan karena itu: jalankan OPTICS, baca diagram jangkauannya, lalu putuskan --- \texttt{extractXi} bila kepadatannya beragam, atau \texttt{extractDBSCAN} pada satu ambang bila diagramnya menunjukkan kepadatan seragam.
+      \end{kotakinterpretasi}
+  - contoh: Mengevaluasi dengan indeks siluet
+    narasi: |-
+      \kode{silhouette beserta penggambarannya}
+
+      ```{r}
+      suppressPackageStartupMessages(library(cluster))
+
+      # Pengelompokan berbasis jarak dipakai di sini semata sebagai PEMBANDING
+      # bagi hasil DBSCAN; metodenya sendiri tidak menjadi bahasan modul ini.
+      set.seed(2026)
+      pam3 <- pam(X, k = 3)
+
+      sil <- silhouette(pam3$clustering, dist(X))
+      cat("siluet rata-rata:", round(mean(sil[, 3]), 4), "\n\n")
+
+      cat("siluet rata-rata per klaster:\n")
+      print(round(tapply(sil[, 3], sil[, 1], mean), 4))
+
+      cat("\namatan bersiluet negatif:", sum(sil[, 3] < 0),
+          sprintf("(%.1f persen)\n", 100 * mean(sil[, 3] < 0)))
+
+      plot(sil, col = c("#0B6FB4", "#F58220", "#00A651"), border = NA,
+           main = "Diagram Siluet (pembanding berbasis jarak, k = 3)")
+      ```
+
+      \begin{kotakpenjelasan}
+      Sebuah pengelompokan berbasis jarak dibentuk lebih dahulu sebagai pembanding, sebab indeks siluet menuntut suatu pengelompokan untuk dinilai. Indeks siluet dihitung bagi tiap amatan, lalu dirata-ratakan secara keseluruhan maupun per klaster. Amatan bersiluet negatif dicacah, dan diagramnya digambar dengan warna berbeda tiap klaster.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Amatan bersiluet negatif adalah amatan yang sesungguhnya lebih dekat ke klaster tetangga daripada ke klasternya sendiri --- pertanda penempatan yang keliru. Bila jumlahnya besar, pengelompokan tidak dapat dipercaya. Perlu ditegaskan bahwa pengelompokan berbasis jarak di sini hanya berperan sebagai objek yang dinilai; bagaimana metodenya bekerja bukan bahasan modul ini, dan pada bagian kajian nanti akan terlihat bahwa siluet justru tidak sah dipakai mengadu kedua keluarga metode.
+
+      \end{kotakinterpretasi}
+  - contoh: Mengevaluasi dengan indeks Dunn dan ukuran lain
+    narasi: |-
+      \kode{fpc::cluster.stats}
+
+      ```{r}
+      suppressPackageStartupMessages(library(fpc))
+      stat <- fpc::cluster.stats(dist(X), pam3$clustering)
+
+      round(c(dunn = stat$dunn,
+              siluet_rata = stat$avg.silwidth,
+              pemisahan_min = stat$min.separation,
+              diameter_maks = stat$max.diameter,
+              wb_ratio = stat$wb.ratio), 4)
+      ```
+
+      \begin{kotakpenjelasan}
+      Fungsi cluster.stats menghitung belasan ukuran mutu pengelompokan sekaligus. Lima yang paling berguna diambil: indeks Dunn, siluet rata-rata, pemisahan antar-klaster terkecil, diameter klaster terbesar, dan rasio jarak dalam terhadap antar-klaster.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Indeks Dunn adalah rasio pemisahan terkecil terhadap diameter terbesar, sehingga sepenuhnya ditentukan dua nilai ekstrem. Sifat itu membuatnya sangat peka terhadap pencilan --- satu amatan menyimpang dapat menjatuhkan nilainya drastis. Karena itu Dunn sebaiknya dibaca bersama siluet, bukan sendirian.
+
+      \end{kotakinterpretasi}
+  - contoh: Menentukan banyaknya klaster dengan metode siku
+    narasi: |-
+      \kode{pam berulang dan grafik siku}
+
+      ```{r}
+      wss <- sapply(2:10, function(k) {
+        set.seed(2026)
+        p <- pam(X, k = k)
+        sum(sapply(seq_len(k), function(j) {
+          ang <- X[p$clustering == j, , drop = FALSE]
+          med <- X[p$id.med[j], ]
+          sum(rowSums(sweep(ang, 2, med)^2))
+        }))
+      })
+
+      plot(2:10, wss, type = "b", pch = 19, lwd = 2, col = "#0B6FB4",
+           xlab = "Banyaknya klaster k", ylab = "Jumlah kuadrat jarak ke medoid",
+           main = "Metode Siku")
+      grid(col = "grey88")
+
+      selisih <- round(diff(wss), 1)
+      cat("penurunan saat k bertambah:\n")
+      print(data.frame(dari_k = 2:9, ke_k = 3:10, penurunan = selisih), row.names = FALSE)
+      ```
+
+      \begin{kotakpenjelasan}
+      Jumlah kuadrat jarak tiap amatan terhadap medoid klasternya dihitung untuk sembilan nilai k. Fungsi sweep mengurangkan medoid dari seluruh baris anggota, lalu kuadratnya dijumlahkan. Grafiknya digambar, dan penurunan antar-nilai k ditampilkan sebagai angka.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Menyajikan penurunan sebagai angka menolong karena titik siku kerap kabur secara visual. Siku berada pada nilai k tempat penurunan mulai mengecil tajam. Bila penurunannya melandai mulus tanpa patahan --- sebagaimana lazim pada data tanpa struktur --- maka metode siku tidak memberi jawaban, dan itu sendiri merupakan temuan yang wajib dilaporkan.
+
+      \end{kotakinterpretasi}
+  - contoh: Menentukan banyaknya klaster dengan siluet rata-rata
+    narasi: |-
+      \kode{pam berulang dan garis acuan siluet}
+
+      ```{r}
+      sil_k <- sapply(2:10, function(k) {
+        set.seed(2026)
+        p <- pam(X, k = k)
+        p$silinfo$avg.width
+      })
+
+      hasil_k <- data.frame(k = 2:10, siluet = round(sil_k, 4))
+      print(hasil_k, row.names = FALSE)
+
+      plot(2:10, sil_k, type = "b", pch = 19, lwd = 2, col = "#0B6FB4",
+           xlab = "Banyaknya klaster k", ylab = "Siluet rata-rata",
+           main = "Metode Siluet Rata-rata")
+      abline(h = 0.25, col = "#C0392B", lty = 2, lwd = 2)
+      abline(v = hasil_k$k[which.max(sil_k)], col = "#00A651", lty = 3, lwd = 2)
+      grid(col = "grey88")
+
+      cat("\nk dengan siluet tertinggi:", hasil_k$k[which.max(sil_k)],
+          "| nilai:", round(max(sil_k), 4), "\n")
+      cat("aturan empiris akar n per dua:", round(sqrt(nrow(X) / 2), 1), "\n")
+      ```
+
+      \begin{kotakpenjelasan}
+      PAM dijalankan untuk sembilan nilai k dan siluet rata-ratanya dicatat. Grafiknya dilengkapi garis mendatar pada nilai 0,25 sebagai batas struktur berarti, dan garis tegak pada k terbaik. Aturan empiris akar n per dua disertakan sebagai pembanding.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Garis mendatar pada 0,25 adalah bagian terpenting gambar ini. Bila seluruh titik berada di bawahnya, maka tidak ada nilai k yang menghasilkan struktur berarti --- dan kesimpulan yang benar adalah menyatakan bahwa data tidak berklaster, bukan memilih k yang kebetulan tertinggi. Pada data simulasi ini, yang peubahnya dibangkitkan tanpa struktur, itulah hasil yang diharapkan.
+
+      \end{kotakinterpretasi}
+  - contoh: Menggambarkan hasil pengelompokan pada dua komponen utama
+    narasi: |-
+      \kode{memproyeksikan klaster ke bidang komponen utama}
+
+      ```{r}
+      pc <- prcomp(X)
+      ragam2 <- round(100 * (pc$sdev^2 / sum(pc$sdev^2))[1:2], 1)
+
+      par(mfrow = c(1, 2), mar = c(4, 4, 3, 1))
+      plot(pc$x[, 1], pc$x[, 2], col = c("#0B6FB4", "#F58220", "#00A651")[pam3$clustering],
+           pch = 19, cex = .6,
+           xlab = sprintf("PC1 (%.1f persen)", ragam2[1]),
+           ylab = sprintf("PC2 (%.1f persen)", ragam2[2]),
+           main = "PAM (k = 3)")
+
+      warna_db <- ifelse(db$cluster == 0, "grey60",
+                         c("#0B6FB4", "#F58220", "#00A651",
+                           "#C0392B", "#6FB3E0")[pmin(db$cluster, 5)])
+      plot(pc$x[, 1], pc$x[, 2], col = warna_db, pch = 19, cex = .6,
+           xlab = sprintf("PC1 (%.1f persen)", ragam2[1]),
+           ylab = sprintf("PC2 (%.1f persen)", ragam2[2]),
+           main = "DBSCAN (abu = derau)")
+      par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
+      ```
+
+      \begin{kotakpenjelasan}
+      Data terbakukan diproyeksikan ke dua komponen utama agar dapat digambar pada bidang. Hasil PAM dan DBSCAN disajikan berdampingan dengan proyeksi yang sama, dan derau DBSCAN diberi warna abu.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Memakai proyeksi yang sama bagi kedua gambar adalah kunci perbandingannya. Perhatikan bahwa kedua komponen pertama hanya menerangkan sebagian keragaman, sehingga klaster yang tampak bertumpang tindih pada bidang ini boleh jadi terpisah pada dimensi lain --- dan sebaliknya. Gambar semacam ini menolong penafsiran tetapi tidak boleh menjadi satu-satunya dasar kesimpulan.
+
+      \end{kotakinterpretasi}
+  - contoh: Menafsirkan klaster melalui profil peubahnya
+    narasi: |-
+      \kode{aggregate untuk menyusun profil klaster}
+
+      ```{r}
+      profil <- aggregate(wil[num], by = list(klaster = pam3$clustering), FUN = mean)
+      print(round(profil, 2), row.names = FALSE)
+
+      cat("\nukuran tiap klaster:\n")
+      print(table(klaster = pam3$clustering))
+
+      cat("\nsebaran pulau menurut klaster:\n")
+      print(round(prop.table(table(pam3$clustering, wil$pulau), margin = 1), 3))
+      ```
+
+      \begin{kotakpenjelasan}
+      Rata-rata tiap peubah numerik dihitung per klaster dalam satuan aslinya, bukan satuan terbakukan. Ukuran klaster dan sebaran peubah kategori ditampilkan sebagai pelengkap.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Menyajikan profil dalam satuan asli adalah keharusan bagi pelaporan: pengguna memahami pengeluaran dalam rupiah, bukan dalam simpangan baku. Perlu diingat bahwa penamaan klaster --- misalnya menyebut satu klaster sebagai wilayah tertinggal --- adalah penafsiran yang menuntut pengetahuan bidang dan wajib disertai catatan bahwa penamaan itu berasal dari analis, bukan dari data.
+
+      \end{kotakinterpretasi}
+  - contoh: k-Medoid (PAM) pada peubah numerik
+    narasi: |-
+      \kode{pam dan pemilihan banyaknya medoid}
+
+      ```{r pam-numerik}
+      suppressPackageStartupMessages(library(cluster))
+      Zn <- scale(wil[, c("kepadatan", "pengeluaran", "akses_air",
+                          "akses_listrik", "lama_sekolah")])
+
+      sil_k <- sapply(2:6, function(k) pam(Zn, k)$silinfo$avg.width)
+      round(setNames(sil_k, paste0("k=", 2:6)), 3)
+
+      pam3 <- pam(Zn, 3)
+      cat("ukuran klaster:", pam3$clusinfo[, 1], "\n")
+      cat("siluet rata-rata:", round(pam3$silinfo$avg.width, 3), "\n")
+      cat("\nmedoid (wilayah yang mewakili tiap klaster):\n")
+      print(round(wil[pam3$id.med, c("kepadatan", "pengeluaran", "akses_air",
+                                     "akses_listrik", "lama_sekolah")], 1))
+      ```
+
+      \begin{kotakinterpretasi}
+      Berbeda dari k-Means yang memakai \textbf{rata-rata} sebagai pusat, k-Medoid memakai \textbf{amatan sungguhan} --- di sini, wilayah tertentu yang paling mewakili kelompoknya. Dua keuntungannya nyata pada pekerjaan statistik resmi. \textbf{Pertama}, pusat klaster dapat ditunjuk: "kelompok ini diwakili wilayah nomor sekian", bukan sekadar vektor rata-rata yang mungkin tidak sesuai dengan wilayah mana pun. \textbf{Kedua}, medoid jauh lebih tahan terhadap pencilan, sebab satu amatan ekstrem tidak menggeser medoid sebagaimana ia menggeser rata-rata.
+
+      Siluet rata-rata pada $k = 2$ sampai 6 berkisar \textbf{0,127 sampai 0,165} --- seluruhnya sangat rendah. Sesuai rancangan data ini, yang dibangkitkan \textbf{tanpa struktur klaster yang disengaja}, hasil itu benar dan wajib dilaporkan apa adanya: tidak ada pengelompokan alami yang tegas pada kelima peubah numerik ini. Bahwa siluet justru tertinggi pada $k = 6$ bukan bukti adanya enam kelompok; pada data tanpa struktur, siluet dapat naik-turun tanpa pola bermakna.
+      \end{kotakinterpretasi}
+  - contoh: 'k-Medoid untuk data kategorik dan campuran: jarak Gower'
+    narasi: |-
+      \kode{daisy dengan metrik Gower lalu pam pada matriks jarak}
+
+      ```{r pam-gower}
+      wil_c <- wil[, -1]
+      wil_c$status <- factor(wil_c$status)
+      wil_c$pulau  <- factor(wil_c$pulau)
+      str(wil_c[, c("status", "pulau")])
+
+      G <- daisy(wil_c, metric = "gower")
+      cat("kelas objek:", class(G), " ukuran:", attr(G, "Size"), "\n")
+      cat("rentang jarak Gower:", round(range(G), 3), "\n")
+
+      sil_g <- sapply(2:6, function(k) pam(G, k, diss = TRUE)$silinfo$avg.width)
+      round(setNames(sil_g, paste0("k=", 2:6)), 3)
+
+      pam_g <- pam(G, 3, diss = TRUE)
+      cat("ukuran klaster:", table(pam_g$clustering), "\n")
+      print(table(klaster = pam_g$clustering, status = wil_c$status))
+      print(table(klaster = pam_g$clustering, pulau = wil_c$pulau))
+      ```
+
+      \begin{kotakinterpretasi}
+      Jarak Euclidean tidak terdefinisi bagi peubah kategorik --- selisih antara "Perkotaan" dan "Perdesaan" bukan bilangan. \textbf{Jarak Gower} menyelesaikannya dengan menghitung ketakmiripan per peubah lalu merata-ratakannya: untuk peubah numerik dipakai selisih mutlak yang dibagi rentangnya (sehingga hasilnya berada pada $[0,1]$), sedangkan untuk peubah kategorik dipakai 0 bila sama dan 1 bila berbeda. Karena tiap peubah menyumbang pada skala yang sama, tidak diperlukan pembakuan --- dan justru \textbf{tidak boleh} dibakukan lebih dahulu, sebab Gower sudah menormalkan sendiri.
+
+      Siluet pada jarak Gower ($0{,}17$ sampai $0{,}30$) lebih tinggi daripada pada peubah numerik saja. Kenaikan itu \textbf{bukan} pertanda pengelompokannya lebih baik: peubah kategorik hanya memiliki sedikit nilai, sehingga banyak pasangan berjarak persis nol atau persis satu --- dan sebaran jarak yang menggumpal seperti itu menaikkan siluet secara artifisial. Tabulasi silang memperlihatkan apa yang sesungguhnya terjadi: klaster terbentuk sebagian besar mengikuti \texttt{pulau} dan \texttt{status}, yakni peubah kategorik mendominasi pengelompokan.
+
+      Inilah masalah pembobotan yang selalu muncul pada data campuran. Lima peubah numerik dan dua peubah kategorik diperlakukan setara oleh Gower, padahal satu peubah kategorik berkategori empat dapat memisahkan data jauh lebih tegas daripada satu peubah numerik yang menyebar. Bila hal itu tidak dikehendaki, bobot tiap peubah harus ditetapkan sendiri lewat argumen \texttt{weights} pada \texttt{daisy()} --- dan penetapan itu wajib dinyatakan dalam laporan.
+      \end{kotakinterpretasi}
+  - contoh: k-Prototype untuk data campuran
+    narasi: |-
+      \kode{kproto dan pengaruh pembakuan terhadap lambda}
+
+      ```{r kproto}
+      suppressPackageStartupMessages(library(clustMixType))
+
+      # (a) TANPA pembakuan peubah numerik
+      set.seed(2026)
+      kp_mentah <- kproto(wil_c, k = 3, verbose = FALSE)
+      cat("lambda tanpa pembakuan:", format(kp_mentah$lambda, digits = 5), "\n")
+
+      # (b) DENGAN pembakuan peubah numerik
+      wil_z <- wil_c
+      wil_z[, 1:5] <- scale(wil_z[, 1:5])
+      set.seed(2026)
+      kp_baku <- kproto(wil_z, k = 3, verbose = FALSE)
+      cat("lambda dengan pembakuan:", round(kp_baku$lambda, 3), "\n\n")
+
+      cat("ukuran klaster -- tanpa baku:", kp_mentah$size,
+          "| dengan baku:", kp_baku$size, "\n")
+      print(table(tanpa_baku = kp_mentah$cluster, dengan_baku = kp_baku$cluster))
+
+      cat("\nprototipe (dengan pembakuan):\n")
+      print(round(kp_baku$centers[, 1:5], 2))
+      print(kp_baku$centers[, 6:7])
+      ```
+
+      \begin{kotakinterpretasi}
+      k-Prototype menggabungkan k-Means bagi peubah numerik dan k-Modes bagi peubah kategorik. Jaraknya adalah jumlah jarak Euclidean kuadrat pada bagian numerik ditambah $\lambda$ kali cacah ketidakcocokan pada bagian kategorik. Parameter $\lambda$ karena itu menentukan \textbf{seberapa besar suara} peubah kategorik.
+
+      Perhatikan akibat pembakuan. Tanpa dibakukan, $\lambda$ ditaksir sekitar \textbf{2.563.400} --- angka raksasa yang muncul karena \texttt{kepadatan} bernilai ribuan dan \texttt{pengeluaran} bernilai ribuan pula, sehingga ragam bagian numerik sangat besar dan $\lambda$ harus mengimbanginya. Setelah dibakukan, $\lambda$ menjadi \textbf{1,648} --- besaran yang wajar dan dapat ditafsirkan: satu ketidakcocokan kategori setara sekitar 1,6 satuan jarak kuadrat pada skala baku.
+
+      Yang lebih penting, keanggotaan klasternya \textbf{berbeda jauh}. Tabulasi silang kedua hasil memperlihatkan bahwa kesepakatannya rendah --- pengelompokan berubah, bukan sekadar berganti nomor. Kaidahnya: pada k-Prototype, \textbf{bakukan peubah numerik lebih dahulu}, dan laporkan nilai $\lambda$ yang dipakai. Menerima $\lambda$ bawaan tanpa memeriksanya berarti membiarkan satuan pengukuran menentukan bobot antar-jenis peubah.
+      \end{kotakinterpretasi}
+  - contoh: Membandingkan PAM-Gower dan k-Prototype
+    narasi: |-
+      \kode{kesepakatan dua pendekatan pada data campuran}
+
+      ```{r banding-campuran}
+      tab <- table(kproto = kp_baku$cluster, pam_gower = pam_g$clustering)
+      print(tab)
+
+      # indeks Rand terkoreksi antara kedua pengelompokan
+      ari <- function(a, b) {
+        tb <- table(a, b); n <- sum(tb)
+        s_ij <- sum(choose(tb, 2)); s_i <- sum(choose(rowSums(tb), 2))
+        s_j <- sum(choose(colSums(tb), 2)); harap <- s_i * s_j / choose(n, 2)
+        (s_ij - harap) / ((s_i + s_j) / 2 - harap)
+      }
+      cat("ARI kproto vs PAM-Gower:", round(ari(kp_baku$cluster, pam_g$clustering), 3), "\n")
+      cat("ARI kproto vs PAM numerik:", round(ari(kp_baku$cluster, pam3$clustering), 3), "\n")
+      ```
+
+      \begin{kotakinterpretasi}
+      Indeks Rand terkoreksi (ARI) antara k-Prototype dan PAM-Gower sangat rendah --- keduanya menghasilkan pembagian yang praktis \textbf{tidak berhubungan}, meskipun bekerja pada data yang sama dan sama-sama menangani peubah campuran.
+
+      Ini bukan kekeliruan salah satu metode. Keduanya menimbang peubah numerik dan kategorik dengan cara yang berbeda: Gower merata-ratakan ketakmiripan per peubah pada skala $[0,1]$, sedangkan k-Prototype menjumlahkan jarak kuadrat numerik dengan $\lambda$ kali ketidakcocokan kategorik. Ketika data \textbf{tidak memuat struktur klaster yang tegas} --- sebagaimana data ini --- kedua pembobotan itu menemukan pembagian yang berbeda-beda, dan tidak ada dasar untuk menyatakan salah satunya benar.
+
+      Pelajarannya justru itu: ketidaksepakatan antar-metode pada data tanpa struktur adalah \textbf{temuan}, bukan kegagalan. Bila dua metode yang sama-sama sah memberi hasil yang tak berhubungan, kesimpulan yang jujur adalah "tidak ada pengelompokan alami yang tegas pada data ini", bukan memilih salah satu hasil lalu menamainya.
+      \end{kotakinterpretasi}
+  - contoh: Mengevaluasi keempat metode dengan ukuran yang sama
+    narasi: |-
+      \kode{cluster.stats untuk PAM, PAM-Gower, k-Prototype, DBSCAN, dan OPTICS}
+
+      ```{r eval-semua}
+      suppressPackageStartupMessages({library(fpc); library(dbscan)})
+
+      nilai <- function(kel, jarak, nama) {
+        ada <- kel > 0                                   # buang derau bagi DBSCAN/OPTICS
+        if (length(unique(kel[ada])) < 2) {
+          cat(sprintf("%-12s kurang dari dua klaster\n", nama)); return(invisible(NULL))
+        }
+        st <- cluster.stats(as.dist(as.matrix(jarak)[ada, ada]), kel[ada])
+        data.frame(metode = nama, klaster = st$cluster.number,
+                   siluet = round(st$avg.silwidth, 3), dunn = round(st$dunn, 3),
+                   CH = round(st$ch, 1),
+                   dalam = round(st$average.within, 3), antar = round(st$average.between, 3),
+                   derau = sum(!ada))
+      }
+
+      db  <- dbscan::dbscan(X, eps = 1.2, minPts = 5)
+      opt <- dbscan::extractDBSCAN(dbscan::optics(X, minPts = 5), eps_cl = 1.2)
+      Gz  <- daisy(wil_z, metric = "gower")
+
+      tabel <- rbind(
+        nilai(pam3$clustering,   dist(X), "PAM"),
+        nilai(pam_g$clustering,  G,       "PAM-Gower"),
+        nilai(kp_baku$cluster,   Gz,      "k-Prototype"),
+        nilai(db$cluster,        dist(X), "DBSCAN"),
+        nilai(opt$cluster,       dist(X), "OPTICS"))
+      print(tabel, row.names = FALSE)
+      ```
+
+      \begin{kotakinterpretasi}
+      Tabel ini menyajikan lima ukuran bagi kelima hasil, tetapi \textbf{tidak seluruhnya boleh dibandingkan langsung}. Bacalah per kelompok.
+
+      \textbf{Di dalam keluarga berbasis medoid} (PAM, PAM-Gower, k-Prototype), perbandingan sah selama jaraknya sama. PAM pada peubah numerik memberi siluet 0,127, k-Prototype 0,088 --- keduanya rendah, sesuai rancangan data. PAM-Gower tampak lebih tinggi (0,193) tetapi \textbf{dihitung atas jarak yang berbeda} (Gower, bukan Euclidean), sehingga angkanya tidak sebanding; hal ini sudah dibahas pada Contoh 12.13.
+
+      \textbf{Di dalam keluarga berbasis kepadatan} (DBSCAN, OPTICS), keduanya menemukan 4 klaster dengan derau 76 dan 80 amatan. Indeks Dunn keduanya \textbf{lebih tinggi} daripada PAM (0,173 berbanding 0,104) --- wajar, sebab Dunn mengukur nisbah pemisahan terkecil terhadap garis tengah terbesar, dan membuang derau menaikkan pemisahan itu.
+
+      \textbf{Antar-keluarga}, tabel ini justru memperlihatkan masalahnya. DBSCAN unggul pada Dunn tetapi kalah pada siluet dan CH; PAM sebaliknya. Tidak ada satu pun ukuran di sini yang dapat menjadi hakim, sebab keduanya \textbf{tidak menjawab pertanyaan yang sama} --- dan yang lebih pokok, DBSCAN dinilai hanya atas 124 amatan yang tidak dianggap derau, sedangkan PAM dinilai atas seluruh 200. Membandingkan angka yang dihitung atas himpunan amatan berbeda adalah kekeliruan mendasar.
+
+      Bagian penutup modul ini membahas cara membandingkan kedua keluarga secara adil.
+      \end{kotakinterpretasi}
+  - contoh: Ukuran yang sah untuk membandingkan antar-keluarga metode
+    narasi: |-
+      \kode{kesepakatan, kestabilan, dan cakupan}
+
+      ```{r eval-antar}
+      # (1) KESEPAKATAN antar-hasil: indeks Rand terkoreksi
+      ari <- function(a, b) { tb <- table(a, b); n <- sum(tb)
+        s_ij <- sum(choose(tb, 2)); s_i <- sum(choose(rowSums(tb), 2))
+        s_j <- sum(choose(colSums(tb), 2)); h <- s_i * s_j / choose(n, 2)
+        (s_ij - h) / ((s_i + s_j) / 2 - h) }
+
+      ada <- db$cluster > 0        # bandingkan pada amatan yang SAMA
+      round(c(PAM_vs_DBSCAN = ari(pam3$clustering[ada], db$cluster[ada]),
+              DBSCAN_vs_OPTICS = ari(db$cluster[ada], opt$cluster[ada]),
+              PAM_vs_kproto = ari(pam3$clustering, kp_baku$cluster)), 3)
+
+      # (2) CAKUPAN: berapa amatan yang benar-benar dikelompokkan
+      round(c(PAM = 1, DBSCAN = mean(db$cluster > 0), OPTICS = mean(opt$cluster > 0)), 3)
+
+      # (3) KESTABILAN terhadap penarikan ulang sampel
+      set.seed(2026)
+      stabil <- function(fun, B = 30) {
+        mean(replicate(B, {
+          i <- sample(nrow(X), replace = TRUE); i <- unique(i)
+          a <- fun(X[i, , drop = FALSE])
+          b <- (fun(X))[i]
+          ok <- a > 0 & b > 0
+          if (length(unique(a[ok])) < 2 || length(unique(b[ok])) < 2) NA else ari(a[ok], b[ok])
+        }), na.rm = TRUE)
+      }
+      round(c(PAM = stabil(function(M) pam(M, 3)$clustering),
+              DBSCAN = stabil(function(M) dbscan::dbscan(M, eps = 1.2, minPts = 5)$cluster)), 3)
+      ```
+
+      \begin{kotakinterpretasi}
+      Tiga ukuran ini \textbf{sah} dipakai lintas keluarga, sebab tidak satu pun bergantung pada asumsi bentuk klaster.
+
+      \textbf{(1) Kesepakatan.} ARI dihitung hanya pada amatan yang \emph{sama-sama} dikelompokkan kedua metode --- inilah syarat yang dilanggar tabel sebelumnya. DBSCAN dan OPTICS hampir sepakat sempurna, sebagaimana seharusnya: OPTICS dengan \texttt{eps\_cl} yang sama pada dasarnya memulihkan hasil DBSCAN. PAM versus DBSCAN jauh lebih rendah --- keduanya membagi data dengan cara yang berbeda.
+
+      \textbf{(2) Cakupan.} PAM mengelompokkan 100\% amatan; DBSCAN hanya sekitar 62\%, sisanya ditandai derau. Angka ini \textbf{wajib} dilaporkan bersama ukuran mutu mana pun. Mutu tinggi yang diperoleh dengan membuang 38\% amatan bukan mutu yang sebanding dengan mutu atas seluruh amatan --- dan pada pekerjaan statistik resmi, wilayah yang "dibuang" itu justru sering yang paling perlu dijelaskan.
+
+      \textbf{(3) Kestabilan.} Mengukur seberapa konsisten hasil bila sampel ditarik ulang. Hasilnya di sini justru berlawanan dengan dugaan yang lazim: \textbf{DBSCAN lebih stabil (0,615) daripada PAM (0,319)}. Sebabnya masuk akal --- PAM dipaksa membelah data menjadi tepat tiga bagian meskipun tidak ada batas alami, sehingga letak batas itu bergeser-geser antar-penarikan sampel; DBSCAN hanya menandai daerah berkepadatan tinggi dan membiarkan sisanya sebagai derau, dan daerah itu lebih bertahan.
+
+      Ukuran ini tidak memihak bentuk klaster tertentu sehingga adil dipakai lintas keluarga --- dan contoh ini memperlihatkan mengapa ia perlu: menilai dari siluet saja akan memenangkan PAM, padahal hasil PAM justru yang lebih mudah berubah. Metode yang hasilnya berubah drastis pada penarikan ulang tidak layak dipakai menetapkan sasaran program, betapa pun tinggi siluetnya.
+
+      Kaidah pelaporan: bila dua keluarga metode dibandingkan, sajikan \textbf{cakupan}, \textbf{kesepakatan}, dan \textbf{kestabilan} --- bukan siluet atau Dunn masing-masing yang dihitung atas himpunan amatan berbeda.
+      \end{kotakinterpretasi}
+  - contoh: 'Bi-clustering: mengelompokkan baris dan kolom sekaligus'
+    narasi: |-
+      \kode{biclust pada data ekspresi}
+
+      ```{r biclust}
+      suppressPackageStartupMessages(library(biclust))
+      eks <- read.csv("data/data_ekspresi.csv")
+      E <- as.matrix(eks[, -1]); rownames(E) <- paste0("g", seq_len(nrow(E)))
+      cat("ukuran matriks:", dim(E), "\n")
+
+      set.seed(2026)
+      bc <- biclust(E, method = BCCC(), delta = 1.0, alpha = 1.5, number = 5)
+      cat("banyak bicluster:", bc@Number, "\n")
+      for (i in seq_len(bc@Number))
+        cat(sprintf("  bicluster %d: %2d baris x %d kolom\n", i,
+                    sum(bc@RowxNumber[, i]), sum(bc@NumberxCol[i, ])))
+      ```
+
+      \begin{kotakinterpretasi}
+      Seluruh metode sebelumnya mengelompokkan \textbf{baris} dengan memakai \textbf{seluruh} kolom. Bi-clustering melepas pengandaian itu: ia mencari blok --- sehimpunan baris yang berperilaku serupa \textbf{hanya pada sehimpunan kolom tertentu}.
+
+      Gagasan ini penting pada data berdimensi tinggi. Pada data ekspresi gen, sekelompok gen mungkin hanya bergerak bersamaan pada sebagian kondisi percobaan; pada data wilayah, sekelompok kabupaten mungkin hanya mirip pada sebagian indikator. Pengelompokan biasa akan melewatkan pola semacam itu, sebab kolom yang tidak relevan menyumbang derau pada perhitungan jarak.
+
+      Algoritma Cheng--Church yang dipakai di sini mencari blok ber-\textbf{skor residu rata-rata} di bawah ambang $\delta$: blok yang di dalamnya nilai dapat dihampiri dengan baik oleh efek baris ditambah efek kolom. Ditemukan lima blok berukuran mulai dari 8 sampai 16 baris pada 4 sampai 7 kolom.
+
+      \textbf{Peringatan yang wajib menyertai:} data ini dibangkitkan \textbf{tanpa blok yang ditanam}. Kelima blok itu karena itu adalah \textbf{artefak} --- Cheng--Church akan selalu mengembalikan sebanyak yang diminta lewat argumen \texttt{number}, sebagaimana k-Means selalu memberi $k$ klaster. Contoh berikutnya menguji hal ini dengan data yang polanya diketahui.
+      \end{kotakinterpretasi}
+  - contoh: Menguji bi-clustering dengan blok yang sengaja ditanam
+    narasi: |-
+      \kode{data uji berblok diketahui}
+
+      ```{r biclust-uji, fig.cap="Matriks dengan satu blok yang ditanam (kiri) dan hasil pencariannya (kanan)", fig.width=7.6, fig.height=3.6, out.width="90%"}
+      set.seed(2026)
+      M <- matrix(rnorm(60 * 10), 60, 10)
+      baris_blok <- 1:12; kolom_blok <- 3:7
+      M[baris_blok, kolom_blok] <- M[baris_blok, kolom_blok] + 3   # blok ditanam
+      rownames(M) <- paste0("r", 1:60)
+
+      # dibinerkan lebih dahulu: 1 bila nilai melampaui 1, 0 bila tidak
+      B <- binarize(M, threshold = 1)
+      cat("proporsi sel bernilai 1:", round(mean(B), 3), "\n")
+
+      set.seed(2026)
+      bc2 <- biclust(B, method = BCBimax(), minr = 5, minc = 3, number = 3)
+      cat("banyak bicluster ditemukan:", bc2@Number, "\n")
+      for (i in seq_len(bc2@Number)) {
+        br <- which(bc2@RowxNumber[, i]); kl <- which(bc2@NumberxCol[i, ])
+        cat(sprintf("  bicluster %d: %2d baris, %d kolom | baris benar: %2d/%d, kolom benar: %d/%d\n",
+            i, length(br), length(kl),
+            length(intersect(br, baris_blok)), length(baris_blok),
+            length(intersect(kl, kolom_blok)), length(kolom_blok)))
+      }
+
+      par(mfrow = c(1, 2), family = "sans", mar = c(4, 4, 2.5, 1))
+      image(t(M[60:1, ]), col = hcl.colors(30, "Blue-Red"), axes = FALSE,
+            main = "matriks dengan blok ditanam")
+      box()
+      br1 <- which(bc2@RowxNumber[, 1]); kl1 <- which(bc2@NumberxCol[1, ])
+      tanda <- matrix(0, 60, 10); tanda[br1, kl1] <- 1
+      image(t(tanda[60:1, ]), col = c("grey92", "#F58220"), axes = FALSE,
+            main = "blok yang ditemukan"); box()
+      par(mfrow = c(1, 1))
+      ```
+
+      \begin{kotakinterpretasi}
+      Pada data yang blok-nya \textbf{sungguh ada}, algoritma menemukannya kembali dengan tepat: bicluster pertama memuat \textbf{12 dari 12} baris yang ditanam dan 4 dari 5 kolomnya; bicluster kedua memuat 10 dari 12 baris dan \textbf{seluruh 5 kolom}. Perbandingan "baris benar" dan "kolom benar" memberi ukuran ketepatan yang dapat diperiksa --- persis cara yang dipakai pada kajian terkendali di bagian akhir modul ini.
+
+      Perhatikan bahwa di sini dipakai algoritma \textbf{Bimax} atas matriks yang dibinerkan lebih dahulu, bukan Cheng--Church. Alasannya bukan selera: Cheng--Church mencari blok ber-residu rendah, dan pada matriks ini ia justru mengembalikan blok merosot berukuran 60 baris $\times$ 1 kolom --- sebab satu kolom tunggal selalu berresidu nol. Bimax mencari blok yang seluruh selnya bernilai 1, sehingga cocok bagi blok yang ditanam sebagai pergeseran nilai. \textbf{Pemilihan algoritma bi-clustering menentukan jenis blok apa yang dapat ditemukan}, dan itu harus diputuskan dari sifat pola yang dicari --- bukan dicoba-coba sampai hasilnya enak dibaca.
+
+      Bandingkan dengan Contoh 12.16 pada data ekspresi yang tidak berblok: di sana lima blok juga "ditemukan", tetapi tidak ada kebenaran yang dapat dicocokkan. Perbedaan antara keduanya tidak terlihat dari keluaran algoritma --- keduanya sama-sama mengembalikan daftar blok berikut ukurannya.
+
+      Kaidahnya sama dengan yang berlaku bagi seluruh metode pengelompokan pada modul ini: sebelum mempercayai blok yang ditemukan, jalankan \textbf{uji kendali} pada data acak berukuran sama. Bila blok berukuran serupa juga muncul di sana, temuan pada data sungguhan tidak dapat dibedakan dari kebetulan.
+      \end{kotakinterpretasi}
+  - contoh: Menyiapkan matriks dan menyisipkan pola
+    narasi: |-
+      \kode{menyusun matriks dan peta panas}
+
+      ```{r}
+      ekspresi <- read.csv("data/data_ekspresi.csv")
+      M <- as.matrix(ekspresi[, paste0("s", 1:8)])
+      rownames(M) <- paste0("gen", ekspresi$gen)
+
+      # menyisipkan pola: 12 gen pertama terekspresi tinggi pada 3 contoh pertama
+      M[1:12, 1:3] <- M[1:12, 1:3] + 2.5
+
+      cat("dimensi matriks:", dim(M), "\n")
+      cat("rata-rata seluruh:", round(mean(M), 3), "\n")
+      cat("rata-rata blok sisipan:", round(mean(M[1:12, 1:3]), 3), "\n")
+
+      image(t(M[nrow(M):1, ]), col = hcl.colors(30, "Blue-Red"), axes = FALSE,
+            main = "Peta Panas Matriks Ekspresi (pola disisipkan)")
+      axis(1, at = seq(0, 1, length.out = 8), labels = colnames(M), cex.axis = .7)
+      ```
+
+      \begin{kotakpenjelasan}
+      Matriks dibentuk dari delapan kolom contoh. Sebuah pola sengaja disisipkan: dua belas gen pertama dinaikkan nilainya hanya pada tiga contoh pertama. Peta panas digambar dengan matriks dibalik urutan barisnya agar baris pertama tampil di atas.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Pola yang disisipkan inilah yang seharusnya ditemukan bi-clustering: sekelompok baris yang berperilaku khas hanya pada sekelompok kolom. Pengelompokan baris biasa akan kesulitan menemukannya, sebab pada kelima kolom lainnya kedua belas gen itu tidak berbeda dari gen lain. Menyisipkan pola secara sengaja adalah cara yang baik untuk menguji apakah suatu algoritma sungguh bekerja.
+
+      \end{kotakinterpretasi}
+  - contoh: Menjalankan algoritma Cheng-Church
+    narasi: |-
+      \kode{biclust dengan metode BCCC}
+
+      ```{r}
+      suppressPackageStartupMessages(library(biclust))
+
+      set.seed(2026)
+      bc <- biclust(M, method = BCCC(), delta = 1.0, alpha = 1.5, number = 5)
+
+      cat("bikluster ditemukan:", bc@Number, "\n\n")
+      if (bc@Number > 0) {
+        for (i in seq_len(bc@Number)) {
+          baris <- which(bc@RowxNumber[, i])
+          kolom <- which(bc@NumberxCol[i, ])
+          cat(sprintf("Bikluster %d: %d baris x %d kolom\n", i,
+                      length(baris), length(kolom)))
+          cat("  kolom:", paste(colnames(M)[kolom], collapse = ", "), "\n")
+          cat("  baris pertama:", paste(rownames(M)[utils::head(baris, 6)],
+                                        collapse = ", "), "\n\n")
+        }
+      }
+      ```
+
+      \begin{kotakpenjelasan}
+      Algoritma Cheng-Church dijalankan dengan ambang skor sisaan delta, faktor pembesaran alpha, dan banyaknya bikluster yang dicari. Hasilnya disimpan sebagai dua matriks logika: keanggotaan baris dan keanggotaan kolom bagi tiap bikluster.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Periksa apakah bikluster pertama memuat gen bernomor kecil pada kolom s1 sampai s3 --- itulah pola yang sengaja disisipkan. Bila ya, algoritma bekerja sebagaimana mestinya. Perhatikan bahwa nilai delta menentukan segalanya: terlalu besar menghasilkan bikluster raksasa tanpa makna, terlalu kecil membuat tak ada yang ditemukan. Seperti Eps pada DBSCAN, nilainya wajib dilaporkan bersama hasilnya.
+
+      \end{kotakinterpretasi}
+  - contoh: Menggambarkan bikluster yang ditemukan
+    narasi: |-
+      \kode{matplot membandingkan anggota dan bukan anggota}
+
+      ```{r}
+      if (bc@Number > 0) {
+        baris1 <- which(bc@RowxNumber[, 1])
+        kolom1 <- which(bc@NumberxCol[1, ])
+
+        par(mfrow = c(1, 2), mar = c(4, 4, 3, 1))
+        matplot(t(M[baris1, , drop = FALSE]), type = "l", lty = 1, lwd = 1.5,
+                col = "#0B6FB4", xaxt = "n",
+                xlab = "Contoh", ylab = "Nilai ekspresi",
+                main = "Anggota Bikluster 1")
+        axis(1, at = 1:ncol(M), labels = colnames(M), cex.axis = .7)
+        abline(v = range(kolom1), col = "#F58220", lty = 2, lwd = 2)
+
+        bukan <- setdiff(seq_len(nrow(M)), baris1)
+        matplot(t(M[utils::head(bukan, length(baris1)), , drop = FALSE]),
+                type = "l", lty = 1, lwd = 1.5, col = "grey65", xaxt = "n",
+                xlab = "Contoh", ylab = "Nilai ekspresi",
+                main = "Bukan Anggota (pembanding)")
+        axis(1, at = 1:ncol(M), labels = colnames(M), cex.axis = .7)
+        par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
+      }
+      ```
+
+      \begin{kotakpenjelasan}
+      Nilai tiap gen anggota bikluster digambar sebagai garis lintas kedelapan contoh, dengan garis tegak menandai batas kolom yang termasuk bikluster. Sejumlah gen bukan anggota digambar sebagai pembanding pada panel kedua.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Perbandingan berdampingan inilah cara memeriksa apakah bikluster bermakna. Garis anggota seharusnya menunjukkan pola yang serupa satu sama lain pada kolom yang termasuk bikluster, sedangkan garis bukan anggota tampak acak. Bila kedua panel tampak serupa, biklusternya tidak bermakna meski algoritma melaporkannya sebagai temuan.
+
+      \end{kotakinterpretasi}
+
+      \begin{kotaksalah}[Bi-clustering juga selalu memberi jawaban]
+      Sebagaimana pengelompokan biasa, algoritma bi-clustering akan mengembalikan bikluster pada data apa pun, termasuk data acak murni. Cara memeriksanya adalah menjalankannya pada matriks acak berukuran sama: bila bikluster yang ditemukan pada data sungguhan tidak lebih menonjol daripada pada data acak, maka temuannya semu.
+      \end{kotaksalah}
+
+      \begin{kotaktips}
+      Bi-clustering jarang diperlukan pada data statistik resmi yang lazim berpeubah puluhan. Ia menjadi penting pada data berdimensi sangat tinggi --- ekspresi gen berpeubah ribuan, atau matriks penilaian pengguna terhadap produk --- ketika kemiripan memang hanya berlaku pada sebagian peubah.
+      \end{kotaktips}
+
+      \vspace{1.2em}
+
+      \begin{kotakcatatan}[Membandingkan antar-keluarga: bukti terkendalinya]
+      Contoh 12.17 memberi tiga ukuran yang sah dipakai lintas keluarga --- kesepakatan, cakupan, dan kestabilan --- beserta alasan mengapa siluet dan Dunn tidak sah untuk itu. Alasan tersebut \textbf{dibuktikan} pada \textbf{Modul 13} lewat kajian terkendali: tiga data uji berpola diketahui, ukuran mutu yang keliru menghakimi, dan prosedur perbandingan yang adil. Modul tersebut bersifat pelengkap, tetapi sangat dianjurkan dibaca sebelum menuliskan perbandingan metode pada laporan.
+      \end{kotakcatatan}
+  kunci:
+  - |-
+    \begin{kotakkunci}
+    \textbf{L10.1} (15 poin)
+  - |-
+    Tingkat Dasar: pembakuan, pembanding berbasis jarak, dan DBSCAN.
+    \end{kotakkunci}
+  - \kode{Solusi Tingkat Dasar (R)}
+  - |-
+    ```{r}
+    suppressPackageStartupMessages({library(cluster); library(dbscan)})
+    wil <- read.csv("data/data_wilayah.csv", stringsAsFactors = TRUE)
+    num <- c("kepadatan","pengeluaran","akses_air","akses_listrik","lama_sekolah")
+  - |-
+    X <- scale(wil[num])                        # pembakuan WAJIB
+    round(colMeans(X), 8)                        # seluruhnya nol
+    round(apply(X, 2, sd), 8)                    # seluruhnya satu
+  - |-
+    # pembanding berbasis jarak, dipakai semata sebagai objek penilaian
+    set.seed(2026)
+    p <- pam(X, k = 3)
+    cat("siluet rata-rata:", round(p$silinfo$avg.width, 4), "\n")
+  - |-
+    minpts <- 2 * length(num)
+    jk <- sort(dbscan::kNNdist(X, k = minpts))
+    db <- dbscan::dbscan(X, eps = 1.5, minPts = minpts)
+    cat("derau:", sum(db$cluster == 0), "\n")
+    cat("cakupan:", round(100 * mean(db$cluster > 0), 1), "persen\n")
+    ```
+  - |-
+    \begin{kotakinterpretasi}
+    Isian yang benar berturut-turut adalah scale, pam, avg.width, kNNdist, dbscan, dan 0. Pembakuan mendahului seluruh pekerjaan pengelompokan, dan pemeriksaan rata-rata nol beserta simpangan baku satu adalah cara membuktikannya. Penulisan dbscan dua titik dua kali wajib karena paket fpc menyediakan fungsi bernama sama dengan argumen berbeda. Perhatikan pula bahwa cakupan dilaporkan sejak awal --- kebiasaan ini menjadi penting pada bagian kajian, sebab tanpa cakupan pembaca tidak mengetahui atas berapa banyak amatan angka mutu itu dihitung.
+  - \end{kotakinterpretasi}
+  - |-
+    \begin{kotakkunci}
+    \textbf{L10.2} (25 poin)
+  - |-
+    Tingkat Menengah dan Lanjut: banyaknya klaster, validitas siluet, dan perbandingan adil.
+    \end{kotakkunci}
+  - \kode{Solusi Menengah dan Lanjut (R)}
+  - |-
+    ```{r}
+    suppressPackageStartupMessages({library(cluster); library(dbscan); library(mclust)})
+  - |-
+    # --- banyaknya klaster pada data wilayah ---
+    sil_k <- sapply(2:10, function(k) {
+      set.seed(2026); pam(X, k = k)$silinfo$avg.width })
+    print(data.frame(k = 2:10, siluet = round(sil_k, 4)), row.names = FALSE)
+    cat("seluruh siluet di bawah 0,25:", all(sil_k < 0.25), "\n\n")
+  - |-
+    # --- menguji kesahihan siluet pada data cincin ---
+    set.seed(2026)
+    sud <- runif(240, 0, 2 * pi)
+    B <- rbind(cbind(1.0*cos(sud[1:120])   + rnorm(120,0,.08),
+                     1.0*sin(sud[1:120])   + rnorm(120,0,.08)),
+               cbind(3.0*cos(sud[121:240]) + rnorm(120,0,.08),
+                     3.0*sin(sud[121:240]) + rnorm(120,0,.08)))
+    lab_B <- rep(1:2, each = 120)
+    Xb <- scale(B); Db <- dist(Xb)
+    pb <- pam(Xb, 2)
+    cat("siluet pengelompokan SEBENARNYA:", round(mean(silhouette(lab_B, Db)[,3]), 4), "\n")
+    cat("siluet berbasis jarak (keliru) :", round(mean(silhouette(pb$clustering, Db)[,3]), 4), "\n")
+    cat("ARI berbasis jarak             :", round(adjustedRandIndex(pb$clustering, lab_B), 4), "\n\n")
+  - |-
+    # --- perbandingan adil pada data berderau ---
+    set.seed(2026)
+    Cd <- rbind(cbind(rnorm(90,0,.5), rnorm(90,0,.5)),
+                cbind(rnorm(90,4,.5), rnorm(90,0,.5)),
+                cbind(runif(20,-3,7), runif(20,-3,3)))
+    lab_C <- c(rep(1,90), rep(2,90), rep(0,20))
+    Xc <- scale(Cd)
+    pc  <- pam(Xc, 2)
+    dbc <- dbscan::dbscan(Xc, eps = 0.35, minPts = 5)
+    ii  <- dbc$cluster > 0
+    cat("cakupan kepadatan:", round(100*mean(ii), 1), "persen\n")
+    cat("ARI seluruh  - jarak:", round(adjustedRandIndex(pc$clustering, lab_C), 3),
+        "| kepadatan:", round(adjustedRandIndex(dbc$cluster, lab_C), 3), "\n")
+    cat("ARI subhimp. - jarak:", round(adjustedRandIndex(pc$clustering[ii], lab_C[ii]), 3),
+        "| kepadatan:", round(adjustedRandIndex(dbc$cluster[ii], lab_C[ii]), 3), "\n")
+    ```
+  - |-
+    \begin{kotakinterpretasi}
+    Bagian pertama menegaskan bahwa bila seluruh nilai siluet berada di bawah 0,25, maka tidak ada nilai k yang menghasilkan struktur berarti, dan kesimpulan yang benar adalah menyatakan data tidak berklaster --- bukan memilih k yang kebetulan tertinggi. Bagian kedua adalah temuan pokok kajian: pengelompokan yang sungguh benar memperoleh siluet lebih rendah daripada pengelompokan yang sepenuhnya keliru, sementara ARI-nya berlawanan arah. Sebabnya sifat ukurannya sendiri --- siluet menghargai klaster yang rapat dan membulat --- sehingga memilih metode berdasarkan siluet dapat menuntun pada pilihan yang justru salah. Bagian ketiga memperlihatkan bahwa keunggulan metode berbasis kepadatan atas seluruh amatan menyusut nyaris habis ketika keduanya dibandingkan pada himpunan bagian yang sama; artinya keunggulan itu berasal dari kemampuan menandai derau, bukan dari pengelompokan titik intinya. Untuk pemilihan metode: bentuk memanjang dengan pencilan menuntut metode kepadatan dan dinilai dengan ARI; bentuk membulat dengan cakupan penuh dapat dinilai dengan siluet; tersedianya label menuntut ukuran eksternal; sedangkan ketiadaan label disertai bentuk tak diketahui menuntut kestabilan, gambar, dan penafsiran bidang --- bukan adu ukuran internal.
+  - \end{kotakinterpretasi}
+  - |-
+    \begin{kotakkunci}
+    \textbf{L10.D} (10 poin)
+  - |-
+    Membetulkan kode: pembakuan, bentrokan nama dbscan, siluet, dan pencacahan derau.
+    \end{kotakkunci}
+  - \kode{Solusi Membetulkan Kode (R)}
+  - |-
+    ```{r}
+    suppressPackageStartupMessages({library(cluster); library(dbscan); library(fpc)})
+    wil <- read.csv("data/data_wilayah.csv", stringsAsFactors = TRUE)
+    num <- c("kepadatan","pengeluaran","akses_air","akses_listrik","lama_sekolah")
+  - |-
+    # (a) pembakuan mendahului perhitungan jarak
+    X <- scale(wil[num])
+    D <- dist(X)
+    p <- pam(D, k = 3)
+  - |-
+    # (b) nama paket ditulis tegas agar tidak bentrok dengan fpc
+    minpts <- 2 * length(num)
+    db <- dbscan::dbscan(X, eps = 1.5, minPts = minpts)
+  - |-
+    # (c) siluet dihitung terhadap data yang sama dengan pengelompokannya
+    sil <- silhouette(p$clustering, dist(X))
+    cat("siluet rata-rata:", round(mean(sil[, 3]), 4), "\n")
+  - |-
+    # (d) derau (klaster 0) dikeluarkan saat mencacah klaster
+    cat("banyaknya klaster:", length(setdiff(unique(db$cluster), 0)), "\n")
+    cat("derau:", sum(db$cluster == 0), "\n")
+  - |-
+    # pemeriksaan wajib
+    all(abs(round(colMeans(X), 8)) == 0)
+    !(0 %in% setdiff(unique(db$cluster), 0))
+    ```
+  - |-
+    \begin{kotakinterpretasi}
+    Empat kesalahan diperbaiki. Kesalahan (a) menghitung jarak pada satuan asli sehingga peubah kepadatan mendominasi; pengelompokan yang dihasilkan sesungguhnya hanya mencerminkan satu peubah, dan kekeliruan ini tidak menimbulkan galat sehingga sukar terdeteksi. Kesalahan (b) memanggil dbscan tanpa nama paket padahal fpc juga menyediakannya dengan argumen berbeda. Kesalahan (c) menghitung siluet terhadap jarak pada satuan asli padahal pengelompokannya dibentuk dari data terbakukan --- dua ukuran yang tidak sepadan sehingga nilainya tidak bermakna. Kesalahan (d) mencacah derau sebagai satu klaster tersendiri, sehingga banyaknya klaster yang dilaporkan selalu berlebih satu.
+  - \end{kotakinterpretasi}
+  - |-
+    \begin{kotakkunci}
+    \textbf{T10.1} (50 poin)
+  - |-
+    Penugasan: pengelompokan wilayah dengan beberapa metode beserta penilaian ada tidaknya struktur.
+    \end{kotakkunci}
+  - \kode{Solusi Penugasan (R)}
+  - |-
+    ```{r}
+    suppressPackageStartupMessages({
+      library(cluster); library(dbscan); library(fpc)})
+    wil <- read.csv("data/data_wilayah.csv", stringsAsFactors = TRUE)
+    num <- c("kepadatan","pengeluaran","akses_air","akses_listrik","lama_sekolah")
+  - |-
+    # 1) perbedaan skala dan pembakuan
+    sb <- sapply(wil[num], sd)
+    cat("rasio sb terbesar/terkecil:", round(max(sb)/min(sb), 1), "\n")
+    X <- scale(wil[num])
+    cat("rata-rata kolom setelah pembakuan:", all(abs(round(colMeans(X), 8)) == 0), "\n")
+  - |-
+    # 2) K-Medoids
+    set.seed(2026); pam3 <- pam(X, k = 3)
+    cat("\nsiluet PAM:", round(pam3$silinfo$avg.width, 4), "\n")
+    cat("ukuran klaster:", paste(pam3$clusinfo[, "size"], collapse = ", "), "\n")
+    print(round(wil[pam3$id.med, num], 2))
+  - |-
+    # 3-4) DBSCAN beserta kepekaannya
+    minpts <- 2 * length(num)
+    eps0 <- as.numeric(quantile(sort(dbscan::kNNdist(X, k = minpts)), 0.95))
+    db <- dbscan::dbscan(X, eps = eps0, minPts = minpts)
+    cat("\nEps:", round(eps0, 3), "| MinPts:", minpts,
+        "| klaster:", length(setdiff(unique(db$cluster), 0)),
+        "| derau:", sum(db$cluster == 0), "\n")
+    peka <- t(sapply(seq(0.5, 3, by = 0.25), function(e) {
+      h <- dbscan::dbscan(X, eps = e, minPts = minpts)
+      c(eps = e, klaster = length(setdiff(unique(h$cluster), 0)),
+        derau = round(100 * mean(h$cluster == 0), 1)) }))
+    print(peka, row.names = FALSE)
+  - |-
+    # 5) OPTICS
+    op <- dbscan::optics(X, eps = 5, minPts = minpts)
+    plot(op, main = "Diagram Jangkauan OPTICS")
+    ex <- dbscan::extractDBSCAN(op, eps_cl = eps0)
+    cat("klaster OPTICS:", length(setdiff(unique(ex$cluster), 0)), "\n")
+  - |-
+    # 6) evaluasi
+    sil <- silhouette(pam3$clustering, dist(X))
+    st <- fpc::cluster.stats(dist(X), pam3$clustering)
+    cat("\nsiluet:", round(mean(sil[, 3]), 4), "| Dunn:", round(st$dunn, 4),
+        "| siluet negatif:", sum(sil[, 3] < 0), "\n")
+    plot(sil, col = c("#0B6FB4", "#F58220", "#00A651"), border = NA)
+  - |-
+    # 7) banyaknya klaster
+    wss <- sapply(2:10, function(k) { set.seed(2026)
+      p <- pam(X, k = k)
+      sum(sapply(seq_len(k), function(j) {
+        ang <- X[p$clustering == j, , drop = FALSE]
+        sum(rowSums(sweep(ang, 2, X[p$id.med[j], ])^2)) })) })
+    sk <- sapply(2:10, function(k) { set.seed(2026); pam(X, k)$silinfo$avg.width })
+    print(data.frame(k = 2:10, wss = round(wss, 1), siluet = round(sk, 4)),
+          row.names = FALSE)
+  - |-
+    # 8) profil klaster dalam satuan asli
+    print(round(aggregate(wil[num], list(klaster = pam3$clustering), mean), 2),
+          row.names = FALSE)
+    print(round(prop.table(table(pam3$clustering, wil$pulau), 1), 3))
+  - |-
+    # 9) kesimpulan berbasis bukti
+    cat("\nseluruh siluet di bawah 0,25:", all(sk < 0.25), "\n")
+    cat("siluet tertinggi:", round(max(sk), 4), "pada k =", (2:10)[which.max(sk)], "\n")
+    ```
+  - |-
+    \begin{kotakinterpretasi}
+    Nomor 1 menuntut pembuktian, bukan pernyataan: rata-rata kolom bernilai nol setelah pembakuan adalah buktinya. Nomor 4 menegaskan bahwa hasil DBSCAN sepenuhnya bergantung pada Eps --- pada nilai kecil hampir semuanya menjadi derau, pada nilai besar seluruhnya melebur menjadi satu klaster --- sehingga melaporkan hasilnya tanpa mencantumkan Eps dan MinPts tidak bermakna. Nomor 6 menuntut kehati-hatian: indeks Dunn ditentukan hanya oleh dua nilai ekstrem sehingga satu pencilan dapat menjatuhkannya drastis, dan karena itu wajib dibaca bersama siluet. Nomor 9 adalah inti penugasan dan menuntut kejujuran paling besar. Pada data simulasi ini seluruh nilai siluet akan berada di bawah 0,25, kurva siku akan melandai mulus tanpa patahan, dan diagram jangkauan akan tampak rata tanpa lembah --- ketiganya secara konsisten menunjukkan bahwa data tidak memiliki struktur klaster. Kesimpulan yang benar adalah menyatakan hal itu apa adanya. Melaporkan bahwa tiga klaster berhasil ditemukan, semata karena algoritma mengembalikan tiga klaster, adalah kekeliruan mendasar yang justru hendak dicegah modul ini.
+  - \end{kotakinterpretasi}
+  - '# Kunci Tambahan: k-Medoid, k-Prototype, dan Bi-clustering'
+  - |-
+    Bagian ini melengkapi kunci di atas untuk materi yang ditambahkan pada modul: k-Medoid
+    (termasuk untuk data kategorik dan campuran), k-Prototype, dan bi-clustering.
+  - |-
+    ```{r kunci-tambahan}
+    suppressPackageStartupMessages({library(cluster); library(clustMixType); library(biclust)})
+    wil <- read.csv("data/data_wilayah.csv", stringsAsFactors = TRUE)
+    num <- c("kepadatan", "pengeluaran", "akses_air", "akses_listrik", "lama_sekolah")
+  - |-
+    # 1) PAM numerik: medoid adalah amatan sungguhan
+    Zn <- scale(wil[, num]); pam3 <- pam(Zn, 3)
+    cat("siluet PAM numerik k=3:", round(pam3$silinfo$avg.width, 4), "\n")
+    cat("baris yang menjadi medoid:", pam3$id.med, "\n")
+  - |-
+    # 2) PAM-Gower: periksa apakah peubah kategorik mendominasi
+    wil_c <- wil[, -1]
+    G <- daisy(wil_c, metric = "gower"); pam_g <- pam(G, 3, diss = TRUE)
+    cat("siluet PAM-Gower k=3:", round(pam_g$silinfo$avg.width, 4), "\n")
+    print(table(klaster = pam_g$clustering, pulau = wil_c$pulau))
+  - |-
+    # 3) bukti bahwa Gower TIDAK boleh didahului pembakuan
+    wil_z <- wil_c; wil_z[, num] <- scale(wil_z[, num])
+    cat("korelasi jarak Gower (mentah vs dibakukan):",
+        round(cor(as.vector(G), as.vector(daisy(wil_z, metric = "gower"))), 4), "\n")
+  - |-
+    # 4) k-Prototype: lambda sebelum dan sesudah pembakuan
+    set.seed(2026); kp_m <- kproto(wil_c, 3, verbose = FALSE)
+    set.seed(2026); kp_b <- kproto(wil_z, 3, verbose = FALSE)
+    cat("lambda mentah:", format(kp_m$lambda, digits = 5),
+        "| lambda baku:", round(kp_b$lambda, 3), "\n")
+  - |-
+    # 5) kesepakatan antar-metode (ARI)
+    ari <- function(a, b) { tb <- table(a, b); n <- sum(tb)
+      s_ij <- sum(choose(tb, 2)); s_i <- sum(choose(rowSums(tb), 2))
+      s_j <- sum(choose(colSums(tb), 2)); h <- s_i * s_j / choose(n, 2)
+      (s_ij - h) / ((s_i + s_j)/2 - h) }
+    cat("ARI kproto vs PAM-Gower:", round(ari(kp_b$cluster, pam_g$clustering), 3),
+        "| kproto vs PAM numerik:", round(ari(kp_b$cluster, pam3$clustering), 3), "\n")
+  - |-
+    # 6) uji kendali bi-clustering pada data ACAK
+    set.seed(2026); Macak <- matrix(rnorm(60 * 10), 60, 10)
+    bc_acak <- biclust(binarize(Macak, 1), method = BCBimax(), minr = 5, minc = 3, number = 3)
+    cat("bicluster pada data ACAK:", bc_acak@Number, "\n")
+    if (bc_acak@Number > 0)
+      for (i in seq_len(bc_acak@Number))
+        cat(sprintf("   %2d baris x %d kolom\n", sum(bc_acak@RowxNumber[, i]),
+                    sum(bc_acak@NumberxCol[i, ])))
+    ```
+  - |-
+    \begin{kotakinterpretasi}
+    \textbf{(1) PAM numerik.} Siluet 0,127 --- sangat rendah, sesuai rancangan data yang memang tanpa struktur. Yang layak ditekankan kepada mahasiswa adalah keunggulan medoid yang tidak dimiliki k-Means: pusat klaster adalah \textbf{baris data yang sungguh ada}, sehingga dapat ditunjuk sebagai wilayah wakil. Pada pelaporan statistik resmi hal ini berharga --- pimpinan dapat diajak melihat wilayah nyata, bukan vektor rata-rata yang mungkin tidak sesuai dengan wilayah mana pun.
+  - '\textbf{(2) PAM-Gower.} Siluet naik menjadi 0,193, tetapi tabulasi silang memperlihatkan sebabnya:
+    klaster sebagian besar mengikuti \texttt{pulau}. Kenaikan siluet karena itu \textbf{artefak} --- peubah
+    kategorik hanya bernilai sedikit, sehingga banyak pasangan berjarak persis nol atau satu dan sebaran
+    jarak menggumpal. Mahasiswa yang menyimpulkan "Gower lebih baik karena siluetnya lebih tinggi" keliru;
+    siluet tidak sebanding antar-ukuran jarak yang berbeda.'
+  - \textbf{(3) Gower dan pembakuan.} Korelasi antara jarak Gower atas data mentah dan atas data yang
+    dibakukan lebih dahulu adalah \textbf{1,000} --- keduanya identik. Sebabnya, Gower menormalkan tiap
+    peubah numerik terhadap rentangnya sendiri, sehingga transformasi linear apa pun tidak berpengaruh.
+    Pembakuan sebelum Gower bukan kesalahan yang merusak, melainkan \textbf{langkah yang tidak berguna}
+    --- dan menyebutkannya sebagai "sudah dibakukan sesuai prosedur" menunjukkan kesalahpahaman tentang
+    cara kerja Gower.
+  - \textbf{(4) k-Prototype.} $\lambda$ = 2.563.400 tanpa pembakuan versus 1,648 sesudahnya. Angka pertama
+    muncul karena \texttt{kepadatan} dan \texttt{pengeluaran} bernilai ribuan, sehingga ragam bagian numerik
+    raksasa dan $\lambda$ harus mengimbanginya agar bagian kategorik masih terdengar. Keanggotaan klaster
+    pun berubah, bukan sekadar berganti nomor. \textbf{Kaidah:} bakukan peubah numerik lebih dahulu, dan
+    laporkan $\lambda$ yang dipakai.
+  - \textbf{(5) Kesepakatan antar-metode.} ARI kproto versus PAM-Gower hanya \textbf{0,08}, dan versus
+    PAM numerik \textbf{0,16} --- praktis tidak berhubungan. Pada data yang memang tidak memiliki struktur,
+    ketidaksepakatan ini adalah \textbf{temuan yang benar}, bukan kegagalan. Jawaban yang memilih salah
+    satu hasil lalu menamai klasternya --- tanpa menyebut bahwa metode lain memberi pembagian yang sama
+    sekali berbeda --- dikenai pengurangan nilai.
+  - '\textbf{(6) Uji kendali bi-clustering.} Pada data yang sepenuhnya acak, Bimax dengan ambang yang
+    sama menemukan \textbf{nol} blok --- ia tidak mengarang temuan. Bandingkan dengan Contoh 12.17 pada
+    modul, tempat blok yang \textbf{sengaja ditanam} ditemukan kembali dengan tepat (12 dari 12 baris).
+    Kedua hasil bersama-sama memberi bukti yang meyakinkan: algoritmanya menemukan blok ketika blok memang
+    ada, dan diam ketika tidak ada.'
+  - |-
+    Perilaku ini \textbf{berbeda} dari Cheng--Church pada Contoh 12.16, yang mengembalikan lima blok pada data ekspresi yang tidak berblok --- sebab argumen \texttt{number} memaksanya mengembalikan sebanyak yang diminta, sebagaimana k-Means selalu memberi $k$ klaster. Perbedaan ini layak ditekankan: \textbf{sebagian algoritma bi-clustering memiliki penjaga bawaan, sebagian tidak}. Uji kendali pada data acak adalah cara termurah untuk mengetahui yang mana yang sedang Anda pakai, dan sebaiknya dijalankan sekali untuk tiap algoritma dan ambang yang dipilih.
+    \end{kotakinterpretasi}
+  - '# Catatan Penskoran untuk Pengajar'
+  - |-
+    \begin{kotakinfo}
+    Toleransi: perbedaan pembulatan dan arah tanda komponen dapat diterima selama interpretasi konsisten.
+    \end{kotakinfo}
+exercises: []
+

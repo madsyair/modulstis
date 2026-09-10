@@ -1,0 +1,1087 @@
+number: 10
+title: 'Jaringan Syaraf Tiruan: FFNN dan RBFNN'
+short_code: jst
+topic: Jaringan Syaraf Tiruan
+pertemuan: 10
+sub_cpmk: |
+  Sub-CPMK 10: Mahasiswa mampu menjelaskan arsitektur jaringan syaraf tiruan, membangun dan menala Feed-Forward Neural Network serta Radial Basis Function Neural Network, menangani ketimpangan kelas, memindahkan ambang keputusan, dan menafsirkan model jaringan yang bersifat tertutup.
+packages:
+- recipes
+- rsample
+- parsnip
+- workflows
+- tune
+- yardstick
+- themis
+- nnet
+contoh_title: Contoh Praktikum dengan R
+tambahan_title: 'Tambahan: Alur yang Sama dengan caret'
+course:
+  matkul: Data Mining dan Big Data
+  matkul_besar: DATA MINING DAN BIG DATA
+  kode: K202505
+  semester: 6 (Genap)
+  prodi: D-IV Statistika
+  penyusun:
+  - Achmad Syahrul Choir
+datasets: []
+body:
+  deskripsi:
+  - |
+    Modul-modul sebelumnya membangun model yang keputusannya dapat ditelusuri: pohon dapat dibaca sebagai aturan, dan koefisien regresi dapat ditafsirkan sebagai rasio odds. Modul ini beralih ke keluarga model yang berbeda wataknya --- jaringan syaraf tiruan, yang kuat dalam menangkap hubungan nonlinier tetapi sukar dijelaskan.
+  - |
+    Dua arsitektur dibahas. Feed-Forward Neural Network menyusun peubah masukan melalui satu atau beberapa lapis tersembunyi dengan fungsi aktivasi nonlinier. Radial Basis Function Neural Network bekerja dengan gagasan yang berbeda: ia menempatkan sejumlah pusat pada ruang peubah, lalu mengukur kedekatan tiap amatan terhadap pusat-pusat itu.
+  - |
+    Konteks yang dipakai adalah pendugaan kerentanan pangan rumah tangga --- persoalan yang lazim dihadapi instansi statistik, dan yang kelasnya timpang sehingga menuntut penanganan khusus. Ketimpangan itu ditangani dengan pembangkitan contoh sintetis, dan ambang keputusan dipindahkan berdasarkan ukuran yang sesuai, bukan dibiarkan pada nilai bawaan.
+  - |-
+    \begin{kotakperhatian}[Tentang data]
+    Berkas data pada modul ini adalah \textbf{data simulasi} (\texttt{set.seed(2025)}), \textbf{bukan data nyata} dan \textbf{bukan data resmi} instansi mana pun. Berbeda dari beberapa modul sebelumnya, data ini sengaja dibangkitkan dengan \textbf{hubungan yang sungguh ada} antara peubah penjelas dan sasaran, sehingga model diharapkan berkinerja baik --- dan kinerja yang buruk justru menandakan ada yang keliru pada alur kerja.
+    \end{kotakperhatian}
+  tujuan:
+  - 'Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:'
+  - 1. **Menjelaskan** arsitektur FFNN beserta peran lapis tersembunyi dan fungsi aktivasi.
+  - 2. **Menjelaskan** cara kerja RBFNN dan perbedaan gagasannya terhadap FFNN.
+  - 3. **Menyusun** resep prapemrosesan yang sesuai bagi jaringan syaraf.
+  - 4. **Menangani** ketimpangan kelas di dalam lipatan validasi silang.
+  - 5. **Menala** banyaknya simpul tersembunyi dan parameter penyusutan.
+  - 6. **Membangun** RBFNN dari dasar beserta penetapan pusat dan lebarnya.
+  - 7. **Memindahkan** ambang keputusan berdasarkan ukuran yang sesuai.
+  - 8. **Menafsirkan** model tertutup melalui kepentingan permutasi dan analisis profil.
+  - 9. **Membandingkan** kedua arsitektur secara adil pada lipatan yang sama.
+  alat:
+  - 'Perangkat dan bahan yang diperlukan:'
+  - '- **R** (RStudio) dengan paket inti tidymodels: `recipes`, `rsample`, `parsnip`, `workflows`, `tune`,
+    `yardstick`.'
+  - '- Paket tambahan: `themis` untuk ketimpangan kelas dan `nnet` sebagai mesin FFNN.'
+  - |-
+    - Pasang paket inti dengan:
+
+    ```
+    install.packages(c("recipes", "rsample", "parsnip", "workflows",
+                       "tune", "yardstick", "dials"))
+    install.packages(c("themis", "nnet"))
+    ```
+  - '- Berkas data: `data/data_survei.csv`.'
+  - '- RBFNN dibangun dari dasar memakai fungsi bawaan R, sehingga **tidak memerlukan paket tambahan**.'
+  instruksi:
+  - 'Ikuti tahapan berikut:'
+  - '**Sebelum praktikum:** pasang seluruh paket; siapkan berkas data; tinjau kembali bagian ukuran penilaian
+    pada modul supervised learning.'
+  - '**Selama praktikum:** kerjakan Contoh berurutan. Penalaan jaringan menuntut waktu lebih lama daripada
+    model sebelumnya, jadi jalankan kode penalaan sekali lalu simpan hasilnya.'
+  - |-
+    **Pembagian kerja:** Contoh dan Latihan dikerjakan di kelas; **Penugasan dikerjakan di luar sesi**.
+
+    **Pengumpulan:** susun laporan R Markdown, render ke PDF atau HTML, kumpulkan melalui Google Classroom.
+  teori:
+  - '### Kedudukan pada CRISP-DM'
+  - |
+    Modul ini menempati tahap Modeling dan Evaluation. Yang membedakannya dari modul pemodelan sebelumnya adalah bobot yang lebih besar pada tahap Data Preparation: jaringan syaraf jauh lebih menuntut dalam hal penskalaan peubah daripada pohon maupun model berbasis aturan.
+  - '### Arsitektur Feed-Forward Neural Network'
+  - |
+    FFNN menyusun peubah masukan menjadi keluaran melalui satu atau beberapa lapis tersembunyi. Setiap simpul pada lapis tersembunyi menghitung kombinasi linier terboboti dari masukannya, lalu meneruskannya melalui fungsi aktivasi nonlinier.
+  - |-
+    \begin{kotakrumus}
+    Bagi jaringan berlapis tersembunyi tunggal dengan $H$ simpul:\\[6pt]
+    $z_{h} = \sigma\!\left( b_{h} + \sum_{j=1}^{p} w_{hj} x_{j} \right), \qquad h = 1, \ldots, H$\\[6pt]
+    $\hat{y} = \sigma\!\left( b_{0} + \sum_{h=1}^{H} v_{h} z_{h} \right)$\\[6pt]
+    dengan $\sigma(u) = 1/(1 + e^{-u})$ fungsi logistik.
+    \end{kotakrumus}
+  - |
+    Fungsi aktivasi nonlinier inilah sumber kekuatannya. Tanpa aktivasi nonlinier, gabungan beberapa lapis lurus tetap menghasilkan fungsi linier, sehingga jaringan tidak lebih kuat daripada regresi biasa. Justru sifat nonlinier itu yang memungkinkan jaringan menangkap hubungan berbentuk lengkung maupun interaksi antar-peubah tanpa perlu dituliskan secara tersurat.
+  - |-
+    \begin{kotakinfo}[Dua parameter penala yang menentukan]\par\smallskip
+    \begin{tabular}{@{}p{3.4cm}p{4.6cm}p{6.0cm}@{}}
+    \textbf{Parameter} & \textbf{Mengatur} & \textbf{Akibat bila keliru}\\
+    \hline
+    Simpul tersembunyi & fleksibilitas model & terlalu sedikit: kurang luwes (\emph{underfitting}); terlalu banyak: mengalami \emph{overfitting}\\[3pt]
+    Penyusutan (\emph{decay}) & besarnya bobot & terlalu kecil: bobot meledak; terlalu besar: model mendatar\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Keduanya saling berkaitan: jaringan berukuran besar dengan penyusutan memadai kerap berkinerja lebih baik daripada jaringan kecil tanpa penyusutan. Karena itu keduanya sebaiknya ditala bersama-sama, bukan satu per satu.
+  - '### Penskalaan Wajib bagi Jaringan Syaraf'
+  - |-
+    \begin{kotakperhatian}[Jaringan syaraf menuntut penskalaan]
+    Bobot awal jaringan dibangkitkan acak pada rentang kecil, dan pembelajarannya bergerak menurut besarnya galat. Bila peubah bersatuan ribuan berdampingan dengan peubah bersatuan belasan, gradien menjadi sangat timpang sehingga pembelajaran lambat atau sama sekali gagal menyatu. Penskalaan ke rentang nol sampai satu, atau pembakuan, karena itu \textbf{wajib} --- berbeda dari pohon keputusan yang tidak memerlukannya sama sekali.
+    \end{kotakperhatian}
+  - '### Arsitektur Radial Basis Function Neural Network'
+  - |
+    RBFNN bertolak dari gagasan yang sama sekali berbeda. Alih-alih menyusun kombinasi linier lalu meneruskannya melalui aktivasi, RBFNN menempatkan sejumlah **pusat** pada ruang peubah, lalu mengukur seberapa dekat tiap amatan terhadap masing-masing pusat.
+  - |-
+    \begin{kotakrumus}
+    Fungsi basis Gauss bagi pusat ke-$h$:\\[6pt]
+    $\phi_{h}(x) = \exp\!\left( -\dfrac{\lVert x - c_{h} \rVert^{2}}{2\sigma^{2}} \right)$\\[6pt]
+    Keluarannya berupa kombinasi linier dari seluruh basis:\\[6pt]
+    $\hat{y} = g\!\left( b_{0} + \sum_{h=1}^{H} v_{h}\, \phi_{h}(x) \right)$\\[6pt]
+    dengan $c_{h}$ pusat, $\sigma$ lebar basis, dan $g$ fungsi kaitan.
+    \end{kotakrumus}
+  - |
+    Akibat bentuk itu, tiap basis hanya aktif pada daerah di sekitar pusatnya dan meredup cepat ketika menjauh. Sifat **lokal** inilah pembeda pokoknya terhadap FFNN, yang tiap simpulnya berpengaruh pada seluruh ruang peubah.
+  - |-
+    \begin{kotakinfo}[Membandingkan dua arsitektur]\par\smallskip
+    \begin{tabular}{@{}p{3.0cm}p{5.2cm}p{6.0cm}@{}}
+     & \textbf{FFNN} & \textbf{RBFNN}\\
+    \hline
+    Sifat simpul & menyeluruh (\emph{global}) & setempat (\emph{local})\\[2pt]
+    Pelatihan & seluruh bobot sekaligus & pusat lalu bobot keluaran\\[2pt]
+    Parameter utama & simpul, penyusutan & banyaknya pusat, lebar\\[2pt]
+    Kecepatan latih & lebih lambat & lebih cepat\\[2pt]
+    Di luar rentang data & meramal sembarang & mendekati nilai dasar\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Baris terakhir patut diperhatikan pada penerapan resmi. Ketika RBFNN menerima amatan yang jauh dari seluruh pusatnya, seluruh basis bernilai mendekati nol sehingga keluarannya kembali ke nilai dasar --- perilaku yang lebih aman daripada FFNN yang dapat menghasilkan dugaan ekstrem tanpa peringatan.
+  - '### Menetapkan Pusat dan Lebar'
+  - |
+    Pusat RBFNN lazim ditetapkan dengan pengelompokan, misalnya K-Means, sehingga pusat berada di daerah yang memang padat amatan. Adapun lebar basis dapat ditetapkan dari jarak antar-pusat.
+  - |-
+    \begin{kotakrumus}
+    Aturan praktis penetapan lebar:\\[6pt]
+    $\sigma = \dfrac{d_{\max}}{\sqrt{2H}}$\\[6pt]
+    dengan $d_{\max}$ jarak terjauh antar-pusat dan $H$ banyaknya pusat. Makin banyak pusat, makin sempit tiap basisnya.
+    \end{kotakrumus}
+  - |-
+    \begin{kotaktips}
+    Lebar yang terlalu sempit membuat tiap basis hanya menanggapi segelintir amatan sehingga jaringan menghafal; lebar yang terlalu lebar membuat seluruh basis hampir sama sehingga jaringan kehilangan ketajaman. Aturan praktis di atas menjadi titik awal yang baik, tetapi nilainya tetap layak ditala bila waktu memungkinkan.
+    \end{kotaktips}
+  - '### Ketimpangan Kelas dan Pemindahan Ambang'
+  - |
+    Pada persoalan seperti kerentanan pangan, kelas yang diperhatikan lazimnya jauh lebih sedikit. Dua penanganan yang saling melengkapi tersedia: menyeimbangkan data latih, dan memindahkan ambang keputusan.
+  - |-
+    \begin{kotakinfo}[Dua penanganan dan kedudukannya]\par\smallskip
+    \begin{tabular}{@{}p{3.6cm}p{4.8cm}p{5.6cm}@{}}
+    \textbf{Penanganan} & \textbf{Dikerjakan pada} & \textbf{Catatan}\\
+    \hline
+    Penyeimbangan & data latih saja & masuk ke dalam resep\\[3pt]
+    Pemindahan ambang & tahap keputusan & tidak mengubah model\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotaksalah}[Menyeimbangkan sebelum membagi data]
+    Pembangkitan contoh sintetis \textbf{hanya boleh} dikenakan pada data latih. Bila dikerjakan sebelum pembagian, amatan sintetis yang diturunkan dari data latih dapat muncul pada data uji, sehingga model menilai dirinya atas amatan yang sudah dipelajarinya. Menempatkan langkah penyeimbangan di dalam resep menjamin hal ini secara rancangan --- ia otomatis dilewati ketika resep diterapkan pada data uji.
+    \end{kotaksalah}
+  - |
+    Pemindahan ambang bekerja pada tahap yang berbeda. Model tetap sama; yang berubah hanya batas peluang yang dipakai memutuskan. Ambang bawaan setengah mengandaikan kedua jenis kekeliruan sama mahalnya --- anggapan yang jarang benar.
+  - |-
+    \begin{kotakrumus}
+    \textbf{Indeks Youden} sebagai dasar pemilihan ambang:\\[6pt]
+    $J(t) = \text{sensitivitas}(t) + \text{spesifisitas}(t) - 1$\\[6pt]
+    Ambang yang memaksimumkan $J$ menyeimbangkan kedua jenis kekeliruan tanpa memihak salah satunya.
+    \end{kotakrumus}
+  - '### Menafsirkan Model yang Tertutup'
+  - |
+    Jaringan syaraf tidak menyediakan koefisien yang dapat dibaca langsung. Dua cara penafsiran yang berlaku bagi model apa pun karena itu menjadi penting.
+  - |-
+    \begin{kotakinfo}[Dua cara menafsirkan model tertutup]\par\smallskip
+    \begin{tabular}{@{}p{4.0cm}p{10.4cm}@{}}
+    \textbf{Kepentingan permutasi} & mengacak satu peubah lalu mengukur penurunan kinerja; makin besar penurunannya, makin penting peubah itu\\[3pt]
+    \textbf{Analisis profil} & membandingkan ciri amatan berpeluang dugaan tinggi terhadap yang rendah\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotaksalah}[Kepentingan bukan hubungan sebab-akibat]
+    Kepentingan permutasi menyatakan seberapa besar suatu peubah menyumbang pada \emph{dugaan}, bukan seberapa besar pengaruhnya secara sebab-akibat. Peubah dapat tampak penting semata karena berkaitan dengan penyebab sesungguhnya yang tidak terukur. Menyampaikan hasil ini tanpa peringatan tersebut berisiko melahirkan kebijakan yang salah sasaran.
+    \end{kotaksalah}
+  contoh:
+  - contoh: Membangkitkan data survei kerentanan pangan
+    kode_r: |-
+      set.seed(2025)
+      n <- 1000
+
+      pengeluaran <- round(rlnorm(n, meanlog = log(450), sdlog = 0.6), 1)
+      anggota_rt  <- sample(1:9, n, TRUE, c(.05,.12,.18,.25,.20,.10,.05,.03,.02))
+      pendidikan  <- pmin(pmax(round(rnorm(n, 9, 3)), 0), 18)
+      air_bersih  <- factor(rbinom(n, 1, .72), labels = c("Tidak", "Ya"))
+      pekerjaan   <- factor(sample(c("formal","informal","tidak_bekerja"), n, TRUE,
+                                   c(.35,.50,.15)))
+      lahan       <- factor(rbinom(n, 1, .55), labels = c("Tidak", "Ya"))
+      ketahanan   <- sample(1:5, n, TRUE, c(.15,.25,.30,.20,.10))
+      sejahtera   <- sample(1:3, n, TRUE, c(.30,.50,.20))
+
+      # hubungan sengaja dibuat ADA agar model dapat diuji kemampuannya
+      skor <- -2.5 - 0.003*pengeluaran + 0.12*anggota_rt - 0.10*pendidikan -
+              0.60*(air_bersih == "Ya") + 0.50*(pekerjaan == "tidak_bekerja") +
+              0.25*(pekerjaan == "informal") - 0.40*(lahan == "Ya") -
+              0.35*ketahanan - 0.50*sejahtera + rnorm(n, 0, 0.5)
+
+      peluang <- plogis(skor)
+      survei <- data.frame(pengeluaran, anggota_rt, pendidikan, air_bersih,
+                           pekerjaan, lahan, ketahanan, sejahtera,
+        rentan = factor(ifelse(peluang > quantile(peluang, 0.80), "Ya", "Tidak"),
+                        levels = c("Ya", "Tidak")))
+
+      write.csv(survei, "data/data_survei.csv", row.names = FALSE)
+      str(survei)
+      round(prop.table(table(survei$rentan)), 4)
+    judul_r: membangkitkan data bersinyal
+    eval: true
+    penjelasan: |
+      Sembilan peubah dibangkitkan menyerupai hasil survei sosial-ekonomi rumah tangga. Skor logit disusun sebagai kombinasi linier peubah tersebut dengan koefisien yang ditetapkan, lalu diubah menjadi peluang. Sasaran ditetapkan dari kuantil ke-80 sehingga kelas yang diperhatikan berjumlah sekitar seperlima.
+    interpretasi: |
+      Perhatikan bahwa urutan taraf sasaran ditetapkan secara tegas dengan kelas yang diperhatikan di depan, sesuai kelaziman yardstick. Perhatikan pula bahwa hubungan antara peubah dan sasaran sengaja dibuat ada --- berbeda dari beberapa modul sebelumnya yang peubahnya saling bebas. Akibatnya model diharapkan berkinerja baik, sehingga kinerja yang buruk justru menjadi pertanda ada kekeliruan pada alur kerja, bukan temuan mengenai datanya.
+  - contoh: Memeriksa ketimpangan dan menetapkan acuan
+    kode_r: |-
+      prop <- prop.table(table(survei$rentan))
+      cat("proporsi kelas:", round(prop, 4), "\n")
+      cat("rasio timpang:", round(max(prop) / min(prop), 2), "berbanding 1\n")
+      cat("acuan tebakan mayoritas:", round(max(prop), 4), "\n\n")
+
+      # sebaran peubah numerik menurut kelas
+      num <- c("pengeluaran", "anggota_rt", "pendidikan", "ketahanan", "sejahtera")
+      ringkas_kelas <- aggregate(survei[num], list(rentan = survei$rentan), mean)
+      ringkas_kelas[num] <- round(ringkas_kelas[num], 2)
+      print(ringkas_kelas, row.names = FALSE)
+    judul_r: memeriksa ketimpangan dan profil awal
+    eval: true
+    penjelasan: |
+      Proporsi kelas dihitung beserta rasio ketimpangan dan acuan tebakan mayoritas. Setelah itu rata-rata tiap peubah numerik dibandingkan antara kedua kelas.
+    interpretasi: |
+      Acuan tebakan mayoritas sebesar empat perlima menjadi pembanding wajib bagi setiap akurasi yang kelak dilaporkan. Adapun perbandingan rata-rata antar-kelas sudah memperlihatkan arah hubungan yang masuk akal: rumah tangga rentan cenderung berpengeluaran lebih rendah dan beranggota lebih banyak. Pemeriksaan sederhana ini berguna sebagai pemeriksaan kewajaran sebelum pemodelan --- bila arahnya berlawanan dengan pengetahuan bidang, ada yang perlu ditelusuri lebih dahulu.
+  - contoh: Membagi data dan menyusun resep
+    kode_r: |-
+      suppressPackageStartupMessages({
+        library(recipes); library(rsample); library(themis)})
+
+      set.seed(2025)
+      bagi <- initial_split(survei, prop = 0.75, strata = rentan)
+      lat  <- training(bagi); uji <- testing(bagi)
+
+      rec <- recipe(rentan ~ ., data = lat) |>
+        step_dummy(all_nominal_predictors()) |>            # pengodean kategori
+        step_zv(all_predictors()) |>                       # buang ragam nol
+        step_range(all_numeric_predictors(), min = 0, max = 1) |>  # skala 0-1
+        step_rose(rentan, seed = 2025)                     # seimbangkan LATIH saja
+
+      siap <- prep(rec, training = lat)
+      lat_siap <- bake(siap, new_data = NULL)   # data latih: sudah diseimbangkan
+      uji_siap <- bake(siap, new_data = uji)    # data uji : TIDAK diseimbangkan
+
+      cat("latih asli    :", nrow(lat), "| setelah ROSE:", nrow(lat_siap), "\n")
+      print(table(latih = lat_siap$rentan))
+      print(table(uji = uji_siap$rentan))
+    judul_r: resep dengan penskalaan dan penyeimbangan
+    eval: true
+    penjelasan: |
+      Data dibagi dengan penstrataan. Resep menetapkan empat langkah: pengodean peubah kategori, pembuangan peubah berragam nol, penskalaan ke rentang nol sampai satu, dan penyeimbangan kelas memakai ROSE. Resep lalu diterapkan ke kedua bagian data.
+    interpretasi: |
+      Bandingkan kedua tabel terakhir. Data latih menjadi seimbang, sedangkan data uji tetap timpang sebagaimana keadaan sesungguhnya --- dan inilah perilaku yang benar. Paket recipes melewatkan langkah penyeimbangan secara otomatis ketika resep diterapkan pada data baru, sehingga kekeliruan yang dibahas pada Teori tercegah oleh rancangan, bukan oleh kedisiplinan penulis kode. Perhatikan pula penskalaan ke rentang nol sampai satu yang dipilih karena sesuai dengan fungsi aktivasi logistik.
+  - contoh: Membangun FFNN pertama
+    kode_r: |-
+      suppressPackageStartupMessages({
+        library(parsnip); library(workflows); library(yardstick); library(dplyr)})
+
+      spec_ffnn <- mlp(hidden_units = 6, penalty = 0.01, epochs = 200) |>
+        set_engine("nnet", trace = FALSE) |>
+        set_mode("classification")
+
+      wf_ffnn <- workflow() |> add_recipe(rec) |> add_model(spec_ffnn)
+      set.seed(2025)
+      m_ffnn <- fit(wf_ffnn, data = lat)
+
+      duga <- predict(m_ffnn, uji) |>
+        bind_cols(predict(m_ffnn, uji, type = "prob")) |>
+        bind_cols(uji |> select(rentan))
+
+      print(conf_mat(duga, truth = rentan, estimate = .pred_class))
+      cat("\nAUC:", round(roc_auc(duga, rentan, .pred_Ya)$.estimate, 4),
+          "| acuan mayoritas:", round(max(prop.table(table(uji$rentan))), 4), "\n")
+    judul_r: mlp dengan mesin nnet
+    eval: true
+    penjelasan: |
+      Spesifikasi jaringan ditetapkan dengan enam simpul tersembunyi, penyusutan 0,01, dan dua ratus epoch. Argumen trace bernilai salah menekan keluaran pelatihan yang panjang. Alur kerja dirangkai, dilatih, lalu dinilai pada data uji.
+    interpretasi: |
+      Bandingkan AUC terhadap acuan; pada data yang hubungannya sengaja dibuat ada, AUC seharusnya jauh melampaui setengah. Perhatikan bahwa nilai simpul dan penyusutan di sini masih ditebak, bukan ditala --- contoh berikutnya memperbaikinya. Perhatikan pula bahwa benih acak ditetapkan sebelum pelatihan, sebab bobot awal jaringan dibangkitkan acak sehingga hasilnya berubah tiap kali dijalankan tanpa benih.
+  - contoh: Memperagakan kepekaan terhadap benih acak
+    kode_r: |-
+      hasil_benih <- sapply(1:5, function(s) {
+        set.seed(s)
+        m <- fit(wf_ffnn, data = lat)
+        d <- predict(m, uji, type = "prob") |> bind_cols(uji |> select(rentan))
+        roc_auc(d, rentan, .pred_Ya)$.estimate
+      })
+      print(round(data.frame(benih = 1:5, AUC = hasil_benih), 4), row.names = FALSE)
+      cat("\nrentang AUC antar-benih:", round(diff(range(hasil_benih)), 4), "\n")
+      cat("simpangan baku          :", round(sd(hasil_benih), 4), "\n")
+    judul_r: melatih jaringan dengan lima benih berbeda
+    eval: true
+    penjelasan: |
+      Jaringan yang sama dilatih lima kali dengan benih acak berbeda. AUC pada data uji dicatat bagi masing-masing, lalu rentang dan simpangan bakunya dihitung.
+    interpretasi: |
+      Rentang antar-benih inilah ketidakpastian yang melekat pada jaringan syaraf dan tidak dimiliki model seperti regresi logistik. Sebabnya bobot awal dibangkitkan acak dan pengoptimuman dapat berhenti pada minimum setempat yang berbeda. Akibat praktisnya tegas: melaporkan AUC dari satu kali pelatihan tanpa menyebutkan benihnya membuat hasil tidak dapat direproduksi, dan bila rentangnya besar maka perbandingan antar-model menjadi tidak bermakna kecuali selisihnya melampaui rentang itu.
+  - contoh: Menala simpul tersembunyi dan penyusutan
+    kode_r: |-
+      suppressPackageStartupMessages({library(tune); library(dials)})
+
+      spec_tune <- mlp(hidden_units = tune(), penalty = tune(), epochs = 200) |>
+        set_engine("nnet", trace = FALSE) |>
+        set_mode("classification")
+      wf_tune <- workflow() |> add_recipe(rec) |> add_model(spec_tune)
+
+      set.seed(2025)
+      lipatan <- vfold_cv(lat, v = 5, strata = rentan)
+      kisi <- expand.grid(hidden_units = c(3, 6, 10, 15),
+                          penalty = c(0.0001, 0.001, 0.01, 0.1))
+
+      set.seed(2025)
+      hasil_tune <- tune_grid(wf_tune, resamples = lipatan, grid = kisi,
+                              metrics = metric_set(roc_auc, f_meas))
+
+      atas <- collect_metrics(hasil_tune) |>
+        filter(.metric == "roc_auc") |>
+        arrange(desc(mean)) |>
+        select(hidden_units, penalty, mean, std_err) |>
+        mutate(across(where(is.numeric), \(x) round(x, 4)))
+      print(utils::head(as.data.frame(atas), 6), row.names = FALSE)
+    judul_r: tune_grid atas dua parameter
+    eval: true
+    penjelasan: |
+      Kedua parameter ditandai tune sehingga nilainya dicari. Kisi berukuran empat kali empat dicoba pada lima lipatan, sehingga delapan puluh jaringan dilatih. Enam kombinasi terbaik ditampilkan bersama galat bakunya.
+    interpretasi: |
+      Perhatikan kolom galat baku. Bila selisih rata-rata antar-kombinasi teratas lebih kecil daripada galat bakunya, maka pemilihan yang terbaik sesungguhnya sembarang. Dalam keadaan demikian, memilih jaringan yang lebih kecil dengan penyusutan lebih besar --- yakni model yang lebih sederhana dan lebih stabil --- lebih dapat dipertanggungjawabkan daripada memilih yang rata-ratanya kebetulan tertinggi.
+  - contoh: Menggambarkan permukaan penalaan
+    kode_r: |-
+      auc_kisi <- collect_metrics(hasil_tune) |> filter(.metric == "roc_auc")
+
+      matriks <- with(auc_kisi,
+        matrix(mean, nrow = length(unique(hidden_units)),
+               dimnames = list(sort(unique(hidden_units)), sort(unique(penalty)))))
+
+      par(mar = c(4.5, 4.5, 3, 1))
+      matplot(sort(unique(auc_kisi$hidden_units)), matriks, type = "b",
+              pch = 19, lwd = 2, lty = 1,
+              col = c("#0B6FB4", "#F58220", "#00A651", "#C0392B"),
+              xlab = "Banyaknya simpul tersembunyi",
+              ylab = "ROC-AUC (validasi silang)",
+              main = "Permukaan Penalaan FFNN")
+      legend("bottomright", legend = paste("penalty =", colnames(matriks)),
+             col = c("#0B6FB4", "#F58220", "#00A651", "#C0392B"),
+             lwd = 2, pch = 19, bty = "n", cex = 0.8)
+      grid(col = "grey88")
+      par(mar = c(5, 4, 4, 2) + 0.1)
+    judul_r: matplot atas kisi dua parameter
+    eval: true
+    penjelasan: |
+      Hasil penalaan diubah menjadi matriks berbaris simpul tersembunyi dan berkolom nilai penyusutan. Setiap kolom digambar sebagai satu garis, sehingga pengaruh kedua parameter terlihat sekaligus.
+    interpretasi: |
+      Gambar ini memperlihatkan keterkaitan yang disebut pada Teori. Garis dengan penyusutan kecil lazimnya menurun ketika simpul bertambah --- pertanda mengalami *overfitting* --- sedangkan garis dengan penyusutan memadai tetap datar atau naik. Menyajikan permukaan seperti ini jauh lebih informatif daripada sekadar melaporkan kombinasi terbaik, sebab pembaca dapat menilai sendiri seberapa peka model terhadap pilihan parameternya.
+  - contoh: Menyelesaikan FFNN dan menilai pada data uji
+    kode_r: |-
+      terbaik <- select_best(hasil_tune, metric = "roc_auc")
+      cat("terpilih - simpul:", terbaik$hidden_units,
+          "| penyusutan:", signif(terbaik$penalty, 4), "\n\n")
+
+      wf_final <- finalize_workflow(wf_tune, terbaik)
+      set.seed(2025)
+      akhir <- last_fit(wf_final, split = bagi,
+                        metrics = metric_set(roc_auc, f_meas, accuracy))
+
+      collect_metrics(akhir) |>
+        mutate(.estimate = round(.estimate, 4)) |>
+        select(.metric, .estimate) |> print()
+
+      pred_ffnn <- collect_predictions(akhir)
+      print(conf_mat(pred_ffnn, truth = rentan, estimate = .pred_class))
+    judul_r: finalize_workflow dan last_fit
+    eval: true
+    penjelasan: |
+      Kombinasi parameter terbaik dipakai menyelesaikan alur kerja. Fungsi last_fit melatih ulang pada seluruh data latih lalu menilai satu kali pada data uji. Dugaan pada data uji diambil untuk pemeriksaan lanjutan.
+    interpretasi: |
+      Inilah satu-satunya kali data uji disentuh; seluruh keputusan penalaan diambil lewat validasi silang pada data latih. Perhatikan bahwa matriks kekeliruan dihitung pada ambang bawaan setengah --- contoh berikutnya memperlihatkan bahwa ambang itu jarang merupakan pilihan terbaik pada data timpang.
+  - contoh: Memindahkan ambang keputusan
+    kode_r: |-
+      ambang <- seq(0.05, 0.95, by = 0.05)
+      ukuran_ambang <- t(sapply(ambang, function(t) {
+        dg <- factor(ifelse(pred_ffnn$.pred_Ya > t, "Ya", "Tidak"),
+                     levels = c("Ya", "Tidak"))
+        sn <- yardstick::sensitivity_vec(pred_ffnn$rentan, dg)
+        sp <- yardstick::specificity_vec(pred_ffnn$rentan, dg)
+        c(sensitivitas = sn, spesifisitas = sp, youden = sn + sp - 1,
+          F1 = yardstick::f_meas_vec(pred_ffnn$rentan, dg))
+      }))
+      tabel_ambang <- data.frame(ambang, round(ukuran_ambang, 4))
+      print(tabel_ambang[seq(1, nrow(tabel_ambang), by = 2), ], row.names = FALSE)
+
+      t_youden <- ambang[which.max(ukuran_ambang[, "youden"])]
+      t_f1     <- ambang[which.max(ukuran_ambang[, "F1"])]
+      cat("\nambang terbaik menurut Youden:", t_youden,
+          "| menurut F1:", t_f1, "| bawaan: 0.5\n")
+    judul_r: menghitung ukuran pada berbagai ambang
+    eval: true
+    penjelasan: |
+      Sembilan belas ambang dicoba. Pada tiap ambang, kelas dugaan dibentuk ulang lalu sensitivitas, spesifisitas, indeks Youden, dan F1 dihitung memakai fungsi bentuk vektor dari yardstick. Ambang terbaik menurut dua ukuran berbeda dicari.
+    interpretasi: |
+      Perhatikan bahwa kedua ukuran dapat menghasilkan ambang yang berbeda, dan keduanya lazimnya bukan setengah. Indeks Youden menyeimbangkan kedua jenis kekeliruan tanpa memihak, sedangkan F1 lebih memihak kelas yang diperhatikan. Pemilihan di antara keduanya adalah keputusan kebijakan: bila melewatkan rumah tangga rentan dianggap jauh lebih merugikan daripada memeriksa yang tidak rentan, maka ukuran yang lebih memihak sensitivitas lebih tepat.
+  - contoh: Menggambarkan pengaruh ambang
+    kode_r: |-
+      par(mfrow = c(1, 2), mar = c(4.5, 4.5, 3, 1))
+
+      matplot(ambang, ukuran_ambang[, c("sensitivitas", "spesifisitas", "F1")],
+              type = "l", lwd = 2, lty = 1,
+              col = c("#0B6FB4", "#F58220", "#00A651"),
+              xlab = "Ambang keputusan", ylab = "Nilai ukuran",
+              main = "Ukuran menurut Ambang")
+      abline(v = t_youden, col = "#C0392B", lty = 2, lwd = 2)
+      legend("bottom", c("sensitivitas", "spesifisitas", "F1"),
+             col = c("#0B6FB4", "#F58220", "#00A651"), lwd = 2, bty = "n", cex = 0.75)
+
+      kurva <- roc_curve(pred_ffnn, truth = rentan, .pred_Ya)
+      plot(1 - kurva$specificity, kurva$sensitivity, type = "l", lwd = 2,
+           col = "#0B6FB4", xlim = c(0, 1), ylim = c(0, 1),
+           xlab = "1 - spesifisitas", ylab = "sensitivitas",
+           main = "Kurva ROC FFNN")
+      abline(0, 1, col = "#C0392B", lty = 2, lwd = 2)
+      par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
+    judul_r: grafik ambang dan kurva ROC
+    eval: true
+    penjelasan: |
+      Dua gambar disajikan berdampingan. Yang kiri memuat ketiga ukuran menurut ambang dengan garis tegak menandai ambang terbaik menurut Youden. Yang kanan berupa kurva ROC yang menilai seluruh ambang sekaligus.
+    interpretasi: |
+      Kedua gambar melengkapi satu sama lain. Kurva ROC menilai kemampuan pemisahan model tanpa bergantung ambang, sedangkan gambar kiri menjawab pertanyaan praktis ambang mana yang hendak dipakai. Perhatikan bahwa titik pada kurva ROC yang terjauh dari garis diagonal berpadanan dengan ambang yang memaksimumkan indeks Youden --- keduanya menyatakan hal yang sama dengan cara berbeda.
+  - contoh: Membangun RBFNN dari dasar
+    kode_r: |-
+      # jarak Euclidean antara tiap baris A terhadap tiap baris B
+      jarak_ke_pusat <- function(A, B) {
+        sqrt(pmax(outer(rowSums(A^2), rep(1, nrow(B))) +
+                  outer(rep(1, nrow(A)), rowSums(B^2)) - 2 * A %*% t(B), 0))
+      }
+
+      rbf_latih <- function(X, y, size = 20, seed = 2025) {
+        set.seed(seed)
+        km    <- kmeans(X, centers = size, nstart = 10, iter.max = 50)
+        lebar <- max(dist(km$centers)) / sqrt(2 * size)      # aturan praktis
+        H     <- exp(-jarak_ke_pusat(X, km$centers)^2 / (2 * lebar^2))
+        df    <- data.frame(H); df$y <- ifelse(y == "Ya", 1, 0)
+        list(pusat = km$centers, lebar = lebar,
+             mod = suppressWarnings(glm(y ~ ., data = df, family = binomial)))
+      }
+
+      rbf_duga <- function(fit, X) {
+        H <- exp(-jarak_ke_pusat(X, fit$pusat)^2 / (2 * fit$lebar^2))
+        as.numeric(predict(fit$mod, newdata = data.frame(H), type = "response"))
+      }
+
+      X_lat <- as.matrix(lat_siap[, setdiff(names(lat_siap), "rentan")])
+      X_uji <- as.matrix(uji_siap[, setdiff(names(uji_siap), "rentan")])
+
+      f20 <- rbf_latih(X_lat, lat_siap$rentan, size = 20)
+      cat("banyaknya pusat:", nrow(f20$pusat), "| lebar basis:", round(f20$lebar, 4), "\n")
+      cat("dimensi ruang peubah:", ncol(X_lat), "\n")
+    judul_r: menyusun RBFNN dengan tiga fungsi
+    eval: true
+    penjelasan: |
+      Tiga fungsi disusun. Yang pertama menghitung matriks jarak memakai penjabaran kuadrat agar cepat. Yang kedua melatih jaringan: pusat ditetapkan dengan K-Means, lebar dihitung dengan aturan praktis, matriks basis Gauss dibentuk, lalu bobot keluaran diduga dengan regresi logistik. Yang ketiga menerapkannya pada data baru.
+    interpretasi: |
+      Menyusun RBFNN dari dasar bukan sekadar siasat karena paket tidak tersedia, melainkan cara memahami mekanismenya. Ketiga langkahnya terlihat jelas: penempatan pusat, pengukuran kedekatan, dan penggabungan lurus. Perlu dicatat bahwa pelatihannya berlangsung dua tahap terpisah --- pusat ditetapkan tanpa memperhatikan sasaran, baru kemudian bobot keluaran diduga --- berbeda dari FFNN yang seluruh bobotnya dilatih bersama-sama.
+  - contoh: Menala banyaknya pusat RBFNN
+    kode_r: |-
+      ukuran_pusat <- c(5, 10, 20, 30, 50)
+
+      hasil_rbf <- t(sapply(ukuran_pusat, function(s) {
+        f <- rbf_latih(X_lat, lat_siap$rentan, size = s)
+        d_lat <- data.frame(benar = lat_siap$rentan, prob = rbf_duga(f, X_lat))
+        d_uji <- data.frame(benar = uji_siap$rentan, prob = rbf_duga(f, X_uji))
+        c(pusat = s, lebar = round(f$lebar, 4),
+          AUC_latih = round(roc_auc(d_lat, benar, prob)$.estimate, 4),
+          AUC_uji   = round(roc_auc(d_uji, benar, prob)$.estimate, 4))
+      }))
+      print(hasil_rbf, row.names = FALSE)
+
+      cat("\njarak AUC latih terhadap uji:\n")
+      print(round(hasil_rbf[, "AUC_latih"] - hasil_rbf[, "AUC_uji"], 4))
+    judul_r: melatih RBFNN pada lima ukuran
+    eval: true
+    penjelasan: |
+      Lima nilai banyaknya pusat dicoba. Pada masing-masing, AUC dihitung dua kali: pada data latih dan pada data uji. Lebar basis ikut dilaporkan karena nilainya berubah mengikuti banyaknya pusat.
+    interpretasi: |
+      Perhatikan dua hal. Pertama, lebar basis menyempit ketika pusat bertambah, sesuai rumus aturan praktis --- makin banyak pusat, makin setempat pengaruh masing-masing. Kedua, jarak antara AUC latih dan uji melebar seiring pusat bertambah; itulah wujud pemodelan berlebih (*overfitting*) pada RBFNN. Banyaknya pusat karena itu berperan serupa dengan banyaknya simpul tersembunyi pada FFNN, yakni mengatur fleksibilitas model.
+  - contoh: Menggambarkan pengaruh banyaknya pusat
+    kode_r: |-
+      plot(hasil_rbf[, "pusat"], hasil_rbf[, "AUC_latih"], type = "b", pch = 19,
+           lwd = 2, col = "#C0392B",
+           ylim = range(hasil_rbf[, c("AUC_latih", "AUC_uji")]),
+           xlab = "Banyaknya pusat", ylab = "ROC-AUC",
+           main = "Kelenturan RBFNN menurut Banyaknya Pusat")
+      lines(hasil_rbf[, "pusat"], hasil_rbf[, "AUC_uji"], type = "b", pch = 17,
+            lwd = 2, col = "#0B6FB4")
+      legend("bottomright", c("data latih", "data uji"),
+             col = c("#C0392B", "#0B6FB4"), lwd = 2, pch = c(19, 17),
+             bty = "n", cex = 0.85)
+      grid(col = "grey88")
+
+      pusat_terbaik <- hasil_rbf[which.max(hasil_rbf[, "AUC_uji"]), "pusat"]
+      cat("banyaknya pusat terbaik menurut data uji:", pusat_terbaik, "\n")
+    judul_r: grafik kinerja latih dan uji
+    eval: true
+    penjelasan: |
+      Kedua kurva AUC digambar bersama pada sumbu yang sama, dengan batas sumbu tegak ditetapkan agar keduanya selalu terlihat penuh.
+    interpretasi: |
+      Jarak antara kedua garis adalah ukuran langsung pemodelan berlebih (*overfitting*), persis sebagaimana pada penalaan tetangga terdekat di modul supervised learning. Perlu diakui satu kelemahan pada peragaan ini: banyaknya pusat terbaik dipilih berdasarkan data uji, padahal seharusnya lewat validasi silang pada data latih. Peragaan ini disederhanakan demi kejelasan, dan Penugasan menuntut Anda mengerjakannya dengan benar memakai lipatan.
+  - contoh: Menghitung kepentingan peubah dengan permutasi
+    kode_r: |-
+      f_rbf <- rbf_latih(X_lat, lat_siap$rentan, size = as.numeric(pusat_terbaik))
+      dasar <- roc_auc(data.frame(benar = uji_siap$rentan,
+                                  prob = rbf_duga(f_rbf, X_uji)), benar, prob)$.estimate
+
+      set.seed(2025)
+      kepentingan <- sapply(seq_len(ncol(X_uji)), function(j) {
+        turun <- replicate(5, {
+          Xp <- X_uji; Xp[, j] <- sample(Xp[, j])
+          dasar - roc_auc(data.frame(benar = uji_siap$rentan,
+                                     prob = rbf_duga(f_rbf, Xp)), benar, prob)$.estimate
+        })
+        mean(turun)
+      })
+
+      imp <- data.frame(peubah = colnames(X_uji),
+                        penurunan_AUC = round(kepentingan, 4))
+      imp <- imp[order(-imp$penurunan_AUC), ]
+      print(utils::head(imp, 8), row.names = FALSE)
+    judul_r: permutasi peubah satu per satu
+    eval: true
+    penjelasan: |
+      Setiap peubah diacak nilainya lima kali, dan penurunan AUC dicatat lalu dirata-ratakan. Pengacakan memutus hubungan antara peubah itu dan sasaran tanpa melatih ulang model, sehingga sumbangannya terhadap dugaan dapat diukur.
+    interpretasi: |
+      Pengulangan lima kali penting karena pengacakan bersifat acak; sekali pengacakan menghasilkan angka yang tidak stabil. Bandingkan urutan yang diperoleh terhadap koefisien yang dipakai membangkitkan data pada Contoh 10.1 --- bila peubah yang koefisiennya besar memang muncul di atas, itu pertanda model menangkap struktur yang benar. Perlu ditegaskan kembali bahwa kepentingan ini menyatakan sumbangan terhadap dugaan, bukan pengaruh sebab-akibat.
+  - contoh: Menafsirkan model melalui analisis profil
+    kode_r: |-
+      prob_uji <- rbf_duga(f_rbf, X_uji)
+      kelompok <- cut(prob_uji, breaks = quantile(prob_uji, c(0, .25, .75, 1)),
+                      labels = c("peluang rendah", "menengah", "peluang tinggi"),
+                      include.lowest = TRUE)
+
+      num_asli <- c("pengeluaran", "anggota_rt", "pendidikan", "ketahanan", "sejahtera")
+      profil <- aggregate(uji[num_asli], list(kelompok = kelompok), mean)
+      profil[num_asli] <- round(profil[num_asli], 2)
+      print(profil, row.names = FALSE)
+
+      cat("\nproporsi rentan sebenarnya per kelompok:\n")
+      print(round(tapply(uji$rentan == "Ya", kelompok, mean), 4))
+    judul_r: membandingkan ciri antar-kelompok peluang
+    eval: true
+    penjelasan: |
+      Amatan data uji dibagi tiga menurut kuartil peluang dugaan. Rata-rata peubah numerik dalam satuan aslinya dibandingkan antar-kelompok, disusul proporsi kelas yang sebenarnya pada tiap kelompok.
+    interpretasi: |
+      Analisis profil menjembatani model tertutup dengan pemahaman pengguna. Bila kelompok berpeluang tinggi ternyata berpengeluaran jauh lebih rendah dan beranggota lebih banyak, maka model menangkap pola yang masuk akal menurut pengetahuan bidang. Baris terakhir berfungsi sebagai pemeriksaan kalibrasi kasar: proporsi rentan sebenarnya seharusnya menaik dari kelompok rendah ke tinggi. Bila tidak menaik, dugaan peluangnya tidak dapat dipercaya untuk penyasaran.
+  - contoh: Membandingkan FFNN dan RBFNN secara adil
+    kode_r: |-
+      d_ffnn <- data.frame(benar = pred_ffnn$rentan, prob = pred_ffnn$.pred_Ya)
+      d_rbf  <- data.frame(benar = uji_siap$rentan,    prob = prob_uji)
+
+      ringkas <- function(d, nama) {
+        dg <- factor(ifelse(d$prob > 0.5, "Ya", "Tidak"), levels = c("Ya", "Tidak"))
+        data.frame(model = nama,
+          AUC  = round(roc_auc(d, benar, prob)$.estimate, 4),
+          F1   = round(yardstick::f_meas_vec(d$benar, dg), 4),
+          Sens = round(yardstick::sensitivity_vec(d$benar, dg), 4),
+          Spes = round(yardstick::specificity_vec(d$benar, dg), 4))
+      }
+      banding <- rbind(ringkas(d_ffnn, "FFNN"), ringkas(d_rbf, "RBFNN"))
+      print(banding, row.names = FALSE)
+
+      cat("\nselisih AUC antar-model      :", round(abs(diff(banding$AUC)), 4), "\n")
+      cat("rentang AUC FFNN antar-benih:", round(diff(range(hasil_benih)), 4), "\n")
+    judul_r: menyandingkan kedua arsitektur
+    eval: true
+    penjelasan: |
+      Kedua model dinilai pada data uji yang sama dengan ambang yang sama. Empat ukuran dihitung bagi masing-masing. Selisih AUC keduanya dibandingkan terhadap rentang antar-benih yang diperoleh sebelumnya.
+    interpretasi: |
+      Perbandingan pada baris terakhir adalah bagian terpenting. Bila selisih AUC antar-model lebih kecil daripada rentang yang timbul semata karena benih acak berbeda, maka menyatakan salah satu arsitektur lebih baik tidak didukung bukti. Kekeliruan ini lazim terjadi pada perbandingan jaringan syaraf, sebab ketidakpastian akibat inisialisasi acak kerap diabaikan. Perlu dicatat pula bahwa keduanya di sini dinilai pada ambang bawaan; kesimpulan dapat berubah bila masing-masing dipakai pada ambang optimalnya sendiri.
+  latihan:
+  - Kerjakan bertahap. Gunakan `data/data_survei.csv`.
+  - '#### Tingkat Dasar (melengkapi kode)'
+  - \latihan{Resep bagi jaringan syaraf}
+  - |-
+    ```{r eval=FALSE}
+    library(recipes); library(rsample); library(themis)
+    survei <- read.csv("data/data_survei.csv", stringsAsFactors = TRUE)
+    survei$rentan <- factor(survei$rentan, levels = c("Ya", "Tidak"))
+    set.seed(2025)
+    bagi <- ____(survei, prop = 0.75, strata = rentan)
+    lat <- training(bagi); uji <- testing(bagi)
+
+    rec <- recipe(rentan ~ ., data = lat) |>
+      step_dummy(all_nominal_predictors()) |>
+      ____(all_numeric_predictors(), min = 0, max = 1) |>   # skala 0-1
+      ____(rentan, seed = 2025)                              # seimbangkan
+    ```
+  - \latihan{Membangun FFNN}
+  - |-
+    ```{r eval=FALSE}
+    library(parsnip); library(workflows)
+    spec <- ____(hidden_units = 6, penalty = 0.01, epochs = 200) |>
+      set_engine("____", trace = FALSE) |>
+      set_mode("classification")
+    wf <- workflow() |> add_recipe(rec) |> add_model(spec)
+    ____(2025)                       # benih WAJIB: bobot awal acak
+    m <- fit(wf, data = lat)
+    ```
+  - \latihan{Basis Gauss}
+  - |-
+    ```{r eval=FALSE}
+    # lebar basis menurut aturan praktis
+    lebar <- max(dist(pusat)) / sqrt(2 * ____)      # H = banyaknya pusat
+    # matriks basis Gauss
+    H <- ____(-jarak_ke_pusat(X, pusat)^2 / (2 * lebar^2))
+    ```
+  - '#### Tingkat Menengah (menulis sendiri)'
+  - \latihan{Menala RBFNN dengan validasi silang}
+  - Contoh 10.13 memilih banyaknya pusat berdasarkan data uji --- cara yang tidak valid. Perbaiki dengan
+    menala memakai **validasi silang lima lipatan pada data latih**. Bandingkan banyaknya pusat yang terpilih
+    terhadap hasil Contoh 10.13, lalu jelaskan mengapa cara yang benar dapat memberi jawaban berbeda.
+  - \latihan{Membetulkan kode yang salah}
+  - Kode berikut memuat empat kesalahan (penyeimbangan dikerjakan sebelum pembagian, peubah tidak diskalakan,
+    benih acak tidak ditetapkan, dan ambang dibiarkan pada nilai bawaan pada data timpang). Temukan dan
+    perbaiki, lalu jelaskan akibat masing-masing.
+  - |-
+    ```{r eval=FALSE}
+    library(recipes); library(rsample); library(themis); library(parsnip)
+    survei <- read.csv("data/data_survei.csv", stringsAsFactors = TRUE)
+
+    # (a) penyeimbangan dikerjakan pada SELURUH data sebelum dibagi
+    survei_seimbang <- ROSE::ROSE(rentan ~ ., data = survei)$data
+    bagi <- initial_split(survei_seimbang, prop = 0.75)
+    lat <- training(bagi); uji <- testing(bagi)
+
+    # (b) tidak ada penskalaan padahal jaringan syaraf menuntutnya
+    rec <- recipe(rentan ~ ., data = lat) |>
+      step_dummy(all_nominal_predictors())
+
+    # (c) benih acak tidak ditetapkan
+    m <- fit(workflow() |> add_recipe(rec) |> add_model(spec), data = lat)
+
+    # (d) ambang dibiarkan pada 0,5 pada data yang timpang
+    duga <- ifelse(predict(m, uji, type = "prob")$.pred_Ya > 0.5, "Ya", "Tidak")
+    ```
+  - |-
+    **Keluaran yang benar.** Setelah diperbaiki, kode yang dipakai adalah sebagai berikut.
+
+    ```
+    # (a) pembagian DAHULU; penyeimbangan masuk ke dalam resep
+    survei$rentan <- factor(survei$rentan, levels = c("Ya", "Tidak"))
+    set.seed(2025)
+    bagi <- initial_split(survei, prop = 0.75, strata = rentan)
+    lat <- training(bagi); uji <- testing(bagi)
+
+    # (b) penskalaan wajib, dan (a) penyeimbangan hanya pada data latih
+    rec <- recipe(rentan ~ ., data = lat) |>
+      step_dummy(all_nominal_predictors()) |>
+      step_zv(all_predictors()) |>
+      step_range(all_numeric_predictors(), min = 0, max = 1) |>
+      step_rose(rentan, seed = 2025)
+
+    # (c) benih ditetapkan sebelum pelatihan
+    set.seed(2025)
+    m <- fit(workflow() |> add_recipe(rec) |> add_model(spec), data = lat)
+
+    # (d) ambang dipilih berdasarkan indeks Youden
+    p <- predict(m, uji, type = "prob")$.pred_Ya
+    ambang <- seq(0.05, 0.95, by = 0.05)
+    j <- sapply(ambang, function(t) {
+      dg <- factor(ifelse(p > t, "Ya", "Tidak"), levels = c("Ya", "Tidak"))
+      yardstick::sensitivity_vec(uji$rentan, dg) +
+        yardstick::specificity_vec(uji$rentan, dg) - 1
+    })
+    t_baik <- ambang[which.max(j)]
+    duga <- factor(ifelse(p > t_baik, "Ya", "Tidak"), levels = c("Ya", "Tidak"))
+    ```
+
+    Pemeriksaan yang wajib berhasil: proporsi kelas pada `uji` masih timpang (sekitar 0,2), dan `t_baik != 0.5` bernilai **TRUE**.
+  - '#### Tingkat Lanjut (pemilihan)'
+  - \latihan{Memilih arsitektur menurut kebutuhan}
+  - 'Untuk masing-masing keadaan berikut, tentukan arsitektur yang Anda pilih beserta alasannya, dan sebutkan
+    **satu kelemahan** pilihan itu: (a) model akan menerima amatan yang mungkin jauh di luar rentang data
+    latih; (b) waktu pelatihan sangat terbatas; (c) hubungan antar-peubah diduga rumit dan menyeluruh,
+    bukan setempat; (d) hasil harus dijelaskan kepada pengguna yang tidak berlatar statistika.'
+  penugasan:
+  - |-
+    \begin{kotaktugas}
+    Sebagai calon analis pada instansi statistik, bangun model penduga kerentanan pangan rumah tangga atas \texttt{data\_survei.csv} (\emph{data simulasi}) memakai dua arsitektur jaringan syaraf, lalu rekomendasikan satu di antaranya beserta ambang keputusan yang sesuai.
+    \end{kotaktugas}
+  - '**Konteks.** Sebuah unit hendak menyasar bantuan pangan. Melewatkan rumah tangga yang sesungguhnya
+    rentan dianggap jauh lebih merugikan daripada memeriksa rumah tangga yang ternyata tidak rentan.'
+  - \tugas{Penyiapan}
+  - 1. Periksa **ketimpangan kelas** dan laporkan acuan tebakan mayoritas. Sajikan pula profil awal tiap
+    peubah menurut kelas.
+  - 2. Bagi data dengan penstrataan, lalu susun resep yang memuat pengodean, **penskalaan**, dan **penyeimbangan**.
+    Buktikan bahwa data uji tidak ikut diseimbangkan.
+  - \tugas{Feed-Forward Neural Network}
+  - 3. Latih FFNN dengan **lima benih acak berbeda**. Laporkan rentang dan simpangan baku AUC-nya, lalu
+    jelaskan sumber ketidakpastian itu.
+  - 4. **Tala** simpul tersembunyi dan penyusutan pada kisi minimal empat kali empat dengan validasi silang
+    lima lipatan. Sajikan tabel enam teratas beserta galat bakunya.
+  - 5. Sajikan **permukaan penalaan** sebagai grafik. Jelaskan keterkaitan kedua parameter berdasarkan
+    bentuk garisnya.
+  - 6. Selesaikan alur dan nilai pada data uji. Sajikan matriks kekeliruan dan minimal empat ukuran.
+  - \tugas{Radial Basis Function Neural Network}
+  - '7. Bangun **RBFNN dari dasar**: penempatan pusat, penetapan lebar, dan pendugaan bobot keluaran.
+    Laporkan banyaknya pusat dan lebar basisnya.'
+  - 8. **Tala banyaknya pusat dengan validasi silang pada data latih** --- bukan pada data uji sebagaimana
+    Contoh 10.13. Sajikan hasilnya dan bandingkan terhadap cara yang keliru itu.
+  - 9. Sajikan grafik AUC latih dan uji menurut banyaknya pusat. Tentukan pada nilai berapa pemodelan
+    berlebih (*overfitting*) mulai tampak.
+  - \tugas{Penafsiran, Ambang, dan Rekomendasi}
+  - 10. Hitung **kepentingan permutasi** dengan minimal lima pengulangan. Bandingkan urutannya terhadap
+    koefisien pembangkit data, lalu nilai apakah model menangkap struktur yang benar.
+  - 11. Lakukan **analisis profil** atas tiga kelompok peluang dugaan. Periksa apakah proporsi kelas sebenarnya
+    menaik antar-kelompok, dan jelaskan artinya bagi kelayakan pemakaian model untuk penyasaran.
+  - 12. **Pindahkan ambang keputusan.** Bandingkan ambang menurut indeks Youden dan menurut F1. Tentukan
+    ambang yang Anda pilih dengan mempertimbangkan bahwa melewatkan rumah tangga rentan lebih merugikan
+    --- dan jelaskan alasannya.
+  - 13. **Bandingkan kedua arsitektur** pada data uji yang sama. Nilai apakah selisihnya melampaui rentang
+    yang timbul semata karena benih acak berbeda. Bila tidak, nyatakan bahwa keduanya tidak dapat dibedakan.
+  - '14. Susun laporan R Markdown berisi kode, keluaran, gambar, dan interpretasi. Tutup dengan **ringkasan
+    (maksimal 300 kata)** memuat: arsitektur dan ambang yang direkomendasikan beserta alasannya, kinerja
+    terhadap acuan, keterbatasan, dan penegasan bahwa data merupakan simulasi.'
+  tambahan:
+  - |
+    Modul ini memakai kerangka tidymodels. Sebagian besar kode dan rujukan yang beredar masih memakai `caret`, sehingga kemampuan membaca keduanya tetap diperlukan. Bagian ini menjalankan alur yang sama dengan `caret` lalu membandingkan hasilnya.
+  - contoh: Alur yang sama dengan caret
+    kode_r: |-
+      suppressPackageStartupMessages(library(caret))
+
+      lat_caret <- lat                       # caret tidak mengenal peran penanda
+      kendali <- trainControl(method = "cv", number = 5,
+                              classProbs = TRUE,
+                              summaryFunction = twoClassSummary,
+                              sampling = "rose")          # penyeimbangan DI DALAM lipatan
+
+      set.seed(2025)
+      m_caret <- train(rentan ~ ., data = lat_caret, method = "nnet",
+                       preProcess = c("range"),           # skala 0-1
+                       tuneGrid = expand.grid(size = c(3, 6, 10, 15),
+                                              decay = c(0.0001, 0.001, 0.01, 0.1)),
+                       trControl = kendali, metric = "ROC",
+                       trace = FALSE, maxit = 200)
+
+      hasil_caret <- m_caret$results[order(-m_caret$results$ROC),
+                                     c("size", "decay", "ROC", "ROCSD")]
+      print(round(utils::head(hasil_caret, 6), 4), row.names = FALSE)
+      cat("\nterpilih - size:", m_caret$bestTune$size,
+          "| decay:", m_caret$bestTune$decay, "\n")
+    judul_r: caret::train dengan method nnet
+    eval: true
+    penjelasan: |
+      Seluruh alur ditulis dalam satu pemanggilan train. Penskalaan ditetapkan lewat preProcess, penyeimbangan lewat argumen sampling pada trainControl, dan ruang pencarian lewat tuneGrid. Argumen sampling bernilai rose memastikan penyeimbangan dikerjakan di dalam tiap lipatan, bukan sebelumnya.
+    interpretasi: |
+      Argumen sampling pada trainControl adalah bagian terpenting di sini. Tanpa itu, penyeimbangan harus dikerjakan manual sebelum train dipanggil --- dan bila dikerjakan pada seluruh data latih sekaligus, amatan sintetis akan bocor antar-lipatan sehingga kinerja validasi silang tampak lebih baik daripada sebenarnya. Perhatikan pula bahwa caret memakai nama size dan decay, sedangkan parsnip memakai hidden\_units dan penalty; keduanya menunjuk hal yang sama.
+  - contoh: Menyandingkan hasil kedua kerangka
+    kode_r: |-
+      tm <- collect_metrics(hasil_tune) |>
+        dplyr::filter(.metric == "roc_auc") |>
+        dplyr::select(size = hidden_units, decay = penalty, tidymodels = mean)
+      ct <- data.frame(size = m_caret$results$size,
+                       decay = m_caret$results$decay,
+                       caret = m_caret$results$ROC)
+
+      banding2 <- merge(tm, ct, by = c("size", "decay"))
+      banding2 <- banding2[order(-banding2$tidymodels), ]
+      print(round(utils::head(banding2, 8), 4), row.names = FALSE)
+
+      cat("\nkorelasi antar-kerangka:",
+          round(cor(banding2$tidymodels, banding2$caret), 4), "\n")
+      cat("selisih rata-rata      :",
+          round(mean(abs(banding2$tidymodels - banding2$caret)), 4), "\n")
+    judul_r: menggabungkan hasil dua kerangka
+    eval: true
+    penjelasan: |
+      Hasil penalaan kedua kerangka digabungkan menurut pasangan nilai parameter yang sama. Korelasi antar-keduanya dihitung, begitu pula selisih rata-rata mutlaknya.
+    interpretasi: |
+      Korelasi yang tinggi menandakan kedua kerangka sepakat mengenai kombinasi parameter mana yang lebih baik, meski angka mutlaknya berbeda. Perbedaan itu wajar dan bersumber dari pembentukan lipatan yang tidak identik, cara penyeimbangan yang sedikit berlainan, serta inisialisasi bobot yang acak. Yang tidak wajar adalah bila urutannya berbeda jauh --- itu pertanda ada perbedaan perlakuan yang perlu ditelusuri, bukan sekadar derau.
+  - |-
+    \begin{kotaksalah}[Melaporkan angka tanpa menyebut seluruh prosedurnya]
+    Karena hasil jaringan syaraf bergantung pada kerangka, benih acak, skema penyeimbangan, penskalaan, dan banyaknya epoch, maka melaporkan angka kinerja tanpa menyebutkan seluruhnya membuat hasil \textbf{tidak dapat direproduksi}. Laporan yang baik mencantumkan: perangkat lunak beserta versinya, skema pembagian dan resampling, benih acak, urutan prapemrosesan, cara penanganan ketimpangan, arsitektur beserta parameternya, dan ambang keputusan yang dipakai.
+    \end{kotaksalah}
+  - |-
+    \begin{kotaktips}
+    Bila Anda menjumpai kode \texttt{caret} pada rujukan lama, padanannya di tidymodels dapat ditelusuri melalui nama parameternya: \texttt{size} menjadi \texttt{hidden\_units}, \texttt{decay} menjadi \texttt{penalty}, \texttt{trControl} menjadi \texttt{resamples} pada \texttt{tune\_grid}, dan \texttt{preProcess} menjadi langkah-langkah pada \texttt{recipe}. Yang berubah adalah tata caranya, bukan gagasannya.
+    \end{kotaktips}
+  ringkasan:
+  - |-
+    \begin{kotaktujuan}
+    \textbf{Daftar periksa penguasaan:}
+    \begin{itemize}
+    \item[$\square$] Saya dapat menjelaskan peran lapis tersembunyi dan fungsi aktivasi.
+    \item[$\square$] Saya memahami mengapa aktivasi nonlinier menjadi sumber kekuatan jaringan.
+    \item[$\square$] Saya selalu menskalakan peubah sebelum melatih jaringan syaraf.
+    \item[$\square$] Saya menempatkan penyeimbangan kelas di dalam resep, bukan sebelum pembagian.
+    \item[$\square$] Saya menetapkan benih acak dan melaporkan ketidakpastian antar-benih.
+    \item[$\square$] Saya menala simpul dan penyusutan bersama-sama, bukan satu per satu.
+    \item[$\square$] Saya dapat menjelaskan perbedaan sifat setempat RBFNN dan menyeluruh FFNN.
+    \item[$\square$] Saya dapat membangun RBFNN dari dasar: pusat, lebar, dan bobot keluaran.
+    \item[$\square$] Saya memindahkan ambang keputusan berdasarkan ukuran yang sesuai.
+    \item[$\square$] Saya menafsirkan model tertutup lewat kepentingan permutasi dan profil.
+    \item[$\square$] Saya menyadari bahwa kepentingan peubah bukan hubungan sebab-akibat.
+    \item[$\square$] Saya membandingkan model hanya bila selisihnya melampaui derau antar-benih.
+    \end{itemize}
+    \end{kotaktujuan}
+  - '**Kartu Referensi Cepat.**'
+  - |-
+    \begin{kotakrumus}\par\smallskip
+    \begin{tabular}{@{}ll@{}}
+    \textbf{Keperluan} & \textbf{Perintah}\\
+    Membagi berstrata & \texttt{initial\_split(d, prop =, strata =)}\\
+    Penskalaan 0--1 & \texttt{step\_range(all\_numeric\_predictors())}\\
+    Penyeimbangan & \texttt{step\_rose(y, seed =)}\\
+    Spesifikasi FFNN & \texttt{mlp(hidden\_units =, penalty =, epochs =)}\\
+    Mesin FFNN & \texttt{set\_engine("nnet", trace = FALSE)}\\
+    Penalaan & \texttt{tune\_grid(wf, resamples =, grid =)}\\
+    Menyelesaikan & \texttt{finalize\_workflow()}, \texttt{last\_fit()}\\
+    Pusat RBFNN & \texttt{kmeans(X, centers = H)}\\
+    Lebar basis & \texttt{max(dist(pusat)) / sqrt(2 * H)}\\
+    Basis Gauss & \texttt{exp(-jarak\^{}2 / (2 * lebar\^{}2))}\\
+    Sensitivitas & \texttt{yardstick::sensitivity\_vec(benar, duga)}\\
+    Indeks Youden & \texttt{sens + spes - 1}\\
+    Kurva ROC & \texttt{roc\_curve(d, truth =, .pred\_Ya)}\\
+    Padanan caret & \texttt{size} = \texttt{hidden\_units}, \texttt{decay} = \texttt{penalty}\\
+    \end{tabular}
+    \end{kotakrumus}
+  - 'Modul ini memperkenalkan keluarga model yang kuat tetapi tertutup. Prinsip yang perlu dibawa: skalakan
+    peubah sebelum melatih; tempatkan penyeimbangan di dalam resep agar data uji tetap mencerminkan keadaan
+    sesungguhnya; tetapkan benih dan laporkan ketidakpastiannya; tala fleksibilitas dan penyusutan bersama-sama;
+    pindahkan ambang berdasarkan biaya kekeliruan, bukan membiarkannya pada nilai bawaan; tafsirkan model
+    lewat permutasi dan profil sambil mengingat bahwa keduanya menyatakan kaitan, bukan sebab; dan jangan
+    menyatakan satu arsitektur lebih baik sebelum selisihnya melampaui derau yang timbul semata dari inisialisasi
+    acak.'
+  referensi:
+  - Bishop, C. M. (1995). *Neural Networks for Pattern Recognition*. Oxford University Press.
+  - Hastie, T., Tibshirani, R., & Friedman, J. (2009). *The Elements of Statistical Learning* (2nd ed.).
+    Springer.
+  - Ripley, B. D. (1996). *Pattern Recognition and Neural Networks*. Cambridge University Press.
+  - Kuhn, M., & Silge, J. (2022). *Tidy Modeling with R*. O'Reilly Media.
+  - Menardi, G., & Torelli, N. (2014). Training and assessing classification rules with imbalanced data.
+    *Data Mining and Knowledge Discovery*, 28(1), 92-122.
+  - Youden, W. J. (1950). Index for rating diagnostic tests. *Cancer*, 3(1), 32-35.
+references:
+- Bishop, C. M. (1995). Neural Networks for Pattern Recognition. Oxford University Press.
+- Hastie, T., Tibshirani, R., & Friedman, J. (2009). The Elements of Statistical Learning (2nd ed.). Springer.
+- Ripley, B. D. (1996). Pattern Recognition and Neural Networks. Cambridge University Press.
+- Kuhn, M., & Silge, J. (2022). Tidy Modeling with R. O'Reilly Media.
+- Menardi, G., & Torelli, N. (2014). Training and assessing classification rules with imbalanced data.
+  Data Mining and Knowledge Discovery, 28(1), 92-122.
+- Youden, W. J. (1950). Index for rating diagnostic tests. Cancer, 3(1), 32-35.
+exercises:
+- id: L10.1
+  points: 15
+  solution: 'Tingkat Dasar: resep bagi jaringan, membangun FFNN, dan basis Gauss.'
+  judul_r: Solusi Tingkat Dasar (R)
+  solusi_r: |-
+    suppressPackageStartupMessages({
+      library(recipes); library(rsample); library(themis)
+      library(parsnip); library(workflows)})
+
+    survei <- read.csv("data/data_survei.csv", stringsAsFactors = TRUE)
+    survei$rentan <- factor(survei$rentan, levels = c("Ya", "Tidak"))
+    set.seed(2025)
+    bagi <- initial_split(survei, prop = 0.75, strata = rentan)
+    lat <- training(bagi); uji <- testing(bagi)
+
+    rec <- recipe(rentan ~ ., data = lat) |>
+      step_dummy(all_nominal_predictors()) |>
+      step_zv(all_predictors()) |>
+      step_range(all_numeric_predictors(), min = 0, max = 1) |>
+      step_rose(rentan, seed = 2025)
+
+    spec <- mlp(hidden_units = 6, penalty = 0.01, epochs = 200) |>
+      set_engine("nnet", trace = FALSE) |>
+      set_mode("classification")
+    wf <- workflow() |> add_recipe(rec) |> add_model(spec)
+    set.seed(2025)
+    m <- fit(wf, data = lat)
+
+    # basis Gauss
+    # lebar <- max(dist(pusat)) / sqrt(2 * H)
+    # H     <- exp(-jarak_ke_pusat(X, pusat)^2 / (2 * lebar^2))
+  interpretasi: |
+    Isian yang benar berturut-turut adalah initial_split, step_range, step_rose, mlp, nnet, set.seed, H, dan exp. Tiga hal patut ditekankan. Pertama, step_range dipilih alih-alih step_normalize karena fungsi aktivasi logistik bekerja pada rentang nol sampai satu. Kedua, step_rose ditempatkan di dalam resep sehingga otomatis dilewati ketika resep diterapkan pada data uji. Ketiga, set.seed wajib mendahului fit karena bobot awal jaringan dibangkitkan acak --- tanpa benih, hasilnya tidak dapat diulang.
+- id: L10.2
+  points: 25
+  solution: 'Tingkat Menengah dan Lanjut: penalaan RBFNN dengan validasi silang dan pemilihan arsitektur.'
+  judul_r: Solusi Menengah dan Lanjut (R)
+  solusi_r: |-
+    suppressPackageStartupMessages({
+      library(recipes); library(rsample); library(themis); library(yardstick)})
+
+    survei <- read.csv("data/data_survei.csv", stringsAsFactors = TRUE)
+    survei$rentan <- factor(survei$rentan, levels = c("Ya", "Tidak"))
+    set.seed(2025)
+    bagi <- initial_split(survei, prop = 0.75, strata = rentan)
+    lat <- training(bagi); uji <- testing(bagi)
+    rec <- recipe(rentan ~ ., data = lat) |>
+      step_dummy(all_nominal_predictors()) |> step_zv(all_predictors()) |>
+      step_range(all_numeric_predictors(), min = 0, max = 1) |>
+      step_rose(rentan, seed = 2025)
+
+    # --- fungsi RBFNN diulang di sini agar kunci berdiri sendiri ---
+    jarak_ke_pusat <- function(A, B) {
+      sqrt(pmax(outer(rowSums(A^2), rep(1, nrow(B))) +
+                outer(rep(1, nrow(A)), rowSums(B^2)) - 2 * A %*% t(B), 0))
+    }
+    rbf_latih <- function(X, y, size = 20, seed = 2025) {
+      set.seed(seed)
+      km    <- kmeans(X, centers = size, nstart = 10, iter.max = 50)
+      lebar <- max(dist(km$centers)) / sqrt(2 * size)
+      H     <- exp(-jarak_ke_pusat(X, km$centers)^2 / (2 * lebar^2))
+      df    <- data.frame(H); df$y <- ifelse(y == "Ya", 1, 0)
+      list(pusat = km$centers, lebar = lebar,
+           mod = suppressWarnings(glm(y ~ ., data = df, family = binomial)))
+    }
+    rbf_duga <- function(fit, X) {
+      H <- exp(-jarak_ke_pusat(X, fit$pusat)^2 / (2 * fit$lebar^2))
+      as.numeric(predict(fit$mod, newdata = data.frame(H), type = "response"))
+    }
+
+    # menala banyaknya pusat dengan validasi silang pada DATA LATIH
+    set.seed(2025)
+    lipatan <- vfold_cv(lat, v = 5, strata = rentan)
+    ukuran  <- c(5, 10, 20, 30, 50)
+
+    hasil_cv <- t(sapply(ukuran, function(s) {
+      auc <- sapply(seq_len(nrow(lipatan)), function(i) {
+        tr <- analysis(lipatan$splits[[i]])
+        va <- assessment(lipatan$splits[[i]])
+        siap_i <- prep(rec, training = tr)
+        Xtr <- as.matrix(bake(siap_i, new_data = NULL)[, -ncol(bake(siap_i, new_data = NULL))])
+        ytr <- bake(siap_i, new_data = NULL)$rentan
+        bva <- bake(siap_i, new_data = va)
+        Xva <- as.matrix(bva[, setdiff(names(bva), "rentan")])
+        f <- rbf_latih(Xtr, ytr, size = s)
+        roc_auc(data.frame(benar = bva$rentan, prob = rbf_duga(f, Xva)),
+                benar, prob)$.estimate
+      })
+      c(pusat = s, AUC_rata = round(mean(auc), 4), galat_baku = round(sd(auc)/sqrt(5), 4))
+    }))
+    print(hasil_cv, row.names = FALSE)
+
+    cat("\npusat terbaik menurut validasi silang:",
+        hasil_cv[which.max(hasil_cv[, "AUC_rata"]), "pusat"], "\n")
+  interpretasi: |
+    Perbedaan pokoknya terhadap Contoh 10.13 adalah resep dipersiapkan ulang di dalam tiap lipatan lewat prep pada data analisis saja, sehingga penyeimbangan maupun penskalaan dipelajari hanya dari bagian yang sedang dipakai melatih. Cara ini dapat memberi jawaban berbeda dari pemilihan berdasarkan data uji, dan jawaban inilah yang valid --- memilih berdasarkan data uji mengubah data uji menjadi data latih terselubung sehingga kinerja akhir yang dilaporkan tidak lagi menggambarkan kinerja pada data baru. Perhatikan pula kolom galat baku: bila selisih antar-ukuran lebih kecil daripadanya, memilih jaringan yang lebih kecil lebih dapat dipertanggungjawabkan. Untuk pemilihan arsitektur: amatan yang mungkin jauh di luar rentang data latih menuntut RBFNN karena keluarannya kembali ke nilai dasar alih-alih meramal sembarang, dengan kelemahan berupa kebutuhan menetapkan pusat; waktu pelatihan terbatas juga memihak RBFNN yang dilatih dua tahap terpisah; hubungan rumit dan menyeluruh memihak FFNN karena tiap simpulnya berpengaruh pada seluruh ruang peubah, dengan kelemahan waktu latih lebih lama; sedangkan kebutuhan penjelasan kepada pengguna awam sesungguhnya tidak dipenuhi keduanya --- jawaban yang jujur adalah mempertimbangkan model yang lebih terbuka seperti pohon atau regresi, dan memakai jaringan hanya bila kenaikan kinerjanya sepadan dengan hilangnya keterjelasan.
+- id: L10.D
+  points: 10
+  solution: 'Membetulkan kode: penyeimbangan sebelum pembagian, tanpa penskalaan, tanpa benih, dan ambang
+    bawaan.'
+  judul_r: Solusi Membetulkan Kode (R)
+  solusi_r: |-
+    suppressPackageStartupMessages({
+      library(recipes); library(rsample); library(themis)
+      library(parsnip); library(workflows); library(yardstick)})
+
+    survei <- read.csv("data/data_survei.csv", stringsAsFactors = TRUE)
+    survei$rentan <- factor(survei$rentan, levels = c("Ya", "Tidak"))
+
+    # (a) pembagian DAHULU; penyeimbangan dipindahkan ke dalam resep
+    set.seed(2025)
+    bagi <- initial_split(survei, prop = 0.75, strata = rentan)
+    lat <- training(bagi); uji <- testing(bagi)
+
+    # (b) penskalaan wajib bagi jaringan syaraf
+    rec <- recipe(rentan ~ ., data = lat) |>
+      step_dummy(all_nominal_predictors()) |>
+      step_zv(all_predictors()) |>
+      step_range(all_numeric_predictors(), min = 0, max = 1) |>
+      step_rose(rentan, seed = 2025)
+
+    spec <- mlp(hidden_units = 6, penalty = 0.01, epochs = 200) |>
+      set_engine("nnet", trace = FALSE) |> set_mode("classification")
+
+    # (c) benih ditetapkan sebelum pelatihan
+    set.seed(2025)
+    m <- fit(workflow() |> add_recipe(rec) |> add_model(spec), data = lat)
+
+    # (d) ambang dipilih berdasarkan indeks Youden
+    p <- predict(m, uji, type = "prob")$.pred_Ya
+    ambang <- seq(0.05, 0.95, by = 0.05)
+    j <- sapply(ambang, function(t) {
+      dg <- factor(ifelse(p > t, "Ya", "Tidak"), levels = c("Ya", "Tidak"))
+      yardstick::sensitivity_vec(uji$rentan, dg) +
+        yardstick::specificity_vec(uji$rentan, dg) - 1
+    })
+    t_baik <- ambang[which.max(j)]
+    cat("ambang terbaik:", t_baik, "| bawaan: 0.5\n")
+
+    # pemeriksaan wajib
+    round(prop.table(table(uji$rentan)), 3)      # masih timpang
+    t_baik != 0.5
+  interpretasi: |
+    Empat kesalahan diperbaiki. Kesalahan (a) paling parah: menyeimbangkan seluruh data sebelum pembagian membuat amatan sintetis yang diturunkan dari data latih muncul di data uji, sehingga model menilai dirinya atas amatan yang sudah dipelajarinya --- dan kinerja yang dilaporkan menjadi terlalu bagus tanpa menimbulkan galat apa pun. Kesalahan (b) meninggalkan peubah pada satuan aslinya; pengeluaran bersatuan ratusan berdampingan dengan indeks bernilai satu sampai lima membuat gradien sangat timpang sehingga pembelajaran lambat atau gagal menyatu. Kesalahan (c) membuat hasil tidak dapat diulang, sebab bobot awal jaringan dibangkitkan acak. Kesalahan (d) membiarkan ambang pada nilai bawaan padahal kelasnya timpang dan biaya kekeliruannya tidak simetris, sehingga peluang perbaikan terbesar terlewat begitu saja.
+- id: T10.1
+  points: 50
+  solution: 'Penugasan: membangun, menala, menafsirkan, dan membandingkan FFNN dan RBFNN.'
+  judul_r: Solusi Penugasan (R)
+  solusi_r: |-
+    suppressPackageStartupMessages({
+      library(recipes); library(rsample); library(parsnip); library(workflows)
+      library(tune); library(yardstick); library(themis); library(dplyr)})
+
+    survei <- read.csv("data/data_survei.csv", stringsAsFactors = TRUE)
+    survei$rentan <- factor(survei$rentan, levels = c("Ya", "Tidak"))
+
+    # 1) ketimpangan dan profil awal
+    prop <- prop.table(table(survei$rentan))
+    cat("acuan mayoritas:", round(max(prop), 4),
+        "| rasio:", round(max(prop)/min(prop), 2), "\n")
+    num <- c("pengeluaran","anggota_rt","pendidikan","ketahanan","sejahtera")
+    ringkas_kelas <- aggregate(survei[num], list(rentan = survei$rentan), mean)
+    ringkas_kelas[num] <- round(ringkas_kelas[num], 2)
+    print(ringkas_kelas, row.names = FALSE)
+
+    # 2) pembagian dan resep
+    set.seed(2025)
+    bagi <- initial_split(survei, prop = 0.75, strata = rentan)
+    lat <- training(bagi); uji <- testing(bagi)
+    rec <- recipe(rentan ~ ., data = lat) |>
+      step_dummy(all_nominal_predictors()) |> step_zv(all_predictors()) |>
+      step_range(all_numeric_predictors(), min = 0, max = 1) |>
+      step_rose(rentan, seed = 2025)
+    siap <- prep(rec, training = lat)
+    lat_siap <- bake(siap, new_data = NULL); uji_siap <- bake(siap, new_data = uji)
+    cat("\nlatih setelah ROSE:"); print(table(lat_siap$rentan))
+    cat("uji (tetap timpang):"); print(table(uji_siap$rentan))
+
+    # 3) kepekaan terhadap benih
+    spec0 <- mlp(hidden_units = 6, penalty = 0.01, epochs = 200) |>
+      set_engine("nnet", trace = FALSE) |> set_mode("classification")
+    wf0 <- workflow() |> add_recipe(rec) |> add_model(spec0)
+    auc_benih <- sapply(1:5, function(s) {
+      set.seed(s); m <- fit(wf0, data = lat)
+      d <- predict(m, uji, type = "prob") |> bind_cols(uji |> select(rentan))
+      roc_auc(d, rentan, .pred_Ya)$.estimate })
+    cat("\nrentang AUC antar-benih:", round(diff(range(auc_benih)), 4),
+        "| sb:", round(sd(auc_benih), 4), "\n")
+
+    # 4-6) penalaan dan penyelesaian
+    spec <- mlp(hidden_units = tune(), penalty = tune(), epochs = 200) |>
+      set_engine("nnet", trace = FALSE) |> set_mode("classification")
+    wf <- workflow() |> add_recipe(rec) |> add_model(spec)
+    set.seed(2025); lipatan <- vfold_cv(lat, v = 5, strata = rentan)
+    kisi <- expand.grid(hidden_units = c(3,6,10,15),
+                        penalty = c(0.0001,0.001,0.01,0.1))
+    set.seed(2025)
+    tun <- tune_grid(wf, resamples = lipatan, grid = kisi,
+                     metrics = metric_set(roc_auc, f_meas))
+    print(collect_metrics(tun) |> filter(.metric == "roc_auc") |>
+            arrange(desc(mean)) |> select(hidden_units, penalty, mean, std_err) |>
+            mutate(across(where(is.numeric), \(x) round(x, 4))) |>
+            as.data.frame() |> utils::head(6), row.names = FALSE)
+    set.seed(2025)
+    akhir <- last_fit(finalize_workflow(wf, select_best(tun, metric = "roc_auc")),
+                      split = bagi, metrics = metric_set(roc_auc, f_meas, accuracy))
+    print(collect_metrics(akhir))
+    pred_ffnn <- collect_predictions(akhir)
+    print(conf_mat(pred_ffnn, truth = rentan, estimate = .pred_class))
+
+    # 12) pemindahan ambang
+    ambang <- seq(0.05, 0.95, by = 0.05)
+    uk <- t(sapply(ambang, function(t) {
+      dg <- factor(ifelse(pred_ffnn$.pred_Ya > t, "Ya", "Tidak"),
+                   levels = c("Ya","Tidak"))
+      sn <- yardstick::sensitivity_vec(pred_ffnn$rentan, dg)
+      sp <- yardstick::specificity_vec(pred_ffnn$rentan, dg)
+      c(sens = sn, spes = sp, youden = sn + sp - 1,
+        F1 = yardstick::f_meas_vec(pred_ffnn$rentan, dg)) }))
+    cat("\nambang Youden:", ambang[which.max(uk[,"youden"])],
+        "| ambang F1:", ambang[which.max(uk[,"F1"])], "\n")
+  interpretasi: |
+    Nomor 2 menuntut pembuktian berupa dua tabel: data latih menjadi seimbang sedangkan data uji tetap timpang. Bila keduanya seimbang, penyeimbangan telah bocor ke data uji. Nomor 3 adalah bagian yang paling sering diabaikan pada pekerjaan jaringan syaraf; rentang AUC antar-benih menjadi tolok ukur apakah selisih antar-model kelak bermakna. Nomor 12 adalah inti penugasan ini. Konteks menyatakan bahwa melewatkan rumah tangga rentan jauh lebih merugikan, sehingga ambang yang dipilih semestinya lebih rendah daripada yang memaksimumkan indeks Youden --- Youden memperlakukan kedua jenis kekeliruan setara, padahal di sini tidak. Mahasiswa yang memilih ambang Youden tanpa membahas ketidaksimetrisan biaya belum menjawab pertanyaannya. Nomor 13 menuntut kejujuran: bila selisih AUC antar-arsitektur lebih kecil daripada rentang antar-benih pada nomor 3, maka kesimpulan yang benar adalah menyatakan keduanya tidak dapat dibedakan --- bukan memilih yang angkanya kebetulan lebih tinggi.
+

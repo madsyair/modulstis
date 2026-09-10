@@ -1,3 +1,26 @@
+# modulstis 0.3.10
+
+* Keterangan paket diperbaiki: frasa "bergaya publikasi BPS" diganti menjadi
+  **"bernuansa warna logo BPS"**. Frasa lama dapat ditafsirkan sebagai klaim
+  mengikuti gaya publikasi resmi BPS, padahal yang diambil hanyalah warna
+  lambangnya. Perubahan menyentuh `DESCRIPTION`, dokumentasi fungsi, dan README.
+* Tidak ada perubahan perilaku; keluaran render identik dengan 0.3.9.
+
+# modulstis 0.3.9
+
+* `latex_prose_safe()` kini mengenali tiga jenis token, bukan dua:
+  kode (`` `...` ``), **matematika** (`$...$`), dan teks biasa. Rumus
+  matematika **tidak lagi di-escape**, sehingga `$\mathbf{...}$` dan
+  sejenisnya tidak lagi menimbulkan galat "\mathbf allowed only in math mode".
+* Penebalan gaya markdown (`**tebal**`) di dalam kotak LaTeX kini diubah
+  menjadi `\textbf{}`. Sebelumnya tanda bintang tercetak apa adanya karena
+  pandoc tidak memproses markdown di dalam lingkungan LaTeX.
+* `AnswerKeyBuilder` kini menuliskan blok mentah `body$kunci` (bila ada)
+  setelah daftar `exercises`. Ini memungkinkan kunci yang sebagian besar
+  isinya prosa panjang beserta kotak LaTeX disimpan utuh pada spesifikasi.
+* Ditambahkan spesifikasi mata kuliah Data Mining dan Big Data pada
+  `inst/specs_dm/`.
+
 # modulstis 0.3.8
 
 ## Perubahan penempatan Buku Pedoman

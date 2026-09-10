@@ -1,6 +1,6 @@
 # modulstis
 
-> Generator template **modul praktikum** dan **buku kunci jawaban** bergaya BPS
+> Generator template **modul praktikum** dan **buku kunci jawaban** bernuansa warna logo BPS
 > dari satu spesifikasi deklaratif — backend **bookdown** / **Quarto** + LaTeX (XeLaTeX) → PDF.
 
 Politeknik Statistika STIS · D-IV Komputasi Statistik
@@ -11,7 +11,7 @@ Penyusun: Achmad Syahrul Choir
 Membangun banyak modul praktikum secara manual (menyalin preamble, mengganti nomor,
 menulis ulang struktur) rawan galat dan sulit dipelihara. `modulstis` mengubahnya menjadi
 proses **deklaratif, terprogram, dan teruji**: satu `ModuleSpec` → modul + kunci + data,
-di dua backend, dengan tema BPS yang sama.
+di dua backend, dengan tema warna BPS yang sama.
 
 ## Prinsip desain
 

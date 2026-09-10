@@ -4,161 +4,156 @@
 \alias{ModuleProject}
 \title{Proyek modul (Facade) — API utama end-to-end}
 \description{
+Proyek modul (Facade) — API utama end-to-end
+
+Proyek modul (Facade) — API utama end-to-end
+}
+\details{
 Menyimpan koleksi \link{ModuleSpec}, memvalidasi seluruhnya (fail-fast agregat),
 membangkitkan data, lalu merender modul + kunci untuk setiap spec lewat
 pipeline fungsional (looping). Renderer disuntikkan (dependency injection),
 sehingga backend dapat diganti tanpa mengubah orkestrasi.
 }
 \section{Public fields}{
-  \if{html}{\out{<div class="r6-fields">}}
-  \describe{
-    \item{\code{specs}}{daftar \link{ModuleSpec}}
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{specs}}{daftar \link{ModuleSpec}}
 
-    \item{\code{logger}}{\link{Logger}}
-  }
-  \if{html}{\out{</div>}}
+\item{\code{logger}}{\link{Logger}}
+}
+\if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
-  \itemize{
-    \item \href{#method-ModuleProject-initialize}{\code{ModuleProject$new()}}
-    \item \href{#method-ModuleProject-add_module}{\code{ModuleProject$add_module()}}
-    \item \href{#method-ModuleProject-validate_all}{\code{ModuleProject$validate_all()}}
-    \item \href{#method-ModuleProject-generate_data}{\code{ModuleProject$generate_data()}}
-    \item \href{#method-ModuleProject-render_module}{\code{ModuleProject$render_module()}}
-    \item \href{#method-ModuleProject-render_all}{\code{ModuleProject$render_all()}}
-    \item \href{#method-ModuleProject-clone}{\code{ModuleProject$clone()}}
-  }
+\itemize{
+\item \href{#method-ModuleProject-new}{\code{ModuleProject$new()}}
+\item \href{#method-ModuleProject-add_module}{\code{ModuleProject$add_module()}}
+\item \href{#method-ModuleProject-validate_all}{\code{ModuleProject$validate_all()}}
+\item \href{#method-ModuleProject-generate_data}{\code{ModuleProject$generate_data()}}
+\item \href{#method-ModuleProject-render_module}{\code{ModuleProject$render_module()}}
+\item \href{#method-ModuleProject-render_all}{\code{ModuleProject$render_all()}}
+\item \href{#method-ModuleProject-clone}{\code{ModuleProject$clone()}}
+}
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-ModuleProject-initialize"></a>}}
-\if{latex}{\out{\hypertarget{method-ModuleProject-initialize}{}}}
-\subsection{\code{ModuleProject$new()}}{
-  Buat proyek
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{ModuleProject$new(
+\if{html}{\out{<a id="method-ModuleProject-new"></a>}}
+\if{latex}{\out{\hypertarget{method-ModuleProject-new}{}}}
+\subsection{Method \code{new()}}{
+Buat proyek
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ModuleProject$new(
   specs_dir = NULL,
   theme = "bps",
   backend = c("bookdown", "quarto"),
   log_level = "info",
   output_dir = "build"
-)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{specs_dir}}{direktori berisi berkas .yml (opsional)}
-      \item{\code{theme}}{"bps" atau \link{LatexTheme}}
-      \item{\code{backend}}{"bookdown" atau "quarto"}
-      \item{\code{log_level}}{ambang log konsol}
-      \item{\code{output_dir}}{direktori keluaran build}
-    }
-    \if{html}{\out{</div>}}
-  }
+)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{specs_dir}}{direktori berisi berkas .yml (opsional)}
+
+\item{\code{theme}}{"bps" atau \link{LatexTheme}}
+
+\item{\code{backend}}{"bookdown" atau "quarto"}
+
+\item{\code{log_level}}{ambang log konsol}
+
+\item{\code{output_dir}}{direktori keluaran build}
+}
+\if{html}{\out{</div>}}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ModuleProject-add_module"></a>}}
 \if{latex}{\out{\hypertarget{method-ModuleProject-add_module}{}}}
-\subsection{\code{ModuleProject$add_module()}}{
-  Tambah satu spec
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{ModuleProject$add_module(spec)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{spec}}{\link{ModuleSpec}}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{add_module()}}{
+Tambah satu spec
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ModuleProject$add_module(spec)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{spec}}{\link{ModuleSpec}}
+}
+\if{html}{\out{</div>}}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ModuleProject-validate_all"></a>}}
 \if{latex}{\out{\hypertarget{method-ModuleProject-validate_all}{}}}
-\subsection{\code{ModuleProject$validate_all()}}{
-  Validasi semua spec (fail-fast agregat)
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{ModuleProject$validate_all()}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    logis, TRUE bila semua valid
-  }
+\subsection{Method \code{validate_all()}}{
+Validasi semua spec (fail-fast agregat)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ModuleProject$validate_all()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+logis, TRUE bila semua valid
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ModuleProject-generate_data"></a>}}
 \if{latex}{\out{\hypertarget{method-ModuleProject-generate_data}{}}}
-\subsection{\code{ModuleProject$generate_data()}}{
-  Bangkitkan data seluruh modul
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{ModuleProject$generate_data()}
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{generate_data()}}{
+Bangkitkan data seluruh modul
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ModuleProject$generate_data()}\if{html}{\out{</div>}}
 }
 
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ModuleProject-render_module"></a>}}
 \if{latex}{\out{\hypertarget{method-ModuleProject-render_module}{}}}
-\subsection{\code{ModuleProject$render_module()}}{
-  Render modul + kunci untuk satu spec
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{ModuleProject$render_module(spec)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{spec}}{\link{ModuleSpec}}
-    }
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    list(modul=Artifact, kunci=Artifact)
-  }
+\subsection{Method \code{render_module()}}{
+Render modul + kunci untuk satu spec
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ModuleProject$render_module(spec)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{spec}}{\link{ModuleSpec}}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+list(modul=Artifact, kunci=Artifact)
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ModuleProject-render_all"></a>}}
 \if{latex}{\out{\hypertarget{method-ModuleProject-render_all}{}}}
-\subsection{\code{ModuleProject$render_all()}}{
-  Render seluruh modul (looping fungsional, tahan galat)
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{ModuleProject$render_all()}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    list hasil per modul
-  }
+\subsection{Method \code{render_all()}}{
+Render seluruh modul (looping fungsional, tahan galat)
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ModuleProject$render_all()}\if{html}{\out{</div>}}
 }
 
+\subsection{Returns}{
+list hasil per modul
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ModuleProject-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-ModuleProject-clone}{}}}
-\subsection{\code{ModuleProject$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{ModuleProject$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ModuleProject$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
 }

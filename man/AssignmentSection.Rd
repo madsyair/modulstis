@@ -5,59 +5,59 @@
 \title{Bagian penugasan (menomori tugas)}
 \description{
 Bagian penugasan (menomori tugas)
+
+Bagian penugasan (menomori tugas)
 }
 \section{Super class}{
-\code{\link[modulstis:Section]{Section}} -> \code{AssignmentSection}
+\code{\link[modulstis:Section]{modulstis::Section}} -> \code{AssignmentSection}
 }
 \section{Methods}{
 \subsection{Public methods}{
-  \itemize{
-    \item \href{#method-AssignmentSection-render_body}{\code{AssignmentSection$render_body()}}
-    \item \href{#method-AssignmentSection-clone}{\code{AssignmentSection$clone()}}
-  }
+\itemize{
+\item \href{#method-AssignmentSection-render_body}{\code{AssignmentSection$render_body()}}
+\item \href{#method-AssignmentSection-clone}{\code{AssignmentSection$clone()}}
 }
-\if{html}{\out{<details open><summary>Inherited methods</summary>
+}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
 <ul>
-  <li><span class="pkg-link" data-pkg="modulstis" data-topic="Section" data-id="initialize"><a href='../../modulstis/html/Section.html#method-Section-initialize'><code>Section$initialize()</code></a></span></li>
-  <li><span class="pkg-link" data-pkg="modulstis" data-topic="Section" data-id="render"><a href='../../modulstis/html/Section.html#method-Section-render'><code>Section$render()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="modulstis" data-topic="Section" data-id="initialize"><a href='../../modulstis/html/Section.html#method-Section-initialize'><code>modulstis::Section$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="modulstis" data-topic="Section" data-id="render"><a href='../../modulstis/html/Section.html#method-Section-render'><code>modulstis::Section$render()</code></a></span></li>
 </ul>
-</details>}}
+</details>
+}}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-AssignmentSection-render_body"></a>}}
 \if{latex}{\out{\hypertarget{method-AssignmentSection-render_body}{}}}
-\subsection{\code{AssignmentSection$render_body()}}{
-  Render isi penugasan
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{AssignmentSection$render_body(ctx)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{ctx}}{\link{RenderContext}}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{render_body()}}{
+Render isi penugasan
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{AssignmentSection$render_body(ctx)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{ctx}}{\link{RenderContext}}
+}
+\if{html}{\out{</div>}}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-AssignmentSection-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-AssignmentSection-clone}{}}}
-\subsection{\code{AssignmentSection$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{AssignmentSection$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{AssignmentSection$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
 }

@@ -1,4 +1,4 @@
-#' Sampul buku bergaya BPS/STIS
+#' Sampul buku bernuansa warna logo BPS/STIS
 #'
 #' Membangkitkan potongan LaTeX sampul buku (logo STIS, latar gedung, pita
 #' diagonal) dari templat bawaan paket. Dipakai pada bagian awal buku gabungan.

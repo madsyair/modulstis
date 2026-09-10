@@ -1,0 +1,743 @@
+number: 15
+title: 'LightGBM: Gradient Boosting Cepat dengan R dan Python'
+short_code: lightgbm
+topic: LightGBM
+pertemuan: 15
+sub_cpmk: 'Sub-CPMK 15: Mahasiswa mampu menjelaskan tiga gagasan yang membuat LightGBM cepat, melatih
+  dan menala model klasifikasi pada data berukuran besar, menangani peubah kategorik berkardinalitas tinggi
+  secara langsung, menangani ketidakseimbangan kelas dengan pembobotan maupun penggeseran ambang, serta
+  menafsirkan pentingnya peubah secara bertanggung jawab.'
+packages:
+- lightgbm
+contoh_title: Contoh Praktikum dengan R dan Python
+course:
+  matkul: Data Mining dan Big Data
+  matkul_besar: DATA MINING DAN BIG DATA
+  kode: K202505
+  ta: 2025/2026
+  semester: 6 (Genap)
+  prodi: D-IV Statistika
+  penyusun:
+  - Achmad Syahrul Choir
+body:
+  deskripsi:
+  - 'Modul 8 dan 9 memperkenalkan klasifikasi dengan pohon dan ansambel; Modul 13 memakai boosting pada
+    data bertingkat. Modul ini kembali ke klasifikasi biasa, tetapi pada keadaan yang khas pekerjaan sungguhan:
+    **data berukuran besar**, memuat **peubah kategorik berkardinalitas tinggi** seperti kode kabupaten,
+    dan **kelas yang tidak seimbang**.'
+  - '**LightGBM** adalah salah satu penerapan *gradient boosting decision tree* yang paling banyak dipakai.
+    Keunggulannya bukan pada gagasan boosting itu sendiri --- yang sudah dikenal sejak akhir 1990-an ---
+    melainkan pada tiga keputusan rekayasa yang membuatnya jauh lebih cepat dan hemat memori: **pertumbuhan
+    pohon per daun**, **pembinan histogram**, dan **penanganan langsung peubah kategorik** tanpa perlu
+    membuat kolom boneka.'
+  - Modul memakai **dua bahasa**. Analisis utama dikerjakan dengan R, lalu diulang dengan Python pada
+    Bagian 15.8 --- keduanya membaca berkas data yang sama, sehingga hasilnya dapat dibandingkan langsung.
+  - |-
+    \begin{kotakperhatian}[Kedudukan modul dan catatan data]
+    Modul ini termasuk \textbf{bagian pengayaan}. Ia mengandaikan Modul 6, 8, dan 9 sudah dikuasai --- khususnya pembagian latih--uji, validasi silang, dan ukuran penilaian klasifikasi.
+  - |-
+    Data bersifat \textbf{ilustratif hasil simulasi} dan \textbf{bukan angka resmi} instansi mana pun. Hubungan antara peubah penjelas dan status penerima sengaja dibuat \textbf{sangat nonlinear dan penuh interaksi}, sehingga keunggulan model berbasis pohon atas model linear dapat diperlihatkan. Pada data nyata keunggulan itu tidak dijamin --- Contoh 15.3 membahasnya.
+    \end{kotakperhatian}
+  - \vspace{1.2em}
+  - |-
+    \begin{kotakinfo}
+    \textbf{Identitas Modul}
+  - |-
+    \begin{tabular}{@{}p{4.2cm}p{0.3cm}p{9.6cm}@{}}
+    Mata Kuliah      & : & Data Mining dan Big Data (K202505) \\
+    Pertemuan        & : & Minggu ke-15 (pengayaan) \\
+    Bahan Kajian     & : & LightGBM --- gradient boosting cepat \\
+    Sub-CPMK         & : & Sub-CPMK 15 \\
+    Bahasa           & : & R (\texttt{lightgbm}) dan Python (\texttt{lightgbm}) \\
+    Alokasi Waktu    & : & Praktikum 1 $\times$ 170 menit \\
+    \end{tabular}
+    \end{kotakinfo}
+  - \vspace{1.2em}
+  tujuan:
+  - 'Setelah menyelesaikan praktikum Modul 15, mahasiswa diharapkan mampu:'
+  - |-
+    1. Menjelaskan **tiga gagasan** yang membuat LightGBM cepat: pertumbuhan per daun, pembinan histogram, dan penanganan kategorik langsung.
+    2. Menyiapkan data dan melatih model klasifikasi LightGBM di R.
+    3. Menentukan banyaknya iterasi dengan **validasi silang beserta penghentian dini**.
+    4. Membandingkan LightGBM dengan **acuan** yang layak, bukan hanya menyebut angkanya bagus.
+    5. Menangani peubah kategorik berkardinalitas tinggi secara **langsung** dan membandingkannya dengan pengodean boneka.
+    6. Menangani **ketidakseimbangan kelas** dengan `scale_pos_weight` maupun dengan **menggeser ambang**, serta menjelaskan bedanya.
+    7. Menafsirkan **pentingnya peubah** beserta keterbatasannya.
+    8. Menjalankan alur yang sama di **Python** dan menjelaskan perbedaan penamaannya.
+  - \vspace{1.2em}
+  alat:
+  - '## Perangkat Lunak'
+  - |-
+    - **R** ($\geq$ 4.2) dengan paket **`lightgbm`**.
+    - **Python** ($\geq$ 3.9) dengan **`lightgbm`**, **`numpy`**, **`pandas`**, dan **`scikit-learn`**.
+  - \kode{pemasangan paket}
+  - |-
+    ```{r pkg, eval=FALSE}
+    # R -- pada Linux, berkas biner jauh lebih cepat daripada kompilasi sumber
+    options(repos = c(P3M =
+      "https://packagemanager.posit.co/cran/__linux__/noble/latest"))
+    options(HTTPUserAgent = sprintf("R/%s R (%s)", getRversion(),
+      paste(getRversion(), R.version["platform"],
+            R.version["arch"], R.version["os"])))
+    install.packages("lightgbm")
+    ```
+  - |-
+    ```{python pkg-py, eval=FALSE}
+    # Python (jalankan di terminal)
+    # pip install lightgbm scikit-learn
+    ```
+  - |-
+    \begin{kotakcatatan}[Berkas biner untuk Linux]
+    Paket \texttt{lightgbm} dan \texttt{gpboost} (Modul 13) memuat kode C++. Bila dipasang dari CRAN pada Linux, keduanya \textbf{dikompilasi dari sumber} dan dapat memakan waktu puluhan menit. Posit Package Manager menyediakan \textbf{berkas biner} untuk Ubuntu sehingga pemasangan selesai dalam hitungan detik. Ganti \texttt{noble} dengan nama sandi distribusi Anda --- \texttt{jammy} untuk Ubuntu 22.04. Baris \texttt{HTTPUserAgent} wajib ada; tanpanya server tetap mengirimkan berkas sumber.
+    \end{kotakcatatan}
+  - '## Bahan (Berkas Data)'
+  - |-
+    | Berkas | Isi |
+    |:-------|:----|
+    | `data/penerima_manfaat.csv` | 40.000 rumah tangga di 120 kabupaten; 7 peubah penjelas dan status penerima |
+  - Berkas `gen_data.R` memuat kode pembangkitnya lengkap dengan `set.seed(2026)`.
+  - \vspace{1.2em}
+  instruksi:
+  - |-
+    1. Buat **RStudio Project** dan salin folder `data/`.
+    2. Kerjakan Contoh berurutan; bagian R dan Python membaca berkas yang sama.
+    3. Kerjakan **Latihan Mandiri**, lalu **Penugasan** sebagai laporan.
+  - \vspace{1.2em}
+  teori:
+  - '## Gradient Boosting Ringkas'
+  - |-
+    \begin{kotakrumus}
+    Boosting membangun ansambel secara berurutan:
+    \[
+    F_m(\mathbf{x}) = F_{m-1}(\mathbf{x}) + \eta \, h_m(\mathbf{x})
+    \]
+    dengan $h_m$ pohon ke-$m$ yang dicocokkan pada \textbf{gradien negatif} fungsi kerugian terhadap $F_{m-1}$, dan $\eta$ \textbf{laju belajar}. Untuk klasifikasi biner, kerugiannya log-loss dan gradiennya adalah selisih antara label dan peluang ramalan.
+    \end{kotakrumus}
+  - '## Tiga Gagasan LightGBM'
+  - |-
+    \begin{kotakinfo}[Apa yang membuat LightGBM cepat]\par\smallskip
+    \begin{tabular}{@{}p{4.0cm}p{10.8cm}@{}}
+    \textbf{Gagasan} & \textbf{Isi}\\
+    \hline
+    Tumbuh \textbf{per daun} & Pohon lain tumbuh per tingkat --- seluruh daun dipecah bersama. LightGBM memilih \emph{satu} daun dengan penurunan kerugian terbesar. Pada anggaran daun yang sama, kerugiannya turun lebih cepat, tetapi pohonnya menjadi dalam dan tak seimbang sehingga rawan lewat-suai bila \texttt{num\_leaves} terlalu besar.\\[3pt]
+    \textbf{Histogram} & Nilai tiap peubah numerik dibin menjadi 255 keranjang. Pencarian titik pecah lalu berjalan pada histogram, bukan pada nilai asli --- biaya turun dari $O(n)$ menjadi $O(\#\text{bin})$ per peubah, dan memorinya jauh lebih kecil.\\[3pt]
+    \textbf{Kategorik langsung} & Peubah kategorik tidak perlu diubah menjadi kolom boneka. Kategori diurutkan menurut statistik gradiennya, lalu dipecah menjadi dua himpunan --- sehingga 120 kabupaten tetap satu kolom, bukan 119 kolom.\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotakrumus}
+    Dua gagasan tambahan pada makalah aslinya: \textbf{GOSS} (\emph{Gradient-based One-Side Sampling}) yang menyimpan seluruh amatan bergradien besar dan menarik sampel dari sisanya; dan \textbf{EFB} (\emph{Exclusive Feature Bundling}) yang menggabungkan peubah renggang yang jarang tak-nol bersamaan menjadi satu kolom.
+    \end{kotakrumus}
+  - |-
+    \begin{kotakperhatian}[Parameter yang paling menentukan]
+    \texttt{num\_leaves} mengendalikan kelenturan --- inilah parameter terpenting pada LightGBM, bukan \texttt{max\_depth}. Kaidah praktis: \texttt{num\_leaves} $< 2^{\texttt{max\_depth}}$. Nilai besar disertai \texttt{min\_data\_in\_leaf} kecil adalah resep lewat-suai yang paling sering dijumpai.
+    \end{kotakperhatian}
+  - |-
+    \begin{kotaktujuan}
+    \textbf{Alur praktikum Modul 15}
+    \begin{enumerate}
+    \item Menelaah data dan menyiapkan acuan (regresi logistik).
+    \item Melatih LightGBM dan membandingkan waktu serta AUC.
+    \item Menala banyaknya iterasi dengan validasi silang.
+    \item Membandingkan penanganan kategorik langsung dan pengodean boneka.
+    \item Menangani ketidakseimbangan kelas: bobot versus ambang.
+    \item Menafsirkan pentingnya peubah.
+    \item Mengulang seluruhnya dengan Python.
+    \end{enumerate}
+    \end{kotaktujuan}
+  - \newpage
+  latihan:
+  - \latihan{Menala parameter}
+  - |-
+    (a) Ulangi Contoh 15.3 dengan `num_leaves` bernilai 15, 63, dan 255 --- masing-masing dengan validasi silang. Bagaimana perubahan iterasi terbaik dan AUC data ujinya?
+    (b) Untuk `num_leaves = 255`, coba `min_data_in_leaf` bernilai 20 dan 200. Apakah menaikkan `min_data_in_leaf` menolong?
+    (c) Simpulkan hubungan antara ketiga parameter tersebut dalam satu paragraf.
+  - \latihan{Kategorik dan kardinalitas}
+  - |-
+    (a) Latih model tanpa peubah `kabupaten` sama sekali. Berapa AUC-nya, dan apa artinya bagi peran efek wilayah?
+    (b) Gabungkan kabupaten berfrekuensi rendah (kurang dari 200 amatan) menjadi satu kategori "Lainnya", lalu latih ulang. Apakah AUC-nya berubah?
+    (c) Bandingkan `cat_smooth` bernilai 1, 10, dan 100. Jelaskan perannya.
+  - \latihan{Ketidakseimbangan dan ambang**}
+  - |-
+    (a) Bagi data latih menjadi latih dan **validasi**, tala ambang pada data validasi, lalu laporkan F1 pada data uji.
+    (b) Bandingkan dengan F1 yang ambangnya ditala langsung pada data uji (Contoh 15.5). Berapa selisihnya, dan mengapa cara kedua menyesatkan?
+    (c) Hitung pula **presisi** dan **recall** pada ambang terpilih. Bila program hanya sanggup menjangkau 5\% rumah tangga, ambang mana yang Anda pilih?
+  - \latihan{Membetulkan kode yang salah}
+  - Kode berikut memuat **empat kesalahan**; temukan, perbaiki, jalankan versi yang benar, dan jelaskan
+    akibat tiap kesalahan.
+  - \kode{kode yang harus dibetulkan}
+  - |-
+    ```{r lat-salah, eval=FALSE}
+    d <- lgb.Dataset(sebagai_matriks(rt), label = rt$penerima)          # (1)
+    p <- list(objective = "binary", num_leaves = 500,
+              min_data_in_leaf = 5, learning_rate = 0.3)                # (2)
+    m <- lgb.train(params = p, data = d, nrounds = 3000)                # (3)
+    akurasi <- mean((predict(m, sebagai_matriks(rt)) > 0.5) == rt$penerima)
+    # "akurasi 0,97 -- model sangat baik"                               # (4)
+    ```
+  - 'Petunjuk: satu baris melatih pada **seluruh** data termasuk data uji; satu himpunan parameter sangat
+    rawan lewat-suai; satu baris menetapkan iterasi tanpa penghentian dini; dan satu kesimpulan memakai
+    ukuran yang keliru bagi data tidak seimbang.'
+  - \newpage
+  penugasan:
+  - |-
+    \begin{kotaktugas}
+    \textbf{Konteks: Penyaringan Awal Calon Penerima Program}
+  - |-
+    Sebuah unit kerja hendak memakai model untuk \textbf{menyaring awal} calon penerima program bantuan, sebelum verifikasi lapangan dilakukan. Anggaran verifikasi hanya cukup untuk mengunjungi \textbf{8 persen} rumah tangga. Anda diminta membangun model penyaring beserta ambang operasionalnya, dan menilai apakah model itu layak dipakai.
+    \end{kotaktugas}
+  - \tugas{Penyiapan dan acuan}
+  - |-
+    1. Bagi data menjadi latih, validasi, dan uji (misalnya 60--15--25). Laporkan proporsi penerima pada ketiganya.
+    2. Bangun **acuan**: regresi logistik. Laporkan AUC-nya pada data uji.
+  - \tugas{Pemodelan}
+  - |-
+    3. Latih LightGBM dengan validasi silang beserta penghentian dini; laporkan iterasi terbaik dan AUC.
+    4. Tala sekurang-kurangnya `num_leaves` dan `min_data_in_leaf`; sajikan tabel hasil penalaan.
+    5. Bandingkan penanganan kategorik langsung dan pengodean boneka.
+  - \tugas{Ambang operasional}
+  - |-
+    6. Tetapkan ambang sehingga **tepat 8 persen** rumah tangga terpilih untuk diverifikasi. Laporkan presisi dan recall pada ambang itu.
+    7. Bandingkan dengan penyaringan **acak** 8 persen dan dengan penyaringan berdasarkan **satu peubah** saja (misalnya lama sekolah terendah). Berapa kali lipat model mengungguli keduanya?
+  - \tugas{Kesimpulan dan keterbatasan}
+  - |-
+    8. Susun rekomendasi (maksimal 250 kata) mengenai kelayakan model sebagai penyaring awal.
+    9. Tulis keterbatasan yang memuat sekurang-kurangnya: pentingnya peubah bukan sebab-akibat; risiko bila sebaran data berubah; dan bahwa data bersifat simulasi.
+  - '## Rubrik Penilaian'
+  - |-
+    | Komponen | Indikator | Bobot |
+    |:---------|:----------|:-----:|
+    | Pembagian data dan acuan | Tiga bagian dipisah benar; acuan dijalankan | 15% |
+    | Pemodelan dan penalaan | Penghentian dini dipakai; penalaan sistematis | 25% |
+    | Ambang operasional | Ambang ditetapkan dari kendala anggaran, bukan 0,5 | 25% |
+    | Pembanding | Dibandingkan dengan acak dan aturan satu peubah | 15% |
+    | Keterbatasan | Ketiga butir dinyatakan | 20% |
+  - \vspace{1.2em}
+  ringkasan:
+  - |-
+    \begin{kotaktujuan}
+    \textbf{Daftar periksa penguasaan Modul 15}
+    \begin{itemize}
+    \item[$\square$] Saya dapat menjelaskan pertumbuhan per daun, pembinan histogram, dan penanganan kategorik langsung.
+    \item[$\square$] Saya dapat melatih LightGBM di R maupun Python.
+    \item[$\square$] Saya selalu menjalankan acuan sebelum menyimpulkan model saya baik.
+    \item[$\square$] Saya menentukan banyaknya iterasi dengan validasi silang, bukan menebak.
+    \item[$\square$] Saya dapat menjelaskan mengapa \texttt{num\_leaves} lebih menentukan daripada \texttt{max\_depth}.
+    \item[$\square$] Saya dapat membedakan pembobotan kelas dan penggeseran ambang, serta tahu keduanya tidak mengubah AUC.
+    \item[$\square$] Saya menafsirkan pentingnya peubah dengan ketiga peringatannya.
+    \end{itemize}
+    \end{kotaktujuan}
+  - '**Ringkasan fungsi:**'
+  - |-
+    | R | Python | Kegunaan |
+    |:--|:-------|:---------|
+    | `lgb.Dataset(X, label=)` | `lgb.Dataset(X, label=)` | menyiapkan data latih |
+    | `categorical_feature=` | `categorical_feature=` atau tipe `category` | menandai peubah kategorik |
+    | `lgb.cv(..., early_stopping_rounds=)` | `lgb.cv(..., callbacks=[early_stopping()])` | menentukan iterasi |
+    | `lgb.train(..., nrounds=)` | `lgb.train(..., num_boost_round=)` | melatih model |
+    | `predict(model, X)` | `model.predict(X)` | ramalan peluang |
+    | `lgb.importance(model)` | `model.feature_importance()` | pentingnya peubah |
+  - '## Daftar Istilah'
+  - |-
+    \begin{kotakistilah}
+    \textbf{Gradient boosting} --- ansambel pohon yang dibangun berurutan, tiap pohon dicocokkan pada gradien negatif fungsi kerugian.
+  - \textbf{Pertumbuhan per daun} (\emph{leaf-wise growth}) --- memecah satu daun dengan penurunan kerugian
+    terbesar, bukan seluruh daun pada tingkat yang sama.
+  - \textbf{Pembinan histogram} (\emph{histogram binning}) --- mengelompokkan nilai peubah numerik menjadi
+    sejumlah keranjang untuk mempercepat pencarian titik pecah.
+  - \textbf{Kardinalitas} --- banyaknya kategori berbeda pada suatu peubah kategorik.
+  - \textbf{cat\_smooth} --- parameter yang menarik statistik kategori berfrekuensi kecil ke arah rata-rata
+    keseluruhan.
+  - \textbf{scale\_pos\_weight} --- bobot bagi kelas positif pada data tidak seimbang.
+  - \textbf{Penghentian dini} (\emph{early stopping}) --- menghentikan penambahan pohon ketika ukuran
+    pada data validasi tidak lagi membaik.
+  - |-
+    \textbf{AUC} --- luas di bawah kurva ROC; mengukur kemampuan mengurutkan, tidak terpengaruh penggeseran ambang.
+    \end{kotakistilah}
+  - \vspace{1.2em}
+  referensi:
+  - |-
+    1. Ke, G., Meng, Q., Finley, T., Wang, T., Chen, W., Ma, W., Ye, Q., & Liu, T.-Y. (2017). LightGBM: A highly efficient gradient boosting decision tree. *Advances in Neural Information Processing Systems*, 30.
+    2. Friedman, J. H. (2001). Greedy function approximation: A gradient boosting machine. *The Annals of Statistics*, 29(5), 1189--1232.
+    3. Chen, T. & Guestrin, C. (2016). XGBoost: A scalable tree boosting system. *Proceedings of KDD 2016*, 785--794.
+    4. Hastie, T., Tibshirani, R., & Friedman, J. (2009). *The Elements of Statistical Learning*, 2nd ed. Springer. (Bab 10)
+    5. Prokhorenkova, L., Gusev, G., Vorobev, A., Dorogush, A. V., & Gulin, A. (2018). CatBoost: unbiased boosting with categorical features. *Advances in Neural Information Processing Systems*, 31.
+    6. Dokumentasi LightGBM: https://lightgbm.readthedocs.io
+  contoh:
+  - contoh: Menelaah data dan menyiapkan acuan
+    narasi: |-
+      \kode{struktur data dan regresi logistik sebagai pembanding}
+
+      ```{r}
+      suppressPackageStartupMessages(library(lightgbm))
+      rt <- read.csv("data/penerima_manfaat.csv", stringsAsFactors = TRUE)
+      str(rt, give.attr = FALSE)
+      cat("baris:", nrow(rt), " kabupaten:", nlevels(rt$kabupaten),
+          " proporsi penerima:", round(mean(rt$penerima), 4), "\n")
+
+      fitur <- c("kabupaten", "lama_sekolah", "umur_krt", "anggota_rt",
+                 "luas_lantai", "jenis_pekerjaan", "punya_aset")
+      set.seed(2026)
+      i_latih <- sample(nrow(rt), 0.75 * nrow(rt))
+      latih <- rt[i_latih, ]; uji <- rt[-i_latih, ]
+      y_uji <- uji$penerima
+
+      auc <- function(y, p) {                       # AUC lewat statistik Mann-Whitney
+        r <- rank(p); n1 <- sum(y == 1); n0 <- sum(y == 0)
+        (sum(r[y == 1]) - n1 * (n1 + 1) / 2) / (n1 * n0)
+      }
+
+      waktu_glm <- system.time(
+        glm_acuan <- glm(penerima ~ ., data = latih[, c(fitur, "penerima")],
+                         family = binomial, model = FALSE, y = FALSE))[["elapsed"]]
+      p_glm <- predict(glm_acuan, uji, type = "response")
+      cat("regresi logistik -- waktu:", round(waktu_glm, 2), "detik  AUC:",
+          round(auc(y_uji, p_glm), 4), "\n")
+      cat("banyaknya koefisien yang ditaksir:", length(coef(glm_acuan)), "\n")
+      rm(glm_acuan); invisible(gc())        # bebaskan memori
+      ```
+
+      \begin{kotakinterpretasi}
+      Data memuat \textbf{40.000 rumah tangga} di \textbf{120 kabupaten}, dengan \textbf{11,8\%} berstatus penerima --- kelas yang jelas tidak seimbang.
+
+      Acuannya adalah regresi logistik dengan seluruh peubah. Perhatikan angka terakhir: ia menaksir \textbf{126 koefisien}, sebab peubah \texttt{kabupaten} sendiri memakan 119 kolom boneka. Inilah persoalan kardinalitas tinggi --- model linear terpaksa memberi satu parameter bagi tiap kabupaten, padahal sebagian kabupaten hanya memuat sedikit amatan.
+
+      AUC-nya \textbf{0,775}. Angka ini akan menjadi pembanding sepanjang modul. Menyajikan AUC sebuah model tanpa acuan seperti ini tidak bermakna: yang penting bukan "0,83 itu bagus" melainkan "0,83 dibandingkan 0,775 dari model yang jauh lebih sederhana".
+      \end{kotakinterpretasi}
+  - contoh: Melatih LightGBM
+    narasi: |-
+      \kode{lgb.Dataset dan lgb.train}
+
+      ```{r}
+      # LightGBM menerima matriks numerik; kategori diserahkan sebagai indeks integer
+      sebagai_matriks <- function(d) {
+        m <- d[, fitur]
+        m$kabupaten       <- as.integer(m$kabupaten) - 1L
+        m$jenis_pekerjaan <- as.integer(m$jenis_pekerjaan) - 1L
+        as.matrix(m)
+      }
+      X_latih <- sebagai_matriks(latih); X_uji <- sebagai_matriks(uji)
+
+      par <- list(objective = "binary", metric = "auc", learning_rate = 0.03,
+                  num_leaves = 63, min_data_in_leaf = 40, feature_fraction = 0.8,
+                  bagging_fraction = 0.8, bagging_freq = 1, cat_smooth = 10, verbose = -1)
+
+      d_latih <- lgb.Dataset(X_latih, label = latih$penerima,
+                             categorical_feature = c("kabupaten", "jenis_pekerjaan"))
+      waktu_lgb <- system.time(
+        model_awal <- lgb.train(params = par, data = d_latih, nrounds = 111))[["elapsed"]]
+
+      cat("LightGBM -- waktu:", round(waktu_lgb, 2), "detik  AUC:",
+          round(auc(y_uji, predict(model_awal, X_uji)), 4), "\n")
+      cat("banyaknya kolom masukan:", ncol(X_latih), "\n")
+      ```
+
+      \begin{kotakinterpretasi}
+      LightGBM memberi AUC \textbf{0,828} berbanding \textbf{0,775} milik regresi logistik --- perbaikan yang berarti. Dan ia melakukannya dengan \textbf{7 kolom} masukan, bukan 126: peubah \texttt{kabupaten} tetap satu kolom karena ditangani langsung sebagai kategorik.
+
+      Waktu latihnya pun jauh lebih singkat meskipun membangun ratusan pohon, sementara regresi logistik hanya menaksir satu himpunan koefisien. Pada \$n = 40.000\$ selisihnya sudah terasa; pada jutaan baris, selisih itulah yang menentukan apakah analisis dapat dijalankan berulang kali dalam sehari atau tidak.
+
+      Perlu ditegaskan bahwa keunggulan ini \textbf{bukan hukum alam}. Data pada modul ini sengaja dibangkitkan dengan hubungan yang penuh ambang dan interaksi --- keadaan yang menguntungkan model berbasis pohon. Bila hubungan sesungguhnya mendekati linear dalam log-odds, regresi logistik dapat menyamai atau bahkan mengungguli LightGBM, dengan bonus koefisien yang dapat ditafsirkan. \textbf{Selalu jalankan acuannya.}
+      \end{kotakinterpretasi}
+  - contoh: Menentukan banyaknya iterasi dengan validasi silang
+    narasi: |-
+      \kode{lgb.cv dengan penghentian dini}
+
+      ```{r}
+      set.seed(2026)
+      cv <- lgb.cv(params = par, data = d_latih, nrounds = 2000, nfold = 5,
+                   early_stopping_rounds = 50, verbose = -1)
+      cat("iterasi terbaik:", cv$best_iter, " AUC validasi silang:",
+          round(cv$best_score, 4), "\n")
+
+      model <- lgb.train(params = par, data = d_latih, nrounds = cv$best_iter)
+      p_lgb <- predict(model, X_uji)
+      cat("AUC data uji:", round(auc(y_uji, p_lgb), 4), "\n")
+
+      # perbandingan: iterasi jauh lebih banyak
+      model_lebih <- lgb.train(params = par, data = d_latih, nrounds = 1500)
+      cat("AUC dengan 1500 iterasi:", round(auc(y_uji, predict(model_lebih, X_uji)), 4), "\n")
+      rm(model_lebih); invisible(gc())
+      ```
+
+      \begin{kotakinterpretasi}
+      Validasi silang lima lipat berhenti pada \textbf{111 iterasi} dengan AUC \$0{,}823\$; pada data uji AUC-nya \textbf{0,828} --- sangat dekat, pertanda penalaannya tidak lewat-suai terhadap lipatan validasi.
+
+      Baris terakhir memperlihatkan mengapa penghentian dini penting. Dengan 1.500 iterasi --- lebih dari tiga belas kali lipat --- AUC pada data uji \textbf{tidak membaik}, malah cenderung menurun. Boosting akan terus menambah pohon selama diminta, dan pohon-pohon terakhir itu hanya menghafal derau data latih.
+
+      Kaidahnya: \textbf{jangan pernah menetapkan \texttt{nrounds} dengan menebak}. Selalu pakai validasi silang dengan penghentian dini, lalu latih ulang pada seluruh data latih dengan banyaknya iterasi yang terpilih.
+      \end{kotakinterpretasi}
+  - contoh: Kategorik langsung dibandingkan pengodean boneka
+    narasi: |-
+      \kode{dua cara menangani 120 kabupaten}
+
+      ```{r}
+      # (a) kategorik ditangani langsung -- sudah dilakukan pada model di atas
+      # (b) pengodean boneka (one-hot)
+      boneka <- model.matrix(~ . - 1, data = rt[, fitur])
+      cat("kolom setelah pengodean boneka:", ncol(boneka), "\n")
+
+      d_boneka <- lgb.Dataset(boneka[i_latih, ], label = latih$penerima)
+      waktu_boneka <- system.time(
+        model_boneka <- lgb.train(params = par, data = d_boneka,
+                                  nrounds = cv$best_iter))[["elapsed"]]
+
+      hasil_kat <- data.frame(
+        penanganan = c("kategorik langsung", "pengodean boneka"),
+        kolom      = c(ncol(X_latih), ncol(boneka)),
+        AUC        = round(c(auc(y_uji, p_lgb),
+                             auc(y_uji, predict(model_boneka, boneka[-i_latih, ]))), 4))
+      rm(boneka, d_boneka, model_boneka); invisible(gc())
+      hasil_kat
+      ```
+
+      \begin{kotakinterpretasi}
+      Penanganan langsung memberi AUC \textbf{0,828} dengan \textbf{7 kolom}; pengodean boneka memberi \textbf{0,823} dengan \textbf{129 kolom}.
+
+      Selisih AUC-nya kecil, tetapi selisih \textbf{struktur}-nya besar dan berdampak pada data yang lebih besar. Dengan pengodean boneka, tiap kabupaten menjadi kolom biner yang hampir seluruhnya nol; pohon harus memecah kolom-kolom itu satu per satu untuk memisahkan sekelompok kabupaten. Dengan penanganan langsung, LightGBM mengurutkan kategori menurut statistik gradiennya lalu memecahnya menjadi \textbf{dua himpunan sekaligus} --- satu pecahan dapat memisahkan 40 kabupaten dari 80 lainnya.
+
+      Peringatan yang menyertainya: penanganan langsung ini \textbf{rawan lewat-suai} pada kategori berfrekuensi kecil, sebab pengurutan menurut gradien dapat mengejar derau. Parameter \texttt{cat\_smooth} --- di sini 10 --- meredamnya dengan menarik statistik kategori kecil ke arah rata-rata keseluruhan. Naikkan nilainya bila banyak kategori beranggota sedikit.
+      \end{kotakinterpretasi}
+  - contoh: Menangani ketidakseimbangan kelas
+    narasi: |-
+      \kode{Pembobotan kelas dibandingkan penggeseran ambang}
+
+      ```{r}
+      w <- sum(latih$penerima == 0) / sum(latih$penerima == 1)
+      cat("nisbah kelas negatif terhadap positif:", round(w, 3), "\n")
+
+      par_bobot <- par; par_bobot$scale_pos_weight <- w
+      model_bobot <- lgb.train(params = par_bobot, data = d_latih, nrounds = cv$best_iter)
+      p_bobot <- predict(model_bobot, X_uji)
+
+      f1 <- function(y, p, th) {
+        pred <- as.integer(p > th); tp <- sum(pred == 1 & y == 1)
+        if (tp == 0) return(0)
+        prec <- tp / sum(pred == 1); rec <- tp / sum(y == 1)
+        2 * prec * rec / (prec + rec)
+      }
+      ambang <- seq(0.05, 0.95, by = 0.01)
+      f1_tanpa <- sapply(ambang, function(t) f1(y_uji, p_lgb, t))
+
+      data.frame(
+        model  = c("tanpa bobot, ambang 0,5", "dengan bobot, ambang 0,5",
+                   "tanpa bobot, ambang terbaik"),
+        rerata_peluang = round(c(mean(p_lgb), mean(p_bobot), mean(p_lgb)), 3),
+        F1  = round(c(f1(y_uji, p_lgb, 0.5), f1(y_uji, p_bobot, 0.5), max(f1_tanpa)), 4),
+        AUC = round(c(auc(y_uji, p_lgb), auc(y_uji, p_bobot), auc(y_uji, p_lgb)), 4))
+      cat("ambang terbaik:", ambang[which.max(f1_tanpa)], "\n")
+
+      par(family = "sans", mar = c(4, 4, 1, 1))
+      plot(ambang, f1_tanpa, type = "l", lwd = 2, col = "#0B6FB4",
+           xlab = "ambang keputusan", ylab = "F1")
+      abline(v = ambang[which.max(f1_tanpa)], lty = 2, col = "#F58220", lwd = 2)
+      abline(v = 0.5, lty = 3, col = "grey40")
+      ```
+
+      \begin{kotakinterpretasi}
+      Kelas positif hanya \$11{,}8\%\$, sehingga tiap positif "bernilai" \$7{,}64\$ negatif. Dua cara lazim menanganinya dibandingkan di sini, dan hasilnya mengandung kejutan.
+
+      \textbf{Pembobotan} (\texttt{scale\_pos\_weight}) menaikkan F1 pada ambang \$0{,}5\$ dari \$0{,}330\$ menjadi \$0{,}436\$. Cara kerjanya bukan membuat model "lebih pintar" melainkan \textbf{menggeser skala peluangnya}: rata-rata peluang ramalan melonjak dari \$0{,}118\$ ke \$0{,}330\$, sehingga lebih banyak amatan melewati ambang \$0{,}5\$.
+
+      \textbf{Menggeser ambang} pada model tanpa bobot memberi F1 \textbf{0,478} pada ambang \$0{,}21\$ --- \textbf{lebih baik} daripada pembobotan, tanpa melatih ulang apa pun.
+
+      Dan perhatikan kolom AUC: ketiganya \textbf{praktis sama}. AUC mengukur kemampuan \textbf{mengurutkan}, dan baik pembobotan maupun penggeseran ambang tidak mengubah urutan --- keduanya hanya memindahkan garis potong.
+
+      Kesimpulan praktisnya penting: bila persoalannya semata-mata ketidakseimbangan, \textbf{latih model apa adanya lalu tala ambangnya pada data validasi}. Pembobotan baru diperlukan ketika biaya kekeliruan sungguh berbeda dan hendak dimasukkan ke dalam proses pelatihan, atau ketika kelas positifnya sangat langka (di bawah 1\%) sehingga gradiennya tenggelam.
+
+      Perlu ditegaskan pula: ambang \$0{,}21\$ di atas dipilih pada \textbf{data uji}, semata untuk peragaan. Pada pekerjaan sungguhan ambang harus ditala pada \textbf{data validasi terpisah}, sebab menalanya pada data uji membuat angka F1 yang dilaporkan menjadi optimistis.
+      \end{kotakinterpretasi}
+  - contoh: Menafsirkan pentingnya peubah
+    narasi: |-
+      \kode{lgb.importance}
+
+      ```{r}
+      imp <- lgb.importance(model)
+      print(imp)
+
+      par(family = "sans", mar = c(4, 8, 1, 1))
+      barplot(rev(imp$Gain), names.arg = rev(imp$Feature), horiz = TRUE, las = 1,
+              col = "#0B6FB4", border = NA, xlab = "gain (proporsi)")
+      ```
+
+      \begin{kotakinterpretasi}
+      Tiga ukuran dilaporkan. \textbf{Gain} adalah total penurunan kerugian dari seluruh pecahan yang memakai peubah itu --- inilah yang paling lazim dipakai. \textbf{Cover} adalah banyaknya amatan yang terpengaruh, dan \textbf{Frequency} adalah cacah pecahan.
+
+      \texttt{kabupaten} menempati urutan pertama menurut gain. Pembacaannya harus hati-hati: sebagian besar gain itu berasal dari \textbf{efek kabupaten} yang memang ditanam saat pembangkitan data, tetapi peubah berkardinalitas tinggi juga secara struktural \textbf{cenderung memperoleh gain tinggi} --- ia menawarkan lebih banyak calon pecahan daripada peubah biner seperti \texttt{punya\_aset}. Kedua sebab itu bercampur dan tidak dapat dipisahkan dari tabel ini saja.
+
+      Tiga peringatan yang wajib menyertai setiap laporan pentingnya peubah:
+
+      \begin{enumerate}
+      \item Ia \textbf{bukan ukuran sebab-akibat}. Peubah dapat penting semata karena berkorelasi dengan penyebab sesungguhnya yang tidak terekam.
+      \item Ia \textbf{berat sebelah} terhadap peubah berkardinalitas tinggi dan peubah kontinu.
+      \item Ia \textbf{tidak menunjukkan arah}. Tabel ini tidak memberi tahu apakah lama sekolah tinggi menaikkan atau menurunkan peluang. Untuk itu diperlukan alat seperti \emph{partial dependence} atau nilai SHAP.
+      \end{enumerate}
+      \end{kotakinterpretasi}
+
+      # Alur yang Sama dengan Python
+
+      Bagian ini mengulang analisis di atas dengan Python, membaca **berkas data yang sama**.
+  - contoh: LightGBM dengan Python
+    narasi: |-
+      \kode[Python]{penyiapan, validasi silang, dan penilaian}
+
+      ```{python}
+      import numpy as np, pandas as pd, lightgbm as lgb, time
+      from sklearn.metrics import roc_auc_score
+
+      rt = pd.read_csv("data/penerima_manfaat.csv")
+      for c in ["kabupaten", "jenis_pekerjaan"]:
+          rt[c] = rt[c].astype("category")          # kategori ditangani langsung
+      fitur = ["kabupaten", "lama_sekolah", "umur_krt", "anggota_rt",
+               "luas_lantai", "jenis_pekerjaan", "punya_aset"]
+      X, y = rt[fitur], rt["penerima"].values
+
+      rng = np.random.default_rng(2026)
+      idx = rng.permutation(len(rt)); n_tr = int(0.75 * len(rt))
+      tr, te = idx[:n_tr], idx[n_tr:]
+
+      par = {"objective": "binary", "metric": "auc", "learning_rate": 0.03,
+             "num_leaves": 63, "min_data_in_leaf": 40, "feature_fraction": 0.8,
+             "bagging_fraction": 0.8, "bagging_freq": 1, "cat_smooth": 10,
+             "verbose": -1, "seed": 2026}
+
+      d_tr = lgb.Dataset(X.iloc[tr], label=y[tr],
+                         categorical_feature=["kabupaten", "jenis_pekerjaan"])
+      cv = lgb.cv(par, d_tr, num_boost_round=2000, nfold=5, stratified=True,
+                  callbacks=[lgb.early_stopping(50, verbose=False)])
+      k = len(cv["valid auc-mean"])
+      print("iterasi terbaik:", k, " AUC validasi silang:", round(cv["valid auc-mean"][-1], 4))
+
+      t0 = time.time(); model = lgb.train(par, d_tr, num_boost_round=k)
+      print("waktu latih:", round(time.time() - t0, 2), "detik")
+      print("AUC data uji:", round(roc_auc_score(y[te], model.predict(X.iloc[te])), 4))
+      ```
+
+      \begin{kotakinterpretasi}
+      Python berhenti pada \textbf{92 iterasi} dengan AUC validasi silang \$0{,}823\$ dan AUC data uji \textbf{0,826}; R berhenti pada 111 iterasi dengan AUC uji \$0{,}828\$.
+
+      Perbedaan banyaknya iterasi ini \textbf{wajar dan tidak menandakan kekeliruan}. Dua sebabnya: pembagian latih--uji berbeda karena \texttt{sample()} pada R dan \texttt{numpy} pada Python memakai pembangkit bilangan acak yang berlainan meskipun benihnya sama-sama 2026; dan pembentukan lipatan validasi silangnya pun berbeda --- Python di sini memakai \texttt{stratified=True} sedangkan \texttt{lgb.cv} pada R tidak menstratifikasi secara bawaan.
+
+      Yang penting adalah \textbf{kesimpulannya sama}: AUC sekitar \$0{,}82\$--\$0{,}83\$, jauh di atas acuan regresi logistik \$0{,}775\$. Bila hasil kedua bahasa harus benar-benar identik, pembagian data harus dibuat sekali lalu disimpan ke berkas dan dibaca oleh keduanya.
+
+      \textbf{Perbedaan penamaan:} Python memakai \texttt{num\_boost\_round} (R: \texttt{nrounds}), \texttt{lgb.train()} (R: \texttt{lgb.train()} juga), dan menyerahkan penghentian dini lewat \texttt{callbacks} (R: argumen \texttt{early\_stopping\_rounds}). Python dapat menerima \texttt{DataFrame} dengan kolom bertipe \texttt{category} secara langsung, sedangkan R menuntut matriks numerik dengan kategori diubah menjadi indeks integer --- perbedaan yang paling sering menjadi sumber galat bagi pemula.
+      \end{kotakinterpretasi}
+
+      \begin{kotaksalah}
+      \begin{enumerate}
+      \item Menetapkan \texttt{nrounds} dengan menebak, tanpa validasi silang beserta penghentian dini.
+      \item Menaikkan \texttt{num\_leaves} tanpa menaikkan \texttt{min\_data\_in\_leaf}; inilah resep lewat-suai yang paling sering dijumpai.
+      \item Melaporkan AUC tanpa \textbf{acuan}; angka $0{,}83$ tidak bermakna sebelum dibandingkan dengan model sederhana.
+      \item Membuat kolom boneka bagi peubah berkardinalitas tinggi padahal LightGBM dapat menanganinya langsung.
+      \item Memakai \texttt{scale\_pos\_weight} padahal yang diperlukan hanya menggeser ambang; keduanya tidak mengubah AUC.
+      \item Menala ambang pada \textbf{data uji} lalu melaporkan hasilnya sebagai ketepatan; ambang harus ditala pada data validasi.
+      \item Menafsirkan pentingnya peubah sebagai hubungan sebab-akibat, atau sebagai arah pengaruh.
+      \item Membandingkan hasil R dan Python lalu menyimpulkan salah satunya keliru padahal pembagian datanya berbeda.
+      \item Memakai \texttt{accuracy} sebagai ukuran pada data tidak seimbang; menebak seluruhnya negatif sudah memberi $88\%$.
+      \end{enumerate}
+      \end{kotaksalah}
+
+      \newpage
+  kunci:
+  - '# Kunci Jawaban Latihan Mandiri'
+  - |-
+    ```{r siap}
+    suppressPackageStartupMessages(library(lightgbm))
+    rt <- read.csv("data/penerima_manfaat.csv", stringsAsFactors = TRUE)
+    fitur <- c("kabupaten","lama_sekolah","umur_krt","anggota_rt",
+               "luas_lantai","jenis_pekerjaan","punya_aset")
+    set.seed(2026); i <- sample(nrow(rt), 0.75 * nrow(rt))
+    latih <- rt[i, ]; uji <- rt[-i, ]; y_uji <- uji$penerima
+    mk <- function(d) { m <- d[, fitur]
+      m$kabupaten <- as.integer(m$kabupaten) - 1L
+      m$jenis_pekerjaan <- as.integer(m$jenis_pekerjaan) - 1L; as.matrix(m) }
+    X_latih <- mk(latih); X_uji <- mk(uji)
+    auc <- function(y, p) { r <- rank(p); n1 <- sum(y == 1); n0 <- sum(y == 0)
+      (sum(r[y == 1]) - n1 * (n1 + 1) / 2) / (n1 * n0) }
+    dasar <- list(objective = "binary", metric = "auc", learning_rate = 0.03,
+                  min_data_in_leaf = 40, feature_fraction = 0.8, bagging_fraction = 0.8,
+                  bagging_freq = 1, cat_smooth = 10, verbose = -1,
+                  feature_pre_filter = FALSE)   # agar min_data_in_leaf boleh diubah
+    kat <- c("kabupaten", "jenis_pekerjaan")
+    d_latih <- lgb.Dataset(X_latih, label = latih$penerima, categorical_feature = kat)
+    ```
+  - '## Kunci Latihan 15.1 -- Menala Parameter'
+  - |-
+    ```{r k1}
+    set.seed(2026)
+    hasil <- do.call(rbind, lapply(c(15, 63, 255), function(nl) {
+      p <- dasar; p$num_leaves <- nl
+      cv <- lgb.cv(params = p, data = d_latih, nrounds = 2000, nfold = 5,
+                   early_stopping_rounds = 50, verbose = -1)
+      m <- lgb.train(params = p, data = d_latih, nrounds = cv$best_iter)
+      data.frame(num_leaves = nl, iterasi = cv$best_iter,
+                 AUC_cv = round(cv$best_score, 4),
+                 AUC_uji = round(auc(y_uji, predict(m, X_uji)), 4))
+    }))
+    print(hasil, row.names = FALSE)
+  - |-
+    set.seed(2026)
+    hasil2 <- do.call(rbind, lapply(c(20, 200), function(md) {
+      p <- dasar; p$num_leaves <- 255; p$min_data_in_leaf <- md
+      d_md <- lgb.Dataset(X_latih, label = latih$penerima, categorical_feature = kat)
+      cv <- lgb.cv(params = p, data = d_md, nrounds = 2000, nfold = 5,
+                   early_stopping_rounds = 50, verbose = -1)
+      m <- lgb.train(params = p, data = d_md, nrounds = cv$best_iter)
+      data.frame(min_data_in_leaf = md, iterasi = cv$best_iter,
+                 AUC_uji = round(auc(y_uji, predict(m, X_uji)), 4))
+    }))
+    print(hasil2, row.names = FALSE)
+    ```
+  - |-
+    \begin{kotakkunci}
+    \textbf{(a)} Hasilnya: \texttt{num\_leaves} 15 memerlukan \textbf{178} iterasi, sedangkan 63 dan 255 hanya 71 dan 73. Pola yang diharapkan muncul --- pohon yang lebih lentur menurunkan kerugian lebih cepat sehingga iterasinya lebih sedikit --- tetapi tidak berbanding lurus: dari 63 ke 255 iterasinya praktis sama.
+  - 'AUC data ujinya berdekatan ($0{,}827$; $0{,}829$; $0{,}825$), dengan yang tertinggi pada 63 dan yang
+    terendah pada 255. Kesimpulan yang benar: menaikkan \texttt{num\_leaves} melampaui titik tertentu
+    \textbf{tidak menambah apa pun} dan mulai merugikan. Mahasiswa yang menyimpulkan ``makin besar makin
+    baik'''' dari selisih sekecil ini dikenai pengurangan nilai --- selisih $0{,}004$ pada satu pembagian
+    data tidak cukup untuk menyimpulkan apa pun.'
+  - \textbf{(b)} Pada \texttt{num\_leaves} 255, menaikkan \texttt{min\_data\_in\_leaf} dari 20 ke 200
+    menaikkan AUC dari $0{,}823$ menjadi $\mathbf{0{,}829}$ --- \textbf{menolong}. Ia menghalangi terbentuknya
+    daun berisi segelintir amatan, yakni daun yang paling mungkin sekadar menghafal derau. Perhatikan
+    bahwa \texttt{feature\_pre\_filter = FALSE} wajib disetel bila \texttt{min\_data\_in\_leaf} hendak
+    diubah-ubah pada objek \texttt{lgb.Dataset} yang sama; tanpa itu LightGBM menolak dengan pesan galat.
+  - |-
+    \textbf{(c)} Ketiga parameter bekerja bersama. \texttt{num\_leaves} menetapkan kelenturan maksimum; \texttt{min\_data\_in\_leaf} membatasi seberapa halus pohon boleh memecah; \texttt{learning\_rate} menentukan seberapa besar sumbangan tiap pohon, dan bersama penghentian dini menentukan banyaknya iterasi. Menaikkan salah satunya hampir selalu menuntut penyesuaian yang lain --- \textbf{tidak ada nilai bawaan yang baik untuk semua data}. Jawaban yang menyimpulkan ketergantungan ini memperoleh nilai penuh.
+    \end{kotakkunci}
+  - '## Kunci Latihan 15.2 -- Kategorik dan Kardinalitas'
+  - |-
+    ```{r k2}
+    p63 <- dasar; p63$num_leaves <- 63
+    tanpa_kab <- setdiff(fitur, "kabupaten")                                   # (a)
+    mk2 <- function(d) { m <- d[, tanpa_kab]
+      m$jenis_pekerjaan <- as.integer(m$jenis_pekerjaan) - 1L; as.matrix(m) }
+    d2 <- lgb.Dataset(mk2(latih), label = latih$penerima,
+                      categorical_feature = "jenis_pekerjaan")
+    m2 <- lgb.train(params = p63, data = d2, nrounds = 111)
+    cat("AUC tanpa kabupaten:", round(auc(y_uji, predict(m2, mk2(uji))), 4), "\n")
+  - |-
+    frek <- table(rt$kabupaten)                                                 # (b)
+    kecil <- names(frek)[frek < 200]
+    cat("kabupaten berfrekuensi < 200:", length(kecil), "\n")
+    rt2 <- rt; lev <- levels(rt2$kabupaten)
+    levels(rt2$kabupaten) <- ifelse(lev %in% kecil, "Lainnya", lev)
+    mk3 <- function(d) { m <- d[, fitur]
+      m$kabupaten <- as.integer(m$kabupaten) - 1L
+      m$jenis_pekerjaan <- as.integer(m$jenis_pekerjaan) - 1L; as.matrix(m) }
+    m3 <- lgb.train(params = p63,
+            data = lgb.Dataset(mk3(rt2[i, ]), label = latih$penerima,
+                               categorical_feature = kat), nrounds = 111)
+    cat("AUC dengan kategori kecil digabung:",
+        round(auc(y_uji, predict(m3, mk3(rt2[-i, ]))), 4), "\n")
+  - |-
+    for (cs in c(1, 10, 100)) {                                                 # (c)
+      p <- p63; p$cat_smooth <- cs
+      m <- lgb.train(params = p, data = d_latih, nrounds = 111)
+      cat("cat_smooth", cs, "-> AUC", round(auc(y_uji, predict(m, X_uji)), 4), "\n")
+    }
+    ```
+  - |-
+    \begin{kotakkunci}
+    \textbf{(a)} AUC turun dari $0{,}828$ menjadi $\mathbf{0{,}789}$ tanpa \texttt{kabupaten} --- penurunan nyata, sebab efek wilayah memang ditanam pada pembangkitan data. Mahasiswa harus menyimpulkan bahwa peubah berkardinalitas tinggi di sini \textbf{bukan sekadar penambah gain artifisial} melainkan benar-benar informatif. Namun perhatikan pula bahwa model tanpa kabupaten pun masih mengungguli regresi logistik lengkap ($0{,}775$) --- jadi keunggulan LightGBM tidak semata berasal dari penanganan kategoriknya.
+  - \textbf{(b)} Pada data ini \textbf{tidak ada satu pun} kabupaten berfrekuensi di bawah 200 --- 40.000
+    amatan terbagi ke 120 kabupaten sehingga rata-ratanya sekitar 333. Penggabungan karena itu tidak mengubah
+    apa pun, dan jawaban yang benar adalah \textbf{melaporkan bahwa syaratnya tidak terpenuhi}, bukan
+    memaksakan penggabungan. Pada data nyata dengan ribuan desa beranggota belasan amatan, langkah ini
+    penting untuk mencegah lewat-suai.
+  - '\textbf{(c)} Hasilnya: \texttt{cat\_smooth} 1 memberi AUC $0{,}827$; 10 memberi $0{,}828$; dan 100
+    memberi $\mathbf{0{,}832}$ --- \textbf{nilai terbesarlah yang terbaik} di sini, berlawanan dengan
+    kaidah umum bahwa nilai menengah biasanya menang.'
+  - |-
+    Penjelasannya justru menguatkan pemahaman: \texttt{cat\_smooth} menarik statistik tiap kategori ke arah rata-rata keseluruhan, dan penarikan itu bermanfaat bila taksiran per kategori berderau. Dengan 120 kabupaten dan efek wilayah yang tidak terlalu besar, peredaman kuat ternyata menguntungkan. Mahasiswa yang melaporkan hasil ini apa adanya --- bukan memaksakannya agar sesuai kaidah umum --- memperoleh nilai penuh.
+    \end{kotakkunci}
+  - '## Kunci Latihan 15.3 -- Ketidakseimbangan dan Ambang'
+  - |-
+    ```{r k3}
+    set.seed(2026)                                                              # (a)
+    j <- sample(seq_len(nrow(latih)), 0.8 * nrow(latih))
+    latih2 <- latih[j, ]; validasi <- latih[-j, ]
+    d3 <- lgb.Dataset(mk(latih2), label = latih2$penerima, categorical_feature = kat)
+    m <- lgb.train(params = p63, data = d3, nrounds = 111)
+    p_val <- predict(m, mk(validasi)); p_uji <- predict(m, X_uji)
+  - |-
+    f1 <- function(y, p, th) { pred <- as.integer(p > th); tp <- sum(pred == 1 & y == 1)
+      if (tp == 0) return(0); prec <- tp / sum(pred == 1); rec <- tp / sum(y == 1)
+      2 * prec * rec / (prec + rec) }
+    ambang <- seq(0.05, 0.95, by = 0.01)
+    th_val <- ambang[which.max(sapply(ambang, function(t) f1(validasi$penerima, p_val, t)))]
+    cat("ambang terpilih pada VALIDASI:", th_val,
+        " F1 pada data uji:", round(f1(y_uji, p_uji, th_val), 4), "\n")
+  - |-
+    th_uji <- ambang[which.max(sapply(ambang, function(t) f1(y_uji, p_uji, t)))]  # (b)
+    cat("ambang terbaik pada DATA UJI:", th_uji,
+        " F1:", round(f1(y_uji, p_uji, th_uji), 4), "\n")
+  - |-
+    pred <- as.integer(p_uji > th_val)                                           # (c)
+    tp <- sum(pred == 1 & y_uji == 1)
+    cat("presisi:", round(tp / sum(pred == 1), 4),
+        " recall:", round(tp / sum(y_uji == 1), 4),
+        " terpilih:", round(mean(pred), 4), "\n")
+    ```
+  - |-
+    \begin{kotakkunci}
+    \textbf{(a)--(b)} Ambang yang ditala pada data validasi memberi F1 pada data uji yang \textbf{sedikit lebih rendah} daripada ambang yang ditala langsung pada data uji. Selisih itulah \textbf{besarnya optimisme} yang diperoleh bila ambang ditala pada data yang sama dengan yang dipakai melaporkan hasil --- dan itulah sebabnya cara kedua menyesatkan. Mahasiswa harus menyebut bahwa data uji hanya boleh disentuh \textbf{sekali}, pada akhir.
+  - |-
+    \textbf{(c)} Bila program hanya sanggup menjangkau $5\%$ rumah tangga, ambang \textbf{tidak boleh} dipilih dari F1 melainkan dari \textbf{kendala anggaran}: naikkan ambang sampai tepat $5\%$ terpilih, lalu laporkan presisi pada titik itu. F1 menimbang presisi dan recall sama berat, padahal ketika anggaran mengikat, yang penting adalah presisi pada cakupan yang mampu dibiayai. Jawaban yang memilih ambang dari kendala anggaran memperoleh nilai penuh.
+    \end{kotakkunci}
+  - '## Kunci Latihan 15.4 -- Membetulkan Kode yang Salah'
+  - |-
+    ```{r k4, eval=FALSE}
+    # KODE ASLI (salah)
+    d <- lgb.Dataset(mk(rt), label = rt$penerima)                  # (1) seluruh data
+    p <- list(objective = "binary", num_leaves = 500,
+              min_data_in_leaf = 5, learning_rate = 0.3)            # (2) rawan lewat-suai
+    m <- lgb.train(params = p, data = d, nrounds = 3000)            # (3) tanpa penghentian dini
+    akurasi <- mean((predict(m, mk(rt)) > 0.5) == rt$penerima)      # (4) akurasi pada data latih
+    ```
+  - |-
+    ```{r k4b}
+    cat("akurasi bila seluruhnya ditebak BUKAN penerima:",
+        round(1 - mean(rt$penerima), 4), "\n")
+    m_benar <- lgb.train(params = p63, data = d_latih, nrounds = 111)
+    p_u <- predict(m_benar, X_uji)
+    cat("akurasi model pada data uji:", round(mean((p_u > 0.5) == y_uji), 4),
+        " AUC:", round(auc(y_uji, p_u), 4), "\n")
+    ```
+  - |-
+    \begin{kotakkunci}
+    \textbf{(1)} Melatih pada seluruh data termasuk data uji --- seluruh penilaian sesudahnya kehilangan makna.
+  - '\textbf{(2)} \texttt{num\_leaves} 500 dengan \texttt{min\_data\_in\_leaf} 5 dan laju belajar $0{,}3$:
+    pohon sangat lentur, daun boleh berisi lima amatan, dan tiap pohon menyumbang besar. Ketiganya bersama-sama
+    menjamin penghafalan.'
+  - \textbf{(3)} 3.000 iterasi tanpa penghentian dini memperparahnya.
+  - |-
+    \textbf{(4)} Inilah butir terpenting. Akurasi \textbf{bukan ukuran yang sah} pada data tidak seimbang: menebak seluruhnya bukan penerima sudah memberi akurasi $0{,}882$ tanpa model sama sekali. Angka $0{,}97$ pada data latih karena itu tidak menunjukkan apa pun --- ia gabungan dari penghafalan dan ukuran yang keliru. Pakailah AUC, atau presisi dan recall pada ambang operasional.
+    \end{kotakkunci}
+  - '# Kunci Jawaban Penugasan'
+  - |-
+    \begin{kotakkunci}
+    \textbf{Butir 1--2.} Proporsi penerima harus serupa pada ketiga bagian (sekitar $0{,}118$); bila jauh berbeda, pembagiannya perlu distratifikasi. Acuan regresi logistik memberi AUC sekitar $\mathbf{0{,}775}$ pada data uji.
+  - \textbf{Butir 3--5.} LightGBM dengan penghentian dini berhenti sekitar 100--120 iterasi dan memberi
+    AUC sekitar $\mathbf{0{,}83}$. Penanganan kategorik langsung sedikit mengungguli pengodean boneka
+    ($0{,}828$ berbanding $0{,}823$) dengan 7 kolom berbanding 129.
+  - '\textbf{Butir 6.} Ambang ditetapkan dari \textbf{kendala anggaran}, bukan dari F1: pilih ambang sehingga
+    tepat $8\%$ terpilih --- yakni kuantil $92\%$ dari peluang ramalan. Laporkan presisi dan recall pada
+    titik itu.'
+  - \textbf{Butir 7.} Ini butir yang membedakan jawaban baik. Penyaringan acak $8\%$ akan menangkap sekitar
+    $8\%$ penerima; presisinya sama dengan prevalensi ($0{,}118$). Model yang baik memberi presisi beberapa
+    kali lipat angka itu --- nisbahnya dikenal sebagai \emph{lift}. Aturan satu peubah (misalnya lama
+    sekolah terendah) berada di antara keduanya. Jawaban wajib menyajikan ketiganya berdampingan.
+  - |-
+    \textbf{Butir 8--9.} Rekomendasi harus menyatakan bahwa model dipakai sebagai \textbf{penyaring awal}, bukan penentu akhir --- verifikasi lapangan tetap diperlukan. Keterbatasan wajib memuat: pentingnya peubah bukan sebab-akibat; model dilatih pada sebaran data tertentu sehingga perlu dilatih ulang bila keadaan berubah; dan data bersifat simulasi.
+    \end{kotakkunci}
+  - '# Catatan Penskoran untuk Pengajar'
+  - |-
+    \begin{kotakinfo}
+    \begin{itemize}
+    \item \textbf{Nilai penuh} bila: acuan dijalankan dan dibandingkan; banyaknya iterasi ditentukan dengan penghentian dini; ambang ditetapkan dari kendala anggaran; dan model dibandingkan dengan penyaringan acak.
+    \item \textbf{Pengurangan nilai} bila: akurasi dipakai sebagai ukuran utama; ambang $0{,}5$ dipakai tanpa alasan; ambang ditala pada data uji; atau pentingnya peubah ditafsirkan sebagai sebab-akibat.
+    \item Mahasiswa yang menunjukkan bahwa regresi logistik dapat menyamai LightGBM bila hubungannya mendekati linear --- misalnya dengan membangkitkan ulang data tanpa interaksi --- layak memperoleh nilai tambahan.
+    \end{itemize}
+    \end{kotakinfo}
+exercises: []
+

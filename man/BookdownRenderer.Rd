@@ -5,62 +5,63 @@
 \title{Renderer bookdown}
 \description{
 Renderer bookdown
+
+Renderer bookdown
 }
 \section{Super class}{
-\code{\link[modulstis:Renderer]{Renderer}} -> \code{BookdownRenderer}
+\code{\link[modulstis:Renderer]{modulstis::Renderer}} -> \code{BookdownRenderer}
 }
 \section{Methods}{
 \subsection{Public methods}{
-  \itemize{
-    \item \href{#method-BookdownRenderer-render}{\code{BookdownRenderer$render()}}
-    \item \href{#method-BookdownRenderer-clone}{\code{BookdownRenderer$clone()}}
-  }
+\itemize{
+\item \href{#method-BookdownRenderer-render}{\code{BookdownRenderer$render()}}
+\item \href{#method-BookdownRenderer-clone}{\code{BookdownRenderer$clone()}}
 }
-\if{html}{\out{<details open><summary>Inherited methods</summary>
+}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
 <ul>
-  <li><span class="pkg-link" data-pkg="modulstis" data-topic="Renderer" data-id="initialize"><a href='../../modulstis/html/Renderer.html#method-Renderer-initialize'><code>Renderer$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="modulstis" data-topic="Renderer" data-id="initialize"><a href='../../modulstis/html/Renderer.html#method-Renderer-initialize'><code>modulstis::Renderer$initialize()</code></a></span></li>
 </ul>
-</details>}}
+</details>
+}}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-BookdownRenderer-render"></a>}}
 \if{latex}{\out{\hypertarget{method-BookdownRenderer-render}{}}}
-\subsection{\code{BookdownRenderer$render()}}{
-  Render via rmarkdown/bookdown
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{BookdownRenderer$render(doc, output_dir)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{doc}}{\link{Document}}
-      \item{\code{output_dir}}{direktori keluaran}
-    }
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    objek \link{Artifact}
-  }
+\subsection{Method \code{render()}}{
+Render via rmarkdown/bookdown
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{BookdownRenderer$render(doc, output_dir)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{doc}}{\link{Document}}
+
+\item{\code{output_dir}}{direktori keluaran}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+objek \link{Artifact}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-BookdownRenderer-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-BookdownRenderer-clone}{}}}
-\subsection{\code{BookdownRenderer$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{BookdownRenderer$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{BookdownRenderer$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
 }

@@ -5,62 +5,63 @@
 \title{Renderer Quarto}
 \description{
 Renderer Quarto
+
+Renderer Quarto
 }
 \section{Super class}{
-\code{\link[modulstis:Renderer]{Renderer}} -> \code{QuartoRenderer}
+\code{\link[modulstis:Renderer]{modulstis::Renderer}} -> \code{QuartoRenderer}
 }
 \section{Methods}{
 \subsection{Public methods}{
-  \itemize{
-    \item \href{#method-QuartoRenderer-render}{\code{QuartoRenderer$render()}}
-    \item \href{#method-QuartoRenderer-clone}{\code{QuartoRenderer$clone()}}
-  }
+\itemize{
+\item \href{#method-QuartoRenderer-render}{\code{QuartoRenderer$render()}}
+\item \href{#method-QuartoRenderer-clone}{\code{QuartoRenderer$clone()}}
 }
-\if{html}{\out{<details open><summary>Inherited methods</summary>
+}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
 <ul>
-  <li><span class="pkg-link" data-pkg="modulstis" data-topic="Renderer" data-id="initialize"><a href='../../modulstis/html/Renderer.html#method-Renderer-initialize'><code>Renderer$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="modulstis" data-topic="Renderer" data-id="initialize"><a href='../../modulstis/html/Renderer.html#method-Renderer-initialize'><code>modulstis::Renderer$initialize()</code></a></span></li>
 </ul>
-</details>}}
+</details>
+}}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-QuartoRenderer-render"></a>}}
 \if{latex}{\out{\hypertarget{method-QuartoRenderer-render}{}}}
-\subsection{\code{QuartoRenderer$render()}}{
-  Render via Quarto
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{QuartoRenderer$render(doc, output_dir)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{doc}}{\link{Document}}
-      \item{\code{output_dir}}{direktori keluaran}
-    }
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    objek \link{Artifact}
-  }
+\subsection{Method \code{render()}}{
+Render via Quarto
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{QuartoRenderer$render(doc, output_dir)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{doc}}{\link{Document}}
+
+\item{\code{output_dir}}{direktori keluaran}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+objek \link{Artifact}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-QuartoRenderer-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-QuartoRenderer-clone}{}}}
-\subsection{\code{QuartoRenderer$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{QuartoRenderer$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{QuartoRenderer$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
 }

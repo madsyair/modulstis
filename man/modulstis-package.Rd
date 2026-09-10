@@ -24,12 +24,7 @@ objek (R6), pipeline fungsional, logging terstruktur, dan kerangka uji.
 }
 
 \author{
-\strong{Maintainer}: Achmad Syahrul Choir \email{madsyair@stis.ac.id}
-
-Authors:
-\itemize{
-  \item Achmad Syahrul Choir \email{madsyair@stis.ac.id}
-}
+\strong{Maintainer}: Achmad Syahrul Choir \email{syahrul@example.ac.id}
 
 }
 \keyword{internal}

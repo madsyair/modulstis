@@ -1,8 +1,8 @@
-#' modulstis: Generator Template Modul Praktikum Bergaya BPS
+#' modulstis: Generator Template Modul Praktikum Bernuansa Warna Logo BPS
 #'
 #' Menghasilkan template modul praktikum dan buku kunci jawaban dari satu
 #' spesifikasi deklaratif (YAML/objek), dengan backend bookdown/Quarto + LaTeX
-#' (XeLaTeX) untuk PDF bergaya publikasi BPS. Menerapkan desain berorientasi
+#' (XeLaTeX) untuk PDF bernuansa warna logo BPS. Menerapkan desain berorientasi
 #' objek (R6), pipeline fungsional, logging terstruktur, dan kerangka uji.
 #'
 #' @section Kelas utama:

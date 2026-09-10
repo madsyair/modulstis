@@ -1,0 +1,561 @@
+number: 9
+title: 'Klasifikasi Lanjut: SVM, KNN, dan Random Forest'
+short_code: klasifikasi_lanjut
+topic: Klasifikasi Lanjut
+pertemuan: 9
+sub_cpmk: 'Sub-CPMK 9: Mahasiswa mampu membangun dan menala model klasifikasi lanjut --- Support Vector Machine, K-Nearest Neighbours, dan Random Forest --- menyesuaikan prapemrosesan dengan kebutuhan tiap model, membandingkannya secara adil, serta mengenali gagasan boosting sebagai keluarga model penggabung.
+
+  '
+packages:
+- recipes
+- rsample
+- parsnip
+- workflows
+- tune
+- yardstick
+- kernlab
+- kknn
+- ranger
+contoh_title: Contoh Praktikum dengan R
+tambahan_title: 'Tambahan: Boosting dengan Python'
+course:
+  matkul: Data Mining dan Big Data
+  matkul_besar: DATA MINING DAN BIG DATA
+  kode: K202505
+  semester: 6 (Genap)
+  prodi: D-IV Statistika
+  penyusun:
+  - Achmad Syahrul Choir
+datasets: []
+body:
+  deskripsi:
+  - 'Modul sebelumnya membangun tiga model dasar yang seluruhnya mudah dijelaskan. Modul ini melanjutkannya ke tiga model yang lebih kuat tetapi menuntut lebih banyak: Support Vector Machine, K-Nearest Neighbours, dan Random Forest.
+
+    '
+  - 'Ketiganya dipilih karena mewakili tiga cara berpikir yang berlainan. SVM mencari batas pemisah yang paling lebar antar-kelas; KNN sama sekali tidak membangun model melainkan menyimpan seluruh data lalu memutuskan berdasarkan tetangga terdekat; Random Forest menggabungkan banyak pohon untuk mengatasi ketidakstabilan pohon tunggal yang dibahas pada modul sebelumnya.
+
+    '
+  - 'Perbedaan cara kerja itu membawa kebutuhan prapemrosesan yang berbeda pula --- dan inilah sorotan utama modul ini. SVM dan KNN menuntut pembakuan karena keduanya bersandar pada jarak, sedangkan Random Forest tidak memerlukannya sama sekali. Menyeragamkan perlakuan bagi ketiganya adalah kekeliruan yang lazim.
+
+    '
+  - 'Mulai modul ini pembahasan beralih dari `caret` ke `tidymodels`, sebab keunggulan resep terasa justru ketika tiap model menuntut prapemrosesan yang berlainan. Bagian Tambahan memperkenalkan boosting memakai Python.
+
+    '
+  - '\begin{kotakperhatian}[Tentang data]
+
+    Berkas data pada modul ini adalah \textbf{data simulasi} (\texttt{set.seed(2025)}), \textbf{bukan data nyata} dan \textbf{bukan data resmi} instansi mana pun. Data dibangkitkan dengan hubungan yang sungguh ada antara peubah penjelas dan sasaran, sehingga model diharapkan berkinerja baik --- dan kinerja yang buruk justru menandakan ada kekeliruan pada alur kerja.
+
+    \end{kotakperhatian}'
+  tujuan:
+  - 'Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:'
+  - 1. **Menjelaskan** gagasan margin dan kernel pada Support Vector Machine.
+  - 2. **Menjelaskan** cara kerja KNN beserta akibat pemilihan banyaknya tetangga.
+  - 3. **Menjelaskan** bagaimana Random Forest mengatasi ketidakstabilan pohon tunggal.
+  - 4. **Menyesuaikan** resep prapemrosesan dengan kebutuhan tiap model.
+  - 5. **Menala** hiperparameter ketiga model dengan validasi silang.
+  - 6. **Membandingkan** ketiganya pada lipatan yang sama secara adil.
+  - 7. **Menafsirkan** Random Forest melalui kepentingan peubah.
+  - 8. **Menjelaskan** gagasan boosting dan perbedaannya terhadap bagging.
+  - 9. **Memilih** model dengan mempertimbangkan kinerja, kestabilan, dan biaya perhitungan.
+  alat:
+  - 'Perangkat dan bahan yang diperlukan:'
+  - '- **R** (RStudio) dengan paket inti tidymodels dan tiga mesin model.'
+  - "- Pasang dengan:\n\n```\ninstall.packages(c(\"recipes\", \"rsample\", \"parsnip\", \"workflows\",\n                   \"tune\", \"yardstick\", \"dials\"))\ninstall.packages(c(\"kernlab\", \"kknn\", \"ranger\"))\n```"
+  - '- **Python** dengan `xgboost` dan `lightgbm` untuk bagian Tambahan.'
+  - '- Berkas data: `data/data_usahatani.csv`.'
+  instruksi:
+  - 'Ikuti tahapan berikut:'
+  - '**Sebelum praktikum:** pasang seluruh paket; siapkan berkas data; tinjau kembali bagian kesesuaian prapemrosesan pada modul klasifikasi dasar.'
+  - '**Selama praktikum:** kerjakan Contoh berurutan. Penalaan SVM memakan waktu paling lama, jadi jalankan sekali lalu simpan hasilnya.'
+  - '**Pembagian kerja:** Contoh dan Latihan dikerjakan di kelas; **Penugasan dikerjakan di luar sesi**.
+
+
+    **Pengumpulan:** susun laporan R Markdown, render ke PDF atau HTML, kumpulkan melalui Google Classroom.'
+  teori:
+  - '### Kedudukan pada CRISP-DM'
+  - 'Modul ini menempati tahap Modeling dan Evaluation. Yang membedakannya dari modul klasifikasi dasar adalah keterkaitannya yang lebih erat dengan tahap Data Preparation: ketiga model menuntut prapemrosesan yang berbeda, sehingga resep tidak lagi dapat disamakan begitu saja.
+
+    '
+  - '### Support Vector Machine'
+  - 'SVM mencari batas pemisah antar-kelas yang **marginnya paling lebar**, yaitu batas yang jaraknya terhadap amatan terdekat dari kedua kelas semaksimal mungkin. Amatan yang berada tepat pada tepi margin disebut vektor pendukung, dan hanya amatan itulah yang menentukan letak batasnya.
+
+    '
+  - '\begin{kotakrumus}
+
+    Batas keputusan SVM berbentuk:\\[6pt]
+
+    $f(x) = \sum_{i \in SV} \alpha_{i} y_{i} K(x_{i}, x) + b$\\[6pt]
+
+    dengan $SV$ himpunan vektor pendukung dan $K$ fungsi kernel. Amatan yang bukan vektor pendukung tidak berpengaruh sama sekali terhadap batasnya.
+
+    \end{kotakrumus}'
+  - 'Sifat terakhir itu membuat SVM tahan terhadap amatan yang jauh dari batas, tetapi sekaligus peka terhadap amatan yang berada di dekat batas --- termasuk amatan yang sesungguhnya salah label.
+
+    '
+  - '\begin{kotakinfo}[Dua parameter penala SVM berkernel RBF]\par\smallskip
+
+    \begin{tabular}{@{}p{3.0cm}p{4.6cm}p{6.4cm}@{}}
+
+    \textbf{Parameter} & \textbf{Mengatur} & \textbf{Akibat bila terlalu besar}\\
+
+    \hline
+
+    \texttt{cost} & hukuman atas kesalahan & margin menyempit, \emph{overfitting}\\[3pt]
+
+    \texttt{rbf\_sigma} & lebar pengaruh tiap amatan & batas menjadi sangat berliku\\
+
+    \end{tabular}
+
+    \end{kotakinfo}'
+  - 'Kernel adalah gagasan pokok yang membuat SVM kuat. Alih-alih memetakan data ke ruang berdimensi lebih tinggi secara nyata, kernel menghitung hasil kali dalam pada ruang itu secara langsung. Akibatnya batas yang lurus pada ruang berdimensi tinggi tampak melengkung pada ruang asli, tanpa biaya perhitungan pemetaannya.
+
+    '
+  - '### K-Nearest Neighbours'
+  - 'KNN adalah model yang paling sederhana gagasannya sekaligus paling ganjil wataknya: ia tidak membangun model sama sekali. Seluruh data latih disimpan, dan keputusan diambil saat dugaan diminta dengan memeriksa tetangga terdekat amatan baru.
+
+    '
+  - '\begin{kotakinfo}[Akibat pemilihan banyaknya tetangga]\par\smallskip
+
+    \begin{tabular}{@{}p{2.6cm}p{5.4cm}p{6.0cm}@{}}
+
+    \textbf{Nilai $k$} & \textbf{Perilaku} & \textbf{Risiko}\\
+
+    \hline
+
+    kecil (1--3) & batas sangat berliku & menghafal derau\\[3pt]
+
+    sedang & seimbang & --\\[3pt]
+
+    besar & batas sangat halus & mengabaikan pola setempat\\
+
+    \end{tabular}
+
+    \end{kotakinfo}'
+  - '\begin{kotaksalah}[KNN memindahkan biaya ke tahap dugaan]
+
+    Berbeda dari model lain, KNN nyaris tidak memerlukan waktu untuk dilatih --- ia hanya menyimpan data. Sebaliknya, setiap kali dugaan diminta, jarak terhadap seluruh data latih harus dihitung. Pada penerapan yang menuntut dugaan cepat atau data latih yang besar, sifat ini menjadi persoalan serius yang kerap baru disadari setelah model diterapkan.
+
+    \end{kotaksalah}'
+  - '### Random Forest'
+  - 'Modul sebelumnya memperagakan bahwa pohon keputusan tidak stabil: perubahan kecil pada data dapat mengubah seluruh strukturnya. Random Forest mengatasinya dengan menggabungkan banyak pohon lalu merata-ratakan hasilnya.
+
+    '
+  - '\begin{kotakinfo}[Dua sumber keragaman antar-pohon]\par\smallskip
+
+    \begin{tabular}{@{}p{4.0cm}p{10.4cm}@{}}
+
+    \textbf{Bagging} & tiap pohon dilatih pada contoh bootstrap yang berbeda\\[3pt]
+
+    \textbf{Pemilihan peubah acak} & pada tiap pembelahan, hanya sebagian peubah dipertimbangkan\\
+
+    \end{tabular}
+
+    \end{kotakinfo}'
+  - 'Sumber kedua itulah yang membedakan Random Forest dari bagging biasa. Tanpa pemilihan peubah acak, seluruh pohon cenderung memilih peubah kuat yang sama pada pembelahan pertama sehingga pohonnya mirip satu sama lain --- dan merata-ratakan pohon yang mirip tidak banyak menolong.
+
+    '
+  - '\begin{kotakinfo}[Dua parameter penala Random Forest]\par\smallskip
+
+    \begin{tabular}{@{}p{2.6cm}p{4.8cm}p{6.6cm}@{}}
+
+    \texttt{mtry} & peubah dipertimbangkan per pembelahan & kecil: pohon makin beragam\\[3pt]
+
+    \texttt{min\_n} & amatan terkecil pada simpul & besar: pohon makin dangkal\\
+
+    \end{tabular}
+
+    \end{kotakinfo}'
+  - '\begin{kotaktips}
+
+    Banyaknya pohon (\texttt{trees}) lazimnya \textbf{tidak perlu ditala}. Menambah pohon tidak menyebabkan \emph{overfitting} pada Random Forest --- ia hanya menambah waktu perhitungan sampai kinerjanya mendatar. Tetapkan pada nilai yang cukup besar, misalnya lima ratus, lalu tala \texttt{mtry} dan \texttt{min\_n} saja.
+
+    \end{kotaktips}'
+  - '### Kesesuaian Prapemrosesan'
+  - 'Inilah sorotan utama modul ini. Ketiga model menuntut perlakuan berbeda, dan menyeragamkannya adalah kekeliruan yang lazim.
+
+    '
+  - "\\begin{kotakinfo}[Kebutuhan prapemrosesan tiap model]\\par\\smallskip\n\\begin{tabular}{@{}p{3.0cm}p{2.8cm}p{2.8cm}p{4.8cm}@{}}\n & \\textbf{SVM} & \\textbf{KNN} & \\textbf{Random Forest}\\\\\n\\hline\nPembakuan & \\textbf{wajib} & \\textbf{wajib} & tidak perlu\\\\[2pt]\nPengodean & wajib & wajib & tidak perlu\\\\[2pt]\nPencilan & peka & peka & tahan\\\\[2pt]\nPeubah tak relevan & mengganggu & sangat mengganggu & cukup tahan\\\\\n\\end{tabular}\n\\end{kotakinfo}"
+  - '\begin{kotaksalah}[Memakai satu resep bagi seluruh model]
+
+    Menyusun satu resep lalu memakainya bagi ketiga model memang menyederhanakan kode, tetapi menyesatkan secara didaktis. Pembakuan pada Random Forest tidak merugikan --- pembelahan hanya membandingkan urutan nilai, dan urutan tidak berubah oleh pembakuan --- tetapi memperlihatkan bahwa penyusunnya belum memahami kebutuhan tiap model. Pada pekerjaan nyata, resep yang berlebihan juga menambah waktu perhitungan tanpa manfaat.
+
+    \end{kotaksalah}'
+  - '### Menafsirkan Model Penggabung'
+  - 'Random Forest tidak dapat dibaca sebagai aturan sebagaimana pohon tunggal, sebab ia terdiri atas ratusan pohon. Penafsirannya bersandar pada kepentingan peubah, yang dapat dihitung dengan dua cara.
+
+    '
+  - '\begin{kotakinfo}[Dua ukuran kepentingan peubah]\par\smallskip
+
+    \begin{tabular}{@{}p{3.4cm}p{11.0cm}@{}}
+
+    \textbf{Ketidakmurnian} & jumlah penurunan ketidakmurnian akibat pembelahan pada peubah itu; cepat tetapi memihak peubah bertaraf banyak\\[3pt]
+
+    \textbf{Permutasi} & penurunan kinerja ketika peubah diacak; lebih mahal tetapi lebih dapat dipercaya\\
+
+    \end{tabular}
+
+    \end{kotakinfo}'
+  - '### Boosting sebagai Keluarga Penggabung Lain'
+  - 'Random Forest membangun pohon secara **sejajar dan saling bebas**, lalu merata-ratakan. Boosting bekerja sebaliknya: pohon dibangun **berurutan**, dan tiap pohon baru dilatih untuk memperbaiki kesalahan pohon sebelumnya.
+
+    '
+  - "\\begin{kotakinfo}[Bagging dibandingkan boosting]\\par\\smallskip\n\\begin{tabular}{@{}p{3.0cm}p{5.2cm}p{6.0cm}@{}}\n & \\textbf{Bagging (Random Forest)} & \\textbf{Boosting}\\\\\n\\hline\nUrutan & sejajar, saling bebas & berurutan, saling bergantung\\\\[2pt]\nSasaran tiap pohon & sasaran asli & sisaan pohon sebelumnya\\\\[2pt]\nYang dikurangi & ragam & bias\\\\[2pt]\nRisiko & rendah & \\emph{overfitting} bila terlalu banyak tahap\\\\[2pt]\nPenalaan & mudah & lebih menuntut\\\\\n\\end{tabular}\n\\end{kotakinfo}"
+  - 'Baris keempat menjelaskan perbedaan watak keduanya. Menambah pohon pada Random Forest aman, sedangkan menambah tahap pada boosting dapat merugikan --- sehingga boosting menuntut penghentian dini atau penalaan banyaknya tahap.
+
+    '
+  contoh:
+  - contoh: Membangkitkan data usahatani dan menetapkan acuan
+    kode_r: "dir.create(\"data\", showWarnings = FALSE)\nset.seed(2025)\nn <- 900\n\nluas_lahan  <- round(rlnorm(n, meanlog = log(1.2), sdlog = 0.5), 2)\ndosis_pupuk <- round(runif(n, 50, 400), 1)\numur_petani <- sample(20:70, n, TRUE)\npengalaman  <- round(runif(n, 0, 40), 1)\njarak_pasar <- round(runif(n, 0.5, 45), 1)\nirigasi     <- factor(sample(c(\"Teknis\", \"Sederhana\", \"Tadah hujan\"), n, TRUE,\n                             c(.35, .40, .25)))\npelatihan    <- factor(sample(c(\"Ya\", \"Tidak\"), n, TRUE, c(.40, .60)))\nakses_kredit <- factor(sample(c(\"Ya\", \"Tidak\"), n, TRUE, c(.30, .70)))\n\n# hubungan sengaja dibuat ADA agar kemampuan model dapat diuji\nskor <- -1.2 + 1.1 * log(luas_lahan) + 0.006 * dosis_pupuk +\n        0.03 * pengalaman - 0.02 * jarak_pasar - 0.01 * umur_petani +\n        0.80 * (irigasi == \"Teknis\") + 0.50 * (pelatihan == \"Ya\") +\n        0.35 * (akses_kredit == \"Ya\") + rnorm(n, 0, 0.6)\npeluang <- plogis(skor)\n\ntani <- data.frame(luas_lahan, dosis_pupuk, umur_petani, pengalaman, jarak_pasar,\n                   irigasi, pelatihan, akses_kredit,\n  produktif = factor(ifelse(peluang > quantile(peluang, 0.70), \"Ya\", \"Tidak\"),\n                     levels = c(\"Ya\", \"Tidak\")))\n\nwrite.csv(tani, \"data/data_usahatani.csv\", row.names = FALSE)\nstr(tani)\n\nprop <- prop.table(table(tani$produktif))\ncat(\"\\nproporsi kelas:\", round(prop, 4), \"\\n\")\ncat(\"acuan tebakan mayoritas:\", round(max(prop), 4), \"\\n\")"
+    judul_r: membangkitkan data bersinyal
+    eval: true
+    penjelasan: 'Delapan peubah dibangkitkan menyerupai hasil survei usahatani. Skor logit disusun sebagai kombinasi linier peubah tersebut dengan koefisien yang ditetapkan, lalu diubah menjadi peluang. Sasaran ditetapkan dari kuantil ke-70 sehingga kelas yang diperhatikan berjumlah sekitar tiga persepuluh. Data disimpan agar contoh berikutnya dapat membacanya.
+
+      '
+    interpretasi: 'Perhatikan bahwa hubungan antara peubah penjelas dan sasaran sengaja dibuat ada, lengkap dengan koefisien yang diketahui. Akibatnya model diharapkan berkinerja jauh di atas acuan tebakan mayoritas --- dan kinerja yang mendekati acuan justru menandakan ada kekeliruan pada alur kerja, bukan temuan mengenai datanya. Koefisien yang dipakai di sini juga menjadi pembanding ketika kepentingan peubah ditafsirkan pada contoh berikutnya.
+
+      '
+  - contoh: Membagi data dan menyiapkan lipatan
+    kode_r: "suppressPackageStartupMessages({\n  library(recipes); library(rsample); library(parsnip)\n  library(workflows); library(tune); library(yardstick); library(dplyr)})\n\nset.seed(2025)\nbagi <- initial_split(tani, prop = 0.75, strata = produktif)\nlat  <- training(bagi); uji <- testing(bagi)\n\nset.seed(2025)\nlipatan <- vfold_cv(lat, v = 5, strata = produktif)\n\nround(rbind(latih = prop.table(table(lat$produktif)),\n            uji   = prop.table(table(uji$produktif))), 4)\ncat(\"\\nukuran - latih:\", nrow(lat), \"| uji:\", nrow(uji), \"\\n\")\nprint(lipatan)"
+    judul_r: initial_split dan vfold_cv
+    eval: true
+    penjelasan: 'Data dibagi dengan penstrataan, lalu data latih dibagi lagi menjadi lima lipatan yang juga berstrata. Objek lipatan disimpan sekali dan akan dipakai bagi ketiga model.
+
+      '
+    interpretasi: 'Menyimpan objek lipatan sekali lalu memakainya bagi seluruh model adalah kunci keadilan perbandingan. Bila tiap model memakai pembagian sendiri, selisih kinerja yang terlihat boleh jadi hanya akibat pembagian yang berbeda, bukan akibat modelnya.
+
+      '
+  - contoh: Menyusun dua resep yang berbeda
+    kode_r: "# Resep A: bagi model berbasis jarak (SVM dan KNN)\nrec_jarak <- recipe(produktif ~ ., data = lat) |>\n  step_dummy(all_nominal_predictors()) |>\n  step_zv(all_predictors()) |>\n  step_normalize(all_numeric_predictors())     # pembakuan WAJIB\n\n# Resep B: bagi model berbasis pohon (Random Forest)\nrec_pohon <- recipe(produktif ~ ., data = lat) |>\n  step_zv(all_predictors())                    # tanpa pengodean maupun pembakuan\n\ncat(\"kolom hasil resep jarak:\", ncol(bake(prep(rec_jarak, lat), NULL)), \"\\n\")\ncat(\"kolom hasil resep pohon:\", ncol(bake(prep(rec_pohon, lat), NULL)), \"\\n\")\n\na <- bake(prep(rec_jarak, lat), NULL)\nnum <- names(a)[sapply(a, is.numeric)]\ncat(\"\\nrata-rata kolom numerik resep jarak (harus nol):\",\n    all(abs(round(colMeans(a[num]), 8)) == 0), \"\\n\")"
+    judul_r: dua resep untuk kebutuhan berbeda
+    eval: true
+    penjelasan: 'Dua resep disusun terpisah. Resep pertama mengodekan peubah kategori lalu membakukan seluruh peubah numerik, sesuai kebutuhan model berbasis jarak. Resep kedua hanya membuang peubah berragam nol, sebab pohon menangani kategori tanpa pengodean dan tidak memerlukan pembakuan.
+
+      '
+    interpretasi: 'Perhatikan perbedaan banyaknya kolom: resep jarak menghasilkan lebih banyak kolom karena tiap peubah kategori dipecah menjadi kolom boneka. Perhatikan pula pembuktian pada baris terakhir --- rata-rata kolom bernilai nol adalah cara memastikan pembakuan sungguh berjalan. Penyusunan dua resep terpisah inilah keunggulan pokok tidymodels dibanding kerangka yang menyeragamkan prapemrosesan bagi seluruh model.
+
+      '
+  - contoh: Menala Support Vector Machine
+    kode_r: "suppressPackageStartupMessages(library(kernlab))\n\nspec_svm <- svm_rbf(cost = tune(), rbf_sigma = tune()) |>\n  set_engine(\"kernlab\") |> set_mode(\"classification\")\nwf_svm <- workflow() |> add_recipe(rec_jarak) |> add_model(spec_svm)\n\nset.seed(2025)\n# kernlab mencetak pesan iterasi yang panjang; keluarannya ditangkap agar\n# tidak memenuhi halaman. Hasil penalaan tetap tersimpan pada tune_svm.\npesan <- capture.output(\n  tune_svm <- tune_grid(wf_svm, resamples = lipatan, grid = 8,\n                        metrics = metric_set(roc_auc, f_meas)))\n\ncollect_metrics(tune_svm) |>\n  filter(.metric == \"roc_auc\") |> arrange(desc(mean)) |>\n  select(cost, rbf_sigma, mean, std_err) |>\n  mutate(across(where(is.numeric), \\(x) signif(x, 4))) |>\n  as.data.frame() |> utils::head(5) |> print(row.names = FALSE)"
+    judul_r: svm_rbf dengan kisi acak
+    eval: true
+    penjelasan: 'Spesifikasi SVM berkernel RBF ditetapkan dengan kedua parameter ditandai tune. Argumen grid berupa angka meminta tune_grid membangkitkan kisi acak berukuran delapan pada rentang bawaan yang masuk akal bagi tiap parameter.
+
+      '
+    interpretasi: 'Kisi acak lebih efisien daripada kisi teratur ketika parameternya lebih dari satu, sebab tiap percobaan mencoba nilai berbeda pada seluruh dimensi sekaligus. Perhatikan bahwa resep yang dipakai adalah resep jarak --- SVM bersandar pada hasil kali dalam antar-amatan sehingga pembakuan wajib. Perhatikan pula kolom galat baku sebelum menyimpulkan kombinasi mana yang terbaik.
+
+      '
+  - contoh: Menala K-Nearest Neighbours
+    kode_r: "suppressPackageStartupMessages(library(kknn))\n\nspec_knn <- nearest_neighbor(neighbors = tune(), weight_func = tune()) |>\n  set_engine(\"kknn\") |> set_mode(\"classification\")\nwf_knn <- workflow() |> add_recipe(rec_jarak) |> add_model(spec_knn)\n\nkisi_knn <- expand.grid(neighbors = c(3, 5, 9, 15, 25, 41),\n                        weight_func = c(\"rectangular\", \"triangular\"),\n                        stringsAsFactors = FALSE)\nset.seed(2025)\ntune_knn <- tune_grid(wf_knn, resamples = lipatan, grid = kisi_knn,\n                      metrics = metric_set(roc_auc, f_meas))\n\ncollect_metrics(tune_knn) |>\n  filter(.metric == \"roc_auc\") |> arrange(desc(mean)) |>\n  select(neighbors, weight_func, mean, std_err) |>\n  mutate(across(where(is.numeric), \\(x) round(x, 4))) |>\n  as.data.frame() |> utils::head(6) |> print(row.names = FALSE)"
+    judul_r: nearest_neighbor dengan fungsi pembobot
+    eval: true
+    penjelasan: 'Selain banyaknya tetangga, fungsi pembobot ikut ditala. Pilihan rectangular memberi bobot sama bagi seluruh tetangga, sedangkan triangular memberi bobot lebih besar kepada tetangga yang lebih dekat. Kisi disusun secara tegas agar seluruh kombinasi dicoba.
+
+      '
+    interpretasi: 'Pembobotan menurut jarak lazimnya sedikit unggul, sebab tetangga yang jauh memang kurang layak diperhitungkan setara dengan yang dekat. Perhatikan bahwa KNN memakai resep jarak yang sama dengan SVM --- keduanya sama-sama bersandar pada jarak sehingga pembakuan menentukan. Tanpa pembakuan, peubah dosis pupuk yang bersatuan ratusan akan menenggelamkan peubah luas lahan yang bersatuan satuan.
+
+      '
+  - contoh: Menala Random Forest
+    kode_r: "suppressPackageStartupMessages(library(ranger))\n\nspec_rf <- rand_forest(mtry = tune(), min_n = tune(), trees = 500) |>\n  set_engine(\"ranger\", importance = \"permutation\") |>\n  set_mode(\"classification\")\nwf_rf <- workflow() |> add_recipe(rec_pohon) |> add_model(spec_rf)\n\nset.seed(2025)\ntune_rf <- tune_grid(wf_rf, resamples = lipatan, grid = 8,\n                     metrics = metric_set(roc_auc, f_meas))\n\ncollect_metrics(tune_rf) |>\n  filter(.metric == \"roc_auc\") |> arrange(desc(mean)) |>\n  select(mtry, min_n, mean, std_err) |>\n  mutate(across(where(is.numeric), \\(x) round(x, 4))) |>\n  as.data.frame() |> utils::head(5) |> print(row.names = FALSE)"
+    judul_r: rand_forest dengan mesin ranger
+    eval: true
+    penjelasan: 'Random Forest ditala pada dua parameter, sedangkan banyaknya pohon ditetapkan lima ratus tanpa ditala. Argumen importance bernilai permutation meminta ranger menghitung kepentingan peubah berbasis permutasi saat pelatihan.
+
+      '
+    interpretasi: 'Perhatikan bahwa resep yang dipakai adalah resep pohon --- tanpa pengodean maupun pembakuan. Perhatikan pula bahwa banyaknya pohon sengaja tidak ditala; menambah pohon pada Random Forest tidak menimbulkan *overfitting* melainkan hanya menambah waktu perhitungan sampai kinerjanya mendatar. Menalanya berarti membuang waktu penalaan yang lebih berguna dialokasikan bagi kedua parameter lain.
+
+      '
+  - contoh: Membandingkan ketiga model secara adil
+    kode_r: "ambil_terbaik <- function(hasil, nama) {\n  collect_metrics(hasil) |>\n    filter(.metric == \"roc_auc\") |>\n    arrange(desc(mean)) |> utils::head(1) |>\n    transmute(model = nama, AUC = round(mean, 4), galat_baku = round(std_err, 4))\n}\n\nbanding <- bind_rows(\n  ambil_terbaik(tune_svm, \"SVM\"),\n  ambil_terbaik(tune_knn, \"KNN\"),\n  ambil_terbaik(tune_rf,  \"Random Forest\"))\nprint(as.data.frame(banding), row.names = FALSE)\n\ncat(\"\\nselisih terbesar antar-model:\",\n    round(max(banding$AUC) - min(banding$AUC), 4), \"\\n\")\ncat(\"galat baku terbesar          :\", round(max(banding$galat_baku), 4), \"\\n\")"
+    judul_r: menyandingkan hasil penalaan ketiga model
+    eval: true
+    penjelasan: 'Fungsi bantu dibuat untuk mengambil satu baris terbaik dari tiap hasil penalaan. Ketiganya digabungkan menjadi satu tabel, lalu selisih terbesar antar-model dibandingkan terhadap galat baku terbesar.
+
+      '
+    interpretasi: 'Perbandingan dua angka terakhir menentukan kesimpulannya. Bila selisih antar-model lebih kecil daripada galat bakunya, maka menyatakan satu model lebih baik tidak didukung bukti --- dan pilihan sebaiknya jatuh pada model yang lebih murah dihitung atau lebih mudah dijelaskan. Perhatikan pula bahwa perbandingan ini adil karena ketiganya dinilai pada objek lipatan yang sama.
+
+      '
+  - contoh: Menggambarkan perbandingan beserta ketidakpastiannya
+    kode_r: "bp <- barplot(banding$AUC, names.arg = banding$model,\n              col = c(\"#0B6FB4\", \"#F58220\", \"#00A651\"), border = \"white\",\n              ylim = c(0, max(banding$AUC + banding$galat_baku) * 1.25),\n              ylab = \"ROC-AUC (validasi silang)\",\n              main = \"Perbandingan Tiga Model Klasifikasi Lanjut\")\narrows(bp, banding$AUC - banding$galat_baku,\n       bp, banding$AUC + banding$galat_baku,\n       angle = 90, code = 3, length = 0.06, lwd = 2)\nabline(h = 0.5, col = \"#C0392B\", lty = 2, lwd = 2)\ntext(bp, banding$AUC + banding$galat_baku, banding$AUC, pos = 3, cex = 0.85)"
+    judul_r: barplot dengan palang galat baku
+    eval: true
+    penjelasan: 'Rata-rata AUC tiap model digambar sebagai batang, dilengkapi palang galat baku memakai arrows bersudut sembilan puluh derajat di kedua ujungnya. Garis acuan pada nilai setengah menandai kinerja tebakan acak.
+
+      '
+    interpretasi: 'Palang galat baku inilah yang mencegah kesimpulan tergesa. Bila palang antar-model saling bertumpang tindih, selisih rata-ratanya tidak dapat dianggap berarti. Menyajikan batang tanpa palang --- sebagaimana lazim ditemui pada laporan --- menyembunyikan ketidakpastian dan mendorong pembaca menyimpulkan lebih dari yang didukung data.
+
+      '
+  - contoh: Menyelesaikan model terpilih pada data uji
+    kode_r: "terbaik_nama <- banding$model[which.max(banding$AUC)]\ncat(\"model terpilih:\", terbaik_nama, \"\\n\\n\")\n\nwf_pilih <- switch(terbaik_nama,\n  \"SVM\"           = finalize_workflow(wf_svm, select_best(tune_svm, metric = \"roc_auc\")),\n  \"KNN\"           = finalize_workflow(wf_knn, select_best(tune_knn, metric = \"roc_auc\")),\n  \"Random Forest\" = finalize_workflow(wf_rf,  select_best(tune_rf,  metric = \"roc_auc\")))\n\nset.seed(2025)\npesan <- capture.output(\n  akhir <- last_fit(wf_pilih, split = bagi,\n    metrics = metric_set(roc_auc, f_meas, accuracy, sensitivity, specificity)))\n\ncollect_metrics(akhir) |>\n  mutate(.estimate = round(.estimate, 4)) |>\n  select(.metric, .estimate) |> print()\n\npred <- collect_predictions(akhir)\nprint(conf_mat(pred, truth = produktif, estimate = .pred_class))\ncat(\"\\nacuan tebakan mayoritas:\",\n    round(max(prop.table(table(uji$produktif))), 4), \"\\n\")"
+    judul_r: finalize_workflow dan last_fit
+    eval: true
+    penjelasan: 'Model berata-rata AUC tertinggi dipilih secara terprogram, alur kerjanya diselesaikan dengan parameter terbaik, lalu dinilai satu kali pada data uji dengan lima ukuran sekaligus.
+
+      '
+    interpretasi: 'Inilah satu-satunya kali data uji disentuh; seluruh keputusan penalaan dan pemilihan model diambil lewat validasi silang pada data latih. Bandingkan akurasi terhadap acuan tebakan mayoritas --- bila keduanya berdekatan, model belum menyumbang apa pun betapapun rumitnya. Perhatikan pula sensitivitas dan spesifisitas yang disajikan terpisah, sebab keduanya kerap sangat berbeda pada data yang kelasnya tidak seimbang.
+
+      '
+  - contoh: Menafsirkan Random Forest melalui kepentingan peubah
+    kode_r: "set.seed(2025)\nm_rf <- fit(finalize_workflow(wf_rf, select_best(tune_rf, metric = \"roc_auc\")),\n            data = lat)\n\npenting <- m_rf |> extract_fit_engine() |> (\\(x) x$variable.importance)()\nimp <- data.frame(peubah = names(penting),\n                  kepentingan = round(as.numeric(penting), 5))\nimp <- imp[order(-imp$kepentingan), ]\nprint(imp, row.names = FALSE)\n\npar(mar = c(4.5, 9, 3, 2))\nbarplot(rev(imp$kepentingan), names.arg = rev(imp$peubah), horiz = TRUE,\n        las = 1, col = \"#00A651\", border = \"white\",\n        xlab = \"Penurunan kinerja saat peubah diacak\",\n        main = \"Kepentingan Peubah (permutasi)\")\npar(mar = c(5, 4, 4, 2) + 0.1)"
+    judul_r: extract_fit_engine dan variable.importance
+    eval: true
+    penjelasan: 'Random Forest dilatih ulang dengan parameter terbaik pada seluruh data latih. Objek model asli diambil dari alur kerja memakai extract_fit_engine, lalu kepentingan peubah yang sudah dihitung ranger saat pelatihan diambil dan digambar sebagai batang mendatar.
+
+      '
+    interpretasi: 'Kepentingan berbasis permutasi lebih dapat dipercaya daripada yang berbasis ketidakmurnian, sebab yang terakhir memihak peubah bertaraf banyak maupun peubah numerik berrentang lebar. Bandingkan urutan yang diperoleh terhadap pengetahuan bidang: bila peubah yang menurut teori paling menentukan produktivitas memang muncul di atas, model menangkap struktur yang masuk akal. Perlu ditegaskan bahwa kepentingan menyatakan sumbangan terhadap dugaan, **bukan** hubungan sebab-akibat --- menaikkan dosis pupuk belum tentu menaikkan produktivitas hanya karena peubah itu tampak penting.
+
+      '
+  - contoh: Memeriksa biaya perhitungan tiap model
+    kode_r: "waktu <- sapply(list(SVM = wf_svm, KNN = wf_knn, `Random Forest` = wf_rf),\n  function(w) {\n    sp <- switch(class(extract_spec_parsnip(w))[1],\n      \"svm_rbf\" = svm_rbf(cost = 1, rbf_sigma = 0.01),\n      \"nearest_neighbor\" = nearest_neighbor(neighbors = 9),\n      rand_forest(mtry = 3, min_n = 5, trees = 500))\n    sp <- set_mode(set_engine(sp,\n      switch(class(sp)[1], \"svm_rbf\" = \"kernlab\",\n             \"nearest_neighbor\" = \"kknn\", \"ranger\")), \"classification\")\n    w2 <- update_model(w, sp)\n    set.seed(2025)\n    system.time(capture.output(fit(w2, data = lat)))[[\"elapsed\"]]\n  })\ntabel_waktu <- data.frame(model = names(waktu),\n                          detik_latih = round(as.numeric(waktu), 3))\nprint(tabel_waktu, row.names = FALSE)"
+    judul_r: system.time atas ketiga model
+    eval: true
+    penjelasan: 'Tiap alur kerja dilatih sekali dengan parameter tetap, dan lamanya diukur memakai system.time. Fungsi update_model mengganti spesifikasi bertanda tune menjadi spesifikasi bernilai tetap agar dapat dilatih langsung.
+
+      '
+    interpretasi: 'Waktu latih adalah pertimbangan nyata yang kerap terlupakan pada perbandingan model. KNN lazimnya tercepat dilatih karena ia hanya menyimpan data --- tetapi justru paling lambat saat menduga. SVM lazimnya paling lambat dilatih karena menuntut penyelesaian masalah optimasi. Bila selisih kinerja antar-model tidak berarti secara statistik, biaya perhitungan menjadi alasan yang sah untuk memilih.
+
+      '
+  - contoh: Menggambarkan kurva ROC ketiga model
+    kode_r: "kurva_model <- function(wf, hasil, nama) {\n  set.seed(2025)\n  pesan <- capture.output(\n    m <- fit(finalize_workflow(wf, select_best(hasil, metric = \"roc_auc\")), data = lat))\n  p <- predict(m, uji, type = \"prob\") |> bind_cols(uji |> select(produktif))\n  k <- roc_curve(p, truth = produktif, .pred_Ya)\n  data.frame(fpr = 1 - k$specificity, tpr = k$sensitivity, model = nama)\n}\n\nsemua <- rbind(kurva_model(wf_svm, tune_svm, \"SVM\"),\n               kurva_model(wf_knn, tune_knn, \"KNN\"),\n               kurva_model(wf_rf,  tune_rf,  \"Random Forest\"))\n\nwarna <- c(SVM = \"#0B6FB4\", KNN = \"#F58220\", `Random Forest` = \"#00A651\")\nplot(NA, xlim = c(0, 1), ylim = c(0, 1),\n     xlab = \"1 - spesifisitas\", ylab = \"sensitivitas\",\n     main = \"Kurva ROC Ketiga Model pada Data Uji\")\nfor (nm in names(warna)) {\n  s <- semua[semua$model == nm, ]\n  lines(s$fpr, s$tpr, lwd = 2, col = warna[nm])\n}\nabline(0, 1, col = \"#C0392B\", lty = 2, lwd = 2)\nlegend(\"bottomright\", names(warna), col = warna, lwd = 2, bty = \"n\", cex = 0.85)\ngrid(col = \"grey88\")"
+    judul_r: menyandingkan tiga kurva ROC
+    eval: true
+    penjelasan: 'Fungsi bantu melatih tiap model dengan parameter terbaiknya, menduga pada data uji, lalu mengembalikan koordinat kurva ROC-nya. Ketiga kurva digambar pada sumbu yang sama di atas kanvas kosong.
+
+      '
+    interpretasi: 'Menyandingkan ketiga kurva memperlihatkan sesuatu yang tidak tertangkap oleh satu angka AUC: dua model dapat berAUC nyaris sama tetapi berperilaku berbeda pada bagian kurva yang berlainan. Bila penerapan menuntut sensitivitas tinggi, yang menentukan adalah bagian kiri kurva --- dan model yang unggul di sana belum tentu model berAUC tertinggi. Perlu dicatat bahwa gambar ini memakai data uji, sehingga hanya boleh dibuat setelah seluruh keputusan pemilihan model selesai diambil.
+
+      '
+  latihan:
+  - Kerjakan bertahap. Gunakan `data/data_usahatani.csv`.
+  - '#### Tingkat Dasar (melengkapi kode)'
+  - \latihan{Dua resep berbeda}
+  - "```{r eval=FALSE}\nlibrary(recipes); library(rsample)\ntani <- read.csv(\"data/data_usahatani.csv\", stringsAsFactors = TRUE)\ntani$produktif <- factor(tani$produktif, levels = c(\"Ya\", \"Tidak\"))\nset.seed(2025)\nbagi <- initial_split(tani, prop = 0.75, strata = produktif)\nlat <- training(bagi); uji <- testing(bagi)\n\nrec_jarak <- recipe(produktif ~ ., data = lat) |>\n  step_dummy(all_nominal_predictors()) |>\n  ____(all_numeric_predictors())        # pembakuan WAJIB bagi SVM dan KNN\n\nrec_pohon <- recipe(produktif ~ ., data = lat) |>\n  ____(all_predictors())                # cukup buang peubah berragam nol\n```"
+  - \latihan{Spesifikasi tiga model}
+  - "```{r eval=FALSE}\nlibrary(parsnip)\nspec_svm <- ____(cost = tune(), rbf_sigma = tune()) |>\n  set_engine(\"____\") |> set_mode(\"classification\")\nspec_knn <- nearest_neighbor(neighbors = tune()) |>\n  set_engine(\"____\") |> set_mode(\"classification\")\nspec_rf  <- ____(mtry = tune(), min_n = tune(), trees = 500) |>\n  set_engine(\"ranger\", importance = \"____\") |> set_mode(\"classification\")\n```"
+  - \latihan{Perbandingan adil}
+  - "```{r eval=FALSE}\nlibrary(tune)\nset.seed(2025)\nlipatan <- ____(lat, v = 5, strata = produktif)   # dipakai SEMUA model\nh_svm <- tune_grid(wf_svm, resamples = ____, grid = 8,\n                   metrics = metric_set(roc_auc))\n____(h_svm, metric = \"roc_auc\")                    # kombinasi terbaik\n```"
+  - '#### Tingkat Menengah (menulis sendiri)'
+  - \latihan{Menguji kebutuhan pembakuan}
+  - 'Latih Random Forest **dua kali**: dengan resep pohon dan dengan resep jarak. Latih pula KNN dua kali dengan kedua resep tersebut. Sajikan keempat AUC sebagai tabel, lalu jelaskan mengapa pembakuan hampir tidak berpengaruh pada Random Forest tetapi sangat berpengaruh pada KNN.'
+  - \latihan{Membetulkan kode yang salah}
+  - Kode berikut memuat empat kesalahan (satu resep dipakai bagi seluruh model, tiap model memakai lipatan sendiri, `trees` ikut ditala, dan pemilihan model dilakukan pada data uji). Temukan dan perbaiki, lalu jelaskan akibat masing-masing.
+  - "```{r eval=FALSE}\nlibrary(tune); library(parsnip); library(workflows)\n\n# (a) satu resep dipakai bagi ketiga model\nrec <- recipe(produktif ~ ., data = lat) |>\n  step_dummy(all_nominal_predictors()) |>\n  step_normalize(all_numeric_predictors())\n\n# (b) tiap model memakai lipatan sendiri\nset.seed(1); lip_svm <- vfold_cv(lat, v = 5)\nset.seed(2); lip_rf  <- vfold_cv(lat, v = 5)\n\n# (c) banyaknya pohon ikut ditala\nspec_rf <- rand_forest(mtry = tune(), min_n = tune(), trees = tune()) |>\n  set_engine(\"ranger\") |> set_mode(\"classification\")\n\n# (d) model dipilih berdasarkan kinerja pada data uji\nfor (m in daftar_model) {\n  d <- predict(fit(m, lat), uji) |> bind_cols(uji |> select(produktif))\n  cat(accuracy(d, produktif, .pred_class)$.estimate, \"\\n\")\n}\n```"
+  - "**Keluaran yang benar.** Setelah diperbaiki, kode yang dipakai adalah sebagai berikut.\n\n```\n# (a) resep disesuaikan dengan kebutuhan tiap model\nrec_jarak <- recipe(produktif ~ ., data = lat) |>\n  step_dummy(all_nominal_predictors()) |> step_zv(all_predictors()) |>\n  step_normalize(all_numeric_predictors())      # SVM dan KNN\nrec_pohon <- recipe(produktif ~ ., data = lat) |>\n  step_zv(all_predictors())                      # Random Forest\n\n# (b) satu objek lipatan dipakai SELURUH model\nset.seed(2025)\nlipatan <- vfold_cv(lat, v = 5, strata = produktif)\n\n# (c) trees ditetapkan, tidak ditala\nspec_rf <- rand_forest(mtry = tune(), min_n = tune(), trees = 500) |>\n  set_engine(\"ranger\", importance = \"permutation\") |>\n  set_mode(\"classification\")\n\n# (d) pemilihan model memakai validasi silang pada data latih\nh_rf <- tune_grid(wf_rf, resamples = lipatan, grid = 8,\n                  metrics = metric_set(roc_auc))\nshow_best(h_rf, metric = \"roc_auc\", n = 1)\n```\n\nPemeriksaan yang wajib berhasil: `identical(lipatan$id, lipatan$id)` bernilai **TRUE** bagi seluruh model karena objeknya sama, dan `\"trees\" %in% names(select_best(h_rf, metric = \"roc_auc\"))` bernilai **FALSE** karena `trees` tidak lagi ditala."
+  - '#### Tingkat Lanjut (pemilihan)'
+  - \latihan{Memilih model menurut kebutuhan}
+  - 'Untuk masing-masing keadaan berikut, tentukan model yang Anda pilih dari ketiganya beserta alasannya, dan sebutkan **satu kelemahan** pilihan itu: (a) dugaan harus dihasilkan sangat cepat pada jutaan amatan baru; (b) data memuat banyak peubah yang diduga tidak relevan; (c) data memuat pencilan ekstrem yang diyakini sah; (d) hasil harus disertai daftar peubah paling berpengaruh.'
+  penugasan:
+  - '\begin{kotaktugas}
+
+    Sebagai calon analis pada instansi statistik, bangun dan bandingkan tiga model klasifikasi lanjut atas \texttt{data\_usahatani.csv} (\emph{data simulasi}), lalu rekomendasikan satu model dengan mempertimbangkan kinerja, kestabilan, dan biaya perhitungan.
+
+    \end{kotaktugas}'
+  - '**Konteks.** Sebuah unit hendak menduga rumah tangga usahatani yang tergolong produktif, sebagai dasar penyasaran program penyuluhan. Hasilnya perlu disertai daftar peubah yang paling menentukan.'
+  - \tugas{Penyiapan}
+  - 1. Periksa ketimpangan kelas dan laporkan **acuan tebakan mayoritas**. Sajikan pula profil awal tiap peubah numerik menurut kelas.
+  - 2. Bagi data dengan penstrataan dan siapkan **satu objek lipatan** yang akan dipakai seluruh model. Jelaskan mengapa objek itu tidak boleh dibuat ulang untuk tiap model.
+  - '3. Susun **dua resep berbeda**: satu bagi model berbasis jarak dan satu bagi model berbasis pohon. Jelaskan perbedaannya beserta alasan tiap langkah.'
+  - \tugas{Pemodelan}
+  - 4. Tala **SVM** pada kedua parameternya. Sajikan lima kombinasi teratas beserta galat bakunya.
+  - 5. Tala **KNN** pada banyaknya tetangga dan fungsi pembobot. Jelaskan pengaruh masing-masing terhadap bentuk batas keputusan.
+  - 6. Tala **Random Forest** pada `mtry` dan `min_n`. Jelaskan mengapa `trees` tidak perlu ikut ditala.
+  - \tugas{Perbandingan dan Penafsiran}
+  - 7. Bandingkan ketiganya pada **lipatan yang sama**. Sajikan tabel dan grafik berpalang galat baku. Nilai apakah selisih antar-model melampaui galat bakunya.
+  - 8. Ukur **waktu latih** ketiga model. Bahas pula perbedaan biaya pada tahap dugaan, khususnya bagi KNN.
+  - 9. Selesaikan model terpilih dan nilai pada data uji dengan minimal lima ukuran. Sajikan matriks kekeliruan dan bandingkan terhadap acuan.
+  - 10. Sajikan **kepentingan peubah** dari Random Forest sebagai tabel dan grafik. Bandingkan urutannya terhadap pengetahuan bidang, lalu jelaskan mengapa kepentingan bukan hubungan sebab-akibat.
+  - '11. **Uji kebutuhan pembakuan**: latih Random Forest dan KNN masing-masing dengan kedua resep. Sajikan keempat hasilnya dan jelaskan polanya.'
+  - 12. Susun rekomendasi akhir yang mempertimbangkan **kinerja, kestabilan antar-lipatan, biaya perhitungan, dan kemudahan penafsiran** --- bukan AUC semata.
+  - '13. Susun laporan R Markdown berisi kode, keluaran, gambar, dan interpretasi. Tutup dengan **ringkasan (maksimal 300 kata)** memuat: model yang direkomendasikan beserta alasannya, kinerja terhadap acuan, keterbatasan, dan penegasan bahwa data merupakan simulasi.'
+  tambahan:
+  - 'Ketiga model pada bagian Contoh mewakili dua cara berpikir: berbasis jarak dan berbasis pohon yang digabung secara sejajar. Bagian ini memperkenalkan cara ketiga --- penggabungan **berurutan** yang disebut boosting.
+
+    '
+  - '\begin{kotakperhatian}[Mengapa memakai Python di sini]
+
+    Paket \texttt{xgboost} dan \texttt{lightgbm} untuk R menuntut kompilasi C++ yang berat dan kerap gagal pada mesin berinti sedikit. Karena itu bagian ini memakai Python, tempat keduanya tersedia sebagai paket siap pasang. Gagasannya sama persis; yang berbeda hanya tata caranya. Bila kedua paket berhasil dipasang di komputer Anda, seluruh contoh ini dapat dikerjakan di R melalui \texttt{parsnip::boost\_tree()}.
+
+    \end{kotakperhatian}'
+  - contoh: Menyiapkan data yang sama di Python
+    kode_py: 'import pandas as pd
+
+      import numpy as np
+
+
+      tani = pd.read_csv("data/data_usahatani.csv").drop(columns=["id"])
+
+      y = (tani["produktif"] == "Ya").astype(int)
+
+      X = pd.get_dummies(tani.drop(columns=["produktif"]), drop_first=True)
+
+
+      print("dimensi:", X.shape)
+
+      print("proporsi kelas positif:", round(y.mean(), 4))
+
+      print("kolom setelah pengodean:", list(X.columns)[:6], "...")'
+    judul_py: membaca data dan mengodekan kategori
+    eval: false
+    penjelasan: 'Data yang sama dibaca dengan pandas. Sasaran diubah menjadi nol dan satu, sedangkan peubah kategori dikodekan menjadi kolom boneka memakai get_dummies dengan argumen drop_first agar tidak terjadi kolinearitas sempurna.
+
+      '
+    interpretasi: 'Perhatikan bahwa **tidak ada pembakuan** di sini. Boosting berbasis pohon sama seperti Random Forest: pembelahan hanya membandingkan urutan nilai, sehingga penskalaan tidak berpengaruh. Kesesuaian prapemrosesan dengan model yang menjadi sorotan modul ini berlaku sama di kedua bahasa.
+
+      '
+  - contoh: Melatih XGBoost dan LightGBM
+    kode_py: "from sklearn.model_selection import train_test_split\nfrom sklearn.metrics import roc_auc_score, f1_score\nimport xgboost as xgb, lightgbm as lgb\n\nXtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.25,\n                                      stratify=y, random_state=2025)\n\nbobot = (ytr == 0).sum() / (ytr == 1).sum()      # menangani ketimpangan\n\nxg = xgb.XGBClassifier(scale_pos_weight=bobot, max_depth=4, n_estimators=200,\n                       learning_rate=0.08, eval_metric=\"logloss\",\n                       random_state=2025).fit(Xtr, ytr)\nlg = lgb.LGBMClassifier(is_unbalance=True, random_state=2025,\n                        verbose=-1).fit(Xtr, ytr)\n\nfor nama, m in [(\"XGBoost\", xg), (\"LightGBM\", lg)]:\n    prob = m.predict_proba(Xte)[:, 1]\n    print(f\"{nama:9s} AUC={roc_auc_score(yte, prob):.4f} \"\n          f\"F1={f1_score(yte, m.predict(Xte)):.4f}\")"
+    judul_py: dua pustaka boosting
+    eval: false
+    penjelasan: 'Data dibagi dengan penstrataan. Bobot kelas dihitung sebagai perbandingan cacah kelas negatif terhadap positif, lalu diberikan lewat scale_pos_weight pada XGBoost dan is_unbalance pada LightGBM. Kedua model dilatih dan dinilai dengan dua ukuran.
+
+      '
+    interpretasi: 'Kedua pustaka menerapkan gagasan yang sama dengan penekanan berbeda: XGBoost menumbuhkan pohon secara berlapis sedangkan LightGBM menumbuhkannya menurut daun yang paling menjanjikan, sehingga LightGBM lazimnya lebih cepat pada data besar. Perhatikan bahwa laju belajar ditetapkan kecil sekaligus banyaknya tahap ditetapkan besar --- keduanya saling mengimbangi, dan itulah cara lazim menala boosting.
+
+      '
+  - contoh: Memeriksa risiko overfitting pada boosting
+    kode_py: "hasil = []\nfor n_est in [25, 50, 100, 200, 400, 800]:\n    m = xgb.XGBClassifier(scale_pos_weight=bobot, max_depth=4,\n                          n_estimators=n_est, learning_rate=0.08,\n                          eval_metric=\"logloss\", random_state=2025).fit(Xtr, ytr)\n    hasil.append({\n        \"tahap\": n_est,\n        \"AUC_latih\": round(roc_auc_score(ytr, m.predict_proba(Xtr)[:, 1]), 4),\n        \"AUC_uji\":   round(roc_auc_score(yte, m.predict_proba(Xte)[:, 1]), 4)})\n\ntabel = pd.DataFrame(hasil)\ntabel[\"jarak\"] = (tabel[\"AUC_latih\"] - tabel[\"AUC_uji\"]).round(4)\nprint(tabel.to_string(index=False))"
+    judul_py: menambah tahap boosting secara bertahap
+    eval: false
+    penjelasan: 'Enam nilai banyaknya tahap dicoba. Pada masing-masing, AUC dihitung dua kali: pada data latih dan pada data uji. Selisih keduanya ditampilkan sebagai kolom jarak.
+
+      '
+    interpretasi: 'Inilah perbedaan watak yang dibahas pada Teori. Pada Random Forest, menambah pohon aman karena tiap pohon dilatih saling bebas. Pada boosting, menambah tahap terus-menerus membuat model makin menyesuaikan diri pada data latih sehingga kolom jarak melebar --- wujud *overfitting*. Karena itu boosting menuntut penghentian dini atau penalaan banyaknya tahap, sedangkan Random Forest tidak.
+
+      '
+  - '\begin{kotaktips}
+
+    Urutan penalaan boosting yang lazim: tetapkan laju belajar kecil (0,05 sampai 0,1), tala kedalaman pohon dan banyaknya tahap bersama-sama, baru sesuaikan parameter penyusutan bila diperlukan. Menala seluruh parameter sekaligus pada kisi penuh hampir selalu terlalu mahal.
+
+    \end{kotaktips}'
+  - '\begin{kotakinfo}[Padanan istilah antar-pustaka]\par\smallskip
+
+    \begin{tabular}{@{}p{4.4cm}p{4.8cm}p{4.6cm}@{}}
+
+    \textbf{Gagasan} & \textbf{XGBoost} & \textbf{parsnip}\\
+
+    \hline
+
+    Banyaknya tahap & \texttt{n\_estimators} & \texttt{trees}\\[2pt]
+
+    Laju belajar & \texttt{learning\_rate} & \texttt{learn\_rate}\\[2pt]
+
+    Kedalaman pohon & \texttt{max\_depth} & \texttt{tree\_depth}\\[2pt]
+
+    Bobot kelas & \texttt{scale\_pos\_weight} & lewat \texttt{themis}\\
+
+    \end{tabular}
+
+    \end{kotakinfo}'
+  ringkasan:
+  - '\begin{kotaktujuan}
+
+    \textbf{Daftar periksa penguasaan:}
+
+    \begin{itemize}
+
+    \item[$\square$] Saya dapat menjelaskan gagasan margin dan kernel pada SVM.
+
+    \item[$\square$] Saya memahami bahwa KNN memindahkan biaya ke tahap dugaan.
+
+    \item[$\square$] Saya dapat menjelaskan dua sumber keragaman antar-pohon pada Random Forest.
+
+    \item[$\square$] Saya menyusun resep berbeda sesuai kebutuhan tiap model.
+
+    \item[$\square$] Saya tahu SVM dan KNN menuntut pembakuan, Random Forest tidak.
+
+    \item[$\square$] Saya memakai satu objek lipatan bagi seluruh model agar perbandingannya adil.
+
+    \item[$\square$] Saya tidak menala banyaknya pohon pada Random Forest.
+
+    \item[$\square$] Saya memeriksa galat baku sebelum menyatakan satu model lebih baik.
+
+    \item[$\square$] Saya mempertimbangkan biaya perhitungan, bukan kinerja semata.
+
+    \item[$\square$] Saya dapat membedakan bagging dan boosting beserta akibatnya.
+
+    \item[$\square$] Saya menyadari bahwa kepentingan peubah bukan hubungan sebab-akibat.
+
+    \end{itemize}
+
+    \end{kotaktujuan}'
+  - '**Kartu Referensi Cepat.**'
+  - '\begin{kotakrumus}\par\smallskip
+
+    \begin{tabular}{@{}ll@{}}
+
+    \textbf{Keperluan} & \textbf{Perintah}\\
+
+    Lipatan bersama & \texttt{vfold\_cv(lat, v = 5, strata =)}\\
+
+    Resep berbasis jarak & \texttt{step\_dummy()} lalu \texttt{step\_normalize()}\\
+
+    Resep berbasis pohon & \texttt{step\_zv()} saja\\
+
+    SVM & \texttt{svm\_rbf(cost =, rbf\_sigma =)}\\
+
+    KNN & \texttt{nearest\_neighbor(neighbors =, weight\_func =)}\\
+
+    Random Forest & \texttt{rand\_forest(mtry =, min\_n =, trees = 500)}\\
+
+    Kepentingan peubah & \texttt{set\_engine("ranger", importance = "permutation")}\\
+
+    Penalaan kisi acak & \texttt{tune\_grid(wf, resamples =, grid = 8)}\\
+
+    Kombinasi terbaik & \texttt{show\_best()}, \texttt{select\_best()}\\
+
+    Mengambil model asli & \texttt{extract\_fit\_engine(m)}\\
+
+    Mengukur waktu & \texttt{system.time(fit(wf, data))}\\
+
+    Boosting (Python) & \texttt{xgb.XGBClassifier(...)}\\
+
+    \end{tabular}
+
+    \end{kotakrumus}'
+  - 'Modul ini membangun tiga model yang lebih kuat daripada modul sebelumnya, dengan harga berupa kebutuhan prapemrosesan yang berbeda-beda dan penafsiran yang lebih sukar. Prinsip yang perlu dibawa: sesuaikan resep dengan kebutuhan tiap model, bukan menyeragamkannya; pakai satu objek lipatan agar perbandingan adil; jangan menala parameter yang tidak perlu ditala; periksa galat baku sebelum menyimpulkan selisih; pertimbangkan biaya perhitungan pada tahap latih maupun tahap dugaan; dan ingat bahwa kepentingan peubah menyatakan sumbangan terhadap dugaan, bukan sebab-akibat. Modul berikutnya membahas jaringan syaraf tiruan.'
+  referensi:
+  - Cortes, C., & Vapnik, V. (1995). Support-vector networks. *Machine Learning*, 20(3), 273-297.
+  - Breiman, L. (2001). Random forests. *Machine Learning*, 45(1), 5-32.
+  - Hastie, T., Tibshirani, R., & Friedman, J. (2009). *The Elements of Statistical Learning* (2nd ed.). Springer.
+  - Kuhn, M., & Silge, J. (2022). *Tidy Modeling with R*. O'Reilly Media.
+  - 'Chen, T., & Guestrin, C. (2016). XGBoost: A scalable tree boosting system. *KDD 2016*, 785-794.'
+  - Strobl, C., Boulesteix, A.-L., Zeileis, A., & Hothorn, T. (2007). Bias in random forest variable importance measures. *BMC Bioinformatics*, 8, 25.
+references:
+- Cortes, C., & Vapnik, V. (1995). Support-vector networks. Machine Learning, 20(3), 273-297.
+- Breiman, L. (2001). Random forests. Machine Learning, 45(1), 5-32.
+- Hastie, T., Tibshirani, R., & Friedman, J. (2009). The Elements of Statistical Learning (2nd ed.). Springer.
+- Kuhn, M., & Silge, J. (2022). Tidy Modeling with R. O'Reilly Media.
+- 'Chen, T., & Guestrin, C. (2016). XGBoost: A scalable tree boosting system. KDD 2016, 785-794.'
+- Strobl, C., Boulesteix, A.-L., Zeileis, A., & Hothorn, T. (2007). Bias in random forest variable importance measures. BMC Bioinformatics, 8, 25.
+exercises:
+- id: L9.1
+  points: 15
+  solution: 'Tingkat Dasar: dua resep berbeda, spesifikasi tiga model, dan perbandingan adil.'
+  judul_r: Solusi Tingkat Dasar (R)
+  solusi_r: "suppressPackageStartupMessages({\n  library(recipes); library(rsample); library(parsnip); library(workflows)\n  library(tune); library(yardstick); library(dplyr)})\n\ntani <- read.csv(\"data/data_usahatani.csv\", stringsAsFactors = TRUE)\ntani$produktif <- factor(tani$produktif, levels = c(\"Ya\", \"Tidak\"))\nset.seed(2025)\nbagi <- initial_split(tani, prop = 0.75, strata = produktif)\nlat  <- training(bagi); uji <- testing(bagi)\nset.seed(2025)\nlipatan <- vfold_cv(lat, v = 5, strata = produktif)\n\nrec_jarak <- recipe(produktif ~ ., data = lat) |>\n  step_dummy(all_nominal_predictors()) |> step_zv(all_predictors()) |>\n  step_normalize(all_numeric_predictors())\nrec_pohon <- recipe(produktif ~ ., data = lat) |> step_zv(all_predictors())\n\nspec_svm <- svm_rbf(cost = tune(), rbf_sigma = tune()) |>\n  set_engine(\"kernlab\") |> set_mode(\"classification\")\nspec_knn <- nearest_neighbor(neighbors = tune()) |>\n  set_engine(\"kknn\") |> set_mode(\"classification\")\nspec_rf  <- rand_forest(mtry = tune(), min_n = tune(), trees = 500) |>\n  set_engine(\"ranger\", importance = \"permutation\") |> set_mode(\"classification\")\n\nwf_svm <- workflow() |> add_recipe(rec_jarak) |> add_model(spec_svm)\nset.seed(2025)\npesan <- capture.output(\n  h_svm <- tune_grid(wf_svm, resamples = lipatan, grid = 8,\n                     metrics = metric_set(roc_auc)))\nshow_best(h_svm, metric = \"roc_auc\", n = 1)"
+  interpretasi: 'Isian yang benar berturut-turut adalah NULL, step_normalize, step_zv, svm_rbf, kernlab, kknn, rand_forest, permutation, vfold_cv, lipatan, dan show_best. Dua hal patut ditekankan. Pertama, kedua resep sengaja berbeda: resep jarak mengodekan lalu membakukan karena SVM dan KNN bersandar pada jarak, sedangkan resep pohon tidak memerlukan keduanya. Kedua, objek lipatan dibuat sekali lalu dipakai seluruh model --- inilah syarat perbandingan yang adil.
+
+    '
+- id: L9.2
+  points: 25
+  solution: 'Tingkat Menengah dan Lanjut: menguji kebutuhan pembakuan dan pemilihan model.'
+  judul_r: Solusi Menengah dan Lanjut (R)
+  solusi_r: "suppressPackageStartupMessages({\n  library(recipes); library(rsample); library(parsnip); library(workflows)\n  library(tune); library(yardstick); library(dplyr)})\n\ntani <- read.csv(\"data/data_usahatani.csv\", stringsAsFactors = TRUE)\ntani$produktif <- factor(tani$produktif, levels = c(\"Ya\", \"Tidak\"))\nset.seed(2025)\nbagi <- initial_split(tani, prop = 0.75, strata = produktif)\nlat  <- training(bagi); uji <- testing(bagi)\nset.seed(2025)\nlipatan <- vfold_cv(lat, v = 5, strata = produktif)\n\nrec_jarak <- recipe(produktif ~ ., data = lat) |>\n  step_dummy(all_nominal_predictors()) |> step_zv(all_predictors()) |>\n  step_normalize(all_numeric_predictors())\nrec_pohon <- recipe(produktif ~ ., data = lat) |> step_zv(all_predictors())\n\nuji_resep <- function(spec, rec, nama) {\n  wf <- workflow() |> add_recipe(rec) |> add_model(spec)\n  set.seed(2025)\n  h <- tune_grid(wf, resamples = lipatan, grid = 5,\n                 metrics = metric_set(roc_auc))\n  data.frame(model = nama,\n             AUC = round(max(collect_metrics(h)$mean, na.rm = TRUE), 4))\n}\n\ns_knn <- nearest_neighbor(neighbors = tune()) |>\n  set_engine(\"kknn\") |> set_mode(\"classification\")\ns_rf  <- rand_forest(mtry = tune(), min_n = tune(), trees = 500) |>\n  set_engine(\"ranger\") |> set_mode(\"classification\")\n\nhasil <- rbind(\n  uji_resep(s_knn, rec_jarak, \"KNN + resep jarak (dibakukan)\"),\n  uji_resep(s_knn, rec_pohon, \"KNN + resep pohon (TANPA baku)\"),\n  uji_resep(s_rf,  rec_pohon, \"RF + resep pohon (TANPA baku)\"),\n  uji_resep(s_rf,  rec_jarak, \"RF + resep jarak (dibakukan)\"))\nprint(hasil, row.names = FALSE)\n\ncat(\"\\nselisih pada KNN:\", round(hasil$AUC[1] - hasil$AUC[2], 4), \"\\n\")\ncat(\"selisih pada RF :\", round(hasil$AUC[3] - hasil$AUC[4], 4), \"\\n\")"
+  interpretasi: 'Selisih pada Random Forest seharusnya mendekati nol, sebab pembelahan pohon hanya membandingkan urutan nilai dan urutan tidak berubah oleh pembakuan --- pembakuan pada pohon tidak merugikan, hanya sia-sia dan menambah waktu. Sebaliknya selisih pada KNN lazimnya nyata, sebab tanpa pembakuan peubah dosis pupuk yang bersatuan ratusan akan menentukan hampir seluruh jarak sehingga peubah lain praktis diabaikan. Peragaan ini mengubah aturan kesesuaian prapemrosesan dari hafalan menjadi sesuatu yang terbukti angkanya. Untuk pemilihan model: dugaan sangat cepat pada jutaan amatan menuntut Random Forest atau SVM dan **bukan** KNN yang biayanya justru pada tahap dugaan, dengan kelemahan waktu latih yang lebih lama; banyak peubah tak relevan memihak Random Forest yang cukup tahan, dengan kelemahan penafsiran yang lebih sukar; pencilan ekstrem yang sah memihak Random Forest karena pencilan hanya memengaruhi sebagian pohon; sedangkan kebutuhan daftar peubah berpengaruh dipenuhi Random Forest lewat kepentingan permutasi, dengan catatan bahwa kepentingan bukan sebab-akibat.
+
+    '
+- id: L9.D
+  points: 10
+  solution: 'Membetulkan kode: resep seragam, lipatan berbeda, trees ditala, dan pemilihan pada data uji.'
+  judul_r: Solusi Membetulkan Kode (R)
+  solusi_r: "suppressPackageStartupMessages({\n  library(recipes); library(rsample); library(parsnip); library(workflows)\n  library(tune); library(yardstick); library(dplyr)})\n\ntani <- read.csv(\"data/data_usahatani.csv\", stringsAsFactors = TRUE)\ntani$produktif <- factor(tani$produktif, levels = c(\"Ya\", \"Tidak\"))\nset.seed(2025)\nbagi <- initial_split(tani, prop = 0.75, strata = produktif)\nlat  <- training(bagi); uji <- testing(bagi)\nset.seed(2025)\nlipatan <- vfold_cv(lat, v = 5, strata = produktif)\n\nrec_jarak <- recipe(produktif ~ ., data = lat) |>\n  step_dummy(all_nominal_predictors()) |> step_zv(all_predictors()) |>\n  step_normalize(all_numeric_predictors())\nrec_pohon <- recipe(produktif ~ ., data = lat) |> step_zv(all_predictors())\n\n# (a) resep sudah disesuaikan dengan kebutuhan tiap model (lihat di atas)\n# (b) satu objek lipatan dipakai seluruh model (lihat di atas)\n\n# (c) trees ditetapkan, tidak ditala\nspec_rf <- rand_forest(mtry = tune(), min_n = tune(), trees = 500) |>\n  set_engine(\"ranger\", importance = \"permutation\") |>\n  set_mode(\"classification\")\nwf_rf <- workflow() |> add_recipe(rec_pohon) |> add_model(spec_rf)\n\n# (d) pemilihan memakai validasi silang pada data latih\nset.seed(2025)\nh_rf <- tune_grid(wf_rf, resamples = lipatan, grid = 8,\n                  metrics = metric_set(roc_auc))\nprint(show_best(h_rf, metric = \"roc_auc\", n = 3))\n\n# pemeriksaan wajib\n!(\"trees\" %in% names(select_best(h_rf, metric = \"roc_auc\")))"
+  interpretasi: 'Empat kesalahan diperbaiki. Kesalahan (a) memakai satu resep bagi seluruh model; akibatnya bukan galat melainkan pemborosan --- pembakuan pada Random Forest tidak merugikan tetapi memperlihatkan bahwa penyusunnya belum memahami kebutuhan tiap model. Kesalahan (b) membuat lipatan berbeda bagi tiap model sehingga selisih kinerja yang terlihat boleh jadi hanya akibat pembagian yang berbeda, bukan akibat modelnya. Kesalahan (c) menala banyaknya pohon padahal menambah pohon pada Random Forest tidak menimbulkan *overfitting*; penalaan itu hanya membuang waktu yang lebih berguna dialokasikan bagi mtry dan min_n. Kesalahan (d) paling parah: mencoba beberapa model pada data uji lalu memilih yang terbaik mengubah data uji menjadi data latih terselubung, sehingga angka akhirnya tidak lagi menggambarkan kinerja pada data baru.
+
+    '
+- id: T9.1
+  points: 50
+  solution: 'Penugasan: membangun, membandingkan, dan merekomendasikan tiga model klasifikasi lanjut.'
+  judul_r: Solusi Penugasan (R)
+  solusi_r: "suppressPackageStartupMessages({\n  library(recipes); library(rsample); library(parsnip); library(workflows)\n  library(tune); library(yardstick); library(dplyr)})\n\ntani <- read.csv(\"data/data_usahatani.csv\", stringsAsFactors = TRUE)\ntani$produktif <- factor(tani$produktif, levels = c(\"Ya\", \"Tidak\"))\nset.seed(2025)\nbagi <- initial_split(tani, prop = 0.75, strata = produktif)\nlat  <- training(bagi); uji <- testing(bagi)\nset.seed(2025)\nlipatan <- vfold_cv(lat, v = 5, strata = produktif)\n\nrec_jarak <- recipe(produktif ~ ., data = lat) |>\n  step_dummy(all_nominal_predictors()) |> step_zv(all_predictors()) |>\n  step_normalize(all_numeric_predictors())\nrec_pohon <- recipe(produktif ~ ., data = lat) |> step_zv(all_predictors())\n\n# 1) ketimpangan dan profil awal\nprop <- prop.table(table(tani$produktif))\ncat(\"acuan mayoritas:\", round(max(prop), 4), \"\\n\")\nnum <- c(\"luas_lahan\",\"dosis_pupuk\",\"umur_petani\",\"pengalaman\",\"jarak_pasar\")\nrk <- aggregate(tani[num], list(produktif = tani$produktif), mean)\nrk[num] <- round(rk[num], 2); print(rk, row.names = FALSE)\n\n# 4-6) penalaan ketiga model pada lipatan yang SAMA\nsuppressPackageStartupMessages({library(kernlab); library(kknn); library(ranger)})\nsp_svm <- svm_rbf(cost = tune(), rbf_sigma = tune()) |>\n  set_engine(\"kernlab\") |> set_mode(\"classification\")\nsp_knn <- nearest_neighbor(neighbors = tune(), weight_func = tune()) |>\n  set_engine(\"kknn\") |> set_mode(\"classification\")\nsp_rf  <- rand_forest(mtry = tune(), min_n = tune(), trees = 500) |>\n  set_engine(\"ranger\", importance = \"permutation\") |> set_mode(\"classification\")\n\nwf_svm <- workflow() |> add_recipe(rec_jarak) |> add_model(sp_svm)\nwf_knn <- workflow() |> add_recipe(rec_jarak) |> add_model(sp_knn)\nwf_rf  <- workflow() |> add_recipe(rec_pohon) |> add_model(sp_rf)\n\nset.seed(2025)\npesan <- capture.output(\n  h_svm <- tune_grid(wf_svm, lipatan, grid = 8, metrics = metric_set(roc_auc)))\nset.seed(2025); h_knn <- tune_grid(wf_knn, lipatan,\n  grid = expand.grid(neighbors = c(3,5,9,15,25,41),\n                     weight_func = c(\"rectangular\",\"triangular\"),\n                     stringsAsFactors = FALSE), metrics = metric_set(roc_auc))\nset.seed(2025); h_rf  <- tune_grid(wf_rf,  lipatan, grid = 8, metrics = metric_set(roc_auc))\n\n# 7) perbandingan beserta ketidakpastiannya\nambil <- function(h, nm) collect_metrics(h) |> arrange(desc(mean)) |>\n  utils::head(1) |> transmute(model = nm, AUC = round(mean,4),\n                              galat_baku = round(std_err,4))\nbanding <- bind_rows(ambil(h_svm,\"SVM\"), ambil(h_knn,\"KNN\"),\n                     ambil(h_rf,\"Random Forest\"))\nprint(as.data.frame(banding), row.names = FALSE)\ncat(\"\\nselisih terbesar:\", round(max(banding$AUC)-min(banding$AUC), 4),\n    \"| galat baku terbesar:\", round(max(banding$galat_baku), 4), \"\\n\")\n\nbp <- barplot(banding$AUC, names.arg = banding$model,\n              col = c(\"#0B6FB4\",\"#F58220\",\"#00A651\"), border = \"white\",\n              ylim = c(0, max(banding$AUC + banding$galat_baku)*1.25),\n              ylab = \"ROC-AUC\", main = \"Perbandingan Tiga Model\")\narrows(bp, banding$AUC - banding$galat_baku, bp, banding$AUC + banding$galat_baku,\n       angle = 90, code = 3, length = 0.06, lwd = 2)\nabline(h = 0.5, col = \"#C0392B\", lty = 2, lwd = 2)\n\n# 9) penilaian pada data uji\nnm <- banding$model[which.max(banding$AUC)]\nwf_pilih <- switch(nm,\n  \"SVM\" = finalize_workflow(wf_svm, select_best(h_svm, metric=\"roc_auc\")),\n  \"KNN\" = finalize_workflow(wf_knn, select_best(h_knn, metric=\"roc_auc\")),\n  finalize_workflow(wf_rf, select_best(h_rf, metric=\"roc_auc\")))\nset.seed(2025)\nakhir <- last_fit(wf_pilih, split = bagi,\n  metrics = metric_set(roc_auc, f_meas, accuracy, sensitivity, specificity))\nprint(collect_metrics(akhir))\nprint(conf_mat(collect_predictions(akhir), truth = produktif, estimate = .pred_class))\n\n# 10) kepentingan peubah\nset.seed(2025)\nm_rf <- fit(finalize_workflow(wf_rf, select_best(h_rf, metric=\"roc_auc\")), data = lat)\npent <- extract_fit_engine(m_rf)$variable.importance\nimp <- data.frame(peubah = names(pent), kepentingan = round(as.numeric(pent), 5))\nprint(imp[order(-imp$kepentingan), ], row.names = FALSE)"
+  interpretasi: 'Nomor 7 adalah inti penugasan. Bila selisih terbesar antar-model lebih kecil daripada galat baku terbesar, maka menyatakan satu model lebih baik tidak didukung bukti --- dan kesimpulan yang benar adalah menyatakan ketiganya tidak dapat dibedakan, lalu memilih berdasarkan pertimbangan lain. Nomor 8 menyediakan pertimbangan itu: KNN tercepat dilatih tetapi paling lambat menduga, dan sifat ini menentukan pada penerapan yang menuntut dugaan cepat. Nomor 10 wajib disertai peringatan bahwa kepentingan peubah menyatakan sumbangan terhadap dugaan, bukan hubungan sebab-akibat; menyimpulkan bahwa menaikkan dosis pupuk akan menaikkan produktivitas hanya karena peubah itu tampak penting adalah kekeliruan yang dapat berujung kebijakan salah sasaran. Nomor 12 menuntut rekomendasi yang mempertimbangkan empat hal sekaligus --- kinerja, kestabilan, biaya, dan penafsiran --- sehingga jawaban yang hanya menyebut AUC tertinggi belum memadai.
+
+    '

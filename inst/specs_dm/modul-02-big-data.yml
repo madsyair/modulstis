@@ -1,0 +1,940 @@
+number: 2
+title: Konsep Dasar Big Data
+short_code: big_data
+topic: Konsep Big Data
+pertemuan: 2
+sub_cpmk: |
+  Sub-CPMK 2: Mahasiswa mampu menjelaskan konsep dan karakteristik big data, mengenali peluang pemanfaatannya, memahami tantangan kompleksitasnya, serta menjalankan alur pengolahan terdistribusi sederhana.
+packages:
+- data.table
+- dplyr
+contoh_title: Contoh Praktikum dengan R dan Python
+tambahan_title: 'Tambahan: Pengolahan Terdistribusi dengan Apache Spark'
+course:
+  matkul: Data Mining dan Big Data
+  matkul_besar: DATA MINING DAN BIG DATA
+  kode: K202505
+  semester: 6 (Genap)
+  prodi: D-IV Statistika
+  penyusun:
+  - Achmad Syahrul Choir
+datasets:
+- name: data_transaksi
+  role: contoh
+  recipe:
+    kind: tabular
+    n: 5000
+    seed: 2026
+    columns:
+      id_transaksi:
+        type: integer
+        min: 100001
+        max: 105000
+      provinsi:
+        type: category
+        levels:
+        - Jawa Barat
+        - Jawa Tengah
+        - Papua
+        - Sulawesi Selatan
+        probs:
+        - 0.4
+        - 0.3
+        - 0.1
+        - 0.2
+      kanal:
+        type: category
+        levels:
+        - Daring
+        - Luring
+        probs:
+        - 0.6
+        - 0.4
+      nilai_transaksi:
+        type: numeric
+        min: 10
+        max: 2500
+        digits: 2
+      durasi_detik:
+        type: integer
+        min: 5
+        max: 900
+body:
+  deskripsi:
+  - |
+    Modul 1 menutup dengan sebuah petunjuk: perbedaan waktu antara dua cara meringkas data yang sama menjadi terasa begitu datanya membesar. Modul ini menelusuri petunjuk tersebut sampai ke akarnya. Apa sesungguhnya yang membuat sekumpulan data disebut besar, dan mengapa cara pengolahan biasa berhenti memadai.
+  - |
+    Jawabannya bukan semata soal jumlah baris. Sebuah berkas berukuran dua gigabita masih dapat diolah di komputer meja, sedangkan aliran data sensor yang datang setiap detik dapat menyulitkan meski ukurannya kecil. Karena itu big data dicirikan oleh beberapa dimensi sekaligus, bukan oleh satu ambang ukuran.
+  - |
+    Materi dibahas dari konsep hingga peragaan: karakteristik big data, peluang pemanfaatannya bagi statistik resmi, tantangan yang menyertainya, serta gagasan pengolahan terdistribusi. Bagian Tambahan menyajikan alur kerja Apache Spark yang benar-benar dijalankan, memakai data berukuran kecil agar dapat dikerjakan di komputer mana pun.
+  - |-
+    \begin{kotakperhatian}[Tentang data]
+    Berkas data pada modul ini adalah \textbf{data simulasi} (\texttt{set.seed(2026)}), \textbf{bukan data nyata} dan \textbf{bukan data resmi} instansi mana pun.
+    \end{kotakperhatian}
+  tujuan:
+  - 'Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:'
+  - 1. **Menjelaskan** karakteristik big data dan mengapa ukuran saja tidak memadai sebagai ciri pembeda.
+  - 2. **Menyebutkan** peluang pemanfaatan big data bagi statistik resmi beserta keterbatasannya.
+  - 3. **Menguraikan** tantangan teknis dan nonteknis dalam pengolahan big data.
+  - 4. **Mengukur** kendala memori dan waktu secara langsung pada data berukuran besar.
+  - 5. **Membandingkan** pendekatan dalam memori terhadap pendekatan terdistribusi.
+  - 6. **Menjalankan** alur pengolahan terdistribusi sederhana beserta pembacaan rencana eksekusinya.
+  alat:
+  - 'Perangkat dan bahan yang diperlukan:'
+  - '- **R** (RStudio) dengan paket `data.table` dan `dplyr`.'
+  - '- **Python** dengan `pyspark` dan `pyarrow` untuk bagian Tambahan.'
+  - '- **Java** versi 11 atau lebih baru (prasyarat Apache Spark).'
+  - '- Berkas data: `data/data_transaksi.csv`.'
+  instruksi:
+  - 'Ikuti tahapan berikut:'
+  - '**Sebelum praktikum:** pastikan Java terpasang dengan menjalankan `java -version` pada terminal.
+    Pasang `pyspark` dan `pyarrow` melalui `pip install pyspark pyarrow`.'
+  - '**Selama praktikum:** kerjakan Contoh secara berurutan. Bagian Tambahan mengenai Spark dikerjakan
+    **setelah Penugasan**, sebab memerlukan penyiapan tersendiri.'
+  - |-
+    **Pembagian kerja:** Contoh dan Latihan dikerjakan di kelas; **Penugasan dikerjakan di luar sesi**.
+
+    **Pengumpulan:** susun laporan R Markdown, render ke PDF atau HTML, kumpulkan melalui Google Classroom.
+  teori:
+  - '### Kedudukan pada CRISP-DM'
+  - |
+    Modul ini masih berada pada tahap Business Understanding. Pertanyaan yang dijawab bukan bagaimana memodelkan, melainkan apakah data yang tersedia dapat diolah sama sekali dengan sumber daya yang ada. Pertanyaan itu menentukan seluruh rencana kerja berikutnya, sebab pendekatan yang mustahil dijalankan tidak berguna betapapun benarnya secara teori.
+  - '### Karakteristik Big Data'
+  - |
+    Big data lazim dicirikan oleh beberapa dimensi yang bermula dari tiga dan berkembang menjadi lima. Perlu ditegaskan sejak awal bahwa ciri pembeda ini bersifat relatif terhadap sumber daya yang tersedia, bukan ambang mutlak.
+  - |-
+    \begin{kotakinfo}[Lima dimensi big data]\par\smallskip
+    \begin{tabular}{@{}p{2.6cm}p{4.4cm}p{7.2cm}@{}}
+    \textbf{Dimensi} & \textbf{Arti} & \textbf{Akibat teknis}\\
+    \hline
+    \textbf{Volume} & besarnya ukuran data & tidak muat di memori; perlu pemrosesan bertahap\\[2pt]
+    \textbf{Velocity} & kecepatan kedatangan & perlu pengolahan aliran, bukan tumpukan\\[2pt]
+    \textbf{Variety} & keragaman bentuk & terstruktur, semi, dan tak terstruktur bercampur\\[2pt]
+    \textbf{Veracity} & keandalan & derau, duplikasi, dan galat pencatatan\\[2pt]
+    \textbf{Value} & manfaat & besar belum tentu berguna\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotaksalah}[Besar tidak sama dengan berguna]
+    Dimensi kelima kerap terlupakan. Data yang sangat besar tetapi tidak menjawab persoalan justru menambah biaya tanpa menambah pengetahuan. Dalam statistik resmi, data administratif berjuta baris kadang kalah berguna dibandingkan survei terancang berukuran ribuan, karena survei dirancang mewakili populasi sedangkan data administratif hanya mencakup yang tercatat. Ukuran tidak menggantikan keterwakilan.
+    \end{kotaksalah}
+  - '### Peluang dan Tantangan bagi Statistik Resmi'
+  - |
+    Bagi badan statistik, big data menjanjikan tiga hal: ketepatan waktu yang lebih baik karena data tersedia hampir seketika, rincian wilayah yang lebih halus, dan biaya pengumpulan yang lebih rendah dibandingkan survei lapangan. Ketiganya menarik, tetapi tidak diperoleh secara cuma-cuma.
+  - |-
+    \begin{kotakinfo}[Tantangan yang menyertai]\par\smallskip
+    \begin{tabular}{@{}p{3.6cm}p{10.8cm}@{}}
+    \textbf{Keterwakilan} & data yang tercatat belum tentu mewakili populasi sasaran; pengguna internet bukan cerminan seluruh penduduk\\[3pt]
+    \textbf{Kesinambungan} & sumber dapat berubah atau berhenti tanpa pemberitahuan\\[3pt]
+    \textbf{Mutu} & tidak ada rancangan penarikan contoh yang menjamin galatnya\\[3pt]
+    \textbf{Privasi} & rincian yang tinggi mempermudah pengenalan individu\\[3pt]
+    \textbf{Infrastruktur} & memerlukan perangkat dan keterampilan yang berbeda\\
+    \end{tabular}
+    \end{kotakinfo}
+  - '### Mengapa Cara Biasa Berhenti Memadai'
+  - |
+    R dan Python secara bawaan memuat seluruh data ke dalam memori. Selama data muat, pendekatan ini paling cepat dan paling sederhana. Persoalan muncul ketika ukuran data mendekati atau melampaui memori yang tersedia: sistem mulai memindahkan data ke cakram, dan kecepatan pengolahan anjlok drastis.
+  - |
+    Terdapat tiga jalan keluar yang lazim. Pertama, memakai struktur data yang lebih hemat seperti `data.table`, yang mengurangi penyalinan. Kedua, mengolah data secara bertahap per potongan sehingga hanya sebagian yang berada di memori. Ketiga, memakai kerangka terdistribusi seperti Apache Spark yang membagi pekerjaan ke beberapa mesin atau beberapa inti.
+  - '### Penyimpanan Menentukan Kecepatan'
+  - |
+    Volume tidak hanya soal muat atau tidak di memori, melainkan juga soal berapa lama data dipindahkan dari cakram. Pilihan format penyimpanan kerap memberi perbaikan yang lebih besar daripada pengoptimuman kode.
+  - |-
+    \begin{kotakinfo}[Empat pertimbangan format penyimpanan]\par\smallskip
+    \begin{tabular}{@{}p{3.0cm}p{5.2cm}p{6.2cm}@{}}
+    \textbf{Aspek} & \textbf{Teks (CSV)} & \textbf{Biner (RDS, Parquet)}\\
+    \hline
+    Ukuran & besar & jauh lebih kecil\\[2pt]
+    Kecepatan baca & lambat, perlu diurai & cepat, langsung dimuat\\[2pt]
+    Tipe kolom & hilang, harus ditebak & tersimpan\\[2pt]
+    Keterbacaan manusia & dapat dibuka editor & tidak\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Format berorientasi kolom seperti Parquet menambah satu keunggulan lagi: kolom yang tidak diperlukan tidak perlu dibaca sama sekali. Pada tabel berkolom ratusan yang hanya lima di antaranya dipakai, penghematannya sangat besar. Inilah alasan format kolom menjadi baku pada pengolahan big data.
+  - |-
+    \begin{kotaksalah}[Menyimpan hasil antara sebagai CSV]
+    Kebiasaan menyimpan hasil antara sebagai CSV tampak aman karena mudah diperiksa, tetapi mahal pada data besar: ukurannya berlipat, pembacaannya lambat, dan tipe kolom hilang sehingga harus ditebak ulang setiap kali. Untuk hasil antara yang hanya dibaca program, format biner jauh lebih tepat. CSV disimpan hanya ketika memang perlu dibaca manusia atau dipertukarkan antar-perangkat lunak.
+    \end{kotaksalah}
+  - '### Skalabilitas: Bagaimana Biaya Tumbuh'
+  - |
+    Ketika data membesar, yang menentukan layak tidaknya suatu algoritma bukanlah kecepatannya pada data kecil, melainkan bagaimana biayanya tumbuh. Algoritma berbiaya linear tetap terjangkau pada data besar, sedangkan algoritma berbiaya kuadrat cepat menjadi mustahil.
+  - |-
+    \begin{kotakinfo}[Pertumbuhan biaya menurut ukuran data]\par\smallskip
+    \begin{tabular}{@{}p{2.6cm}p{4.2cm}p{7.6cm}@{}}
+    \textbf{Orde} & \textbf{Contoh operasi} & \textbf{Bila data digandakan sepuluh kali}\\
+    \hline
+    $O(1)$ & mengambil satu baris & tetap\\[2pt]
+    $O(\log n)$ & pencarian terurut & bertambah sedikit\\[2pt]
+    $O(n)$ & menghitung rata-rata & sepuluh kali\\[2pt]
+    $O(n \log n)$ & pengurutan & sekitar sebelas kali\\[2pt]
+    $O(n^{2})$ & seluruh pasangan jarak & \textbf{seratus kali}\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Baris terakhir menjelaskan mengapa pengelompokan hierarkis dan KNN sukar diterapkan pada data besar: keduanya menuntut perhitungan jarak antar seluruh pasangan amatan. Pada seratus ribu amatan, banyaknya pasangan sudah mendekati lima miliar.
+  - '### Menghampiri Alih-alih Menghitung Tepat'
+  - |
+    Pada data besar, penghampiran kerap menjadi jalan keluar yang sah. Median yang dihitung dari contoh lima persen biasanya sudah cukup teliti bagi pengambilan keputusan, sementara biayanya berkurang dua puluh kali lipat. Yang penting adalah menyatakan bahwa nilainya hampiran, bukan menyajikannya seolah tepat.
+  - |-
+    \begin{kotaktips}
+    Penarikan contoh bukan tanda kemalasan. Justru pada data besar, contoh acak berukuran memadai memberi dugaan yang ketelitiannya nyaris sama dengan perhitungan penuh --- sebab galat baku bergantung pada akar ukuran contoh, bukan pada rasio contoh terhadap populasi. Menambah contoh dari sepuluh ribu menjadi sejuta hanya menyempitkan selang kepercayaan sepuluh kali lipat, dengan biaya seratus kali lipat.
+    \end{kotaktips}
+  - '### Gagasan Pengolahan Terdistribusi'
+  - |
+    Spark membagi data menjadi beberapa partisi, lalu menjalankan perhitungan pada tiap partisi secara sejajar sebelum menggabungkan hasilnya. Dua gagasan pentingnya adalah pembagian partisi dan penundaan eksekusi.
+  - |-
+    \begin{kotakinfo}[Transformasi dan aksi]\par\smallskip
+    \begin{tabular}{@{}p{3.8cm}p{10.6cm}@{}}
+    \textbf{Transformasi} & \texttt{filter}, \texttt{select}, \texttt{groupBy}, \texttt{withColumn} --- \emph{tidak} langsung dijalankan, hanya dicatat sebagai rencana\\[3pt]
+    \textbf{Aksi} & \texttt{show}, \texttt{count}, \texttt{collect}, \texttt{write} --- memicu seluruh rencana dijalankan\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Penundaan ini bukan kemalasan melainkan peluang pengoptimuman: karena Spark mengetahui seluruh rangkaian langkah sebelum menjalankannya, ia dapat menyusun ulang urutan agar lebih efisien, misalnya mendahulukan penyaringan sebelum penggabungan sehingga data yang dipindahkan antar-partisi jauh berkurang.
+  - |-
+    \begin{kotaktips}
+    Perintah \texttt{explain()} menampilkan rencana eksekusi yang disusun Spark. Membacanya adalah keterampilan penting: dari situ terlihat apakah penyaringan sudah didorong ke tahap awal, dan berapa banyak pertukaran data antar-partisi yang terjadi.
+    \end{kotaktips}
+  contoh:
+  - contoh: Mengukur jejak memori data
+    kode_r: |-
+      trx <- read.csv("data/data_transaksi.csv", stringsAsFactors = TRUE)
+      dim(trx)
+      format(object.size(trx), units = "KB")
+
+      # perkiraan bila baris digandakan
+      ukuran_per_baris <- as.numeric(object.size(trx)) / nrow(trx)
+      round(c(per_baris_byte = ukuran_per_baris,
+              perkiraan_1juta_MB = ukuran_per_baris * 1e6 / 1024^2), 2)
+    judul_r: object.size dan perkiraan
+    eval: true
+    penjelasan: |
+      Fungsi object.size mengukur memori yang dipakai sebuah objek. Hasilnya dibagi banyaknya baris untuk memperoleh jejak per baris, lalu dikalikan satu juta dan dibagi 1024 pangkat dua agar terbaca dalam megabita.
+    interpretasi: |
+      Perkiraan sederhana ini sudah cukup untuk memutuskan pendekatan. Bila satu juta baris diperkirakan memakan ratusan megabita, komputer meja masih sanggup. Bila perkiraannya mencapai puluhan gigabita, pendekatan dalam memori harus ditinggalkan sejak awal, bukan setelah kode gagal berjalan.
+  - contoh: Membandingkan tiga cara meringkas
+    kode_r: |-
+      suppressPackageStartupMessages({library(data.table); library(dplyr)})
+      trx_dt <- as.data.table(trx)
+
+      w1 <- system.time(aggregate(nilai_transaksi ~ provinsi, trx, mean))[["elapsed"]]
+      w2 <- system.time(trx |> group_by(provinsi) |>
+                          summarise(r = mean(nilai_transaksi), .groups = "drop"))[["elapsed"]]
+      w3 <- system.time(trx_dt[, list(r = mean(nilai_transaksi)), by = provinsi])[["elapsed"]]
+      round(c(aggregate = w1, dplyr = w2, data.table = w3), 4)
+    judul_r: system.time atas tiga pendekatan
+    eval: true
+    penjelasan: |
+      Data yang sama diringkas dengan tiga cara: aggregate dari basis R, rangkaian dplyr, dan sintaks data.table. Lamanya masing-masing diukur dengan system.time dan hanya komponen elapsed yang diambil.
+    interpretasi: |
+      Selisih waktunya kecil pada data lima ribu baris, dan memang seharusnya demikian. Pelajarannya justru di situ: pada data kecil pemilihan perkakas nyaris tidak berpengaruh, sehingga mengoptimumkannya adalah pemborosan tenaga. Pengoptimuman baru berarti setelah terbukti ada kendala.
+  - contoh: Mengolah data secara bertahap per potongan
+    kode_r: |-
+      # menghitung rata-rata tanpa memuat seluruh data sekaligus
+      berkas <- "data/data_transaksi.csv"
+      n_potong <- 1000
+      jumlah <- 0; cacah <- 0; lewati <- 1
+
+      repeat {
+        potong <- tryCatch(
+          read.csv(berkas, skip = lewati, nrows = n_potong, header = FALSE),
+          error = function(e) NULL)
+        if (is.null(potong) || nrow(potong) == 0) break
+        jumlah <- jumlah + sum(potong[[4]])   # kolom nilai_transaksi
+        cacah  <- cacah + nrow(potong)
+        lewati <- lewati + nrow(potong)
+      }
+      round(c(cacah = cacah, rata_bertahap = jumlah / cacah,
+              rata_sekaligus = mean(trx$nilai_transaksi)), 4)
+    judul_r: membaca per potongan dengan skip dan nrows
+    eval: true
+    penjelasan: |
+      Berkas dibaca berulang kali dalam potongan seribu baris memakai argumen skip dan nrows. Jumlah dan cacah dikumpulkan lintas potongan, lalu rata-ratanya dihitung di akhir. Perulangan berhenti ketika potongan berikutnya kosong. Fungsi tryCatch menjaga agar pembacaan melewati akhir berkas tidak menghentikan program.
+    interpretasi: |
+      Kedua rata-rata identik, membuktikan pendekatan bertahap memberi hasil yang sama tanpa memuat seluruh data. Inilah gagasan dasar pengolahan di luar memori. Perhatikan pula bahwa tidak semua besaran dapat dihitung begini: rata-rata bisa karena dapat diuraikan menjadi jumlah dan cacah, sedangkan median menuntut seluruh data hadir sekaligus.
+  - |-
+    \begin{kotaktips}
+    Besaran yang dapat diuraikan menjadi penjumlahan --- rata-rata, ragam, cacah --- mudah dihitung secara bertahap maupun terdistribusi. Besaran berbasis urutan seperti median dan kuantil memerlukan siasat khusus, umumnya berupa penghampiran. Perbedaan inilah yang menentukan mudah tidaknya suatu perhitungan diparalelkan.
+    \end{kotaktips}
+  - contoh: Mengenali keragaman bentuk data
+    kode_r: |-
+      sapply(trx, class)
+
+      # proporsi tiap kanal per provinsi
+      round(prop.table(table(trx$provinsi, trx$kanal), margin = 1), 3)
+
+      # ringkasan durasi menurut kanal
+      trx_dt[, list(n = .N, rata_durasi = round(mean(durasi_detik), 1),
+                    rata_nilai = round(mean(nilai_transaksi), 1)), by = kanal]
+    judul_r: sapply class dan ringkasan data.table
+    eval: true
+    penjelasan: |
+      Fungsi sapply yang dikenakan pada data frame menerapkan class ke tiap kolom sekaligus. Tabel silang berproporsi baris memperlihatkan komposisi kanal pada tiap provinsi. Peringkasan data.table memakai penanda titik N yang berarti banyaknya baris pada tiap kelompok.
+    interpretasi: |
+      Dimensi variety terlihat bahkan pada data sesederhana ini: kolom bertipe bilangan bulat, pecahan, dan faktor bercampur dalam satu tabel. Pada big data sesungguhnya, keragaman itu jauh lebih jauh lagi karena teks, citra, dan catatan waktu dapat berada dalam satu sumber.
+  - contoh: Memeriksa dimensi veracity
+    kode_r: |-
+      # duplikasi
+      cat("id ganda:", sum(duplicated(trx$id_transaksi)), "\n")
+
+      # nilai di luar rentang wajar
+      cat("nilai negatif:", sum(trx$nilai_transaksi < 0), "\n")
+      cat("durasi di atas 900 detik:", sum(trx$durasi_detik > 900), "\n")
+
+      # pencilan menurut aturan simpangan kuartil
+      q <- quantile(trx$nilai_transaksi, c(.25, .75))
+      batas <- q[2] + 1.5 * diff(q)
+      cat("pencilan atas:", sum(trx$nilai_transaksi > batas),
+          sprintf("(%.2f persen)\n", 100 * mean(trx$nilai_transaksi > batas)))
+    judul_r: pemeriksaan mutu data
+    eval: true
+    penjelasan: |
+      Tiga jenis pemeriksaan dijalankan. Fungsi duplicated menandai nilai yang muncul lebih dari sekali. Pemeriksaan rentang mencari nilai yang mustahil menurut pengetahuan bidang. Aturan simpangan kuartil menetapkan batas pencilan sebagai kuartil ketiga ditambah satu setengah kali jarak antar-kuartil.
+    interpretasi: |
+      Dimensi veracity diperiksa dengan cara yang konkret seperti ini, bukan dibicarakan secara abstrak. Pada data simulasi hasilnya bersih, tetapi pada data nyata pemeriksaan semacam ini hampir selalu menemukan sesuatu. Perlu diingat bahwa pencilan tidak otomatis berarti kesalahan; transaksi bernilai sangat besar bisa saja sah dan justru paling menarik untuk ditelaah.
+  - contoh: Membandingkan format penyimpanan
+    kode_r: |-
+      set.seed(2026)
+      uji <- data.frame(g = sample(letters[1:6], 3e4, TRUE),
+                        x = runif(3e4), y = rnorm(3e4))
+
+      f_csv <- tempfile(fileext = ".csv")
+      f_gz  <- tempfile(fileext = ".csv.gz")
+      f_rds <- tempfile(fileext = ".rds")
+
+      write.csv(uji, f_csv, row.names = FALSE)
+      write.csv(uji, gzfile(f_gz), row.names = FALSE)
+      saveRDS(uji, f_rds)
+
+      ukuran <- c(csv = file.size(f_csv), csv_gz = file.size(f_gz), rds = file.size(f_rds))
+      round(data.frame(KB = ukuran / 1024,
+                       rasio_thd_csv = ukuran / ukuran["csv"]), 3)
+    judul_r: membandingkan ukuran berkas
+    eval: true
+    penjelasan: |
+      Data yang sama disimpan dalam tiga format: teks biasa, teks termampatkan, dan biner bawaan R. Fungsi file.size mengukur besarnya masing-masing, lalu rasionya terhadap CSV dihitung.
+    interpretasi: |
+      Pemampatan memangkas ukuran lebih dari separuh, sedangkan format biner memangkas lebih jauh lagi. Pada data lima ribu baris selisihnya terasa kecil, tetapi pada data berjuta baris selisih ini menentukan apakah data muat di cakram dan berapa lama pemindahannya lewat jaringan.
+  - contoh: Membandingkan kecepatan pembacaan
+    kode_r: |-
+      w_csv <- system.time(read.csv(f_csv))[["elapsed"]]
+      w_gz  <- system.time(read.csv(f_gz))[["elapsed"]]
+      w_rds <- system.time(readRDS(f_rds))[["elapsed"]]
+
+      round(c(csv = w_csv, csv_gz = w_gz, rds = w_rds), 4)
+
+      # tipe kolom setelah dibaca
+      cat("\ntipe dari CSV:", paste(sapply(read.csv(f_csv), class), collapse = ", "), "\n")
+      cat("tipe dari RDS:", paste(sapply(readRDS(f_rds), class), collapse = ", "), "\n")
+    judul_r: system.time atas tiga format
+    eval: true
+    penjelasan: |
+      Ketiga berkas dibaca dan lamanya diukur. Setelah itu tipe kolom hasil pembacaan dibandingkan antara format teks dan format biner.
+    interpretasi: |
+      Selain lebih cepat, format biner mempertahankan tipe kolom sebagaimana adanya. Pembacaan CSV harus menebak tipe tiap kolom, dan tebakan itu dapat keliru --- misalnya kode wilayah berawalan nol yang berubah menjadi bilangan sehingga nolnya hilang. Kekeliruan semacam ini tidak menimbulkan galat dan baru ketahuan jauh belakangan.
+  - contoh: Menggambarkan pertumbuhan biaya
+    kode_r: |-
+      ukuran2 <- c(250, 500, 1000, 2000, 4000)
+      waktu_jarak <- sapply(ukuran2, function(m) {
+        X <- matrix(rnorm(m * 4), m, 4)
+        system.time(dist(X))[["elapsed"]]
+      })
+      waktu_urut2 <- sapply(ukuran2, function(m)
+        system.time(sort(rnorm(m * 50)))[["elapsed"]])
+
+      plot(ukuran2, waktu_jarak, type = "b", pch = 19, lwd = 2, col = "#C0392B",
+           log = "xy", ylim = range(c(waktu_jarak, waktu_urut2) + 1e-4),
+           xlab = "Banyaknya amatan (skala log)",
+           ylab = "Waktu detik (skala log)",
+           main = "Pertumbuhan Biaya Dua Jenis Operasi")
+      lines(ukuran2, waktu_urut2 + 1e-4, type = "b", pch = 17, lwd = 2, col = "#0B6FB4")
+      grid(col = "grey85")
+      legend("topleft", c("jarak antar-pasangan", "pengurutan"),
+             col = c("#C0392B", "#0B6FB4"), pch = c(19, 17), lwd = 2, bty = "n", cex = .85)
+    judul_r: grafik log-log pertumbuhan biaya
+    eval: true
+    penjelasan: |
+      Dua operasi diukur pada lima ukuran data, lalu digambar pada skala logaritma ganda. Nilai kecil ditambah satu per sepuluh ribu agar tidak bernilai nol yang mustahil digambar pada skala logaritma. Legenda ditambahkan tanpa bingkai.
+    interpretasi: |
+      Pada skala logaritma ganda, biaya berorde pangkat tampak sebagai garis lurus yang kemiringannya sama dengan pangkatnya. Garis jarak antar-pasangan seharusnya lebih curam daripada garis pengurutan, sebab biayanya kuadrat sedangkan pengurutan mendekati linear. Perhatikan bahwa pengukuran pada data kecil sangat berderau, sehingga garisnya belum tentu rapi --- dan itu sendiri merupakan pelajaran mengenai batas keandalan pengukuran waktu.
+  - contoh: Menggambarkan perbandingan format penyimpanan
+    kode_r: |-
+      nama <- c("CSV", "CSV.gz", "RDS")
+      kb <- c(file.size(f_csv), file.size(f_gz), file.size(f_rds)) / 1024
+      wk <- c(w_csv, w_gz, w_rds)
+
+      par(mfrow = c(1, 2))
+      bp <- barplot(kb, names.arg = nama, col = c("#0B6FB4", "#6FB3E0", "#00A651"),
+                    border = "white", ylab = "Ukuran (KB)",
+                    main = "Ukuran Berkas", ylim = c(0, max(kb) * 1.2))
+      text(bp, kb, round(kb, 0), pos = 3, cex = .8)
+
+      bp2 <- barplot(wk, names.arg = nama, col = c("#0B6FB4", "#6FB3E0", "#00A651"),
+                     border = "white", ylab = "Waktu baca (detik)",
+                     main = "Kecepatan Pembacaan", ylim = c(0, max(wk) * 1.25))
+      text(bp2, wk, round(wk, 3), pos = 3, cex = .8)
+      par(mfrow = c(1, 1))
+    judul_r: barplot berlabel nilai
+    eval: true
+    penjelasan: |
+      Dua diagram batang disajikan berdampingan, masing-masing untuk ukuran berkas dan waktu pembacaan. Fungsi barplot mengembalikan koordinat tengah tiap batang, yang dipakai text untuk menempatkan label nilai tepat di atasnya. Batas sumbu dilebihkan agar label tidak terpotong.
+    interpretasi: |
+      Menyertakan nilai di atas batang membuat gambar dapat dibaca tanpa menaksir dari sumbu, dan itu praktik yang dianjurkan untuk grafik pelaporan. Perhatikan bahwa kedua gambar menceritakan hal berbeda: format termampatkan unggul pada ukuran tetapi tidak selalu pada kecepatan, sebab pemampatan menuntut waktu pembongkaran. Format biner unggul pada keduanya sekaligus.
+  - contoh: Memantau penggunaan memori
+    kode_r: |-
+      gc(reset = TRUE)
+      awal <- sum(gc()[, 2])
+
+      besar2 <- data.frame(a = rnorm(2e5), b = rnorm(2e5), c = rnorm(2e5))
+      setelah_buat <- sum(gc()[, 2])
+
+      salinan <- besar2          # penyalinan malas: belum menambah memori
+      setelah_salin <- sum(gc()[, 2])
+
+      salinan$a <- salinan$a * 2 # penyuntingan memicu penyalinan sungguhan
+      setelah_ubah <- sum(gc()[, 2])
+
+      round(c(awal = awal, setelah_buat = setelah_buat,
+              setelah_salin = setelah_salin, setelah_ubah = setelah_ubah), 1)
+    judul_r: gc untuk memantau memori
+    eval: true
+    penjelasan: |
+      Fungsi gc memicu pemungutan sampah sekaligus melaporkan pemakaian memori dalam megabita. Pemakaian diukur pada empat titik: sebelum objek dibuat, sesudahnya, sesudah objek disalin, dan sesudah salinannya disunting.
+    interpretasi: |
+      Perhatikan bahwa penyalinan objek tidak langsung menambah memori, sebab R memakai penyalinan saat disunting. Memori baru terpakai ketika salinannya benar-benar diubah. Sifat ini menjelaskan mengapa pemakaian memori R dapat melonjak mendadak di tengah pengolahan: satu penyuntingan kecil dapat memicu penyalinan seluruh objek. Inilah salah satu alasan data.table dirancang menyunting di tempat.
+  - contoh: Menyimpan hasil bertahap ke cakram
+    kode_r: |-
+      keluaran <- tempfile(fileext = ".csv")
+      n_potong <- 1000
+      lewati <- 1; pertama <- TRUE; total <- 0
+
+      repeat {
+        potong <- tryCatch(
+          read.csv("data/data_transaksi.csv", skip = lewati,
+                   nrows = n_potong, header = FALSE),
+          error = function(e) NULL)
+        if (is.null(potong) || nrow(potong) == 0) break
+
+        # olah potongan: saring transaksi bernilai besar
+        olahan <- potong[potong[[4]] > 1000, ]
+        if (nrow(olahan) > 0) {
+          write.table(olahan, keluaran, sep = ",", row.names = FALSE,
+                      col.names = pertama, append = !pertama)
+          pertama <- FALSE
+          total <- total + nrow(olahan)
+        }
+        lewati <- lewati + nrow(potong)
+      }
+      cat("baris tersaring:", total, "| ukuran keluaran:",
+          round(file.size(keluaran) / 1024, 1), "KB\n")
+    judul_r: membaca, mengolah, dan menulis per potongan
+    eval: true
+    penjelasan: |
+      Berkas dibaca per potongan, tiap potongan disaring, lalu hasilnya langsung ditulis ke berkas keluaran memakai append. Argumen col.names hanya bernilai benar pada potongan pertama agar kepala kolom tidak terulang.
+    interpretasi: |
+      Pola baca-olah-tulis inilah bentuk paling sederhana pengolahan di luar memori, dan gagasannya sama dengan yang dipakai kerangka terdistribusi. Perhatikan bahwa hanya satu potongan berada di memori pada satu waktu, sehingga berkas seberapa pun besarnya dapat diolah. Yang tidak dapat dikerjakan dengan pola ini adalah operasi yang menuntut seluruh data hadir sekaligus, misalnya pengurutan menyeluruh atau perhitungan median tepat.
+  - contoh: Mengukur pertumbuhan biaya secara empiris
+    kode_r: |-
+      suppressPackageStartupMessages(library(data.table))
+      set.seed(2026)
+      besar <- data.table(g = sample(letters[1:8], 5e4, TRUE), x = rlnorm(5e4, 5, 1))
+
+      ukuran <- c(2000, 10000, 25000, 50000)
+      waktu_ringkas <- sapply(ukuran, function(m)
+        system.time(besar[1:m][, list(r = mean(x)), by = g])[["elapsed"]])
+      waktu_urut <- sapply(ukuran, function(m)
+        system.time(sort(besar$x[1:m]))[["elapsed"]])
+
+      hasil <- data.frame(ukuran, peringkasan = waktu_ringkas, pengurutan = waktu_urut)
+      print(hasil, right = FALSE)
+    judul_r: mengukur waktu pada beberapa ukuran
+    eval: true
+    penjelasan: |
+      Data lima puluh ribu baris dibentuk, lalu dua operasi diukur pada empat ukuran potongan yang berbeda. Peringkasan per kelompok berbiaya linear, sedangkan pengurutan berbiaya n log n.
+    interpretasi: |
+      Bandingkan pertumbuhan waktunya terhadap pertumbuhan ukuran data. Pada ukuran sekecil ini selisihnya tenggelam oleh derau pengukuran, sehingga angkanya belum memperlihatkan orde dengan jelas. Justru itulah pelajarannya: menyimpulkan orde pertumbuhan dari pengukuran pada data kecil tidak dapat dipercaya. Untuk menaksir kelayakan pada data besar, orde teoretis lebih dapat diandalkan daripada pengukuran pada data kecil.
+  - contoh: Membuktikan biaya kuadrat pada perhitungan jarak
+    kode_r: |-
+      ukuran <- c(200, 400, 800, 1600)
+      waktu <- sapply(ukuran, function(m) {
+        X <- matrix(rnorm(m * 5), m, 5)
+        system.time(dist(X))[["elapsed"]]
+      })
+      pasangan <- ukuran * (ukuran - 1) / 2
+      print(data.frame(ukuran, pasangan, waktu), right = FALSE)
+
+      cat("\nrasio pasangan saat ukuran digandakan:",
+          paste(round(pasangan[-1] / pasangan[-length(pasangan)], 2), collapse = ", "), "\n")
+    judul_r: dist dan pertumbuhan banyaknya pasangan
+    eval: true
+    penjelasan: |
+      Matriks jarak dihitung pada empat ukuran yang masing-masing dua kali sebelumnya. Banyaknya pasangan dihitung dengan rumus kombinasi dua dari n, lalu rasio pertumbuhannya ditampilkan.
+    interpretasi: |
+      Rasio pasangan mendekati empat setiap kali ukuran digandakan --- inilah wujud biaya kuadrat. Pada seratus ribu amatan, banyaknya pasangan mencapai sekitar lima miliar, yang sudah tidak muat di memori apa pun. Karena itu pengelompokan hierarkis dan KNN memerlukan siasat khusus pada data besar, misalnya penarikan contoh, pengindeksan spasial, atau penghampiran tetangga terdekat.
+  - contoh: Menghampiri kuantil dengan penarikan contoh
+    kode_r: |-
+      set.seed(2026)
+      populasi <- besar$x
+
+      rasio <- c(0.01, 0.05, 0.10, 0.25)
+      hampiran <- sapply(rasio, function(f) {
+        s <- sample(populasi, length(populasi) * f)
+        c(median = median(s), q90 = quantile(s, 0.9))
+      })
+      colnames(hampiran) <- paste0(rasio * 100, " persen")
+
+      tepat <- c(median = median(populasi), q90 = quantile(populasi, 0.9))
+      print(round(cbind(hampiran, tepat = tepat), 2))
+
+      cat("\ngalat relatif median (persen):",
+          paste(round(100 * abs(hampiran[1, ] - tepat[1]) / tepat[1], 2), collapse = ", "), "\n")
+    judul_r: membandingkan kuantil hampiran dan tepat
+    eval: true
+    penjelasan: |
+      Median dan kuantil ke-90 dihitung dari empat ukuran contoh yang berbeda, lalu dibandingkan terhadap nilai yang dihitung dari seluruh data. Galat relatifnya dinyatakan dalam persen.
+    interpretasi: |
+      Perhatikan bahwa contoh lima persen sudah menghasilkan median yang galatnya kecil, dan menambah contoh menjadi dua puluh lima persen hanya memperbaikinya sedikit. Inilah dasar pembenaran penarikan contoh pada data besar: ketelitian bertambah menurut akar ukuran contoh, sehingga usaha yang berlipat hanya memberi perbaikan yang mengecil. Yang wajib dilakukan adalah menyatakan bahwa nilainya hampiran beserta ukuran contoh yang dipakai.
+  - contoh: Penarikan contoh pada aliran data
+    kode_r: |-
+      # reservoir sampling: menarik contoh berukuran tetap dari aliran
+      reservoir <- function(aliran, k) {
+        hasil <- aliran[1:k]
+        for (i in (k + 1):length(aliran)) {
+          j <- sample.int(i, 1)
+          if (j <= k) hasil[j] <- aliran[i]
+        }
+        hasil
+      }
+
+      set.seed(2026)
+      aliran <- besar$x[1:10000]
+      contoh <- reservoir(aliran, 500)
+
+      round(c(n_contoh = length(contoh),
+              rata_contoh = mean(contoh),
+              rata_populasi = mean(aliran),
+              median_contoh = median(contoh),
+              median_populasi = median(aliran)), 2)
+    judul_r: reservoir sampling
+    eval: true
+    penjelasan: |
+      Algoritma reservoir menarik contoh berukuran tetap dari aliran yang panjangnya tidak diketahui di muka. Amatan ke-i menggantikan salah satu isi reservoir dengan peluang k dibagi i, sehingga setiap amatan berpeluang sama terpilih.
+    interpretasi: |
+      Keunggulannya adalah hanya memerlukan satu kali penelusuran dan memori sebesar k saja, sehingga cocok bagi data yang datang mengalir dan tak dapat disimpan seluruhnya. Bandingkan rata-rata dan median contoh terhadap populasinya: keduanya berdekatan, sebagaimana diharapkan dari contoh acak. Inilah wujud penanganan dimensi velocity yang dibahas pada Teori.
+  - contoh: Menaksir kebutuhan sumber daya
+    kode_r: |-
+      memori_tersedia_MB <- 4096          # sesuaikan dengan mesin Anda
+      per_baris <- as.numeric(object.size(trx)) / nrow(trx)
+
+      skala <- c(`1 juta` = 1e6, `10 juta` = 1e7, `100 juta` = 1e8)
+      taksir <- data.frame(
+        baris = names(skala),
+        perkiraan_MB = round(per_baris * skala / 1024^2, 1),
+        muat = ifelse(per_baris * skala / 1024^2 < memori_tersedia_MB * 0.5,
+                      "muat di memori", "perlu bertahap/terdistribusi"))
+      print(taksir, right = FALSE)
+    judul_r: tabel taksiran kebutuhan
+    eval: true
+    penjelasan: |
+      Jejak memori per baris dikalikan tiga tingkat ukuran data untuk memperkirakan kebutuhan memorinya. Kolom keputusan dibentuk dengan ifelse memakai ambang setengah dari memori tersedia, karena pengolahan memerlukan ruang tambahan di luar penyimpanan data itu sendiri.
+    interpretasi: |
+      Ambang setengah memori bukan angka keramat, melainkan aturan praktis: banyak operasi R menyalin data sehingga kebutuhan sesaat dapat berlipat. Tabel seperti ini sebaiknya disusun pada tahap perencanaan, sebelum kode ditulis, agar pendekatan yang dipilih sejak awal memang dapat dijalankan.
+  latihan:
+  - Kerjakan bertahap. Gunakan `data/data_transaksi.csv`. Bagian Spark dikerjakan pada bagian Tambahan
+    setelah Penugasan.
+  - '#### Tingkat Dasar (melengkapi kode)'
+  - \latihan{Mengukur ukuran objek}
+  - |-
+    ```{r eval=FALSE}
+    trx <- read.csv("data/data_transaksi.csv", stringsAsFactors = TRUE)
+    format(____(trx), units = "KB")        # jejak memori objek
+    per_baris <- as.numeric(object.size(trx)) / ____(trx)   # bagi banyaknya baris
+    ```
+  - \latihan{Ringkasan dengan data.table}
+  - |-
+    ```{r eval=FALSE}
+    library(data.table)
+    trx_dt <- ____(trx)
+    trx_dt[, list(n = ____, rata = mean(nilai_transaksi)), by = provinsi]
+    ```
+  - \latihan{Pemeriksaan mutu}
+  - |-
+    ```{r eval=FALSE}
+    sum(____(trx$id_transaksi))            # cacah id ganda
+    q <- ____(trx$nilai_transaksi, c(.25, .75))   # kuartil
+    batas <- q[2] + 1.5 * ____(q)          # jarak antar-kuartil
+    ```
+  - \latihan{Format penyimpanan}
+  - |-
+    ```{r eval=FALSE}
+    f1 <- tempfile(fileext = ".csv"); f2 <- tempfile(fileext = ".rds")
+    write.csv(trx, f1, row.names = FALSE)
+    ____(trx, f2)                       # simpan sebagai biner
+    round(c(csv = ____(f1), rds = file.size(f2)) / 1024, 1)   # ukuran dalam KB
+    ```
+  - \latihan{Memantau memori}
+  - |-
+    ```{r eval=FALSE}
+    ____(reset = TRUE)                  # pungut sampah dan setel ulang pencatatan
+    sebelum <- sum(gc()[, 2])
+    besar <- data.frame(a = rnorm(1e5))
+    sesudah <- sum(____()[, 2])
+    cat("tambahan memori:", round(sesudah - sebelum, 1), "MB
+    ")
+    ```
+  - '#### Tingkat Menengah (menulis sendiri)'
+  - \latihan{Pengolahan bertahap}
+  - 'Tulis kode yang menghitung **ragam** `nilai_transaksi` secara bertahap per potongan seribu baris,
+    tanpa memuat seluruh berkas sekaligus. Petunjuk: kumpulkan jumlah, jumlah kuadrat, dan cacah, lalu
+    susun ragamnya di akhir. Buktikan hasilnya sama dengan `var()` atas data utuh hingga ketelitian enam
+    angka.'
+  - \latihan{Membetulkan kode yang salah}
+  - Kode berikut memuat empat kesalahan (satuan `object.size` keliru, pembagi bukan banyaknya baris, `margin`
+    tabel salah, dan batas pencilan memakai kuartil pertama). Temukan dan perbaiki, lalu jelaskan tiap
+    kesalahannya.
+  - |-
+    ```{r eval=FALSE}
+    trx <- read.csv("data/data_transaksi.csv", stringsAsFactors = TRUE)
+
+    # (a) satuan keliru: hasil dibaca sebagai MB padahal byte
+    ukuran <- as.numeric(object.size(trx))
+    cat("ukuran:", ukuran, "MB
+    ")
+
+    # (b) dibagi banyaknya KOLOM, bukan baris
+    per_baris <- ukuran / ncol(trx)
+
+    # (c) ingin proporsi kanal PER PROVINSI, tetapi margin salah
+    prop.table(table(trx$provinsi, trx$kanal), margin = 2)
+
+    # (d) batas pencilan atas memakai kuartil PERTAMA
+    q <- quantile(trx$nilai_transaksi, c(.25, .75))
+    batas <- q[1] + 1.5 * diff(q)
+    ```
+  - |-
+    **Keluaran yang benar.** Setelah diperbaiki, kode yang dipakai adalah sebagai berikut.
+
+    ```
+    # (a) byte diubah ke MB dengan membagi 1024^2
+    ukuran <- as.numeric(object.size(trx))
+    cat("ukuran:", round(ukuran / 1024^2, 3), "MB
+    ")
+
+    # (b) jejak per baris dibagi banyaknya BARIS
+    per_baris <- ukuran / nrow(trx)
+
+    # (c) margin = 1 agar proporsi dihitung per baris (per provinsi)
+    prop.table(table(trx$provinsi, trx$kanal), margin = 1)
+
+    # (d) batas atas memakai kuartil KETIGA
+    q <- quantile(trx$nilai_transaksi, c(.25, .75))
+    batas <- q[2] + 1.5 * diff(q)
+    ```
+
+    Pemeriksaan yang wajib berhasil: `all(round(rowSums(prop.table(table(trx$provinsi, trx$kanal), margin = 1)), 8) == 1)` bernilai **TRUE**, dan `batas > q[2]` bernilai **TRUE**.
+  - \latihan{Menakar orde pertumbuhan}
+  - Ukur waktu `dist()` pada empat ukuran data yang masing-masing dua kali sebelumnya. Hitung rasio waktu
+    antar-ukuran berturutan, lalu bandingkan terhadap rasio teoretis biaya kuadrat. Jelaskan mengapa rasio
+    terukur dapat menyimpang dari rasio teoretis.
+  - \latihan{Menghampiri dengan contoh}
+  - Hitung median dan kuartil ketiga `nilai_transaksi` dari contoh berukuran 1, 5, 10, dan 25 persen.
+    Sajikan galat relatifnya terhadap nilai tepat, lalu tentukan ukuran contoh terkecil yang menurut Anda
+    memadai beserta alasannya.
+  - '#### Tingkat Lanjut (perencanaan)'
+  - \latihan{Menyusun rencana sumber daya}
+  - 'Andaikan data transaksi ini bertambah menjadi 50 juta baris dan datang setiap hari. Susun rencana
+    ringkas yang memuat: (a) perkiraan kebutuhan memori dan cakram; (b) pendekatan yang Anda pilih beserta
+    alasannya; (c) besaran mana yang mudah dihitung secara terdistribusi dan mana yang sulit; (d) satu
+    risiko mutu data yang membesar seiring bertambahnya volume.'
+  penugasan:
+  - |-
+    \begin{kotaktugas}
+    Sebagai calon analis pada instansi statistik, susun laporan kelayakan pengolahan atas data transaksi tiruan \texttt{data\_transaksi.csv} (\emph{data simulasi}), lengkap dengan rekomendasi pendekatan bila datanya membesar.
+    \end{kotaktugas}
+  - '**Konteks.** Sebuah unit menerima catatan transaksi harian. Saat ini berukuran 5.000 baris, tetapi
+    diperkirakan tumbuh cepat. Pimpinan meminta penilaian apakah infrastruktur yang ada masih memadai.'
+  - \tugas{Penilaian Data}
+  - 1. Lakukan penjelajahan menyeluruh dan ukur jejak memorinya. Susun tabel taksiran kebutuhan untuk
+    1 juta, 10 juta, dan 100 juta baris.
+  - 2. Periksa **kelima dimensi** big data pada data ini. Untuk tiap dimensi, sebutkan apakah data ini
+    memenuhinya, disertai bukti dari perhitungan Anda.
+  - '3. Periksa dimensi **veracity** secara konkret: duplikasi, nilai di luar rentang wajar, dan pencilan.
+    Laporkan temuannya beserta pertimbangan apakah pencilan perlu dibuang.'
+  - \tugas{Perbandingan Pendekatan}
+  - 4. Bandingkan **tiga pendekatan** peringkasan (basis R, `dplyr`, `data.table`) dari sisi waktu. Ulangi
+    pada data yang digandakan sepuluh kali dengan `rbind`, lalu bahas apakah urutan kecepatannya berubah.
+  - 5. Terapkan **pengolahan bertahap** untuk menghitung rata-rata dan ragam tanpa memuat seluruh berkas.
+    Buktikan hasilnya sama dengan perhitungan sekaligus.
+  - \tugas{Penyimpanan}
+  - 6. Simpan data transaksi dalam **tiga format** (CSV, CSV termampatkan, biner). Bandingkan ukuran berkas
+    dan waktu pembacaannya. Sajikan sebagai tabel beserta rasio terhadap CSV.
+  - 7. Periksa apakah **tipe kolom terjaga** setelah dibaca dari masing-masing format. Jelaskan satu risiko
+    nyata bila tipe kolom salah ditebak dari CSV.
+  - '8. Terapkan pola **baca-olah-tulis per potongan**: saring transaksi bernilai di atas 1.000 lalu tulis
+    hasilnya ke berkas baru tanpa memuat seluruh data. Laporkan banyaknya baris tersaring dan buktikan
+    hasilnya sama dengan penyaringan sekaligus.'
+  - \tugas{Skalabilitas}
+  - 6. Ukur waktu **peringkasan** dan **perhitungan jarak** pada empat ukuran data berbeda. Sajikan tabel
+    dan grafik, lalu tentukan orde pertumbuhan masing-masing berdasarkan rasio waktunya.
+  - 7. Terapkan **reservoir sampling** untuk menarik contoh 500 amatan dari data. Bandingkan rata-rata,
+    median, dan simpangan baku contoh terhadap populasinya, lalu jelaskan mengapa cara ini sesuai bagi
+    data yang mengalir.
+  - 8. Bandingkan **kuantil hampiran** dari beberapa ukuran contoh terhadap nilai tepatnya. Tentukan ukuran
+    contoh yang memadai, dan susun kalimat pelaporan yang menyatakan dengan jujur bahwa nilainya hampiran.
+  - \tugas{Rekomendasi}
+  - 6. Susun rekomendasi pendekatan untuk tiga tingkat pertumbuhan data, disertai alasan teknis. Sebutkan
+    pula pada tingkat mana pendekatan terdistribusi mulai layak dipertimbangkan.
+  - '7. Susun laporan R Markdown berisi kode, keluaran, tabel, dan interpretasi. Tutup dengan **ringkasan
+    (maksimal 300 kata)** memuat: penilaian kelayakan, rekomendasi, keterbatasan, dan penegasan bahwa
+    data merupakan simulasi.'
+  tambahan:
+  - |
+    Bagian Contoh mengerjakan seluruh pengolahan di dalam memori satu mesin. Bagian ini memperkenalkan pendekatan yang berbeda secara mendasar: pekerjaan dibagi ke beberapa partisi dan dijalankan sejajar. Kerjakan setelah Penugasan selesai.
+  - |-
+    \begin{kotakcatatan}
+    Data sengaja dibuat kecil agar berjalan di komputer mana pun tanpa klaster. Yang dilatih di sini adalah \textbf{alur kerjanya} --- partisi, transformasi tertunda, dan aksi --- bukan besarnya data. Gagasan yang sama persis berlaku ketika kelak Anda bekerja pada klaster sungguhan.
+    \end{kotakcatatan}
+  - '**Prasyarat.** Java 11 atau lebih baru, serta `pip install pyspark pyarrow`. Periksa dengan `java
+    -version` pada terminal sebelum melanjutkan.'
+  - contoh: Memulai sesi Spark dan membentuk DataFrame
+    kode_py: |-
+      from pyspark.sql import SparkSession
+      import pyspark.sql.functions as F
+      import pandas as pd
+
+      spark = (SparkSession.builder
+               .appName("modul2")
+               .master("local[2]")               # 2 inti pada mesin ini
+               .config("spark.driver.memory", "1g")
+               .config("spark.ui.enabled", "false")
+               .getOrCreate())
+      spark.sparkContext.setLogLevel("ERROR")
+
+      pdf = pd.read_csv("data/data_transaksi.csv")
+      sdf = spark.createDataFrame(pdf)
+      print("baris:", sdf.count(), "| kolom:", len(sdf.columns))
+      print("partisi:", sdf.rdd.getNumPartitions())
+      sdf.printSchema()
+    judul_py: SparkSession dan partisi
+    eval: false
+    penjelasan: |
+      Sesi Spark dibuat dengan mode local dua inti, sehingga pekerjaan dibagi ke dua partisi pada satu mesin. Argumen driver memory membatasi memori, dan ui enabled bernilai false mematikan antarmuka web yang tidak diperlukan. Data dibaca lebih dahulu dengan pandas lalu diubah menjadi DataFrame Spark. Perintah getNumPartitions memperlihatkan berapa bagian data dipecah, dan printSchema menampilkan tipe tiap kolom sebagaimana dikenali Spark.
+    interpretasi: |
+      Perhatikan bahwa banyaknya partisi menentukan tingkat kesejajaran: dua partisi berarti dua bagian dapat dikerjakan bersamaan. Pada klaster sungguhan, partisi tersebar ke banyak mesin dan angkanya jauh lebih besar. Skema yang dicetak Spark juga patut diperiksa, sebab Spark menyimpulkan tipe secara mandiri dan kadang berbeda dari dugaan.
+  - contoh: Transformasi tertunda dan aksi
+    kode_py: |-
+      # TRANSFORMASI -- belum dijalankan, hanya dicatat sebagai rencana
+      rencana = (sdf
+                 .filter(F.col("nilai_transaksi") > 500)
+                 .groupBy("provinsi", "kanal")
+                 .agg(F.count("*").alias("n"),
+                      F.round(F.avg("nilai_transaksi"), 1).alias("rata")))
+      print(type(rencana))          # masih berupa DataFrame, belum ada hasil
+
+      # AKSI -- memicu seluruh rencana dijalankan
+      rencana.orderBy("provinsi", "kanal").show()
+    judul_py: filter, groupBy, agg, lalu show
+    eval: false
+    penjelasan: |
+      Rangkaian penyaringan, pengelompokan, dan peringkasan disusun tetapi belum dijalankan; yang terbentuk baru rencana kerja. Baru ketika show dipanggil, seluruh rangkaian dieksekusi. Fungsi F.count dengan tanda bintang mencacah baris, sedangkan alias memberi nama pada kolom hasil.
+    interpretasi: |
+      Inilah wujud penundaan eksekusi. Selama hanya transformasi yang dipanggil, tidak ada perhitungan yang berjalan dan tidak ada waktu terbuang. Sifat ini menjelaskan mengapa merangkai banyak langkah pada Spark tidak semahal merangkai banyak langkah pada pengolahan biasa.
+  - contoh: Membaca rencana eksekusi
+    kode_py: rencana.explain(mode="simple")
+    judul_py: explain
+    eval: false
+    penjelasan: |
+      Perintah explain menampilkan rencana fisik yang disusun Spark, dibaca dari bawah ke atas: pemindaian data, penyaringan, peringkasan sebagian pada tiap partisi, pertukaran data antar-partisi, lalu peringkasan akhir.
+    interpretasi: |
+      Dua hal patut diperhatikan. Pertama, penyaringan muncul dekat dasar rencana, artinya Spark mendahulukannya agar data yang diproses lebih sedikit. Kedua, adanya Exchange menandakan pertukaran data antar-partisi, yang merupakan operasi termahal pada pengolahan terdistribusi. Mengurangi pertukaran adalah inti pengoptimuman kerja Spark.
+  - contoh: Menutup sesi
+    kode_py: |-
+      spark.stop()
+      print("Sesi Spark ditutup.")
+    judul_py: spark.stop
+    eval: false
+    penjelasan: |
+      Sesi Spark menahan sumber daya selama masih hidup, sehingga wajib ditutup setelah pekerjaan selesai.
+    interpretasi: |
+      Lupa menutup sesi adalah kekeliruan yang lazim dan berakibat memori tetap terpakai. Pada lingkungan bersama, sesi yang tidak ditutup dapat menghalangi pengguna lain memperoleh sumber daya.
+  - |-
+    \begin{kotaksalah}[Spark bukan selalu lebih cepat]
+    Pada data berukuran kecil, Spark justru \textbf{lebih lambat} daripada pengolahan biasa, karena biaya penyiapan sesi, pembagian partisi, dan pertukaran data melebihi manfaat kesejajarannya. Spark baru unggul ketika data tidak lagi muat di memori satu mesin. Memakai Spark untuk data lima ribu baris adalah pilihan yang keliru --- dan modul ini memakainya semata untuk melatih alur kerja.
+    \end{kotaksalah}
+  ringkasan:
+  - |-
+    \begin{kotaktujuan}
+    \textbf{Daftar periksa penguasaan:}
+    \begin{itemize}
+    \item[$\square$] Saya dapat menyebutkan lima dimensi big data beserta akibat teknisnya.
+    \item[$\square$] Saya memahami bahwa besar tidak sama dengan berguna, dan ukuran tidak menggantikan keterwakilan.
+    \item[$\square$] Saya dapat mengukur jejak memori data dan menaksir kebutuhan pada skala lebih besar.
+    \item[$\square$] Saya dapat mengolah data secara bertahap tanpa memuatnya sekaligus.
+    \item[$\square$] Saya dapat membedakan besaran yang mudah diparalelkan dari yang sulit.
+    \item[$\square$] Saya memahami perbedaan transformasi dan aksi pada Spark.
+    \item[$\square$] Saya dapat membaca rencana eksekusi dan mengenali pertukaran antar-partisi.
+    \item[$\square$] Saya menyadari bahwa Spark tidak selalu lebih cepat.
+    \end{itemize}
+    \end{kotaktujuan}
+  - '**Kartu Referensi Cepat.**'
+  - |-
+    \begin{kotakrumus}
+    \begin{tabular}{@{}ll@{}}
+    \textbf{Keperluan} & \textbf{Perintah}\\nJejak memori objek & \texttt{object.size(d)}\\nRingkasan data.table & \texttt{dt[, list(r = mean(x)), by = g]}\\nCacah per kelompok & \texttt{dt[, list(n = .N), by = g]}\\nBaca per potongan & \texttt{read.csv(f, skip =, nrows =)}\\nMengukur waktu & \texttt{system.time(ekspresi)}\\nSesi Spark & \texttt{SparkSession.builder...getOrCreate()}\\nCacah partisi & \texttt{sdf.rdd.getNumPartitions()}\\nRingkasan Spark & \texttt{groupBy().agg()}\\nRencana eksekusi & \texttt{df.explain()}\\nMenutup sesi & \texttt{spark.stop()}\\
+    \end{tabular}
+    \end{kotakrumus}
+  - 'Modul ini menjawab pertanyaan apakah data yang tersedia dapat diolah dengan sumber daya yang ada,
+    dan apa jalan keluarnya bila tidak. Prinsip yang perlu dibawa: ukur lebih dahulu sebelum mengoptimumkan,
+    pilih pendekatan sesuai kendala nyata bukan sesuai tren, dan ingat bahwa data besar tanpa keterwakilan
+    tetap tidak menggantikan survei terancang. Modul berikutnya membahas ragam tipe data beserta perlakuan
+    yang sesuai bagi masing-masing.'
+  referensi:
+  - 'Han, J., Kamber, M., & Pei, J. (2011). *Data Mining: Concepts and Techniques* (3rd ed.). Morgan Kaufmann.'
+  - 'Marr, B. (2015). *Big Data: Using SMART Big Data, Analytics and Metrics*. Wiley.'
+  - 'Chambers, B., & Zaharia, M. (2018). *Spark: The Definitive Guide*. O''Reilly Media.'
+  - 'Dowle, M., & Srinivasan, A. (2023). *data.table: Extension of data.frame*. R package documentation.'
+  - UNECE (2013). *What Does Big Data Mean for Official Statistics?* United Nations Economic Commission
+    for Europe.
+exercises:
+- id: L2.1
+  points: 15
+  solution: 'Tingkat Dasar: object.size, ringkasan data.table, pemeriksaan mutu.'
+  judul_r: Solusi Tingkat Dasar (R)
+  solusi_r: |
+    suppressPackageStartupMessages(library(data.table))
+    trx <- read.csv("data/data_transaksi.csv", stringsAsFactors = TRUE)
+
+    format(object.size(trx), units = "KB")
+    per_baris <- as.numeric(object.size(trx)) / nrow(trx)
+
+    trx_dt <- as.data.table(trx)
+    trx_dt[, list(n = .N, rata = mean(nilai_transaksi)), by = provinsi]
+
+    sum(duplicated(trx$id_transaksi))
+    q <- quantile(trx$nilai_transaksi, c(.25, .75))
+    batas <- q[2] + 1.5 * diff(q)
+  interpretasi: |
+    Isian yang benar berturut-turut adalah object.size, nrow, as.data.table, .N, duplicated, quantile, dan diff. Penanda .N hanya sah dipakai di dalam kurung siku data.table dan berarti banyaknya baris pada kelompok yang sedang diproses. Fungsi diff atas dua kuartil menghasilkan jarak antar-kuartil.
+- id: L2.2
+  points: 25
+  solution: 'Tingkat Menengah dan Lanjut: ragam bertahap dan rencana sumber daya.'
+  judul_r: Solusi Menengah dan Lanjut (R)
+  solusi_r: |
+    berkas <- "data/data_transaksi.csv"
+    trx <- read.csv(berkas, stringsAsFactors = TRUE)
+
+    # ragam secara bertahap: kumpulkan jumlah, jumlah kuadrat, dan cacah
+    n_potong <- 1000
+    s1 <- 0; s2 <- 0; n <- 0; lewati <- 1
+    repeat {
+      potong <- tryCatch(read.csv(berkas, skip = lewati, nrows = n_potong,
+                                  header = FALSE), error = function(e) NULL)
+      if (is.null(potong) || nrow(potong) == 0) break
+      x  <- potong[[4]]                    # kolom nilai_transaksi
+      s1 <- s1 + sum(x); s2 <- s2 + sum(x^2); n <- n + length(x)
+      lewati <- lewati + nrow(potong)
+    }
+    ragam_bertahap <- (s2 - s1^2 / n) / (n - 1)
+    round(c(bertahap = ragam_bertahap,
+            sekaligus = var(trx$nilai_transaksi),
+            selisih = ragam_bertahap - var(trx$nilai_transaksi)), 6)
+
+    # rencana sumber daya pada 50 juta baris
+    per_baris <- as.numeric(object.size(trx)) / nrow(trx)
+    round(per_baris * 5e7 / 1024^3, 2)     # perkiraan dalam GB
+  interpretasi: |
+    Ragam dihitung dari tiga besaran yang dapat dijumlahkan lintas potongan, yaitu jumlah, jumlah kuadrat, dan cacah. Rumus yang dipakai adalah bentuk hitung pendek; selisihnya terhadap var bawaan nol hingga ketelitian mesin. Perlu dicatat bahwa bentuk hitung pendek ini rentan kehilangan ketelitian bila nilai datanya sangat besar, sehingga pada praktik nyata algoritma Welford lebih dianjurkan. Untuk perencanaan, besaran yang dapat dijumlahkan seperti ini mudah dihitung terdistribusi, sedangkan median memerlukan penghampiran.
+- id: L2.D
+  points: 10
+  solution: 'Membetulkan kode: satuan byte, pembagi baris, margin tabel, dan kuartil batas.'
+  judul_r: Solusi Membetulkan Kode (R)
+  solusi_r: |
+    trx <- read.csv("data/data_transaksi.csv", stringsAsFactors = TRUE)
+
+    # (a) byte diubah ke MB dengan membagi 1024^2
+    ukuran <- as.numeric(object.size(trx))
+    cat("ukuran:", round(ukuran / 1024^2, 3), "MB\n")
+
+    # (b) jejak per baris dibagi banyaknya BARIS
+    per_baris <- ukuran / nrow(trx)
+
+    # (c) margin = 1 agar proporsi dihitung per provinsi
+    prop.table(table(trx$provinsi, trx$kanal), margin = 1)
+
+    # (d) batas pencilan atas memakai kuartil KETIGA
+    q <- quantile(trx$nilai_transaksi, c(.25, .75))
+    batas <- q[2] + 1.5 * diff(q)
+
+    # pemeriksaan wajib
+    all(round(rowSums(prop.table(table(trx$provinsi, trx$kanal), margin = 1)), 8) == 1)
+    batas > q[2]
+  interpretasi: |
+    Empat kesalahan diperbaiki. Pertama, object.size mengembalikan byte sehingga menyebutnya megabita tanpa pembagian membuat angkanya keliru sejuta kali lipat. Kedua, jejak per baris tentu dibagi banyaknya baris, bukan kolom. Ketiga, margin bernilai 2 menghitung proporsi per kolom padahal yang diminta per provinsi yang berada di baris. Keempat, batas pencilan atas dihitung dari kuartil ketiga; memakai kuartil pertama menghasilkan batas yang justru berada di bawah sebagian besar data.
+- id: T2.1
+  points: 50
+  solution: 'Penugasan: penilaian lima dimensi, perbandingan pendekatan, pengolahan bertahap, rekomendasi.'
+  judul_r: Solusi Penugasan (R)
+  solusi_r: |
+    suppressPackageStartupMessages({library(data.table); library(dplyr)})
+    trx <- read.csv("data/data_transaksi.csv", stringsAsFactors = TRUE)
+    trx_dt <- as.data.table(trx)
+
+    # 1) jejak memori dan taksiran
+    per_baris <- as.numeric(object.size(trx)) / nrow(trx)
+    skala <- c(`1 juta` = 1e6, `10 juta` = 1e7, `100 juta` = 1e8)
+    taksir <- data.frame(baris = names(skala),
+                         MB = round(per_baris * skala / 1024^2, 1),
+                         GB = round(per_baris * skala / 1024^3, 2))
+    print(taksir, right = FALSE)
+
+    # 2) lima dimensi -- disajikan sebagai tabel penilaian
+    dimensi <- data.frame(
+      dimensi = c("Volume","Velocity","Variety","Veracity","Value"),
+      bukti = c(paste(nrow(trx), "baris,", round(per_baris*nrow(trx)/1024^2,2), "MB"),
+                "tidak diketahui (data statis)",
+                paste(length(unique(sapply(trx, class))), "tipe kolom berbeda"),
+                paste("duplikasi:", sum(duplicated(trx$id_transaksi))),
+                "bergantung persoalan yang dirumuskan"))
+    print(dimensi, right = FALSE)
+
+    # 3) veracity secara konkret
+    q <- quantile(trx$nilai_transaksi, c(.25, .75))
+    batas <- q[2] + 1.5 * diff(q)
+    c(duplikasi = sum(duplicated(trx$id_transaksi)),
+      negatif = sum(trx$nilai_transaksi < 0),
+      pencilan = sum(trx$nilai_transaksi > batas))
+
+    # 4) perbandingan tiga pendekatan, data asli dan digandakan
+    bandingkan <- function(d) {
+      dt <- as.data.table(d)
+      c(aggregate = system.time(aggregate(nilai_transaksi ~ provinsi, d, mean))[["elapsed"]],
+        dplyr = system.time(d |> group_by(provinsi) |>
+                  summarise(r = mean(nilai_transaksi), .groups="drop"))[["elapsed"]],
+        data.table = system.time(dt[, list(r = mean(nilai_transaksi)), by = provinsi])[["elapsed"]])
+    }
+    besar <- do.call(rbind, replicate(10, trx, simplify = FALSE))
+    round(rbind(asli = bandingkan(trx), sepuluh_kali = bandingkan(besar)), 4)
+
+    # 5) rata-rata dan ragam bertahap
+    berkas <- "data/data_transaksi.csv"; s1 <- 0; s2 <- 0; n <- 0; lewati <- 1
+    repeat {
+      p <- tryCatch(read.csv(berkas, skip = lewati, nrows = 1000, header = FALSE),
+                    error = function(e) NULL)
+      if (is.null(p) || nrow(p) == 0) break
+      x <- p[[4]]; s1 <- s1 + sum(x); s2 <- s2 + sum(x^2); n <- n + length(x)
+      lewati <- lewati + nrow(p)
+    }
+    round(c(rata_bertahap = s1/n, rata_sekaligus = mean(trx$nilai_transaksi),
+            ragam_bertahap = (s2 - s1^2/n)/(n-1),
+            ragam_sekaligus = var(trx$nilai_transaksi)), 6)
+  interpretasi: |
+    Nomor 2 sengaja menuntut bukti dari perhitungan, bukan pernyataan umum; dimensi velocity pada data statis memang tidak dapat dinilai dan menuliskannya apa adanya lebih jujur daripada mengarang. Pada nomor 4, urutan kecepatan lazimnya baru berubah setelah data digandakan --- pada data kecil selisihnya tenggelam oleh derau pengukuran, sehingga menyimpulkan perkakas tercepat dari data kecil adalah kekeliruan yang sering terjadi. Nomor 5 membuktikan bahwa rata-rata dan ragam dapat dihitung bertahap karena keduanya tersusun dari besaran yang dapat dijumlahkan. Laporan wajib menegaskan bahwa data merupakan simulasi, dan bahwa data besar tanpa keterwakilan tidak menggantikan survei terancang.
+references:
+- 'Han, J., Kamber, M., & Pei, J. (2011). Data Mining: Concepts and Techniques (3rd ed.). Morgan Kaufmann.'
+- 'Marr, B. (2015). Big Data: Using SMART Big Data, Analytics and Metrics. Wiley.'
+- 'Chambers, B., & Zaharia, M. (2018). Spark: The Definitive Guide. O''Reilly Media.'
+- 'Dowle, M., & Srinivasan, A. (2023). data.table: Extension of data.frame. R package documentation.'
+- UNECE (2013). What Does Big Data Mean for Official Statistics? United Nations Economic Commission for
+  Europe.
+

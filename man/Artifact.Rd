@@ -5,60 +5,59 @@
 \title{Artefak hasil render}
 \description{
 Artefak hasil render
+
+Artefak hasil render
 }
 \section{Public fields}{
-  \if{html}{\out{<div class="r6-fields">}}
-  \describe{
-    \item{\code{path}}{path berkas hasil}
+\if{html}{\out{<div class="r6-fields">}}
+\describe{
+\item{\code{path}}{path berkas hasil}
 
-    \item{\code{kind}}{jenis artefak}
-  }
-  \if{html}{\out{</div>}}
+\item{\code{kind}}{jenis artefak}
+}
+\if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
-  \itemize{
-    \item \href{#method-Artifact-initialize}{\code{Artifact$new()}}
-    \item \href{#method-Artifact-clone}{\code{Artifact$clone()}}
-  }
+\itemize{
+\item \href{#method-Artifact-new}{\code{Artifact$new()}}
+\item \href{#method-Artifact-clone}{\code{Artifact$clone()}}
+}
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-Artifact-initialize"></a>}}
-\if{latex}{\out{\hypertarget{method-Artifact-initialize}{}}}
-\subsection{\code{Artifact$new()}}{
-  Buat artefak
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Artifact$new(path, kind = "pdf")}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{path}}{path}
-      \item{\code{kind}}{jenis}
-    }
-    \if{html}{\out{</div>}}
-  }
+\if{html}{\out{<a id="method-Artifact-new"></a>}}
+\if{latex}{\out{\hypertarget{method-Artifact-new}{}}}
+\subsection{Method \code{new()}}{
+Buat artefak
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Artifact$new(path, kind = "pdf")}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{path}}{path}
+
+\item{\code{kind}}{jenis}
+}
+\if{html}{\out{</div>}}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-Artifact-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-Artifact-clone}{}}}
-\subsection{\code{Artifact$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{Artifact$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Artifact$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
 }

@@ -5,61 +5,61 @@
 \title{Pembangun kunci jawaban (menampilkan solusi) — DRY dari spec yang sama}
 \description{
 Pembangun kunci jawaban (menampilkan solusi) — DRY dari spec yang sama
+
+Pembangun kunci jawaban (menampilkan solusi) — DRY dari spec yang sama
 }
 \section{Super class}{
-\code{\link[modulstis:ContentBuilder]{ContentBuilder}} -> \code{AnswerKeyBuilder}
+\code{\link[modulstis:ContentBuilder]{modulstis::ContentBuilder}} -> \code{AnswerKeyBuilder}
 }
 \section{Methods}{
 \subsection{Public methods}{
-  \itemize{
-    \item \href{#method-AnswerKeyBuilder-build}{\code{AnswerKeyBuilder$build()}}
-    \item \href{#method-AnswerKeyBuilder-clone}{\code{AnswerKeyBuilder$clone()}}
-  }
+\itemize{
+\item \href{#method-AnswerKeyBuilder-build}{\code{AnswerKeyBuilder$build()}}
+\item \href{#method-AnswerKeyBuilder-clone}{\code{AnswerKeyBuilder$clone()}}
 }
-\if{html}{\out{<details open><summary>Inherited methods</summary>
+}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
 <ul>
-  <li><span class="pkg-link" data-pkg="modulstis" data-topic="ContentBuilder" data-id="initialize"><a href='../../modulstis/html/ContentBuilder.html#method-ContentBuilder-initialize'><code>ContentBuilder$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="modulstis" data-topic="ContentBuilder" data-id="initialize"><a href='../../modulstis/html/ContentBuilder.html#method-ContentBuilder-initialize'><code>modulstis::ContentBuilder$initialize()</code></a></span></li>
 </ul>
-</details>}}
+</details>
+}}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-AnswerKeyBuilder-build"></a>}}
 \if{latex}{\out{\hypertarget{method-AnswerKeyBuilder-build}{}}}
-\subsection{\code{AnswerKeyBuilder$build()}}{
-  Bangun Document kunci
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{AnswerKeyBuilder$build(spec)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{spec}}{\link{ModuleSpec}}
-    }
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Returns}{
-    objek \link{Document}
-  }
+\subsection{Method \code{build()}}{
+Bangun Document kunci
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{AnswerKeyBuilder$build(spec)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{spec}}{\link{ModuleSpec}}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+objek \link{Document}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-AnswerKeyBuilder-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-AnswerKeyBuilder-clone}{}}}
-\subsection{\code{AnswerKeyBuilder$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{AnswerKeyBuilder$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{AnswerKeyBuilder$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
 }

@@ -1,0 +1,906 @@
+number: 1
+title: Pengenalan Knowledge Discovery dan Data Mining
+short_code: pengenalan_kdd
+topic: Pengenalan KDD
+pertemuan: 1
+sub_cpmk: |
+  Sub-CPMK 1: Mahasiswa mampu menjelaskan konsep data mining dan knowledge discovery, membedakannya dari statistika inferensia dan pembelajaran mesin, mengenali jenis data yang dapat ditambang, serta menempatkan pekerjaan analisis pada kerangka CRISP-DM.
+packages:
+- dplyr
+- data.table
+contoh_title: Contoh Praktikum dengan R
+course:
+  matkul: Data Mining dan Big Data
+  matkul_besar: DATA MINING DAN BIG DATA
+  kode: K202505
+  semester: 6 (Genap)
+  prodi: D-IV Statistika
+  penyusun:
+  - Achmad Syahrul Choir
+datasets:
+- name: data_pelanggan
+  role: contoh
+  recipe:
+    kind: tabular
+    n: 500
+    seed: 2026
+    columns:
+      id_pelanggan:
+        type: integer
+        min: 10001
+        max: 10500
+      wilayah:
+        type: category
+        levels:
+        - Perkotaan
+        - Perdesaan
+        probs:
+        - 0.55
+        - 0.45
+      segmen:
+        type: category
+        levels:
+        - Baru
+        - Aktif
+        - Pasif
+        probs:
+        - 0.25
+        - 0.5
+        - 0.25
+      lama_langganan:
+        type: integer
+        min: 1
+        max: 72
+      tagihan_bulanan:
+        type: numeric
+        min: 50
+        max: 850
+        digits: 2
+      jumlah_transaksi:
+        type: integer
+        min: 0
+        max: 120
+      skor_kepuasan:
+        type: numeric
+        min: 1
+        max: 5
+        digits: 1
+body:
+  deskripsi:
+  - |
+    Modul ini membuka mata kuliah Data Mining dan Big Data. Sasarannya bukan langsung membangun model, melainkan menata cara berpikir: apa sebenarnya yang dicari data mining, bagaimana ia berbeda dari statistika inferensia yang sudah Anda pelajari, dan pada kerangka kerja apa seluruh kegiatan ini ditempatkan.
+  - |
+    Anda datang ke mata kuliah ini membawa bekal Analisis Peubah Ganda dan Analisis Regresi. Keduanya mengajarkan cara menarik kesimpulan mengenai populasi dari sebuah contoh, dengan model yang ditetapkan lebih dahulu berdasarkan teori. Data mining bergerak dari arah yang berlawanan: pola dicari dari data, dan model dipilih berdasarkan seberapa baik ia meramalkan, bukan seberapa cocok ia dengan teori yang mendahului.
+  - |
+    Perbedaan arah itu membawa akibat yang nyata pada cara bekerja. Ukuran keberhasilan bergeser dari kebermaknaan menjadi ketepatan ramalan; perhatian bergeser dari penduga parameter menjadi pemodelan berlebih (*overfitting*); dan pembagian data menjadi latih dan uji berubah dari pilihan menjadi keharusan.
+  - |
+    Materi dibahas dari dasar hingga penerapan: pengertian dan tujuan data mining, jenis data yang dapat ditambang, perbedaan dengan disiplin serumpun, alur Knowledge Discovery in Databases, kerangka CRISP-DM sebagai tulang punggung seluruh modul, serta etika dan privasi data.
+  - |-
+    \begin{kotakperhatian}[Tentang data]
+    Berkas data pada modul ini adalah \textbf{data simulasi} (\texttt{set.seed(2026)}), \textbf{bukan data nyata} dan \textbf{bukan data resmi} instansi mana pun. Data dibangkitkan agar konteks praktikum terasa nyata, tetapi angkanya tidak menggambarkan keadaan sebenarnya.
+    \end{kotakperhatian}
+  tujuan:
+  - 'Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:'
+  - 1. **Menjelaskan** pengertian data mining dan knowledge discovery beserta tujuannya.
+  - 2. **Membedakan** data mining dari statistika inferensia dan pembelajaran mesin.
+  - 3. **Mengenali** jenis data yang dapat ditambang beserta perlakuan yang sesuai.
+  - 4. **Menguraikan** enam tahap CRISP-DM dan menempatkan suatu pekerjaan padanya.
+  - 5. **Melakukan** penjelajahan awal data sebagai langkah *data understanding*.
+  - 6. **Membandingkan** rumusan pertanyaan inferensia dengan pertanyaan data mining atas data yang sama.
+  - 7. **Menjelaskan** pertimbangan etika dan privasi dalam penambangan data.
+  alat:
+  - 'Perangkat dan bahan yang diperlukan:'
+  - '- **R** (RStudio) sebagai lingkungan kerja utama.'
+  - '- Paket: `dplyr` dan `data.table` (pasang dengan `install.packages()`).'
+  - '- Berkas data: `data/data_pelanggan.csv`.'
+  - '- Peramban (*browser*) untuk membuka dokumentasi paket bila diperlukan.'
+  instruksi:
+  - 'Ikuti tahapan berikut:'
+  - '**Sebelum praktikum:** siapkan direktori kerja; letakkan `data_pelanggan.csv` pada subfolder `data/`;
+    baca bagian Teori Singkat, khususnya kerangka CRISP-DM.'
+  - '**Selama praktikum:** kerjakan Contoh secara berurutan. Untuk setiap contoh, ketik ulang kodenya,
+    amati keluarannya, baca Penjelasan Kode, lalu tuliskan tafsiran Anda sendiri sebelum membaca Interpretasi
+    Output.'
+  - |-
+    **Pembagian kerja:** Contoh dan Latihan dikerjakan selama sesi di kelas; **Penugasan dikerjakan di luar sesi** sebagai tugas terstruktur.
+
+    **Pengumpulan:** susun laporan R Markdown, render ke PDF atau HTML, kumpulkan melalui Google Classroom sesuai tenggat.
+  teori:
+  - '### Kedudukan Modul Ini pada CRISP-DM'
+  - |
+    Seluruh modul dalam mata kuliah ini ditempatkan pada kerangka CRISP-DM (Cross-Industry Standard Process for Data Mining). Modul ini berada pada dua tahap awal: Business Understanding, yaitu merumuskan persoalan dan ukuran keberhasilannya; dan Data Understanding, yaitu mengenali data yang tersedia sebelum menyentuh pemodelan.
+  - |-
+    \begin{kotakinfo}[Enam tahap CRISP-DM]\par\smallskip
+    \begin{tabular}{@{}p{0.7cm}p{4.0cm}p{9.4cm}@{}}
+    \textbf{1} & \textbf{Business Understanding} & merumuskan persoalan, tujuan, dan kriteria sukses\\[2pt]
+    \textbf{2} & \textbf{Data Understanding} & mengumpulkan, menjelajah, dan menilai mutu data\\[2pt]
+    \textbf{3} & \textbf{Data Preparation} & membersihkan, menggabung, mereduksi, menransformasi\\[2pt]
+    \textbf{4} & \textbf{Modeling} & memilih teknik, melatih model, menala hiperparameter\\[2pt]
+    \textbf{5} & \textbf{Evaluation} & menilai hasil terhadap tujuan pada tahap 1\\[2pt]
+    \textbf{6} & \textbf{Deployment} & menerapkan, melaporkan, memantau\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Perlu ditegaskan bahwa CRISP-DM bukan urutan yang berjalan sekali jalan. Panahnya dua arah: temuan pada tahap penjelajahan kerap memaksa rumusan persoalan ditinjau ulang, dan hasil evaluasi kerap mengembalikan pekerjaan ke tahap penyiapan data. Justru pengulangan itulah yang lazim dalam praktik.
+  - '### Apa Itu Data Mining'
+  - |
+    Data mining adalah proses menemukan pola yang valid, baru, bermanfaat, dan dapat dipahami dari data berukuran besar. Keempat sifat itu perlu dibaca bersama-sama. Pola yang valid tetapi tidak baru hanya mengulang yang sudah diketahui; pola yang baru tetapi tidak bermanfaat tidak menolong pengambilan keputusan; dan pola yang bermanfaat tetapi tidak dapat dipahami sukar dipertanggungjawabkan.
+  - |
+    Istilah data mining sering dipertukarkan dengan Knowledge Discovery in Databases (KDD). Secara ketat, KDD adalah keseluruhan prosesnya, sedangkan data mining adalah satu tahap di dalamnya, yaitu penerapan algoritma penemuan pola. Dalam pemakaian sehari-hari keduanya kerap disamakan, dan modul ini pun tidak mempersoalkannya selama konteksnya jelas.
+  - '### Membedakan dari Disiplin Serumpun'
+  - |-
+    \begin{kotakinfo}[Tiga cara pandang atas data yang sama]\par\smallskip
+    \begin{tabular}{@{}p{3.2cm}p{5.3cm}p{5.6cm}@{}}
+     & \textbf{Statistika inferensia} & \textbf{Data mining}\\
+    \hline
+    \textbf{Titik mula} & teori dan hipotesis & data\\[2pt]
+    \textbf{Model} & ditetapkan lebih dahulu & dipilih dari perbandingan\\[2pt]
+    \textbf{Ukuran sukses} & kebermaknaan, selang & ketepatan ramalan pada data baru\\[2pt]
+    \textbf{Ukuran contoh} & lazimnya terbatas & lazimnya besar\\[2pt]
+    \textbf{Perhatian utama} & bias penduga & pemodelan berlebih (\emph{overfitting})\\[2pt]
+    \textbf{Peubah} & sedikit, terpilih & banyak, kadang ribuan\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Pembelajaran mesin sendiri lebih tepat dipandang sebagai kumpulan algoritma yang dipakai data mining, bukan sebagai pesaingnya. Sebuah pohon keputusan adalah algoritma pembelajaran mesin; memakainya untuk menemukan ciri pelanggan yang berpotensi berhenti berlangganan adalah pekerjaan data mining.
+  - |-
+    \begin{kotaksalah}[Data mining bukan sekadar mengumpulkan data]
+    Banyak orang mengira data mining berarti mengumpulkan data sebanyak-banyaknya lalu berharap pola muncul dengan sendirinya. Anggapan ini keliru dan berbahaya. Tanpa rumusan persoalan yang jelas, pencarian pola pada data besar hampir pasti menemukan hubungan semu --- makin banyak peubah diperiksa, makin besar peluang menemukan kebetulan yang tampak bermakna. Itulah sebabnya CRISP-DM menempatkan \emph{business understanding} pada tahap pertama, bukan terakhir.
+    \end{kotaksalah}
+  - '### Jenis Data yang Dapat Ditambang'
+  - |-
+    \begin{kotakinfo}[Ragam data dan perlakuannya]\par\smallskip
+    \begin{tabular}{@{}p{3.6cm}p{4.4cm}p{6.2cm}@{}}
+    \textbf{Jenis} & \textbf{Contoh} & \textbf{Perlakuan khas}\\
+    \hline
+    Tabular & basis data pelanggan & pembersihan, pengodean, pembakuan\\[2pt]
+    Transaksi & keranjang belanja & format keranjang, aturan asosiasi\\[2pt]
+    Runtun waktu & penjualan harian & pembedaan, jendela geser\\[2pt]
+    Teks & ulasan, media sosial & tokenisasi, pembobotan istilah\\[2pt]
+    Jaringan & relasi antar-akun & ukuran sentralitas, komunitas\\[2pt]
+    Spasial & titik dan wilayah & bobot ketetanggaan\\[2pt]
+    Citra & foto satelit & ekstraksi ciri, jaringan konvolusi\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Modul ini dan sebagian besar modul berikutnya bekerja pada data tabular, karena di sanalah gagasan pokok paling mudah dipahami. Data teks dan jaringan dibahas pada Modul 3, sedangkan data transaksi menjadi bahan Modul 11.
+  - '### Tujuh Langkah Proses KDD'
+  - |
+    CRISP-DM memberi kerangka manajerial, sedangkan proses KDD yang dirumuskan Fayyad dan rekan memberi rincian teknisnya. Keduanya tidak bertentangan melainkan saling melengkapi; KDD dapat dipandang sebagai perincian tahap ketiga sampai kelima CRISP-DM.
+  - |-
+    \begin{kotakinfo}[Tujuh langkah KDD]\par\smallskip
+    \begin{tabular}{@{}p{0.7cm}p{3.4cm}p{10.0cm}@{}}
+    \textbf{1} & Seleksi & memilih data dan peubah yang relevan bagi persoalan\\[2pt]
+    \textbf{2} & Prapemrosesan & membersihkan derau, menangani nilai hilang\\[2pt]
+    \textbf{3} & Transformasi & mengubah bentuk, mereduksi dimensi\\[2pt]
+    \textbf{4} & Penambangan & menerapkan algoritma penemuan pola\\[2pt]
+    \textbf{5} & Penafsiran & menilai pola yang ditemukan\\[2pt]
+    \textbf{6} & Penyajian & menyampaikan temuan agar dapat dipahami\\[2pt]
+    \textbf{7} & Pemanfaatan & menerapkan pengetahuan pada keputusan\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Perhatikan bahwa penambangan sesungguhnya hanya menempati satu dari tujuh langkah. Enam langkah lainnya adalah penyiapan dan penindaklanjutan. Kesan bahwa data mining identik dengan menjalankan algoritma karena itu keliru, dan kekeliruan itulah yang membuat banyak proyek gagal pada tahap penerapan.
+  - '### Ragam Tugas Penambangan'
+  - |-
+    \begin{kotakinfo}[Enam tugas pokok]\par\smallskip
+    \begin{tabular}{@{}p{3.0cm}p{4.4cm}p{6.6cm}@{}}
+    \textbf{Tugas} & \textbf{Pertanyaan} & \textbf{Contoh penerapan}\\
+    \hline
+    Klasifikasi & termasuk kelas mana? & pelanggan berpotensi berhenti\\[2pt]
+    Regresi & berapa nilainya? & menduga pengeluaran\\[2pt]
+    Pengelompokan & ada berapa kelompok alami? & segmentasi wilayah\\[2pt]
+    Aturan asosiasi & apa yang muncul bersama? & pola keranjang belanja\\[2pt]
+    Deteksi anomali & mana yang menyimpang? & transaksi mencurigakan\\[2pt]
+    Peringkasan & bagaimana gambaran umumnya? & profil wilayah\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Menetapkan tugas dengan tepat adalah keputusan awal yang menentukan. Persoalan yang sama dapat dirumuskan sebagai tugas berbeda: menduga besarnya tagihan adalah regresi, sedangkan menduga apakah tagihan tergolong tinggi adalah klasifikasi. Pilihan itu mengubah algoritma, ukuran keberhasilan, dan cara menafsirkan hasilnya.
+  - '### Skala Pengukuran Menentukan Perlakuan'
+  - |
+    Sebelum memilih algoritma, tipe peubah perlu dikenali menurut skala pengukurannya. Kekeliruan pada tahap ini berakibat perhitungan yang secara teknis berjalan tetapi maknanya keliru --- misalnya menghitung rata-rata atas kode wilayah yang sesungguhnya nominal.
+  - |-
+    \begin{kotakinfo}[Empat skala pengukuran]\par\smallskip
+    \begin{tabular}{@{}p{2.2cm}p{4.2cm}p{4.0cm}p{3.6cm}@{}}
+    \textbf{Skala} & \textbf{Ciri} & \textbf{Contoh} & \textbf{Yang sah dihitung}\\
+    \hline
+    Nominal & kategori tanpa urutan & wilayah, jenis kelamin & modus, frekuensi\\[2pt]
+    Ordinal & kategori berurutan & tingkat pendidikan & modus, median\\[2pt]
+    Interval & jarak bermakna, nol relatif & suhu Celsius & rata-rata, simpangan\\[2pt]
+    Rasio & nol mutlak & pendapatan, umur & seluruhnya, termasuk rasio\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Perbedaan interval dan rasio kerap dianggap sepele, padahal berpengaruh. Suhu 20 derajat Celsius bukan dua kali lebih panas daripada 10 derajat, sebab titik nolnya tidak mutlak. Sebaliknya pendapatan dua juta memang dua kali pendapatan satu juta. Rasio hanya bermakna pada skala rasio.
+  - '### Supervised dan Unsupervised'
+  - |-
+    \begin{kotakinfo}[Dua kelompok besar tugas penambangan]\par\smallskip
+    \begin{tabular}{@{}p{2.8cm}p{5.4cm}p{6.0cm}@{}}
+     & \textbf{Supervised} & \textbf{Unsupervised}\\
+    \hline
+    Sasaran & ada, diketahui & tidak ada\\[2pt]
+    Tujuan & meramalkan sasaran & menemukan struktur\\[2pt]
+    Contoh tugas & klasifikasi, regresi & pengelompokan, aturan asosiasi\\[2pt]
+    Penilaian & terhadap sasaran sebenarnya & tidak langsung, perlu penafsiran\\[2pt]
+    Modul & 6 sampai 10, 13 & 11, 12, 14\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Perbedaan penilaian pada baris keempat patut dicermati. Pada tugas supervised, kebenaran dapat diperiksa karena sasarannya diketahui. Pada tugas unsupervised tidak ada kunci jawaban, sehingga kebermaknaan hasil bersandar pada penafsiran dan pengetahuan bidang. Inilah sebabnya pengelompokan lebih sukar dinilai daripada klasifikasi, meski secara perhitungan tampak lebih sederhana.
+  - '### Bahaya Menemukan Pola Semu'
+  - |
+    Telah disinggung bahwa mencari pola pada data berpeubah banyak berisiko menemukan kebetulan. Besarnya risiko itu dapat dihitung. Bila seratus peubah diuji hubungannya dengan suatu sasaran pada taraf nyata lima persen, maka sekitar lima peubah akan tampak nyata **meski tidak ada hubungan sama sekali**.
+  - |-
+    \begin{kotakrumus}
+    Peluang menemukan setidaknya satu hasil nyata palsu dari $m$ pengujian bebas:\\[4pt]
+    $P(\text{setidaknya satu}) = 1 - (1-\alpha)^{m}$\\[4pt]
+    Pada $\alpha = 0{,}05$ dan $m = 100$, peluangnya mencapai $0{,}994$.
+    \end{kotakrumus}
+  - '### Etika dan Privasi'
+  - |
+    Kemampuan menemukan pola membawa tanggung jawab. Data yang tampak tidak sensitif dapat menjadi sensitif ketika digabungkan: gabungan kode pos, tanggal lahir, dan jenis kelamin sudah cukup untuk mengenali sebagian besar orang secara unik. Karena itu penggabungan sumber data perlu ditimbang, bukan sekadar dikerjakan karena mungkin dikerjakan.
+  - |-
+    \begin{kotakperhatian}[Tiga pertanyaan sebelum menambang data]
+    \begin{enumerate}
+    \item Apakah data ini diperoleh dengan sah dan dengan sepengetahuan pemiliknya?
+    \item Apakah hasilnya dapat merugikan kelompok tertentu, meski tidak disengaja?
+    \item Apakah individu masih dapat dikenali setelah data digabungkan?
+    \end{enumerate}
+    \end{kotakperhatian}
+  contoh:
+  - contoh: Mengenali struktur data sebagai langkah pertama
+    kode_r: |-
+      pel <- read.csv("data/data_pelanggan.csv", stringsAsFactors = TRUE)
+      dim(pel)
+      str(pel)
+    judul_r: dim dan str
+    eval: true
+    penjelasan: |
+      Data dibaca dengan argumen stringsAsFactors bernilai TRUE agar kolom teks langsung menjadi faktor, sesuai kebutuhan sebagian besar algoritma penambangan. Fungsi dim menampilkan banyaknya baris dan kolom, sedangkan str memerikan tipe tiap kolom beserta beberapa nilai pertamanya.
+    interpretasi: |
+      Inilah langkah pertama tahap Data Understanding pada CRISP-DM. Sebelum menghitung apa pun, pastikan lebih dahulu berapa banyak amatan yang tersedia dan bertipe apa saja peubahnya. Perhatikan bahwa tipe kolom menentukan perlakuan berikutnya: kolom faktor perlu dikodekan bagi sebagian model, sedangkan kolom numerik perlu dibakukan bagi model berbasis jarak.
+  - contoh: Ringkasan menyeluruh dan pemeriksaan kelengkapan
+    kode_r: |-
+      summary(pel)
+      colSums(is.na(pel))
+    judul_r: summary dan colSums(is.na())
+    eval: true
+    penjelasan: |
+      Fungsi summary memberi ringkasan yang berbeda menurut tipe kolom: lima serangkai bagi kolom numerik dan cacah tiap taraf bagi kolom faktor. Perintah colSums yang dikenakan pada is.na menghitung banyaknya nilai hilang per kolom, sebab is.na menghasilkan matriks logika yang penjumlahan kolomnya adalah cacah nilai hilang.
+    interpretasi: |
+      Dua hal perlu diperiksa dari keluaran ini. Pertama, apakah rentang tiap peubah masuk akal --- skor kepuasan di luar rentang 1 sampai 5 menandakan kekeliruan pencatatan. Kedua, apakah ada nilai hilang; pada data ini tidak ada, tetapi pada data nyata pemeriksaan ini wajib dilakukan sebelum melangkah.
+  - contoh: Membaca sebaran peubah kategori
+    kode_r: |-
+      table(pel$wilayah)
+      table(pel$segmen)
+      round(prop.table(table(pel$segmen, pel$wilayah), margin = 2), 3)
+    judul_r: table dan prop.table
+    eval: true
+    penjelasan: |
+      Fungsi table mencacah frekuensi tiap taraf. Ketika diberi dua peubah, ia menghasilkan tabel silang. Fungsi prop.table mengubahnya menjadi proporsi; argumen margin bernilai 2 membuat proporsi dihitung per kolom, sehingga tiap kolom berjumlah satu.
+    interpretasi: |
+      Tabel silang berproporsi kolom menjawab pertanyaan apakah komposisi segmen berbeda antara perkotaan dan perdesaan. Bila proporsinya serupa, kedua peubah cenderung saling bebas. Pemeriksaan semacam ini berguna sejak awal karena peubah yang saling bebas memberi informasi yang saling melengkapi bagi model.
+  - contoh: Menghitung ringkasan per kelompok
+    kode_r: |-
+      suppressPackageStartupMessages(library(dplyr))
+      pel |>
+        group_by(segmen) |>
+        summarise(n = n(),
+                  rata_tagihan = mean(tagihan_bulanan),
+                  median_transaksi = median(jumlah_transaksi),
+                  rata_kepuasan = mean(skor_kepuasan),
+                  .groups = "drop") |>
+        arrange(desc(rata_tagihan))
+    judul_r: group_by dan summarise
+    eval: true
+    penjelasan: |
+      Data dikelompokkan menurut segmen, lalu diringkas dengan beberapa besaran sekaligus. Argumen .groups bernilai drop melepaskan pengelompokan setelah peringkasan agar tidak terbawa ke langkah berikutnya. Hasilnya diurutkan menurun berdasarkan rata-rata tagihan.
+    interpretasi: |
+      Perbandingan antar-segmen semacam ini adalah bahan mentah bagi perumusan persoalan. Bila segmen Pasif ternyata bertagihan tinggi tetapi berkepuasan rendah, muncul pertanyaan bisnis yang layak ditambang lebih lanjut. Perhatikan bahwa median dipakai bagi jumlah transaksi karena peubah cacahan kerap miring (*skewed*).
+  - contoh: Mengukur kendala volume dengan data.table
+    kode_r: |-
+      suppressPackageStartupMessages(library(data.table))
+      set.seed(2026)
+      besar <- data.frame(g = sample(letters[1:5], 2e5, TRUE),
+                          x = runif(2e5))
+      besar_dt <- as.data.table(besar)
+
+      waktu_df <- system.time(aggregate(x ~ g, data = besar, FUN = mean))[["elapsed"]]
+      waktu_dt <- system.time(besar_dt[, list(rata = mean(x)), by = g])[["elapsed"]]
+      round(c(data.frame = waktu_df, data.table = waktu_dt), 4)
+    judul_r: system.time membandingkan dua pendekatan
+    eval: true
+    penjelasan: |
+      Data buatan berukuran 200 ribu baris dibentuk, lalu disalin menjadi objek data.table. Peringkasan per kelompok dikerjakan dua kali dengan cara berbeda, dan lamanya diukur memakai system.time; komponen elapsed menyatakan waktu sesungguhnya yang berlalu. Penulisan list dipakai alih-alih singkatan titik agar kode tetap berjalan ketika dipanggil dari dalam paket lain.
+    interpretasi: |
+      Selisih waktunya memperlihatkan bahwa pilihan perkakas berpengaruh nyata begitu data membesar. Inilah gerbang menuju pembahasan big data pada Modul 2: persoalannya bukan semata algoritma apa yang dipakai, melainkan apakah data masih muat di memori dan berapa lama pengolahannya. Angka pastinya bergantung pada mesin masing-masing.
+  - contoh: Merumuskan dua jenis pertanyaan atas data yang sama
+    kode_r: |-
+      # Pertanyaan INFERENSIA: apakah rata-rata tagihan berbeda antar-wilayah?
+      uji <- t.test(tagihan_bulanan ~ wilayah, data = pel)
+      round(c(selisih = diff(rev(uji$estimate)),
+              p_value = uji$p.value), 4)
+
+      # Pertanyaan DATA MINING: seberapa baik wilayah meramalkan tagihan tinggi?
+      pel$tagihan_tinggi <- factor(ifelse(pel$tagihan_bulanan > median(pel$tagihan_bulanan),
+                                          "tinggi", "rendah"))
+      tabel <- table(pel$wilayah, pel$tagihan_tinggi)
+      round(prop.table(tabel, margin = 1), 3)
+    judul_r: t.test versus tabel klasifikasi
+    eval: true
+    penjelasan: |
+      Bagian pertama menjalankan uji t dua contoh bebas untuk membandingkan rata-rata tagihan antar-wilayah, lalu mengambil selisih penduga dan nilai-p. Bagian kedua membentuk peubah biner tagihan tinggi berdasarkan median, lalu memeriksa proporsi tagihan tinggi pada tiap wilayah dengan margin bernilai 1 agar proporsi dihitung per baris.
+    interpretasi: |
+      Kedua bagian memakai data yang sama tetapi menanyakan hal berbeda. Pertanyaan inferensia berhenti pada apakah perbedaannya nyata secara statistik. Pertanyaan data mining melangkah lebih jauh: seberapa berguna wilayah sebagai penduga. Perbedaan yang nyata secara statistik belum tentu berguna untuk meramal, dan sebaliknya peubah yang tidak nyata kadang tetap menyumbang ketika digabungkan dengan peubah lain.
+  - |-
+    \begin{kotaktips}
+    Pembedaan pada contoh terakhir adalah inti mata kuliah ini. Setiap kali Anda menghadapi data, biasakan bertanya lebih dahulu: apakah saya sedang menguji dugaan, atau sedang mencari pola untuk meramal? Jawabannya menentukan seluruh langkah berikutnya.
+    \end{kotaktips}
+  - contoh: Mengenali skala pengukuran tiap peubah
+    kode_r: |-
+      skala <- data.frame(
+        peubah = names(pel),
+        tipe_r = sapply(pel, function(x) class(x)[1]),
+        nilai_unik = sapply(pel, function(x) length(unique(x))),
+        row.names = NULL)
+      skala$dugaan_skala <- ifelse(
+        skala$tipe_r == "factor", "nominal/ordinal",
+        ifelse(skala$nilai_unik < 10, "perlu diperiksa", "interval/rasio"))
+      print(skala, right = FALSE)
+    judul_r: menduga skala dari tipe dan keunikan
+    eval: true
+    penjelasan: |
+      Tabel disusun memuat nama peubah, kelas R-nya, dan banyaknya nilai unik. Dugaan skala ditetapkan dengan ifelse bersarang: kolom faktor tergolong kategori, sedangkan kolom numerik bernilai unik sedikit ditandai untuk diperiksa sebab boleh jadi sesungguhnya merupakan kode kategori.
+    interpretasi: |
+      Dugaan otomatis semacam ini menolong tetapi tidak boleh dipercaya bulat-bulat. Kolom id_pelanggan bertipe bilangan bulat sehingga terbaca sebagai rasio, padahal ia penanda yang tak bermakna untuk dirata-ratakan. Sebaliknya skor kepuasan berskala satu sampai lima sesungguhnya ordinal meski tersimpan sebagai angka. Keputusan akhir tetap menuntut pengetahuan bidang.
+  - contoh: Menggambarkan sebaran dan hubungan
+    kode_r: |-
+      par(mfrow = c(2, 2))
+      hist(pel$tagihan_bulanan, main = "Tagihan Bulanan", col = "#0B6FB4",
+           border = "white", xlab = "ribu rupiah")
+      boxplot(tagihan_bulanan ~ segmen, data = pel, col = "#6FB3E0",
+              main = "Tagihan menurut Segmen", xlab = "segmen", ylab = "tagihan")
+      barplot(table(pel$wilayah), col = "#F58220", border = "white",
+              main = "Sebaran Wilayah")
+      plot(pel$lama_langganan, pel$jumlah_transaksi, pch = 19, cex = .5,
+           col = "#0B6FB4", main = "Lama Langganan vs Transaksi",
+           xlab = "lama langganan (bulan)", ylab = "jumlah transaksi")
+      par(mfrow = c(1, 1))
+    judul_r: empat gambar eksplorasi
+    eval: true
+    penjelasan: |
+      Empat gambar disajikan sekaligus memakai pengaturan mfrow dua baris dua kolom. Histogram untuk sebaran satu peubah numerik, diagram kotak-garis untuk membandingkan antar-kelompok, diagram batang untuk peubah kategori, dan diagram pencar untuk hubungan dua peubah numerik.
+    interpretasi: |
+      Empat jenis gambar ini menjawab empat pertanyaan berbeda dan sebaiknya dikerjakan pada tiap penjelajahan awal. Perhatikan bahwa pemilihan jenis gambar ditentukan oleh skala pengukuran peubahnya --- diagram batang bagi kategori, histogram bagi numerik. Memakai histogram atas peubah nominal akan menghasilkan gambar yang secara teknis terbentuk tetapi tidak bermakna.
+  - contoh: Memperagakan bahaya pola semu
+    kode_r: |-
+      set.seed(2026)
+      n <- 200; p <- 100
+      X <- matrix(rnorm(n * p), n, p)      # SELURUHNYA acak
+      y <- rnorm(n)                        # sasaran juga acak
+
+      nilai_p <- apply(X, 2, function(v) cor.test(v, y)$p.value)
+
+      cat("peubah nyata pada alpha 0,05:", sum(nilai_p < 0.05), "dari", p, "\n")
+      cat("harapan bila murni kebetulan:", 0.05 * p, "\n")
+      cat("nilai-p terkecil:", format(min(nilai_p), digits = 3), "\n")
+      cat("setelah koreksi Bonferroni:", sum(p.adjust(nilai_p, "bonferroni") < 0.05), "\n")
+
+      hist(nilai_p, breaks = 20, col = "#0B6FB4", border = "white",
+           main = "Sebaran nilai-p pada data acak", xlab = "nilai-p")
+      abline(v = 0.05, col = "#F58220", lwd = 2, lty = 2)
+    judul_r: cor.test atas seratus peubah acak
+    eval: true
+    penjelasan: |
+      Seratus peubah acak diuji korelasinya terhadap sasaran yang juga acak. Fungsi apply menjalankan cor.test pada tiap kolom dan mengambil nilai-p-nya. Koreksi Bonferroni diterapkan memakai p.adjust untuk membandingkan hasilnya.
+    interpretasi: |
+      Inilah bahaya pola semu dalam wujud angka. Kira-kira lima peubah tampak nyata padahal datanya sepenuhnya acak, dan jumlah itu persis sesuai harapan teoretis lima persen dari seratus. Perhatikan pula sebaran nilai-p yang mendekati seragam --- ciri khas ketiadaan hubungan. Setelah koreksi Bonferroni tidak ada lagi yang nyata, sebagaimana seharusnya. Pada data mining berpeubah ribuan, risiko ini berlipat ganda dan menjadi alasan utama mengapa penilaian selalu dilakukan pada data uji yang terpisah.
+  - |-
+    \begin{kotaksalah}[Memilih peubah karena nilai-p kecil]
+    Godaan terbesar setelah melihat hasil semacam itu adalah memilih kelima peubah yang tampak nyata lalu memodelkannya. Model yang dihasilkan akan tampak baik pada data yang sama dan gagal total pada data baru. Modul 5 menakar besarnya akibat kekeliruan ini dengan angka.
+    \end{kotaksalah}
+  - contoh: Meringkas dua peubah kategori sekaligus
+    kode_r: |-
+      silang <- table(pel$wilayah, pel$segmen)
+      print(silang)
+
+      cat("\nProporsi baris (per wilayah):\n")
+      print(round(prop.table(silang, margin = 1), 3))
+
+      cat("\nUji kebebasan khi-kuadrat:\n")
+      uji <- chisq.test(silang)
+      cat("statistik:", round(uji$statistic, 4),
+          "| db:", uji$parameter,
+          "| nilai-p:", round(uji$p.value, 4), "\n")
+    judul_r: table, prop.table, dan chisq.test
+    eval: true
+    penjelasan: |
+      Tabel silang dua peubah kategori dibentuk, lalu diubah menjadi proporsi per baris. Uji khi-kuadrat memeriksa apakah kedua peubah saling bebas, dengan statistik, derajat bebas, dan nilai-p ditampilkan terpisah agar mudah dibaca.
+    interpretasi: |
+      Karena kedua peubah dibangkitkan saling bebas, nilai-p yang besar adalah hasil yang diharapkan dan harus dilaporkan apa adanya. Perlu diingat bahwa uji kebebasan menjawab pertanyaan inferensia, bukan pertanyaan data mining. Bagi penambangan data, yang lebih berguna adalah seberapa banyak informasi yang disumbangkan satu peubah untuk menduga peubah lain --- gagasan yang akan diperdalam pada modul klasifikasi.
+  - contoh: Menakar risiko pengenalan individu
+    kode_r: |-
+      set.seed(2026)
+      n <- 300
+      samar <- data.frame(
+        kode_pos = sample(10:15, n, TRUE),
+        tahun_lahir = sample(1960:2000, n, TRUE),
+        jenis_kelamin = sample(c("L", "P"), n, TRUE))
+
+      kunci <- paste(samar$kode_pos, samar$tahun_lahir, samar$jenis_kelamin)
+      tab <- table(kunci)
+
+      cat("amatan unik (k = 1):", sum(tab == 1), "dari", n,
+          sprintf("(%.1f persen)\n", 100 * sum(tab == 1) / n))
+      cat("nilai k terkecil    :", min(tab), "\n")
+      cat("kombinasi berbeda   :", length(tab), "\n")
+    judul_r: memeriksa keunikan gabungan penanda
+    eval: true
+    penjelasan: |
+      Tiga peubah yang masing-masing tampak tidak sensitif digabungkan menjadi satu kunci. Fungsi table mencacah berapa orang berbagi tiap kombinasi. Banyaknya kombinasi yang hanya dimiliki satu orang dihitung, begitu pula nilai terkecil di antara seluruh cacahan.
+    interpretasi: |
+      Lebih dari separuh amatan ternyata dapat dikenali secara unik hanya dari tiga peubah yang seluruhnya tampak tidak sensitif. Inilah yang dimaksud pada bagian Teori: data menjadi sensitif ketika digabungkan. Ukuran k terkecil bernilai satu berarti ada individu yang sepenuhnya terbuka. Praktik yang lazim menuntut nilai k minimum tertentu, misalnya lima, yang dicapai dengan mengasarkan peubah --- umpamanya mengganti tahun lahir menjadi kelompok umur.
+  - contoh: Menarik contoh dari data besar
+    kode_r: |-
+      set.seed(2026)
+      # contoh acak sederhana
+      acak <- pel[sample(nrow(pel), 100), ]
+
+      # contoh acak berlapis menurut segmen
+      suppressPackageStartupMessages(library(dplyr))
+      berlapis <- pel |> group_by(segmen) |> slice_sample(prop = 0.2) |> ungroup()
+
+      banding <- rbind(
+        populasi = prop.table(table(pel$segmen)),
+        acak     = prop.table(table(acak$segmen)),
+        berlapis = prop.table(table(berlapis$segmen)))
+      round(banding, 4)
+    judul_r: sample dan slice_sample
+    eval: true
+    penjelasan: |
+      Dua cara penarikan contoh dibandingkan. Cara pertama menarik seratus baris secara acak sederhana. Cara kedua menarik dua puluh persen dari tiap segmen memakai slice_sample setelah pengelompokan, sehingga proporsi tiap segmen terjaga. Ketiga proporsi disandingkan.
+    interpretasi: |
+      Bandingkan ketiga baris. Contoh berlapis mempertahankan proporsi segmen nyaris persis, sedangkan contoh acak sederhana dapat menyimpang terutama pada segmen kecil. Pada penambangan data berukuran besar, penarikan contoh berguna untuk mempercepat penjelajahan awal --- tetapi penstrataan menjadi penting agar kelompok kecil tidak hilang, khususnya ketika kelompok kecil itulah yang justru menarik.
+  - contoh: Menyusun fungsi penjelajahan yang dapat dipakai ulang
+    kode_r: |-
+      jelajah <- function(d, nama = deparse(substitute(d))) {
+        num <- names(d)[sapply(d, is.numeric)]
+        kat <- names(d)[sapply(d, function(x) is.factor(x) || is.character(x))]
+        cat("=== ", nama, " ===\n", sep = "")
+        cat("dimensi     :", nrow(d), "baris x", ncol(d), "kolom\n")
+        cat("numerik     :", length(num), "|", paste(utils::head(num, 4), collapse = ", "), "\n")
+        cat("kategori    :", length(kat), "|", paste(utils::head(kat, 4), collapse = ", "), "\n")
+        cat("nilai hilang:", sum(is.na(d)), "\n")
+        cat("baris kembar:", sum(duplicated(d)), "\n")
+        invisible(list(numerik = num, kategori = kat))
+      }
+
+      hasil <- jelajah(pel)
+    judul_r: fungsi jelajah
+    eval: true
+    penjelasan: |
+      Fungsi menerima sebuah data frame dan memisahkan kolomnya menurut tipe memakai sapply. Nama objek diambil otomatis lewat deparse atas substitute sehingga keluarannya berjudul. Hasil dikembalikan secara tersembunyi memakai invisible agar dapat dipakai lanjut tanpa tercetak dua kali.
+    interpretasi: |
+      Membungkus pemeriksaan rutin menjadi fungsi adalah kebiasaan yang terbayar sepanjang mata kuliah ini, sebab langkah yang sama diulang pada tiap modul. Perhatikan pemakaian invisible: fungsi tetap mencetak ringkasan untuk dibaca, sekaligus mengembalikan daftar nama kolom yang dapat dipakai langkah berikutnya --- gabungan yang menghemat banyak pengetikan.
+  - contoh: Memeriksa hubungan antar-peubah numerik
+    kode_r: |-
+      num <- pel[, c("lama_langganan", "tagihan_bulanan",
+                      "jumlah_transaksi", "skor_kepuasan")]
+      K <- round(cor(num), 3)
+      print(K)
+
+      # pasangan paling erat di luar diagonal
+      K2 <- K; diag(K2) <- 0
+      pos <- which(abs(K2) == max(abs(K2)), arr.ind = TRUE)[1, ]
+      cat("\npasangan terkuat:", rownames(K)[pos[1]], "dan", colnames(K)[pos[2]],
+          "| r =", K[pos[1], pos[2]], "\n")
+
+      pairs(num, pch = 19, cex = .4, col = "#0B6FB4",
+            main = "Matriks Diagram Pencar")
+    judul_r: cor dan pairs
+    eval: true
+    penjelasan: |
+      Matriks korelasi keempat peubah numerik dihitung dan dibulatkan. Diagonalnya dinolkan lebih dahulu sebelum mencari nilai mutlak terbesar, agar pasangan terkuat tidak terpilih dari diagonalnya sendiri yang selalu bernilai satu. Fungsi pairs menggambar seluruh pasangan diagram pencar sekaligus.
+    interpretasi: |
+      Matriks korelasi wajib dibaca bersama matriks diagram pencarnya, sebab korelasi hanya mengukur hubungan linier. Pola melengkung dapat menghasilkan korelasi mendekati nol meski hubungannya kuat. Karena peubah pada data ini dibangkitkan saling bebas, korelasi yang seluruhnya lemah adalah hasil yang benar --- dan melaporkannya apa adanya lebih baik daripada mencari-cari hubungan yang tidak ada.
+  - contoh: Menyusun tabel ringkasan lintas kelompok
+    kode_r: |-
+      suppressPackageStartupMessages(library(dplyr))
+      ringkas <- pel |>
+        group_by(wilayah, segmen) |>
+        summarise(n = n(),
+                  rata_tagihan = round(mean(tagihan_bulanan), 1),
+                  rata_transaksi = round(mean(jumlah_transaksi), 1),
+                  .groups = "drop") |>
+        arrange(wilayah, desc(rata_tagihan))
+      print(as.data.frame(ringkas), right = FALSE)
+
+      # bentuk lebar agar mudah dibandingkan
+      lebar <- reshape(as.data.frame(ringkas[, c("wilayah","segmen","rata_tagihan")]),
+                       idvar = "wilayah", timevar = "segmen", direction = "wide")
+      print(lebar, right = FALSE)
+    judul_r: peringkasan dua peubah dan reshape
+    eval: true
+    penjelasan: |
+      Data dikelompokkan menurut dua peubah sekaligus lalu diringkas. Hasilnya diurutkan menurut wilayah dan rata-rata tagihan menurun. Fungsi reshape mengubah bentuk panjang menjadi lebar, dengan wilayah sebagai penanda baris dan segmen sebagai kolom.
+    interpretasi: |
+      Bentuk panjang lebih baik untuk pengolahan lanjutan, sedangkan bentuk lebar lebih mudah dibaca manusia. Keduanya memuat informasi yang sama sehingga pemilihannya bergantung keperluan. Perhatikan bahwa peringkasan dua peubah menghasilkan sel yang lebih sedikit anggotanya; bila salah satu sel hanya berisi beberapa amatan, rata-ratanya menjadi tidak stabil dan tidak layak ditafsirkan.
+  - contoh: Mendeteksi amatan yang menyimpang
+    kode_r: |-
+      # skor-z pada tiap peubah numerik
+      z <- scale(pel[, c("tagihan_bulanan", "jumlah_transaksi", "lama_langganan")])
+      ekstrem <- apply(abs(z) > 3, 1, any)
+      cat("amatan berskor-z melebihi 3:", sum(ekstrem),
+          sprintf("(%.2f persen)\n", 100 * mean(ekstrem)))
+
+      # jarak Mahalanobis memperhitungkan korelasi antar-peubah
+      num <- pel[, c("tagihan_bulanan", "jumlah_transaksi", "lama_langganan")]
+      d2 <- mahalanobis(num, colMeans(num), cov(num))
+      batas <- qchisq(0.99, df = ncol(num))
+      cat("amatan menyimpang menurut Mahalanobis:", sum(d2 > batas),
+          sprintf("(%.2f persen)\n", 100 * mean(d2 > batas)))
+
+      plot(d2, pch = 19, cex = .5, col = ifelse(d2 > batas, "#F58220", "#0B6FB4"),
+           ylab = "jarak Mahalanobis kuadrat", xlab = "amatan ke-",
+           main = "Deteksi Amatan Menyimpang")
+      abline(h = batas, col = "#C0392B", lty = 2, lwd = 2)
+    judul_r: skor-z dan jarak Mahalanobis
+    eval: true
+    penjelasan: |
+      Dua cara deteksi dibandingkan. Skor-z memeriksa tiap peubah sendiri-sendiri; amatan ditandai bila salah satu peubahnya menyimpang lebih dari tiga simpangan baku. Jarak Mahalanobis memeriksa seluruh peubah sekaligus dengan memperhitungkan korelasinya, dan batasnya diambil dari sebaran khi-kuadrat berderajat bebas sebanyak peubah.
+    interpretasi: |
+      Kedua cara dapat menandai amatan yang berbeda. Skor-z melewatkan amatan yang pada tiap peubah tampak wajar tetapi kombinasinya ganjil --- misalnya pelanggan berlangganan sangat lama namun bertransaksi sangat sedikit. Mahalanobis menangkapnya karena memperhitungkan hubungan antar-peubah. Deteksi anomali adalah salah satu dari enam tugas penambangan, dan di sini diperkenalkan dalam bentuk paling sederhananya.
+  - contoh: Merumuskan satu persoalan sebagai dua tugas berbeda
+    kode_r: |-
+      # TUGAS REGRESI: menduga besarnya tagihan
+      mr <- lm(tagihan_bulanan ~ lama_langganan + jumlah_transaksi + skor_kepuasan,
+               data = pel)
+      cat("REGRESI  | R-kuadrat:", round(summary(mr)$r.squared, 4),
+          "| RMSE:", round(sqrt(mean(residuals(mr)^2)), 2), "\n")
+
+      # TUGAS KLASIFIKASI: menduga apakah tagihan tergolong tinggi
+      pel$tinggi <- factor(ifelse(pel$tagihan_bulanan > median(pel$tagihan_bulanan),
+                                  "tinggi", "rendah"))
+      mk <- glm(tinggi ~ lama_langganan + jumlah_transaksi + skor_kepuasan,
+                data = pel, family = binomial)
+      dug <- ifelse(predict(mk, type = "response") > 0.5, "tinggi", "rendah")
+      cat("KLASIFIKASI | akurasi:", round(mean(dug == pel$tinggi), 4),
+          "| acuan mayoritas:", round(max(prop.table(table(pel$tinggi))), 4), "\n")
+    judul_r: lm dan glm atas persoalan yang sama
+    eval: true
+    penjelasan: |
+      Persoalan yang sama dimodelkan dua kali. Sebagai regresi, tagihan diduga nilainya dan dinilai dengan R-kuadrat serta akar rerata kuadrat galat. Sebagai klasifikasi, tagihan diubah menjadi dua kategori berdasarkan median lalu dimodelkan dengan regresi logistik dan dinilai dengan akurasi.
+    interpretasi: |
+      Bandingkan kedua ukuran keberhasilan; keduanya tidak sebanding satu sama lain sehingga tidak dapat dipakai memilih tugas mana yang lebih baik. Yang menentukan adalah kebutuhan pengguna: bila keputusannya bersifat ya atau tidak, klasifikasi lebih sesuai; bila besarnya nilai diperlukan, regresi lebih tepat. Perhatikan pula bahwa akurasi wajib dibandingkan terhadap acuan tebakan mayoritas --- tanpa pembanding itu, angka akurasi tidak bermakna apa-apa.
+  - contoh: Menyusun peta persoalan menurut CRISP-DM
+    kode_r: |-
+      peta <- data.frame(
+        tahap = c("1 Business Understanding", "2 Data Understanding",
+                  "3 Data Preparation", "4 Modeling",
+                  "5 Evaluation", "6 Deployment"),
+        pertanyaan = c("Pelanggan mana yang berpotensi berhenti?",
+                       "Peubah apa yang tersedia dan bagaimana mutunya?",
+                       "Bagaimana menangani nilai hilang dan skala berbeda?",
+                       "Model apa yang sesuai tipe data ini?",
+                       "Apakah ketepatannya cukup bagi keputusan bisnis?",
+                       "Bagaimana hasilnya dipakai dan dipantau?"),
+        modul = c("1, 2, 7", "3, 4", "5", "6, 8-12", "6, 8-12", "13, 14"))
+      print(peta, right = FALSE)
+    judul_r: data.frame sebagai peta kerja
+    eval: true
+    penjelasan: |
+      Sebuah data.frame dibentuk berisi enam tahap CRISP-DM, contoh pertanyaan pada tiap tahap, dan modul mana yang membahasnya. Argumen right bernilai FALSE pada print membuat teks dirata-kiri sehingga lebih mudah dibaca.
+    interpretasi: |
+      Peta ini sebaiknya Anda simpan dan buka kembali pada tiap modul. Kesulitan yang paling sering dialami pemula bukan pada algoritma, melainkan kehilangan arah: lupa sedang berada pada tahap apa dan untuk menjawab pertanyaan apa. Menuliskan pertanyaan tahap pertama sebelum menyentuh data adalah kebiasaan yang menolong sepanjang mata kuliah ini.
+  latihan:
+  - Kerjakan bertahap. **Dasar** melengkapi kode; **Menengah** menulis sendiri dan membetulkan kode; **Lanjut**
+    menyusun rumusan persoalan. Gunakan `data/data_pelanggan.csv`.
+  - '#### Tingkat Dasar (melengkapi kode)'
+  - \latihan{Penjelajahan awal}
+  - |-
+    ```{r eval=FALSE}
+    pel <- read.csv("data/data_pelanggan.csv", stringsAsFactors = TRUE)
+    ____(pel)                    # banyaknya baris dan kolom
+    ____(pel)                    # tipe tiap kolom
+    colSums(____(pel))           # cacah nilai hilang per kolom
+    ```
+  - \latihan{Sebaran kategori}
+  - |-
+    ```{r eval=FALSE}
+    ____(pel$segmen)                              # cacah tiap segmen
+    round(____(table(pel$segmen)), 3)             # ubah menjadi proporsi
+    ```
+  - \latihan{Ringkasan per kelompok}
+  - |-
+    ```{r eval=FALSE}
+    library(dplyr)
+    pel |>
+      ____(wilayah) |>
+      summarise(n = ____(), rata = mean(tagihan_bulanan), .groups = "drop")
+    ```
+  - \latihan{Skala pengukuran}
+  - |-
+    ```{r eval=FALSE}
+    sapply(pel, function(x) ____(x)[1])      # kelas tiap kolom
+    sapply(pel, function(x) length(____(x)))  # cacah nilai unik tiap kolom
+    ```
+  - \latihan{Tabel silang dan uji kebebasan}
+  - |-
+    ```{r eval=FALSE}
+    silang <- ____(pel$wilayah, pel$segmen)      # tabel silang
+    round(prop.table(silang, margin = ____), 3)  # proporsi PER BARIS
+    ____(silang)$p.value                          # uji kebebasan khi-kuadrat
+    ```
+  - '#### Tingkat Menengah (menulis sendiri)'
+  - \latihan{Penjelajahan mandiri}
+  - 'Susun ringkasan yang menjawab tiga pertanyaan berikut, seluruhnya dengan kode Anda sendiri: (a) berapa
+    rata-rata dan median `lama_langganan` pada tiap segmen; (b) segmen mana yang skor kepuasannya paling
+    rendah; (c) apakah pelanggan berlangganan lebih lama cenderung bertagihan lebih besar --- jawab dengan
+    koefisien korelasi dan diagram pencar.'
+  - \latihan{Membetulkan kode yang salah}
+  - Kode berikut memuat empat kesalahan (argumen `is.na` keliru, `prop.table` tanpa margin sehingga salah
+    tafsir, pengelompokan tidak dilepaskan, dan `mean` pada kolom faktor). Temukan dan perbaiki, lalu
+    jelaskan tiap kesalahannya.
+  - |-
+    ```{r eval=FALSE}
+    pel <- read.csv("data/data_pelanggan.csv", stringsAsFactors = TRUE)
+
+    # (a) is.na diberi nama kolom sebagai teks
+    colSums(is.na("pel"))
+
+    # (b) proporsi tanpa margin -- ditafsirkan sebagai proporsi per kolom
+    prop.table(table(pel$segmen, pel$wilayah))
+
+    # (c) pengelompokan tidak dilepaskan sehingga terbawa
+    library(dplyr)
+    hasil <- pel |> group_by(segmen) |> summarise(n = n())
+
+    # (d) rata-rata dihitung pada kolom faktor
+    mean(pel$wilayah)
+    ```
+  - |-
+    **Keluaran yang benar.** Setelah diperbaiki, kode yang dipakai adalah sebagai berikut. Gunakan ini untuk memverifikasi perbaikan Anda.
+
+    ```
+    # (a) is.na dikenakan pada objek, bukan pada teks berisi namanya
+    colSums(is.na(pel))
+
+    # (b) margin = 2 bila ingin proporsi per kolom
+    prop.table(table(pel$segmen, pel$wilayah), margin = 2)
+
+    # (c) lepaskan pengelompokan setelah peringkasan
+    hasil <- pel |> group_by(segmen) |> summarise(n = n(), .groups = "drop")
+
+    # (d) kolom faktor dicacah, bukan dirata-ratakan
+    table(pel$wilayah)
+    ```
+
+    Pemeriksaan yang wajib berhasil setelah perbaikan: `sum(colSums(is.na(pel)))` bernilai **0**, dan `all(round(colSums(prop.table(table(pel$segmen, pel$wilayah), margin = 2)), 8) == 1)` bernilai **TRUE**.
+  - \latihan{Menakar pola semu sendiri}
+  - 'Ulangi peragaan pada Contoh 1.10 dengan tiga nilai banyaknya peubah: 20, 100, dan 500. Untuk masing-masing,
+    laporkan (a) berapa peubah tampak nyata pada taraf lima persen; (b) berapa yang diharapkan secara
+    teoretis; (c) berapa yang tersisa setelah koreksi Bonferroni. Sajikan sebagai tabel dan jelaskan polanya.'
+  - \latihan{Menakar risiko pengenalan}
+  - Ulangi Contoh 1.12 dengan mengasarkan tahun lahir menjadi **kelompok umur lima tahunan**. Laporkan
+    berapa persen amatan yang tetap unik dan berapa nilai k terkecil. Bandingkan terhadap hasil semula,
+    lalu jelaskan mengapa pengasaran menurunkan risiko sekaligus apa yang hilang darinya.
+  - '#### Tingkat Lanjut (rumusan persoalan)'
+  - \latihan{Menempatkan persoalan pada CRISP-DM}
+  - 'Pilih satu persoalan nyata yang dapat dijawab dengan data pelanggan ini --- misalnya mengenali pelanggan
+    berpotensi berhenti, atau menetapkan sasaran promosi. Untuk persoalan itu: (a) tuliskan rumusan tahap
+    *Business Understanding* beserta **kriteria sukses yang terukur**; (b) sebutkan peubah mana yang relevan
+    dan alasannya; (c) tentukan pada tahap CRISP-DM mana pekerjaan Anda akan paling banyak menghabiskan
+    waktu, dan jelaskan mengapa; (d) sebutkan satu risiko etika dari penerapan hasilnya.'
+  penugasan:
+  - |-
+    \begin{kotaktugas}
+    Sebagai calon analis data pada instansi statistik, susun laporan penjelajahan awal atas data pelanggan tiruan \texttt{data\_pelanggan.csv} (\emph{data simulasi}) sekaligus merumuskan persoalan penambangan data yang layak dikerjakan.
+    \end{kotaktugas}
+  - '**Konteks.** Sebuah unit layanan memiliki catatan 500 pelanggan berisi wilayah, segmen, lama langganan,
+    tagihan bulanan, jumlah transaksi, dan skor kepuasan. Pimpinan ingin mengetahui apakah data ini cukup
+    untuk mendukung keputusan penawaran layanan.'
+  - \tugas{Data Understanding}
+  - '1. Lakukan penjelajahan menyeluruh: dimensi, tipe kolom, ringkasan tiap peubah, cacah nilai hilang,
+    dan pemeriksaan kewajaran rentang. Laporkan temuan yang patut diperhatikan.'
+  - 2. Sajikan sebaran ketiga peubah kategori dan tiga peubah numerik dengan tabel maupun gambar. Jelaskan
+    bentuk sebarannya, termasuk apakah ada yang miring.
+  - 3. Periksa hubungan antar-peubah numerik dengan matriks korelasi. Sebutkan pasangan yang paling erat
+    dan tafsirkan artinya.
+  - \tugas{Business Understanding}
+  - '4. Rumuskan **dua persoalan** yang dapat dijawab dengan data ini: satu bersifat **inferensia** dan
+    satu bersifat **data mining**. Untuk masing-masing, tuliskan pertanyaannya, ukuran keberhasilannya,
+    dan mengapa jenis pendekatannya berbeda.'
+  - 5. Untuk persoalan data mining yang Anda pilih, susun rencana ringkas menurut **enam tahap CRISP-DM**,
+    memuat perkiraan kesulitan pada tiap tahap.
+  - \tugas{Penjelajahan Lanjut}
+  - 8. Sajikan **empat jenis gambar** eksplorasi (histogram, diagram kotak-garis, diagram batang, diagram
+    pencar). Untuk masing-masing, jelaskan mengapa jenis itu sesuai bagi skala pengukuran peubahnya.
+  - 9. Susun tabel skala pengukuran seluruh peubah. Tandai peubah yang **dugaan otomatisnya keliru** dan
+    jelaskan mengapa.
+  - '10. Peragakan bahaya **pola semu**: bangkitkan 100 peubah acak, uji korelasinya terhadap `tagihan_bulanan`,
+    lalu laporkan berapa yang tampak nyata sebelum dan sesudah koreksi Bonferroni.'
+  - 11. Takar **risiko pengenalan individu** bila data pelanggan digabungkan dengan kode pos dan tahun
+    lahir. Laporkan persentase amatan unik, lalu usulkan satu langkah pengasaran beserta akibatnya terhadap
+    kegunaan data.
+  - \tugas{Etika dan Laporan}
+  - 6. Bahas **dua pertimbangan etika** yang muncul bila hasil analisis ini dipakai menyasar pelanggan
+    tertentu. Sebutkan pula langkah pencegahannya.
+  - '7. Susun laporan R Markdown berisi kode, keluaran, gambar, dan interpretasi. Tutup dengan **ringkasan
+    (maksimal 300 kata)** yang memuat: temuan pokok, persoalan yang diusulkan, keterbatasan data, dan
+    penegasan bahwa data merupakan simulasi sehingga hasilnya tidak menggambarkan keadaan sebenarnya.'
+  ringkasan:
+  - |-
+    \begin{kotaktujuan}
+    \textbf{Daftar periksa penguasaan:}
+    \begin{itemize}
+    \item[$\square$] Saya dapat menjelaskan pengertian data mining beserta empat sifat pola yang dicarinya.
+    \item[$\square$] Saya dapat membedakan data mining dari statistika inferensia pada enam aspek.
+    \item[$\square$] Saya dapat menyebutkan enam tahap CRISP-DM dan menempatkan suatu pekerjaan padanya.
+    \item[$\square$] Saya dapat mengenali jenis data beserta perlakuan yang sesuai.
+    \item[$\square$] Saya dapat melakukan penjelajahan awal: dimensi, tipe, ringkasan, nilai hilang.
+    \item[$\square$] Saya dapat merumuskan pertanyaan inferensia dan pertanyaan data mining atas data yang sama.
+    \item[$\square$] Saya menyadari risiko menemukan pola semu pada data berpeubah banyak.
+    \item[$\square$] Saya dapat menyebutkan pertimbangan etika sebelum menambang data.
+    \end{itemize}
+    \end{kotaktujuan}
+  - '**Kartu Referensi Cepat.** Perintah penjelajahan awal:'
+  - |-
+    \begin{kotakrumus}
+    \begin{tabular}{@{}ll@{}}
+    \textbf{Keperluan} & \textbf{Perintah}\\nDimensi data & \texttt{dim(d)}, \texttt{nrow(d)}, \texttt{ncol(d)}\\nTipe tiap kolom & \texttt{str(d)}\\nRingkasan menyeluruh & \texttt{summary(d)}\\nNilai hilang per kolom & \texttt{colSums(is.na(d))}\\nCacah kategori & \texttt{table(d\$k)}\\nProporsi per kolom & \texttt{prop.table(tab, margin = 2)}\\nRingkasan per kelompok & \texttt{group\_by()} lalu \texttt{summarise()}\\nKorelasi & \texttt{cor(d[, numerik])}\\nMengukur waktu & \texttt{system.time(ekspresi)}\\
+    \end{tabular}
+    \end{kotakrumus}
+  - 'Modul ini menata cara berpikir sebelum menyentuh algoritma. Prinsip yang perlu dibawa: rumuskan persoalan
+    sebelum mencari pola, kenali data sebelum memodelkannya, dan ingat bahwa menemukan pola pada data
+    berpeubah banyak selalu disertai risiko menemukan kebetulan. Modul berikutnya membahas konsep big
+    data beserta kendala teknis yang menyertainya.'
+  referensi:
+  - 'Han, J., Kamber, M., & Pei, J. (2011). *Data Mining: Concepts and Techniques* (3rd ed.). Morgan Kaufmann.
+    (Rujukan utama konsep data mining dan KDD.)'
+  - Tan, P.-N., Steinbach, M., Karpatne, A., & Kumar, V. (2019). *Introduction to Data Mining* (2nd ed.).
+    Pearson.
+  - 'Wirth, R., & Hipp, J. (2000). CRISP-DM: Towards a standard process model for data mining. *Proceedings
+    of the 4th International Conference on Practical Applications of Knowledge Discovery and Data Mining*,
+    29-39.'
+  - 'Pramana, S., Yuniarto, B., Santoso, I., Nooraeni, R., & Lystiani, L. (2018). *Data Mining dengan
+    R: Konsep serta Implementasi*. In Media.'
+  - Provost, F., & Fawcett, T. (2013). *Data Science for Business*. O'Reilly Media. (Kaitan antara data
+    mining dan pengambilan keputusan.)
+exercises:
+- id: L1.1
+  points: 15
+  solution: 'Tingkat Dasar: penjelajahan awal, sebaran kategori, ringkasan per kelompok.'
+  judul_r: Solusi Tingkat Dasar (R)
+  solusi_r: |
+    pel <- read.csv("data/data_pelanggan.csv", stringsAsFactors = TRUE)
+    dim(pel)                     # banyaknya baris dan kolom
+    str(pel)                     # tipe tiap kolom
+    colSums(is.na(pel))          # cacah nilai hilang per kolom
+
+    table(pel$segmen)                              # cacah tiap segmen
+    round(prop.table(table(pel$segmen)), 3)        # proporsi
+
+    suppressPackageStartupMessages(library(dplyr))
+    pel |>
+      group_by(wilayah) |>
+      summarise(n = n(), rata = mean(tagihan_bulanan), .groups = "drop")
+  interpretasi: |
+    Isian yang benar berturut-turut adalah dim, str, is.na, table, prop.table, group_by, dan n. Perhatikan bahwa is.na dikenakan pada seluruh data.frame sehingga menghasilkan matriks logika, dan colSums menjumlahkannya per kolom. Fungsi n hanya sah dipakai di dalam summarise setelah group_by.
+- id: L1.2
+  points: 25
+  solution: 'Tingkat Menengah dan Lanjut: penjelajahan mandiri dan rumusan persoalan.'
+  judul_r: Solusi Menengah dan Lanjut (R)
+  solusi_r: |
+    suppressPackageStartupMessages(library(dplyr))
+    pel <- read.csv("data/data_pelanggan.csv", stringsAsFactors = TRUE)
+
+    # (a) rata-rata dan median lama langganan per segmen
+    pel |>
+      group_by(segmen) |>
+      summarise(rata = mean(lama_langganan),
+                median = median(lama_langganan), .groups = "drop")
+
+    # (b) segmen dengan skor kepuasan terendah
+    ringkas <- pel |>
+      group_by(segmen) |>
+      summarise(rata_kepuasan = mean(skor_kepuasan), .groups = "drop")
+    ringkas$segmen[which.min(ringkas$rata_kepuasan)]
+
+    # (c) hubungan lama langganan dengan tagihan
+    round(cor(pel$lama_langganan, pel$tagihan_bulanan), 4)
+    plot(pel$lama_langganan, pel$tagihan_bulanan, pch = 19, col = "#0B6FB4",
+         xlab = "Lama langganan (bulan)", ylab = "Tagihan bulanan (ribu Rp)",
+         main = "Lama Langganan vs Tagihan")
+    abline(lm(tagihan_bulanan ~ lama_langganan, data = pel),
+           col = "#F58220", lwd = 2)
+  interpretasi: |
+    Butir (b) memakai which.min atas hasil peringkasan, bukan atas data mentah, karena yang dibandingkan adalah rata-rata per kelompok. Pada butir (c), koefisien korelasi wajib dibaca bersama diagram pencarnya: korelasi mendekati nol hanya menyatakan tidak ada hubungan linier, dan pola melengkung tetap dapat terjadi. Karena data ini dibangkitkan dengan peubah saling bebas, korelasi yang lemah adalah hasil yang wajar dan harus dilaporkan apa adanya.
+- id: L1.D
+  points: 10
+  solution: 'Membetulkan kode: argumen is.na, margin prop.table, pelepasan kelompok, dan mean pada faktor.'
+  judul_r: Solusi Membetulkan Kode (R)
+  solusi_r: |
+    pel <- read.csv("data/data_pelanggan.csv", stringsAsFactors = TRUE)
+
+    # (a) is.na dikenakan pada objek, bukan pada teks berisi namanya
+    colSums(is.na(pel))
+
+    # (b) margin = 2 agar proporsi dihitung per kolom
+    prop.table(table(pel$segmen, pel$wilayah), margin = 2)
+
+    # (c) pengelompokan dilepaskan setelah peringkasan
+    suppressPackageStartupMessages(library(dplyr))
+    hasil <- pel |> group_by(segmen) |> summarise(n = n(), .groups = "drop")
+
+    # (d) kolom faktor dicacah, bukan dirata-ratakan
+    table(pel$wilayah)
+
+    # pemeriksaan wajib
+    sum(colSums(is.na(pel)))                                          # 0
+    all(round(colSums(prop.table(table(pel$segmen, pel$wilayah),
+                                 margin = 2)), 8) == 1)               # TRUE
+  interpretasi: |
+    Empat kesalahan diperbaiki. Pertama, is.na yang diberi teks berisi nama objek memeriksa teks itu sendiri, bukan datanya, sehingga hasilnya selalu FALSE. Kedua, prop.table tanpa margin menghitung proporsi terhadap total seluruh sel, sehingga menafsirkannya sebagai proporsi per kolom adalah kekeliruan penafsiran yang serius. Ketiga, pengelompokan yang tidak dilepaskan terbawa ke langkah berikutnya dan menimbulkan hasil tak terduga. Keempat, rata-rata tidak terdefinisi bagi kolom faktor; yang sesuai adalah pencacahan.
+- id: T1.1
+  points: 50
+  solution: 'Penugasan: penjelajahan menyeluruh, rumusan dua jenis persoalan, rencana CRISP-DM, dan etika.'
+  judul_r: Solusi Penugasan (R)
+  solusi_r: |
+    suppressPackageStartupMessages(library(dplyr))
+    pel <- read.csv("data/data_pelanggan.csv", stringsAsFactors = TRUE)
+
+    # 1) penjelajahan menyeluruh
+    dim(pel); str(pel); summary(pel)
+    colSums(is.na(pel))
+    # pemeriksaan kewajaran rentang
+    range(pel$skor_kepuasan)          # harus berada di dalam 1 sampai 5
+    range(pel$lama_langganan)
+
+    # 2) sebaran peubah kategori dan numerik
+    par(mfrow = c(2, 3))
+    for (k in c("wilayah", "segmen"))
+      barplot(table(pel[[k]]), main = k, col = "#0B6FB4", border = "white")
+    for (k in c("lama_langganan", "tagihan_bulanan", "jumlah_transaksi", "skor_kepuasan"))
+      hist(pel[[k]], main = k, xlab = k, col = "#0B6FB4", border = "white")
+    par(mfrow = c(1, 1))
+
+    # 3) matriks korelasi peubah numerik
+    num <- pel[, c("lama_langganan", "tagihan_bulanan",
+                   "jumlah_transaksi", "skor_kepuasan")]
+    K <- round(cor(num), 3); print(K)
+    # pasangan paling erat (di luar diagonal)
+    diag(K) <- 0
+    which(abs(K) == max(abs(K)), arr.ind = TRUE)[1, ]
+
+    # 4) dua jenis persoalan atas data yang sama
+    #    (a) INFERENSIA: apakah rata-rata kepuasan berbeda antar-segmen?
+    summary(aov(skor_kepuasan ~ segmen, data = pel))
+    #    (b) DATA MINING: seberapa baik peubah yang ada meramalkan tagihan tinggi?
+    pel$tagihan_tinggi <- factor(ifelse(
+      pel$tagihan_bulanan > median(pel$tagihan_bulanan), "tinggi", "rendah"))
+    round(prop.table(table(pel$segmen, pel$tagihan_tinggi), margin = 1), 3)
+
+    # 5) rencana CRISP-DM sebagai tabel
+    rencana <- data.frame(
+      tahap = paste(1:6, c("Business Understanding","Data Understanding",
+                           "Data Preparation","Modeling","Evaluation","Deployment")),
+      kegiatan = c("rumuskan sasaran dan kriteria sukses",
+                   "jelajahi mutu dan sebaran data",
+                   "tangani nilai hilang, skala, pengodean",
+                   "bandingkan beberapa model",
+                   "nilai terhadap kriteria tahap 1",
+                   "laporkan dan pantau"),
+      kesulitan = c("sedang","rendah","tinggi","sedang","sedang","tinggi"))
+    print(rencana, right = FALSE)
+  interpretasi: |
+    Penjelajahan pada nomor 1 wajib memuat pemeriksaan kewajaran rentang, bukan sekadar ringkasan, karena nilai di luar rentang yang mungkin menandakan kekeliruan pencatatan. Pada nomor 3, diagonal matriks korelasi dinolkan lebih dahulu agar pasangan terkuat tidak terpilih dari diagonalnya sendiri. Nomor 4 adalah inti penugasan: pertanyaan inferensia dijawab dengan uji dan nilai-p, sedangkan pertanyaan data mining dijawab dengan seberapa berguna peubah itu membedakan kelas. Pada nomor 5, penempatan Data Preparation sebagai tahap tersulit sejalan dengan pengalaman lapangan: penyiapan data lazimnya menyita porsi waktu terbesar. Laporan wajib menegaskan bahwa data merupakan simulasi dengan peubah yang dibangkitkan saling bebas, sehingga hubungan yang lemah adalah hasil yang wajar dan tidak boleh ditafsirkan sebagai temuan.
+references:
+- 'Han, J., Kamber, M., & Pei, J. (2011). Data Mining: Concepts and Techniques (3rd ed.). Morgan Kaufmann.'
+- Tan, P.-N., Steinbach, M., Karpatne, A., & Kumar, V. (2019). Introduction to Data Mining (2nd ed.).
+  Pearson.
+- 'Wirth, R., & Hipp, J. (2000). CRISP-DM: Towards a standard process model for data mining.'
+- 'Pramana, S., Yuniarto, B., Santoso, I., Nooraeni, R., & Lystiani, L. (2018). Data Mining dengan R:
+  Konsep serta Implementasi. In Media.'
+- Provost, F., & Fawcett, T. (2013). Data Science for Business. O'Reilly Media.
+

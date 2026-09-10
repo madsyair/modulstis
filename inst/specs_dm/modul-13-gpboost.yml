@@ -1,0 +1,804 @@
+number: 13
+title: 'GPBoost: Boosting untuk Data Bertingkat dengan R dan Python'
+short_code: gpboost
+topic: GPBoost
+pertemuan: 13
+sub_cpmk: 'Sub-CPMK 13: Mahasiswa mampu mengenali struktur data bertingkat, menjelaskan mengapa boosting
+  biasa dan model campuran linear masing-masing tidak memadai, menerapkan GPBoost yang menggabungkan keduanya,
+  menaksir serta menafsirkan komponen ragam dan efek acak, dan membandingkan keempat pendekatan dengan
+  ukuran yang sama.'
+packages:
+- gpboost
+- lme4
+contoh_title: Contoh Praktikum dengan R dan Python
+course:
+  matkul: Data Mining dan Big Data
+  matkul_besar: DATA MINING DAN BIG DATA
+  kode: K202505
+  ta: 2025/2026
+  semester: 6 (Genap)
+  prodi: D-IV Statistika
+  penyusun:
+  - Achmad Syahrul Choir
+body:
+  deskripsi:
+  - 'Seluruh modul pemodelan sebelumnya --- klasifikasi dasar, klasifikasi lanjut, jaringan syaraf tiruan
+    --- mengandaikan satu hal yang jarang dinyatakan terus terang: bahwa **amatan saling bebas**. Pada
+    data statistik resmi, pengandaian itu hampir selalu keliru. Rumah tangga tersarang di dalam desa,
+    desa di dalam kabupaten, siswa di dalam sekolah, pasien di dalam rumah sakit. Dua rumah tangga dari
+    desa yang sama lebih mirip satu sama lain daripada dua rumah tangga dari desa berbeda --- karena berbagi
+    harga pasar, akses jalan, mutu layanan, dan banyak hal lain yang tidak terekam sebagai peubah.'
+  - Ada dua tradisi yang masing-masing menangani setengah persoalan. **Model campuran** (*mixed models*)
+    menangani struktur kelompok lewat **efek acak**, tetapi memaksa hubungan antara peubah penjelas dan
+    respons berbentuk **linear**. **Boosting** menangani hubungan nonlinear dan interaksi dengan sangat
+    baik, tetapi memperlakukan seluruh amatan sebagai bebas sehingga struktur kelompok terabaikan.
+  - '**GPBoost** menggabungkan keduanya: bagian tetap dimodelkan dengan **tree-boosting**, bagian acak
+    dengan **proses Gaussian atau efek acak berkelompok**, dan keduanya ditaksir bersama secara berselang-seling.
+    Modul ini menerapkannya pada data rumah tangga bertingkat, lalu membandingkan empat pendekatan pada
+    data uji yang sama.'
+  - Modul memakai **dua bahasa**. R dipakai untuk pembangkitan data, penelaahan struktur, dan model pembanding
+    (`lme4`); Python dipakai untuk GPBoost. Keduanya membaca **berkas data yang sama**, sehingga hasilnya
+    dapat dibandingkan langsung.
+  - |-
+    \begin{kotakperhatian}[Kedudukan modul dan catatan data]
+    Modul ini termasuk \textbf{bagian pengayaan}. Ia mengandaikan Modul 6 sampai 9 sudah dikuasai, khususnya gagasan pembagian latih--uji, validasi silang, dan pencegahan kebocoran data.
+  - |-
+    Data bersifat \textbf{ilustratif hasil simulasi} dan \textbf{bukan angka resmi} instansi mana pun. Efek acak tiap wilayah \textbf{sengaja ditanam} pada saat pembangkitan dan disimpan pada berkas terpisah, sehingga dapat diperiksa apakah tiap model berhasil memulihkannya --- pemeriksaan yang tidak mungkin dilakukan pada data nyata.
+    \end{kotakperhatian}
+  - \vspace{1.2em}
+  - |-
+    \begin{kotakinfo}
+    \textbf{Identitas Modul}
+  - |-
+    \begin{tabular}{@{}p{4.2cm}p{0.3cm}p{9.6cm}@{}}
+    Mata Kuliah      & : & Data Mining dan Big Data (K202505) \\
+    Pertemuan        & : & Minggu ke-13 (pengayaan) \\
+    Bahan Kajian     & : & GPBoost --- boosting untuk data bertingkat \\
+    Sub-CPMK         & : & Sub-CPMK 13 \\
+    Bahasa           & : & R (\texttt{lme4}) dan Python (\texttt{gpboost}) \\
+    Alokasi Waktu    & : & Praktikum 1 $\times$ 170 menit \\
+    \end{tabular}
+    \end{kotakinfo}
+  tujuan:
+  - 'Setelah menyelesaikan praktikum Modul 13, mahasiswa diharapkan mampu:'
+  - |-
+    1. Mengenali **struktur bertingkat** pada data dan menjelaskan mengapa ia melanggar pengandaian kebebasan amatan.
+    2. Menghitung dan menafsirkan **koefisien korelasi intrakelas** (ICC) sebagai ukuran kuatnya struktur kelompok.
+    3. Menjelaskan keterbatasan **boosting biasa** dan **model campuran linear**, masing-masing pada setengah persoalan yang berbeda.
+    4. Menerapkan **GPBoost** dengan Python: menyusun `GPModel`, menentukan banyaknya iterasi lewat validasi silang, dan melatih model.
+    5. Menaksir dan menafsirkan **komponen ragam** --- ragam antar-kelompok dan ragam galat.
+    6. Memulihkan **efek acak** tiap wilayah dan memeriksa ketepatannya terhadap nilai yang ditanam.
+    7. Membandingkan **empat pendekatan** pada data uji yang sama dan menjelaskan urutan hasilnya.
+    8. Menjelaskan perbedaan ramalan bagi kelompok **yang sudah terlihat** dan kelompok **baru**.
+  alat:
+  - '## Perangkat Lunak'
+  - |-
+    - **R** ($\geq$ 4.2) dengan paket **`lme4`** (model campuran linear).
+    - **Python** ($\geq$ 3.9) dengan paket **`gpboost`**, **`numpy`**, dan **`pandas`**.
+  - \kode{pemasangan paket}
+  - |-
+    ```{r pkg-r, eval=FALSE}
+    install.packages("lme4")           # R
+    ```
+  - |-
+    ```{python pkg-py, eval=FALSE}
+    # Python (jalankan di terminal)
+    # pip install gpboost numpy pandas
+    ```
+  - |-
+    \begin{kotakcatatan}[Tentang pemasangan gpboost]
+    Paket \texttt{gpboost} tersedia untuk \textbf{R maupun Python} dengan antarmuka yang hampir sama --- keduanya membungkus pustaka C++ yang sama. Modul ini menjalankan \textbf{keduanya}: Contoh 13.4--13.7 memakai Python, dan Bagian 13.8 mengulang analisis yang sama dengan R.
+  - 'Pada Linux, memasang versi R dari CRAN berarti \textbf{mengompilasinya dari sumber} --- ia membawa
+    pustaka Eigen dan LightGBM --- dan dapat memakan waktu setengah jam. Jauh lebih cepat memakai \textbf{berkas
+    biner} dari Posit Package Manager:'
+  - |-
+    \begin{verbatim}
+    options(repos = c(P3M =
+      "https://packagemanager.posit.co/cran/__linux__/noble/latest"))
+    options(HTTPUserAgent = sprintf("R/%s R (%s)", getRversion(),
+      paste(getRversion(), R.version["platform"],
+            R.version["arch"], R.version["os"])))
+    install.packages("gpboost")
+    \end{verbatim}
+  - |-
+    Ganti \texttt{noble} dengan nama sandi distribusi Anda (\texttt{jammy} untuk Ubuntu 22.04). Baris \texttt{HTTPUserAgent} wajib disertakan --- tanpanya server tetap mengirimkan berkas sumber.
+    \end{kotakcatatan}
+  - '## Bahan (Berkas Data)'
+  - |-
+    | Berkas | Isi |
+    |:-------|:----|
+    | `data/rumahtangga_wilayah.csv` | 1.200 rumah tangga dalam 60 wilayah; peubah penjelas dan pengeluaran |
+    | `data/efek_wilayah_sebenarnya.csv` | efek acak tiap wilayah yang **ditanam** --- hanya untuk pemeriksaan |
+  - Berkas `gen_data.R` memuat kode pembangkitnya lengkap dengan `set.seed(2026)`.
+  instruksi:
+  - |-
+    1. Buat **RStudio Project**, salin folder `data/`, dan pastikan Python beserta `gpboost` dapat dipanggil.
+    2. Kerjakan Contoh berurutan; perhatikan bahwa potongan R dan Python **berbagi berkas data yang sama**.
+    3. Kerjakan **Latihan Mandiri**, lalu **Penugasan** sebagai laporan.
+  teori:
+  - '## Data Bertingkat dan Efek Acak'
+  - |-
+    \begin{kotakrumus}
+    Misalkan $y_{ij}$ adalah respons rumah tangga ke-$i$ pada wilayah ke-$j$. Model campuran dengan intersep acak menulis
+    \[
+    y_{ij} = F(\mathbf{x}_{ij}) + b_j + \varepsilon_{ij}, \qquad
+    b_j \sim N(0, \sigma_b^2), \quad \varepsilon_{ij} \sim N(0, \sigma^2)
+    \]
+    dengan $b_j$ \textbf{efek acak} wilayah dan $F(\cdot)$ \textbf{pengaruh tetap}.
+  - |-
+    \textbf{Koefisien korelasi intrakelas}
+    \[
+    \mathrm{ICC} = \frac{\sigma_b^2}{\sigma_b^2 + \sigma^2}
+    \]
+    mengukur proporsi keragaman yang berasal dari perbedaan antar-wilayah. ICC $= 0$ berarti wilayah tidak berperan; ICC mendekati 1 berarti hampir seluruh keragaman terletak antar-wilayah.
+    \end{kotakrumus}
+  - 'Perbedaan ketiga pendekatan terletak pada bagaimana $F(\cdot)$ dan $b_j$ diperlakukan:'
+  - |-
+    \begin{kotakinfo}[Empat pendekatan dan yang ditanganinya]\par\smallskip
+    \begin{tabular}{@{}p{4.2cm}p{4.6cm}p{5.4cm}@{}}
+    \textbf{Pendekatan} & \textbf{$F(\cdot)$ nonlinear?} & \textbf{Efek kelompok $b_j$?}\\
+    \hline
+    Regresi linear (OLS) & tidak (linear) & tidak (diabaikan)\\[2pt]
+    Boosting biasa & \textbf{ya} & tidak (diabaikan)\\[2pt]
+    Model campuran linear & tidak (linear) & \textbf{ya}\\[2pt]
+    GPBoost & \textbf{ya} & \textbf{ya}\\
+    \end{tabular}
+    \end{kotakinfo}
+  - '## Cara Kerja GPBoost'
+  - |-
+    \begin{kotakrumus}
+    GPBoost menaksir $F(\cdot)$ dan komponen ragam secara \textbf{berselang-seling}:
+    \begin{enumerate}
+    \item Diberikan taksiran komponen ragam, satu pohon ditambahkan pada ansambel boosting --- tetapi gradiennya dihitung terhadap \textbf{likelihood model campuran}, bukan terhadap sisaan biasa.
+    \item Diberikan ansambel pohon terbaru, komponen ragam $\sigma_b^2$ dan $\sigma^2$ ditaksir ulang dengan memaksimumkan likelihood.
+    \item Ulangi sampai banyaknya iterasi tercapai.
+    \end{enumerate}
+    Ramalan bagi kelompok yang sudah terlihat menjumlahkan pengaruh tetap dan efek acak kelompok itu; bagi kelompok \textbf{baru}, efek acaknya diramalkan nol --- yakni kembali ke pengaruh tetap saja.
+    \end{kotakrumus}
+  - |-
+    \begin{kotakperhatian}[Mengapa langkah 1 penting]
+    Bila boosting dijalankan lebih dahulu lalu efek acak ditaksir dari sisaannya, pohon-pohon akan lebih dahulu ``memakan'' keragaman antar-kelompok --- sebab peubah penjelas dapat menghampiri identitas kelompok. Akibatnya ragam antar-kelompok tertaksir terlalu kecil dan model menjadi terlalu percaya diri. Penaksiran berselang-seling menghindari hal ini.
+    \end{kotakperhatian}
+  - |-
+    \begin{kotaktujuan}
+    \textbf{Alur praktikum Modul 13}
+    \begin{enumerate}
+    \item Menelaah struktur bertingkat dan menghitung ICC (R).
+    \item Menunjukkan keterbatasan regresi linear dan model campuran linear (R).
+    \item Menjalankan GPBoost: penentuan iterasi, pelatihan, komponen ragam (Python).
+    \item Memulihkan efek acak dan memeriksanya terhadap nilai yang ditanam (Python).
+    \item Membandingkan keempat pendekatan pada data uji yang sama.
+    \item Meramalkan bagi wilayah baru.
+    \end{enumerate}
+    \end{kotaktujuan}
+  latihan:
+  - \latihan{Menelaah struktur dan pembanding}
+  - |-
+    (a) Hitung ICC memakai model kosong pada **seluruh** data (bukan hanya data latih). Bandingkan dengan nilai pada Contoh 13.2 dan jelaskan mengapa keduanya berbeda sedikit.
+    (b) Gambar diagram kotak-garis pengeluaran untuk 12 wilayah pertama. Apa yang terlihat mengenai perbedaan antar-wilayah?
+    (c) Cocokkan model campuran linear dengan menambahkan **kemiringan acak** untuk `lama_sekolah`, yakni `(1 + lama_sekolah | wilayah)`. Apakah RMSE-nya membaik? Apa artinya?
+  - \latihan{Menjalankan GPBoost}
+  - |-
+    (a) Ulangi Contoh 13.4 sampai 13.6 dengan `learning_rate` $0{,}01$ dan $0{,}20$. Bagaimana perubahan banyaknya iterasi optimum dan taksiran komponen ragamnya?
+    (b) Bandingkan taksiran ragam antar-wilayah pada ketiga nilai `learning_rate` tersebut dengan nilai sebenarnya ($0{,}904$). Nilai mana yang paling mendekati?
+    (c) Hitung RMSE GPBoost **terpisah** untuk rumah tangga di wilayah ber-efek acak positif dan negatif. Apakah ketepatannya seimbang?
+  - \latihan{Membetulkan kode yang salah}
+  - Kode berikut memuat **empat kesalahan**; temukan, perbaiki, jalankan versi yang benar, dan jelaskan
+    akibat tiap kesalahan bagi kesimpulan.
+  - \kode{kode yang harus dibetulkan}
+  - |-
+    ```{python lat-salah, eval=FALSE}
+    X = rt[["lama_sekolah", "umur_krt", "anggota_rt", "wilayah"]].values   # (1)
+    gm = gpb.GPModel(group_data=g[tr], likelihood="gaussian")
+    bst = gpb.train(params=par, train_set=gpb.Dataset(X[tr], label=y[tr]),
+                    gp_model=gm, num_boost_round=1000)                      # (2)
+    pred = bst.predict(data=X[tr], group_data_pred=g[tr])                   # (3)
+    # "RMSE 0,08 -- model sangat akurat"                                    # (4)
+    ```
+  - 'Petunjuk: satu baris memasukkan penanda kelompok sebagai peubah penjelas; satu baris menetapkan iterasi
+    tanpa validasi silang; satu baris menilai model pada **data latih**; dan satu kesimpulan menyalahartikan
+    angka yang dihasilkan cara tersebut.'
+  - \latihan{Meramalkan wilayah baru}
+  - |-
+    (a) Bagi data **per wilayah**: 48 wilayah untuk latih, 12 wilayah untuk uji --- sehingga seluruh wilayah uji belum pernah terlihat.
+    (b) Latih ulang GPBoost pada pembagian itu, lalu hitung RMSE-nya.
+    (c) Bandingkan dengan RMSE pada Contoh 13.7 yang pembagiannya acak. Berapa besar penurunan ketepatannya, dan mengapa?
+    (d) Tulis satu paragraf (maksimal 150 kata) tentang bagaimana hasil ini harus disampaikan kepada pengguna yang hendak menerapkan model pada kabupaten yang belum tercakup pendataan.
+  penugasan:
+  - |-
+    \begin{kotaktugas}
+    \textbf{Konteks: Pendugaan Pengeluaran Rumah Tangga per Wilayah}
+  - |-
+    Sebuah unit kerja hendak menduga rata-rata pengeluaran rumah tangga tiap wilayah untuk keperluan penargetan program. Data pencacahan tersedia bagi 60 wilayah, tetapi ukuran sampel per wilayah kecil. Anda diminta menilai apakah pendekatan berbasis model dapat memperbaiki dugaan langsung, dan pendekatan mana yang sebaiknya dipakai.
+    \end{kotaktugas}
+  - \tugas{Penelaahan struktur}
+  - 1. Laporkan struktur data, ICC, dan sebaran rata-rata wilayah. Simpulkan apakah struktur kelompok
+    perlu dimodelkan.
+  - \tugas{Pemodelan dan perbandingan}
+  - |-
+    2. Cocokkan keempat pendekatan pada pembagian latih--uji yang **sama**; laporkan RMSE keempatnya dalam satu tabel.
+    3. Untuk GPBoost, tentukan banyaknya iterasi lewat validasi silang dan laporkan komponen ragam beserta galat bakunya.
+    4. Bandingkan taksiran komponen ragam dari model campuran linear dan dari GPBoost. Mana yang lebih mendekati nilai yang ditanam, dan mengapa?
+  - \tugas{Efek acak dan penargetan}
+  - |-
+    5. Susun peringkat 10 wilayah dengan efek acak terendah menurut GPBoost, lalu bandingkan dengan peringkat menurut **rata-rata mentah** pengeluaran wilayah. Apakah keduanya sama? Jelaskan mengapa dapat berbeda.
+    6. Jelaskan mengapa peringkat berdasarkan efek acak lebih tepat untuk penargetan daripada peringkat berdasarkan rata-rata mentah.
+  - \tugas{Kesimpulan dan keterbatasan}
+  - |-
+    7. Susun rekomendasi (maksimal 250 kata): pendekatan mana yang Anda usulkan, dan dengan syarat apa.
+    8. Tulis bagian keterbatasan yang memuat sekurang-kurangnya: perbedaan ketepatan bagi wilayah dikenal dan wilayah baru; ketiadaan klaim sebab-akibat; dan bahwa data bersifat simulasi.
+  - '## Rubrik Penilaian'
+  - |-
+    | Komponen | Indikator | Bobot |
+    |:---------|:----------|:-----:|
+    | Penelaahan struktur | ICC dihitung dan dipakai sebagai dasar keputusan | 15% |
+    | Ketepatan pemodelan | Keempat model dicocokkan benar pada pembagian yang sama | 30% |
+    | Komponen ragam | Iterasi ditentukan lewat CV; komponen ragam ditafsirkan | 20% |
+    | Efek acak dan penargetan | Perbedaan peringkat dijelaskan dengan benar | 20% |
+    | Keterbatasan | Wilayah baru, kausalitas, dan sifat data dinyatakan | 15% |
+  ringkasan:
+  - |-
+    \begin{kotaktujuan}
+    \textbf{Daftar periksa penguasaan Modul 13}
+    \begin{itemize}
+    \item[$\square$] Saya dapat mengenali struktur bertingkat dan menjelaskan akibatnya.
+    \item[$\square$] Saya dapat menghitung dan menafsirkan ICC.
+    \item[$\square$] Saya dapat menjelaskan keterbatasan boosting biasa dan model campuran linear.
+    \item[$\square$] Saya dapat menjalankan GPBoost dan menentukan iterasi lewat validasi silang.
+    \item[$\square$] Saya dapat menafsirkan komponen ragam dan memeriksa pemulihan efek acak.
+    \item[$\square$] Saya dapat menjelaskan perbedaan ramalan bagi wilayah dikenal dan wilayah baru.
+    \item[$\square$] Saya memahami padanan kode GPBoost antara R dan Python.
+    \end{itemize}
+    \end{kotaktujuan}
+  - '**Ringkasan fungsi:**'
+  - |-
+    | Python | R | Kegunaan |
+    |:-------|:--|:---------|
+    | `gpb.GPModel(group_data=)` | `GPModel(group_data=)` | mendefinisikan struktur efek acak |
+    | `gpb.Dataset(X, label=)` | `data=`, `label=` | menyiapkan data latih |
+    | `gpb.cv(...)` | `gpb.cv(...)` | menentukan banyaknya iterasi |
+    | `gpb.train(...)` | `gpboost(...)` | melatih model |
+    | `gm.summary()` | `summary(gm)` | komponen ragam |
+    | `bst.predict(..., pred_latent=)` | `predict(bst, ...)` | ramalan dan efek acak |
+    | `lmer()` (R saja) | `lme4::lmer()` | model campuran linear pembanding |
+  - '## Daftar Istilah'
+  - |-
+    \begin{kotakistilah}
+    \textbf{Data bertingkat} (\emph{hierarchical/multilevel data}) --- data yang unitnya tersarang di dalam unit tingkat lebih tinggi.
+  - \textbf{Efek acak} (\emph{random effect}) --- simpangan khas tiap kelompok yang dimodelkan sebagai
+    peubah acak berpusat nol.
+  - \textbf{ICC} (\emph{intraclass correlation}) --- proporsi keragaman yang berasal dari perbedaan antar-kelompok.
+  - \textbf{Komponen ragam} (\emph{variance components}) --- ragam antar-kelompok dan ragam galat.
+  - \textbf{Boosting} --- ansambel pohon yang dibangun berurutan, tiap pohon memperbaiki sisaan pendahulunya.
+  - \textbf{GPBoost} --- metode yang menaksir pengaruh tetap dengan boosting dan struktur kelompok dengan
+    efek acak atau proses Gaussian secara berselang-seling.
+  - |-
+    \textbf{Pendugaan area kecil} (\emph{small area estimation}) --- pendugaan bagi wilayah dengan sampel kecil dengan meminjam kekuatan dari wilayah lain lewat model.
+    \end{kotakistilah}
+  referensi:
+  - |-
+    1. Sigrist, F. (2022). Gaussian process boosting. *Journal of Machine Learning Research*, 23(232), 1--46.
+    2. Sigrist, F. (2023). Latent Gaussian model boosting. *IEEE Transactions on Pattern Analysis and Machine Intelligence*, 45(2), 1894--1905.
+    3. Gelman, A. & Hill, J. (2007). *Data Analysis Using Regression and Multilevel/Hierarchical Models*. Cambridge University Press.
+    4. Bates, D., Mächler, M., Bolker, B., & Walker, S. (2015). Fitting linear mixed-effects models using lme4. *Journal of Statistical Software*, 67(1), 1--48.
+    5. Rao, J. N. K. & Molina, I. (2015). *Small Area Estimation*, 2nd ed. Wiley.
+    6. Hastie, T., Tibshirani, R., & Friedman, J. (2009). *The Elements of Statistical Learning*, 2nd ed. Springer. (Bab 10)
+  contoh:
+  - contoh: Membaca data dan mengenali struktur bertingkat
+    narasi: |-
+      \kode{struktur data dan sebaran antar-wilayah}
+
+      ```{r baca, fig.cap="Rata-rata pengeluaran tiap wilayah: perbedaan antar-wilayah jelas terlihat", fig.width=7.2, fig.height=3.4, out.width="86%"}
+      rt <- read.csv("data/rumahtangga_wilayah.csv", stringsAsFactors = FALSE)
+      str(rt)
+      cat("rumah tangga:", nrow(rt), " wilayah:", length(unique(rt$wilayah)),
+          " rumah tangga per wilayah:", nrow(rt) / length(unique(rt$wilayah)), "\n")
+
+      rata_wil <- tapply(rt$pengeluaran, rt$wilayah, mean)
+      round(summary(rata_wil), 3)
+
+      par(family = "sans", mar = c(4, 4, 1, 1))
+      plot(sort(rata_wil), pch = 19, col = "#0B6FB4", cex = 0.7,
+           xlab = "wilayah (diurutkan)", ylab = "rata-rata pengeluaran")
+      abline(h = mean(rt$pengeluaran), lty = 2, col = "#F58220", lwd = 2)
+      legend("topleft", c("rata-rata wilayah", "rata-rata keseluruhan"),
+             col = c("#0B6FB4", "#F58220"), pch = c(19, NA), lty = c(NA, 2), bty = "n", cex = 0.8)
+      ```
+
+      \begin{kotakinterpretasi}
+      Data memuat 1.200 rumah tangga yang tersebar merata pada 60 wilayah --- 20 rumah tangga per wilayah. Inilah bentuk \textbf{bertingkat} yang lazim pada pendataan resmi: unit pencacahan tersarang di dalam unit wilayah.
+
+      Gambar memperlihatkan persoalannya dengan gamblang. Rata-rata pengeluaran antar-wilayah tersebar jauh dari garis rata-rata keseluruhan --- rentangnya lebih dari empat juta rupiah. Bila amatan benar-benar saling bebas, sebaran rata-rata wilayah hanya akan mencerminkan keragaman pencuplikan dan tampak jauh lebih rapat.
+
+      Perbedaan antar-wilayah sebesar ini \textbf{tidak boleh diabaikan}. Model yang mengandaikan kebebasan akan menganggap keragaman tersebut sebagai galat murni, sehingga selang kepercayaannya terlalu sempit dan ramalannya untuk wilayah tertentu bias.
+      \end{kotakinterpretasi}
+  - contoh: Mengukur kuatnya struktur kelompok dengan ICC
+    narasi: |-
+      \kode{model kosong dengan lme4}
+
+      ```{r icc}
+      suppressPackageStartupMessages(library(lme4))
+      set.seed(2026)
+      i_latih <- sample(nrow(rt), 900)
+      latih <- rt[i_latih, ]; uji <- rt[-i_latih, ]
+      cat("latih:", nrow(latih), " uji:", nrow(uji), "\n")
+
+      m0 <- lmer(pengeluaran ~ 1 + (1 | wilayah), data = latih)
+      vc <- as.data.frame(VarCorr(m0))
+      ragam <- setNames(vc$vcov, c("antar_wilayah", "galat"))
+      round(ragam, 4)
+      cat("ICC =", round(ragam["antar_wilayah"] / sum(ragam), 3), "\n")
+      ```
+
+      \begin{kotakinterpretasi}
+      Model kosong --- tanpa peubah penjelas apa pun --- memisahkan keragaman menjadi dua bagian: \textbf{antar-wilayah} $0{,}917$ dan \textbf{dalam wilayah (galat)} $1{,}320$.
+
+      ICC-nya \textbf{0,410}: sekitar $41\%$ keragaman pengeluaran berasal dari perbedaan antar-wilayah, bukan dari perbedaan antar-rumah tangga di dalam wilayah yang sama. Angka setinggi ini menegaskan bahwa struktur kelompok wajib dimodelkan.
+
+      Sebagai kaidah praktis, ICC di atas sekitar $0{,}05$ saja sudah cukup untuk membuat pengabaian struktur kelompok berbahaya bagi inferensi. Nilai $0{,}41$ jauh melampauinya.
+
+      Perhatikan bahwa ragam galat $1{,}320$ di sini \textbf{masih memuat} pengaruh peubah penjelas yang belum dimasukkan --- pada model kosong, seluruh pengaruh lama sekolah dan umur kepala rumah tangga ikut terhitung sebagai galat. Contoh berikutnya memasukkannya.
+      \end{kotakinterpretasi}
+  - contoh: 'Dua model pembanding: regresi linear dan model campuran linear'
+    narasi: |-
+      \kode{lm dan lmer beserta penilaiannya pada data uji}
+
+      ```{r pembanding}
+      ols <- lm(pengeluaran ~ lama_sekolah + umur_krt + anggota_rt, data = latih)
+      lmm <- lmer(pengeluaran ~ lama_sekolah + umur_krt + anggota_rt + (1 | wilayah),
+                  data = latih)
+
+      rmse <- function(y, yhat) sqrt(mean((y - yhat)^2))
+      p_ols <- predict(ols, newdata = uji)
+      p_lmm <- predict(lmm, newdata = uji, allow.new.levels = TRUE)
+      round(c(RMSE_OLS = rmse(uji$pengeluaran, p_ols),
+              RMSE_LMM = rmse(uji$pengeluaran, p_lmm)), 4)
+
+      vc1 <- as.data.frame(VarCorr(lmm))
+      round(setNames(vc1$vcov, c("antar_wilayah", "galat")), 4)
+
+      benar <- read.csv("data/efek_wilayah_sebenarnya.csv")
+      eb <- ranef(lmm)$wilayah[, 1]; nama <- rownames(ranef(lmm)$wilayah)
+      cat("korelasi efek acak LMM vs yang ditanam:",
+          round(cor(eb, benar$efek_sebenarnya[match(nama, benar$wilayah)]), 4), "\n")
+      ```
+
+      \begin{kotakinterpretasi}
+      Kedua model memakai peubah penjelas yang sama; yang membedakan hanyalah ada atau tidaknya efek acak wilayah.
+
+      \textbf{Regresi linear} memberi RMSE $\mathbf{1{,}294}$. Ia mengabaikan wilayah sepenuhnya, sehingga seluruh perbedaan antar-wilayah masuk ke galat.
+
+      \textbf{Model campuran linear} memberi RMSE $\mathbf{0{,}873}$ --- perbaikan sekitar $32\%$ hanya dengan menambahkan satu suku $(1 \mid \texttt{wilayah})$. Setelah peubah penjelas masuk, ragam galat turun tajam dari $1{,}320$ menjadi jauh lebih kecil, sedangkan ragam antar-wilayah bertahan --- sebagaimana seharusnya, sebab peubah penjelas tingkat rumah tangga tidak menjelaskan perbedaan antar-wilayah.
+
+      Yang paling meyakinkan: korelasi antara efek acak taksiran dan efek yang \textbf{sengaja ditanam} mencapai $\mathbf{0{,}977}$. Model campuran berhasil memulihkan hampir seluruh struktur wilayah.
+
+      Lalu apa yang masih kurang? Model ini memaksa pengaruh lama sekolah \textbf{linear}, padahal data dibangkitkan dengan bentuk sinus yang naik lalu melandai, ditambah \textbf{ambang tajam} pada umur 45 tahun. Kekurangan itulah yang hendak dijawab GPBoost.
+      \end{kotakinterpretasi}
+
+      # Contoh Praktikum: GPBoost dengan Python
+  - contoh: Menyiapkan data dan GPModel
+    narasi: |-
+      \kode{membaca berkas yang sama dari Python}
+
+      ```{python py-siap}
+      import numpy as np, pandas as pd, gpboost as gpb
+      print("gpboost versi:", gpb.__version__)
+
+      rt = pd.read_csv("data/rumahtangga_wilayah.csv")
+      X  = rt[["lama_sekolah", "umur_krt", "anggota_rt"]].values
+      y  = rt["pengeluaran"].values
+      g  = rt["wilayah"].astype(str).to_numpy()      # penanda kelompok
+
+      rng = np.random.default_rng(2026)
+      idx = rng.permutation(len(rt)); tr, te = idx[:900], idx[900:]
+      print("latih:", len(tr), " uji:", len(te), " wilayah:", len(np.unique(g)))
+      ```
+
+      \begin{kotakpenjelasan}
+      Python membaca \textbf{berkas yang sama} dengan R. Perbedaan pokoknya adalah adanya \texttt{group\_data} --- penanda kelompok --- yang diserahkan kepada \texttt{GPModel} secara terpisah dari matriks peubah penjelas. Penanda kelompok \textbf{bukan} peubah penjelas dan tidak boleh dimasukkan ke dalam \texttt{X}.
+      \end{kotakpenjelasan}
+  - contoh: Menentukan banyaknya iterasi dengan validasi silang
+    narasi: |-
+      \kode{gpb.cv dengan penghentian dini}
+
+      ```{python py-cv}
+      par = {"objective": "regression_l2", "learning_rate": 0.05,
+             "max_depth": 3, "verbose": 0}
+
+      gm_cv = gpb.GPModel(group_data=g[tr], likelihood="gaussian")
+      cv = gpb.cv(params=par, train_set=gpb.Dataset(X[tr], label=y[tr]), gp_model=gm_cv,
+                  num_boost_round=400, early_stopping_rounds=20, nfold=5,
+                  seed=2026, verbose_eval=False)
+      kunci = [k for k in cv if "mean" in k][0]
+      k_opt = int(np.argmin(cv[kunci])) + 1
+      print("banyaknya iterasi optimum:", k_opt)
+      ```
+
+      \begin{kotakinterpretasi}
+      Validasi silang lima lipat memilih \textbf{44 iterasi}. Angka ini jauh lebih kecil daripada 400 yang disediakan --- dan itu bukan kebetulan.
+
+      Pada GPBoost, banyaknya iterasi berperan ganda. Selain mengendalikan kelenturan pengaruh tetap sebagaimana pada boosting biasa, ia juga menentukan \textbf{pembagian keragaman} antara pengaruh tetap dan efek acak. Iterasi yang terlalu banyak membuat pohon-pohon menyerap keragaman yang sesungguhnya milik wilayah, sehingga ragam antar-wilayah tertaksir terlalu kecil.
+
+      Contoh berikutnya memperlihatkan akibatnya secara angka, jadi menentukan banyaknya iterasi lewat validasi silang di sini \textbf{bukan sekadar praktik yang rapi} --- ia menentukan benar atau tidaknya taksiran komponen ragam.
+      \end{kotakinterpretasi}
+  - contoh: Melatih GPBoost dan menaksir komponen ragam
+    narasi: |-
+      \kode{gpb.train dan ringkasan GPModel}
+
+      ```{python py-latih}
+      gm = gpb.GPModel(group_data=g[tr], likelihood="gaussian")
+      bst = gpb.train(params=par, train_set=gpb.Dataset(X[tr], label=y[tr]),
+                      gp_model=gm, num_boost_round=k_opt)
+      gm.summary()
+      ```
+
+      ```{python py-ragam-berlebih}
+      # pembanding: iterasi terlalu banyak (tanpa validasi silang)
+      gm_lebih = gpb.GPModel(group_data=g[tr], likelihood="gaussian")
+      bst_lebih = gpb.train(params=par, train_set=gpb.Dataset(X[tr], label=y[tr]),
+                            gp_model=gm_lebih, num_boost_round=400)
+      print("--- dengan 400 iterasi ---")
+      gm_lebih.summary()
+      ```
+
+      \begin{kotakinterpretasi}
+      Dengan 44 iterasi, komponen ragam tertaksir: \textbf{ragam galat 0,202} dan \textbf{ragam antar-wilayah 0,890}.
+
+      Bandingkan dengan nilai yang sebenarnya dipakai membangkitkan data: ragam galat $0{,}5^2 = 0{,}25$, dan ragam ke-60 efek wilayah yang tertarik $0{,}951^2 = 0{,}904$. Keduanya dipulihkan dengan baik --- selisihnya kecil dan searah dengan galat baku yang dilaporkan.
+
+      Sekarang perhatikan pembandingnya. Dengan 400 iterasi, \textbf{ragam galat anjlok} jauh di bawah nilai sebenarnya: pohon-pohon telah menghafal data latih sehingga sisaannya hampir nol. Model menjadi sangat percaya diri padahal keragaman itu nyata dan akan muncul kembali pada data baru.
+
+      Inilah alasan mengapa pada GPBoost penghentian yang tepat lebih penting daripada pada boosting biasa. Pada boosting biasa, terlalu banyak iterasi merusak daya ramal; pada GPBoost, ia \textbf{juga} merusak taksiran komponen ragam --- yakni merusak hal yang sering justru menjadi tujuan analisis pada statistik resmi.
+      \end{kotakinterpretasi}
+  - contoh: Memulihkan efek acak wilayah
+    narasi: |-
+      \kode{prediksi laten dan pencocokan dengan nilai yang ditanam}
+
+      ```{python py-efek}
+      pl = bst.predict(data=X[te], group_data_pred=g[te], pred_latent=True)
+      efek = (pd.DataFrame({"wilayah": g[te], "taksiran": pl["random_effect_mean"]})
+                .groupby("wilayah").mean())
+
+      benar = pd.read_csv("data/efek_wilayah_sebenarnya.csv").set_index("wilayah")
+      gab = efek.join(benar)
+      print(gab.head(5).round(4))
+      print("\nkorelasi efek acak GPBoost vs yang ditanam:",
+            round(float(gab["taksiran"].corr(gab["efek_sebenarnya"])), 4))
+      print("banyaknya wilayah yang dicocokkan:", len(gab))
+      ```
+
+      \begin{kotakinterpretasi}
+      Korelasi antara efek acak taksiran dan efek yang ditanam mencapai \textbf{0,985} --- sedikit lebih tinggi daripada model campuran linear ($0{,}977$).
+
+      Sebabnya masuk akal. Model campuran linear harus memaksakan bentuk linear pada pengaruh lama sekolah dan umur; ketidakcocokan bentuk itu ikut terserap ke dalam efek acak, sehingga taksirannya sedikit tercemar. GPBoost memodelkan bentuk nonlinearnya dengan pohon, sehingga efek acak yang tersisa lebih murni mencerminkan perbedaan antar-wilayah.
+
+      Bagi pekerjaan statistik resmi, efek acak ini sering \textbf{lebih penting daripada ramalannya sendiri}: ia adalah taksiran ``seberapa tinggi atau rendah wilayah ini dibandingkan wilayah lain setelah ciri rumah tangganya diperhitungkan'' --- persis gagasan yang mendasari pendugaan area kecil.
+      \end{kotakinterpretasi}
+  - contoh: Membandingkan empat pendekatan pada data uji yang sama
+    narasi: |-
+      \kode{RMSE GPBoost dan boosting biasa}
+
+      ```{python py-banding}
+      pr = bst.predict(data=X[te], group_data_pred=g[te], pred_latent=False)
+      rmse_gpb = float(np.sqrt(np.mean((y[te] - pr["response_mean"])**2)))
+
+      bst_biasa = gpb.train(params=par, train_set=gpb.Dataset(X[tr], label=y[tr]),
+                            num_boost_round=k_opt)          # TANPA gp_model
+      rmse_boost = float(np.sqrt(np.mean((y[te] - bst_biasa.predict(X[te]))**2)))
+
+      print("RMSE GPBoost      :", round(rmse_gpb, 4))
+      print("RMSE boosting biasa:", round(rmse_boost, 4))
+      ```
+
+      \begin{kotakinterpretasi}
+      Empat pendekatan, satu data uji, satu ukuran:
+
+      \begin{center}
+      \begin{tabular}{@{}p{5.0cm}p{2.6cm}p{2.6cm}p{2.2cm}@{}}
+      \textbf{Pendekatan} & \textbf{Nonlinear} & \textbf{Kelompok} & \textbf{RMSE}\\
+      \hline
+      Regresi linear (OLS)   & tidak & tidak & 1,294\\
+      Boosting biasa         & ya    & tidak & 1,097\\
+      Model campuran linear  & tidak & ya    & 0,873\\
+      \textbf{GPBoost}       & ya    & ya    & \textbf{0,548}\\
+      \end{tabular}
+      \end{center}
+
+      Urutannya menceritakan seluruh gagasan modul ini. Menambahkan \textbf{kemampuan nonlinear} saja (OLS $\to$ boosting) memperbaiki RMSE sekitar $15\%$. Menambahkan \textbf{struktur kelompok} saja (OLS $\to$ model campuran) memperbaikinya $33\%$ --- lebih besar, sebab ICC data ini tinggi. Menambahkan \textbf{keduanya} memberi $58\%$.
+
+      Yang perlu diperhatikan: perbaikan GPBoost atas model campuran ($0{,}873 \to 0{,}548$) \textbf{lebih besar} daripada perbaikan boosting atas OLS ($1{,}294 \to 1{,}097$). Kedua langkah itu sama-sama ``menambahkan kemampuan nonlinear'', tetapi hasilnya berbeda jauh --- karena pada GPBoost, pohon tidak lagi harus bersaing dengan keragaman antar-wilayah yang tak termodelkan. Kedua komponen itu \textbf{saling menguatkan}, bukan sekadar berjumlah.
+
+      Perlu pula ditegaskan bahwa urutan ini bergantung pada data. Bila ICC-nya rendah, model campuran nyaris tidak akan mengungguli OLS dan boosting biasa dapat memadai. Karena itu \textbf{hitung ICC lebih dahulu} --- sebagaimana Contoh 13.2 --- sebelum memilih pendekatan.
+      \end{kotakinterpretasi}
+  - contoh: Meramalkan bagi wilayah baru
+    narasi: |-
+      \kode{kelompok yang belum pernah terlihat}
+
+      ```{python py-baru}
+      pred_lama = bst.predict(data=X[te][:5], group_data_pred=g[te][:5],
+                              pred_latent=False)["response_mean"]
+      pred_baru = bst.predict(data=X[te][:5],
+                              group_data_pred=np.array(["W99"] * 5),
+                              pred_latent=False)["response_mean"]
+      print(pd.DataFrame({"wilayah_asli": g[te][:5],
+                          "ramalan_wilayah_dikenal": np.round(pred_lama, 3),
+                          "ramalan_wilayah_baru": np.round(pred_baru, 3)}))
+      ```
+
+      \begin{kotakinterpretasi}
+      Kelima rumah tangga ini memiliki ciri yang sama persis pada kedua kolom ramalan --- yang berbeda hanyalah wilayahnya.
+
+      Untuk \textbf{wilayah yang dikenal}, ramalannya menjumlahkan pengaruh tetap dan efek acak wilayah tersebut. Untuk \textbf{wilayah baru} (\texttt{W99}, yang tidak ada pada data latih), efek acaknya diramalkan \textbf{nol} sehingga yang tersisa hanya pengaruh tetap --- dan seluruh ramalannya bergeser ke nilai rata-rata.
+
+      Perilaku ini benar dan penting dipahami: model tidak memiliki dasar apa pun untuk menduga wilayah baru itu di atas atau di bawah rata-rata. Konsekuensi praktisnya, \textbf{ketepatan ramalan bagi wilayah baru akan jauh lebih rendah} daripada bagi wilayah yang datanya sudah ada. Bila laporan menyajikan satu angka ketepatan tanpa membedakan keduanya, angka itu menyesatkan bagi pengguna yang hendak menerapkan model ke wilayah yang belum tercakup.
+      \end{kotakinterpretasi}
+
+      # Padanan Kode dalam R
+
+      Bagian ini menjalankan **analisis yang sama dengan R**, sehingga hasil kedua bahasa dapat dibandingkan langsung. Berikut analisis yang sama dijalankan ulang dengan R.
+
+      \kode{GPBoost dengan R}
+
+      ```{r r-gpboost}
+      library(gpboost)
+
+      rt <- read.csv("data/rumahtangga_wilayah.csv", stringsAsFactors = FALSE)
+      X  <- as.matrix(rt[, c("lama_sekolah", "umur_krt", "anggota_rt")])
+      y  <- rt$pengeluaran
+      g  <- rt$wilayah
+
+      set.seed(2026)
+      i_latih <- sample(nrow(rt), 900)
+      X_tr <- X[i_latih, ]; y_tr <- y[i_latih]; g_tr <- g[i_latih]
+      X_te <- X[-i_latih, ]; y_te <- y[-i_latih]; g_te <- g[-i_latih]
+
+      par <- list(objective = "regression_l2", learning_rate = 0.05,
+                  max_depth = 3, verbose = -1)
+
+      # (1) banyaknya iterasi lewat validasi silang
+      gm_cv <- GPModel(group_data = g_tr, likelihood = "gaussian")
+      cv <- gpb.cv(params = par, data = X_tr, label = y_tr, gp_model = gm_cv,
+                   nrounds = 400, early_stopping_rounds = 20, nfold = 5, verbose = 0)
+      k_opt <- cv$best_iter
+      cat("banyaknya iterasi optimum (R):", k_opt, "\n")
+
+      # (2) pelatihan dan komponen ragam
+      gm  <- GPModel(group_data = g_tr, likelihood = "gaussian")
+      bst <- gpboost(data = X_tr, label = y_tr, gp_model = gm,
+                     nrounds = k_opt, params = par, verbose = 0)
+      summary(gm)
+
+      # (3) efek acak dan ramalan
+      pl <- predict(bst, data = X_te, group_data_pred = g_te, predict_var = FALSE)
+      cat("RMSE GPBoost (R):", round(sqrt(mean((y_te - pl$response_mean)^2)), 4), "\n")
+      ```
+
+      \begin{kotakinterpretasi}
+      Bandingkan keluaran R di atas dengan hasil Python pada Contoh 13.4--13.6.
+
+      \textbf{Banyaknya iterasi optimum sama persis: 44.} Ini bukan kebetulan --- kedua bahasa membungkus pustaka C++ yang sama, sehingga algoritmanya identik.
+
+      \textbf{Komponen ragam praktis sama:} R memberi ragam galat $0{,}212$ dan ragam wilayah $0{,}870$; Python memberi $0{,}202$ dan $0{,}890$. Keduanya sama-sama dekat dengan nilai sebenarnya ($0{,}25$ dan $0{,}904$).
+
+      \textbf{RMSE sedikit berbeda:} $0{,}529$ pada R dan $0{,}548$ pada Python. Penyebabnya bukan algoritma melainkan \textbf{pembagian latih--uji yang berbeda} --- \texttt{sample()} pada R dan \texttt{numpy} pada Python memakai pembangkit bilangan acak yang berlainan, sehingga 900 rumah tangga yang terpilih tidak sama meskipun benihnya sama-sama 2026.
+
+      Pelajaran praktisnya: \textbf{benih acak tidak dapat disamakan antar-bahasa}. Bila hasil R dan Python harus benar-benar identik, pembagian latih--uji harus dibuat sekali lalu disimpan ke berkas dan dibaca kedua bahasa --- bukan dibangkitkan ulang di masing-masing.
+
+      \textbf{Perbedaan penamaan:} R memakai \texttt{nrounds} (Python: \texttt{num\_boost\_round}), \texttt{gpboost()} (Python: \texttt{gpb.train()}), dan menyerahkan data lewat \texttt{data=} beserta \texttt{label=} (Python: objek \texttt{gpb.Dataset}). Argumen \texttt{verbose} pun berbeda: R memakai $-1$ untuk membisukan keluaran, Python memakai $0$.
+      \end{kotakinterpretasi}
+
+      \begin{kotaksalah}
+      \begin{enumerate}
+      \item Memasukkan penanda kelompok sebagai \textbf{peubah penjelas} ke dalam \texttt{X}; ia harus diserahkan lewat \texttt{group\_data} agar diperlakukan sebagai efek acak, bukan sebagai pemecah pohon.
+      \item Menjalankan boosting lebih dahulu lalu menaksir efek acak dari sisaannya; komponen ragam akan tertaksir terlalu kecil.
+      \item Menetapkan banyaknya iterasi tanpa validasi silang; pada GPBoost hal itu merusak taksiran komponen ragam, bukan hanya daya ramal.
+      \item Membagi data latih--uji secara acak padahal tujuannya meramalkan \textbf{wilayah baru}; pembagiannya harus dilakukan \textbf{per wilayah}.
+      \item Melaporkan satu angka ketepatan tanpa membedakan wilayah yang dikenal dan wilayah baru.
+      \item Menafsirkan efek acak sebagai ``mutu'' wilayah; ia hanyalah simpangan bersyarat setelah peubah penjelas diperhitungkan.
+      \item Mengabaikan ICC lalu langsung memakai GPBoost; bila ICC hampir nol, boosting biasa lebih sederhana dan setara.
+      \item Membandingkan RMSE antar-model yang dihitung pada pembagian data yang berbeda.
+      \item Menyimpulkan hubungan sebab-akibat dari pentingnya peubah pada model boosting.
+      \end{enumerate}
+      \end{kotaksalah}
+  kunci:
+  - '# Kunci Jawaban Latihan Mandiri'
+  - '## Kunci Latihan 13.1 -- Menelaah Struktur dan Pembanding'
+  - |-
+    ```{r k1, fig.cap="Sebaran pengeluaran pada 12 wilayah pertama", fig.width=7.2, fig.height=3.2, out.width="86%"}
+    suppressPackageStartupMessages(library(lme4))
+    rt <- read.csv("data/rumahtangga_wilayah.csv", stringsAsFactors = FALSE)
+  - |-
+    m0_penuh <- lmer(pengeluaran ~ 1 + (1 | wilayah), data = rt)          # (a)
+    vc <- as.data.frame(VarCorr(m0_penuh))
+    round(c(antar_wilayah = vc$vcov[1], galat = vc$vcov[2],
+            ICC = vc$vcov[1] / sum(vc$vcov)), 4)
+  - |-
+    w12 <- subset(rt, wilayah %in% sprintf("W%02d", 1:12))                # (b)
+    par(family = "sans", mar = c(4, 4, 1, 1))
+    boxplot(pengeluaran ~ wilayah, data = w12, col = "#CFE3F5", border = "#0B6FB4",
+            xlab = "wilayah", ylab = "pengeluaran", las = 2)
+  - |-
+    set.seed(2026); i <- sample(nrow(rt), 900)                             # (c)
+    latih <- rt[i, ]; uji <- rt[-i, ]
+    rmse <- function(y, yh) sqrt(mean((y - yh)^2))
+    lmm  <- lmer(pengeluaran ~ lama_sekolah + umur_krt + anggota_rt + (1 | wilayah),
+                 data = latih)
+    lmm2 <- lmer(pengeluaran ~ lama_sekolah + umur_krt + anggota_rt +
+                   (1 + lama_sekolah | wilayah), data = latih)
+    round(c(RMSE_intersep_acak = rmse(uji$pengeluaran,
+              predict(lmm, uji, allow.new.levels = TRUE)),
+            RMSE_kemiringan_acak = rmse(uji$pengeluaran,
+              predict(lmm2, uji, allow.new.levels = TRUE))), 4)
+    round(c(AIC_intersep = AIC(lmm), AIC_kemiringan = AIC(lmm2)), 1)
+    ```
+  - |-
+    \begin{kotakkunci}
+    \textbf{(a)} ICC pada seluruh data $\approx 0{,}41$ --- praktis sama dengan hasil Contoh 13.2 yang memakai data latih saja. Selisih kecilnya wajar: 300 amatan tambahan sedikit mengubah taksiran ragam. Yang harus disimpulkan mahasiswa: ICC adalah ciri \textbf{populasi}, bukan ciri pembagian data, sehingga menghitungnya pada data latih sudah memadai.
+  - '\textbf{(b)} Diagram kotak-garis memperlihatkan bahwa \textbf{letak} kotak berbeda-beda antar-wilayah,
+    sedangkan \textbf{lebarnya} relatif serupa. Itulah gambaran visual dari intersep acak: wilayah berbeda
+    pada tingkat rata-rata, bukan pada keragaman internalnya. Bila lebar kotak juga sangat berbeda, yang
+    diperlukan adalah pemodelan ragam heterogen, bukan sekadar intersep acak.'
+  - |-
+    \textbf{(c)} Menambahkan kemiringan acak untuk \texttt{lama\_sekolah} \textbf{tidak memperbaiki} RMSE secara berarti, dan AIC-nya justru lebih besar. Kesimpulannya benar: pada data ini pengaruh lama sekolah \textbf{sama} di seluruh wilayah --- memang demikian data dibangkitkan --- sehingga kemiringan acak hanya menambah parameter tanpa manfaat. Mahasiswa yang menambahkan kemiringan acak ``karena lebih lengkap'' tanpa memeriksa AIC dikenai pengurangan nilai.
+    \end{kotakkunci}
+  - '## Kunci Latihan 13.2 -- Menjalankan GPBoost'
+  - |-
+    ```{python k2}
+    import numpy as np, pandas as pd, gpboost as gpb
+    rt = pd.read_csv("data/rumahtangga_wilayah.csv")
+    X = rt[["lama_sekolah", "umur_krt", "anggota_rt"]].values
+    y = rt["pengeluaran"].values
+    g = rt["wilayah"].astype(str).to_numpy()
+    rng = np.random.default_rng(2026); idx = rng.permutation(len(rt))
+    tr, te = idx[:900], idx[900:]
+  - |-
+    hasil = []
+    for lr in [0.01, 0.05, 0.20]:                                          # (a) dan (b)
+        par = {"objective": "regression_l2", "learning_rate": lr,
+               "max_depth": 3, "verbose": 0}
+        gm_cv = gpb.GPModel(group_data=g[tr], likelihood="gaussian")
+        cv = gpb.cv(params=par, train_set=gpb.Dataset(X[tr], label=y[tr]), gp_model=gm_cv,
+                    num_boost_round=800, early_stopping_rounds=30, nfold=5,
+                    seed=2026, verbose_eval=False)
+        k = int(np.argmin(cv[[c for c in cv if "mean" in c][0]])) + 1
+        gm = gpb.GPModel(group_data=g[tr], likelihood="gaussian")
+        bst = gpb.train(params=par, train_set=gpb.Dataset(X[tr], label=y[tr]),
+                        gp_model=gm, num_boost_round=k)
+        cov = gm.get_cov_pars()
+        pr = bst.predict(data=X[te], group_data_pred=g[te], pred_latent=False)
+        hasil.append({"learning_rate": lr, "iterasi": k,
+                      "ragam_galat": round(float(np.asarray(cov).ravel()[0]), 4),
+                      "ragam_wilayah": round(float(np.asarray(cov).ravel()[1]), 4),
+                      "RMSE": round(float(np.sqrt(np.mean((y[te]-pr["response_mean"])**2))), 4)})
+    print(pd.DataFrame(hasil))
+    print("\nnilai sebenarnya: ragam galat 0.25, ragam wilayah 0.904")
+    ```
+  - |-
+    ```{python k2c}
+    par = {"objective": "regression_l2", "learning_rate": 0.05, "max_depth": 3, "verbose": 0}
+    gm = gpb.GPModel(group_data=g[tr], likelihood="gaussian")
+    bst = gpb.train(params=par, train_set=gpb.Dataset(X[tr], label=y[tr]),
+                    gp_model=gm, num_boost_round=44)
+    pr = bst.predict(data=X[te], group_data_pred=g[te], pred_latent=False)
+    benar = pd.read_csv("data/efek_wilayah_sebenarnya.csv").set_index("wilayah")
+    tanda = np.array([benar.loc[w, "efek_sebenarnya"] > 0 for w in g[te]])   # (c)
+    sisa = y[te] - pr["response_mean"]
+    print("RMSE wilayah efek POSITIF:", round(float(np.sqrt(np.mean(sisa[tanda]**2))), 4),
+          " n =", int(tanda.sum()))
+    print("RMSE wilayah efek NEGATIF:", round(float(np.sqrt(np.mean(sisa[~tanda]**2))), 4),
+          " n =", int((~tanda).sum()))
+    ```
+  - |-
+    \begin{kotakkunci}
+    \textbf{(a)--(b)} Makin kecil \texttt{learning\_rate}, makin banyak iterasi yang diperlukan --- pola yang lazim pada boosting. Yang khas GPBoost adalah pengaruhnya terhadap \textbf{komponen ragam}: laju belajar besar membuat pohon cepat menyerap keragaman sehingga ragam galat cenderung tertaksir terlalu kecil.
+  - 'Mahasiswa harus membandingkan taksiran terhadap nilai sebenarnya (ragam galat $0{,}25$; ragam wilayah
+    $0{,}904$) dan menyimpulkan laju belajar mana yang paling mendekati --- bukan sekadar memilih yang
+    RMSE-nya terkecil. Inilah butir pokok latihan ini: pada statistik resmi, \textbf{komponen ragam sering
+    menjadi tujuan analisis}, bukan hasil sampingan.'
+  - |-
+    \textbf{(c)} Hasilnya: RMSE $0{,}496$ pada wilayah ber-efek positif ($n = 124$) dan $0{,}582$ pada wilayah ber-efek negatif ($n = 176$) --- selisihnya kecil dan dapat dianggap \textbf{seimbang}. Itulah yang diharapkan: model tidak berat sebelah terhadap wilayah tertentu. Ketidakseimbangan yang besar akan menandakan model belum menangkap struktur wilayah dengan baik. Jawaban yang menyimpulkan keseimbangan ini \emph{beserta angkanya} memperoleh nilai penuh.
+    \end{kotakkunci}
+  - '## Kunci Latihan 13.3 -- Membetulkan Kode yang Salah'
+  - |-
+    ```{python k3, eval=FALSE}
+    # KODE ASLI (salah)
+    X = rt[["lama_sekolah","umur_krt","anggota_rt","wilayah"]].values      # (1)
+    bst = gpb.train(..., num_boost_round=1000)                              # (2)
+    pred = bst.predict(data=X[tr], group_data_pred=g[tr])                   # (3)
+    # "RMSE 0,08 -- model sangat akurat"                                    # (4)
+    ```
+  - |-
+    ```{python k3b}
+    X = rt[["lama_sekolah", "umur_krt", "anggota_rt"]].values               # (1)
+    par = {"objective": "regression_l2", "learning_rate": 0.05, "max_depth": 3, "verbose": 0}
+    gm_cv = gpb.GPModel(group_data=g[tr], likelihood="gaussian")            # (2)
+    cv = gpb.cv(params=par, train_set=gpb.Dataset(X[tr], label=y[tr]), gp_model=gm_cv,
+                num_boost_round=400, early_stopping_rounds=20, nfold=5,
+                seed=2026, verbose_eval=False)
+    k = int(np.argmin(cv[[c for c in cv if "mean" in c][0]])) + 1
+    gm = gpb.GPModel(group_data=g[tr], likelihood="gaussian")
+    bst = gpb.train(params=par, train_set=gpb.Dataset(X[tr], label=y[tr]),
+                    gp_model=gm, num_boost_round=k)
+  - |-
+    p_latih = bst.predict(data=X[tr], group_data_pred=g[tr], pred_latent=False)
+    p_uji   = bst.predict(data=X[te], group_data_pred=g[te], pred_latent=False)   # (3)
+    print("RMSE data LATIH:", round(float(np.sqrt(np.mean((y[tr]-p_latih["response_mean"])**2))), 4))
+    print("RMSE data UJI  :", round(float(np.sqrt(np.mean((y[te]-p_uji["response_mean"])**2))), 4))
+    ```
+  - |-
+    \begin{kotakkunci}
+    \textbf{(1)} Memasukkan \texttt{wilayah} ke dalam \texttt{X} membuat penanda kelompok diperlakukan sebagai \textbf{peubah penjelas} --- pohon akan memecah berdasarkan identitas wilayah, sehingga efek acak kehilangan perannya dan ragam antar-wilayah tertaksir mendekati nol. Selain itu kolom teks akan mengubah seluruh matriks menjadi karakter dan menimbulkan galat.
+  - '\textbf{(2)} Menetapkan 1.000 iterasi tanpa validasi silang. Pada GPBoost ini merusak dua hal sekaligus:
+    daya ramal \emph{dan} taksiran komponen ragam (bandingkan Contoh 13.5 yang memperlihatkan ragam galat
+    anjlok dari $0{,}202$ ke $0{,}105$ ketika iterasi dinaikkan ke 400).'
+  - \textbf{(3)} Menilai model pada \textbf{data latih}. Angka yang dihasilkan mengukur seberapa baik
+    model menghafal, bukan seberapa baik ia meramal.
+  - |-
+    \textbf{(4)} RMSE $0{,}08$ pada data latih bukan tanda model akurat melainkan tanda \textbf{penghafalan}. Perhatikan selisih RMSE latih dan uji pada kode yang telah dibetulkan; selisih besar adalah gejala klasik. Nilai penuh bila mahasiswa menghubungkan butir (2) dan (4) --- iterasi berlebihlah yang menyebabkan angka latih tampak sempurna.
+    \end{kotakkunci}
+  - '## Kunci Latihan 13.4 -- Meramalkan Wilayah Baru'
+  - |-
+    ```{python k4}
+    wil_unik = np.unique(g)                                                 # (a)
+    rng2 = np.random.default_rng(2026); acak = rng2.permutation(wil_unik)
+    wil_latih, wil_uji = acak[:48], acak[48:]
+    trw = np.isin(g, wil_latih); tew = np.isin(g, wil_uji)
+    print("wilayah latih:", len(wil_latih), " wilayah uji:", len(wil_uji),
+          " amatan latih:", int(trw.sum()), " amatan uji:", int(tew.sum()))
+  - |-
+    gm_w = gpb.GPModel(group_data=g[trw], likelihood="gaussian")            # (b)
+    bst_w = gpb.train(params=par, train_set=gpb.Dataset(X[trw], label=y[trw]),
+                      gp_model=gm_w, num_boost_round=44)
+    pw = bst_w.predict(data=X[tew], group_data_pred=g[tew], pred_latent=False)
+    rmse_baru = float(np.sqrt(np.mean((y[tew] - pw["response_mean"])**2)))
+    print("RMSE wilayah BARU     :", round(rmse_baru, 4))
+    print("RMSE pembagian acak   :", 0.5482)                                 # (c)
+    print("kenaikan galat        :", round(rmse_baru / 0.5482, 2), "kali")
+    ```
+  - |-
+    \begin{kotakkunci}
+    \textbf{(a)--(b)} Pembagian dilakukan \textbf{per wilayah}, bukan per rumah tangga, sehingga seluruh 12 wilayah uji benar-benar belum pernah terlihat. Ini menirukan keadaan sesungguhnya ketika model diterapkan pada kabupaten yang belum tercakup pendataan.
+  - '\textbf{(c)} RMSE naik dari $0{,}548$ menjadi $\mathbf{1{,}112}$ --- \textbf{dua kali lipat}. Sebabnya
+    jelas dan bukan cacat model: bagi wilayah baru, efek acaknya diramalkan \textbf{nol}, sehingga seluruh
+    keragaman antar-wilayah (yang menyumbang $41\%$ keragaman total menurut ICC) tidak dapat diramalkan
+    sama sekali. Yang tersisa hanya pengaruh tetap.'
+  - 'Perhatikan bahwa besarnya kenaikan ini dapat diduga dari ICC: makin tinggi ICC, makin besar bagian
+    keragaman yang hilang ketika wilayah tidak dikenal.'
+  - |-
+    \textbf{(d) Contoh paragraf.} ``Model ini menduga pengeluaran rumah tangga dengan memanfaatkan dua sumber informasi: ciri rumah tangga, dan simpangan khas wilayahnya. Bagi kabupaten yang sudah tercakup pendataan, keduanya tersedia sehingga ketepatannya tinggi. Bagi kabupaten yang \textbf{belum} tercakup, sumber kedua tidak tersedia --- model hanya dapat memakai ciri rumah tangga, dan dugaannya akan mendekati rata-rata nasional. Pada pengujian kami, galat ramalan bagi wilayah baru meningkat dua kali lipat. Karena itu dugaan bagi kabupaten yang belum tercakup \textbf{tidak boleh} disajikan dengan tingkat ketelitian yang sama, dan sebaiknya disertai selang yang jauh lebih lebar atau tidak diterbitkan sama sekali sampai tersedia sampel dari kabupaten tersebut.'' Nilai penuh bila jawaban menyebut sebab teknisnya (efek acak diramalkan nol) \emph{dan} menarik konsekuensi bagi penyajian.
+    \end{kotakkunci}
+  - '# Kunci Jawaban Penugasan'
+  - |-
+    \begin{kotakkunci}
+    \textbf{Butir 1 (struktur).} Angka acuan: 1.200 rumah tangga, 60 wilayah, 20 per wilayah; ragam antar-wilayah $0{,}917$, galat $1{,}320$, \textbf{ICC $0{,}410$}. Kesimpulan wajib: struktur kelompok harus dimodelkan.
+  - '\textbf{Butir 2 (perbandingan).} Pada pembagian acak dengan benih 2026: OLS $1{,}294$; boosting biasa
+    $1{,}097$; model campuran linear $0{,}873$; GPBoost $\mathbf{0{,}548}$. Yang dinilai bukan sekadar
+    angkanya melainkan apakah keempatnya dinilai pada \textbf{pembagian yang sama}.'
+  - '\textbf{Butir 3 (komponen ragam).} Dengan 44 iterasi terpilih lewat validasi silang: ragam galat
+    $0{,}202$ (galat baku $0{,}010$), ragam wilayah $0{,}890$ (galat baku $0{,}165$).'
+  - '\textbf{Butir 4 (perbandingan taksiran ragam).} Nilai sebenarnya: ragam galat $0{,}25$, ragam wilayah
+    $0{,}904$. GPBoost lebih mendekati karena model campuran linear memaksakan bentuk linear, sehingga
+    ketidakcocokan bentuk itu terserap ke dalam komponen ragam. Jawaban yang menyebut alasan ini memperoleh
+    nilai penuh; yang hanya membandingkan angka tanpa alasan memperoleh sebagian.'
+  - '\textbf{Butir 5--6 (peringkat).} Peringkat menurut efek acak dan menurut rata-rata mentah \textbf{tidak
+    akan sama}. Rata-rata mentah mencampuradukkan dua hal: simpangan khas wilayah, dan komposisi rumah
+    tangga di dalamnya. Sebuah wilayah dapat berrata-rata rendah semata karena penduduknya berpendidikan
+    rendah --- bukan karena ada sesuatu pada wilayah itu sendiri.'
+  - 'Efek acak menjawab pertanyaan yang berbeda dan lebih tepat untuk penargetan: ``setelah ciri rumah
+    tangganya diperhitungkan, apakah wilayah ini masih tertinggal?'''' Wilayah yang tertinggal \emph{setelah}
+    penyesuaian itulah yang menunjukkan adanya persoalan tingkat wilayah --- akses, harga, layanan ---
+    yang dapat ditangani program.'
+  - |-
+    \textbf{Butir 7--8.} Rekomendasi harus memuat syarat: ICC cukup tinggi, ukuran sampel per wilayah memadai, dan iterasi ditentukan lewat validasi silang. Keterbatasan wajib memuat ketiganya: perbedaan ketepatan wilayah dikenal versus baru; ketiadaan klaim sebab-akibat; dan sifat data yang simulatif.
+    \end{kotakkunci}
+  - '# Catatan Penskoran untuk Pengajar'
+  - |-
+    \begin{kotakinfo}
+    \begin{itemize}
+    \item \textbf{Nilai penuh} bila: ICC dihitung dan dipakai sebagai dasar keputusan, bukan sekadar dilaporkan; keempat model dinilai pada pembagian yang sama; banyaknya iterasi ditentukan lewat validasi silang \emph{dan} alasannya dikaitkan dengan komponen ragam; serta perbedaan ramalan bagi wilayah dikenal dan wilayah baru dinyatakan terus terang.
+    \item \textbf{Pengurangan nilai} bila: penanda wilayah dimasukkan sebagai peubah penjelas; model dinilai pada data latih; RMSE antar-model dibandingkan pada pembagian berbeda; atau efek acak ditafsirkan sebagai ``mutu wilayah'' tanpa menyebut bahwa ia bersyarat pada peubah penjelas.
+    \item Mahasiswa yang memeriksa apakah GPBoost masih unggul ketika ICC rendah --- misalnya dengan membangkitkan ulang data ber-ICC kecil --- layak memperoleh nilai tambahan, sebab itulah uji kendali yang tepat bagi klaim modul ini.
+    \end{itemize}
+    \end{kotakinfo}
+exercises: []
+

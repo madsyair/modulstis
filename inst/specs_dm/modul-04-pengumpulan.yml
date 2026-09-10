@@ -1,0 +1,1676 @@
+number: 4
+title: Pengumpulan Data dan Perayapan Web
+short_code: pengumpulan
+topic: Pengumpulan Data
+pertemuan: 4
+sub_cpmk: 'Sub-CPMK 4: Mahasiswa mampu menjelaskan konsep pengumpulan data dan perayapan web, menerapkan
+  etika pengumpulan, serta mengekstrak data terstruktur dari laman web menjadi tabel yang siap dianalisis.'
+packages:
+- dplyr
+- gtrendsR
+- rvest
+contoh_title: Contoh Praktikum dengan Python
+course:
+  matkul: Data Mining dan Big Data
+  matkul_besar: DATA MINING DAN BIG DATA
+  kode: K202505
+  ta: 2025/2026
+  semester: 6 (Genap)
+  prodi: D-IV Statistika
+  penyusun:
+  - Achmad Syahrul Choir
+body:
+  deskripsi:
+  - Tiga modul sebelumnya bekerja dengan data yang sudah tersedia sebagai berkas. Dalam praktik, data
+    kerap harus dikumpulkan lebih dahulu, dan sumbernya sering berupa laman web maupun antarmuka pemrograman.
+    Modul ini membahas cara memperolehnya beserta pertimbangan yang menyertainya.
+  - Perlu ditegaskan sejak awal bahwa kemampuan teknis mengambil data dari internet tidak dengan sendirinya
+    membuat pengambilan itu boleh dilakukan. Persoalan hukum, etika, dan beban terhadap peladen pihak
+    lain sama pentingnya dengan persoalan teknis. Karena itu bagian Teori memuat pembahasan etika sebelum
+    contoh teknisnya, bukan sesudahnya.
+  - 'Modul ini memakai **Python**, bukan R. Alasannya bukan preferensi melainkan kematangan perkakas:
+    pustaka `requests` dan `BeautifulSoup` menyediakan penanganan permintaan HTTP dan penelusuran struktur
+    dokumen yang lebih lengkap dan lebih terdokumentasi untuk keperluan ini.'
+  - |-
+    \begin{kotakperhatian}[Tidak merayapi situs sungguhan]
+    Seluruh contoh pada modul ini bekerja atas \textbf{laman tiruan} yang disediakan sebagai berkas lokal. Praktikum ini \textbf{tidak} merayapi situs mana pun di internet. Dengan begitu latihan dapat diulang kapan saja, hasilnya tetap sama, dan tidak ada peladen pihak lain yang terbebani.
+    \end{kotakperhatian}
+  - \vspace{1.2em}
+  tujuan:
+  - 'Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:'
+  - 1. **Menjelaskan** perbedaan pengumpulan data melalui berkas, API, dan perayapan.
+  - 2. **Menerapkan** pertimbangan etika dan hukum sebelum mengumpulkan data.
+  - 3. **Membaca** berkas `robots.txt` dan menafsirkan ketentuannya.
+  - 4. **Menelusuri** struktur dokumen HTML untuk menemukan bagian yang diperlukan.
+  - 5. **Mengekstrak** tabel HTML menjadi DataFrame yang bertipe benar.
+  - 6. **Menangani** kegagalan permintaan secara santun beserta jeda antar-permintaan.
+  - 7. **Menilai** mutu dan keterwakilan data hasil pengumpulan.
+  - \vspace{1.2em}
+  alat:
+  - 'Perangkat dan bahan yang diperlukan:'
+  - '- **Python** dengan pustaka `requests`, `beautifulsoup4`, dan `pandas`.'
+  - '- **R** dengan paket `rvest` dan `dplyr` untuk Bagian 4.8 (padanan dalam R).'
+  - '- Pasang dengan `pip install requests beautifulsoup4 pandas`.'
+  - '- Berkas tiruan pada folder `data/` --- seluruhnya **lokal**, tidak ada yang diunduh:'
+  - |-
+    | Berkas | Isi |
+    |:-------|:----|
+    | `laman_contoh.html` | laman bertabel tunggal |
+    | `daftar_1.html`, `daftar_2.html`, `daftar_3.html` | daftar berhalaman dengan tautan |
+    | `detail_a.html` ... `detail_i.html` | laman rincian tiap wilayah |
+    | `api_wilayah.json` | tiruan tanggapan API |
+    | `umpan_rilis.xml` | tiruan umpan RSS |
+    | `laman_versi_baru.html` | laman yang tata letaknya berubah |
+    | `robots_tiruan.txt` | tiruan berkas ketentuan perayapan |
+    | `data_perbandingan.csv` | data pembanding |
+  - Berkas `buat_laman.py` memuat kode pembangkit seluruh berkas tiruan itu.
+  - \vspace{1.2em}
+  instruksi:
+  - 'Ikuti tahapan berikut:'
+  - '**Sebelum praktikum:** pasang ketiga pustaka Python; pastikan berkas `laman_contoh.html` berada pada
+    subfolder `data/`.'
+  - '**Selama praktikum:** kerjakan Contoh berurutan. Bacalah bagian etika pada Teori sebelum menjalankan
+    kode apa pun.'
+  - '**Pembagian kerja:** Contoh dan Latihan dikerjakan di kelas; **Penugasan dikerjakan di luar sesi**.'
+  - '**Pengumpulan:** susun laporan R Markdown yang memuat potongan kode Python beserta keluarannya, render
+    ke PDF atau HTML, kumpulkan melalui Google Classroom.'
+  - \vspace{1.2em}
+  teori:
+  - '### Kedudukan pada CRISP-DM'
+  - 'Modul ini berada pada tahap Data Understanding, khususnya langkah pengumpulan data awal. Perlu diingat
+    bahwa tahap ini datang setelah Business Understanding: data dikumpulkan untuk menjawab persoalan yang
+    sudah dirumuskan, bukan dikumpulkan lebih dahulu lalu dicarikan persoalannya.'
+  - '### Tiga Cara Memperoleh Data'
+  - |-
+    \begin{kotakinfo}[Perbandingan tiga cara]\par\smallskip
+    \begin{tabular}{@{}p{2.6cm}p{3.6cm}p{4.0cm}p{3.8cm}@{}}
+     & \textbf{Berkas} & \textbf{API} & \textbf{Perayapan}\\
+    \hline
+    Bentuk & terstruktur & terstruktur & tak terstruktur\\[2pt]
+    Kestabilan & tinggi & tinggi & rendah\\[2pt]
+    Izin & jelas & jelas & kerap kabur\\[2pt]
+    Usaha & rendah & sedang & tinggi\\[2pt]
+    Risiko & rendah & rendah & tinggi\\
+    \end{tabular}
+    \end{kotakinfo}
+  - Urutan pertimbangan yang sehat adalah dari kiri ke kanan. Bila data tersedia sebagai berkas unduhan,
+    ambil dari sana. Bila tidak, periksa apakah penyedia menyediakan API. Perayapan ditempuh hanya ketika
+    kedua jalan sebelumnya tertutup, sebab ia paling rapuh terhadap perubahan tata letak laman dan paling
+    besar risikonya.
+  - '### Etika dan Ketentuan'
+  - Sebelum menulis kode, empat hal perlu dipastikan. Pertama, apakah ketentuan layanan situs mengizinkan
+    pengambilan otomatis. Kedua, apa yang tercantum pada berkas robots.txt. Ketiga, apakah data yang diambil
+    memuat informasi pribadi. Keempat, seberapa besar beban yang ditimbulkan bagi peladen penyedia.
+  - |-
+    \begin{kotakinfo}[Membaca robots.txt]
+    Berkas ini diletakkan pada akar situs, misalnya \texttt{contoh.id/robots.txt}, dan memuat ketentuan bagi perayap otomatis:\\[4pt]
+    \begin{tabular}{@{}p{3.6cm}p{10.8cm}@{}}
+    \texttt{User-agent: *} & ketentuan berlaku bagi semua perayap\\[2pt]
+    \texttt{Disallow: /admin/} & bagian ini tidak boleh dirayapi\\[2pt]
+    \texttt{Allow: /publik/} & bagian ini diizinkan\\[2pt]
+    \texttt{Crawl-delay: 10} & beri jeda 10 detik antar-permintaan\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotaksalah}[robots.txt bukan pengaman]
+    Berkas robots.txt adalah \textbf{permintaan}, bukan penghalang teknis; secara teknis ia dapat diabaikan begitu saja. Justru karena itulah mematuhinya menjadi soal etika, bukan soal kemampuan. Mengabaikannya dapat berakibat alamat IP diblokir, dan pada kasus tertentu berujung persoalan hukum.
+    \end{kotaksalah}
+  - Beban terhadap peladen kerap terlupakan. Perayap yang mengirim ratusan permintaan per detik dapat
+    memperlambat layanan bagi pengguna lain, dan dampaknya tidak berbeda dari serangan penolakan layanan
+    meski niatnya berbeda. Karena itu jeda antar-permintaan bukan kesopanan berlebihan melainkan keharusan.
+  - '### Menilai Keterwakilan Data Daring'
+  - 'Persoalan terbesar data hasil pengumpulan daring bukan pada mutu teknisnya melainkan pada keterwakilannya.
+    Survei terancang menetapkan kerangka dan peluang terpilih, sehingga dugaannya dapat dipertanggungjawabkan.
+    Data daring tidak memiliki keduanya: yang tercakup adalah yang kebetulan tercatat.'
+  - |-
+    \begin{kotakinfo}[Tiga pertanyaan keterwakilan]\par\smallskip
+    \begin{tabular}{@{}p{3.6cm}p{10.8cm}@{}}
+    \textbf{Siapa tercakup?} & kelompok mana yang terwakili dan mana yang tidak sama sekali\\[3pt]
+    \textbf{Mengapa tercakup?} & apakah keterpilihan berkaitan dengan peubah yang diteliti\\[3pt]
+    \textbf{Berubahkah cakupannya?} & apakah kelompok yang tercakup berubah antar-waktu\\
+    \end{tabular}
+    \end{kotakinfo}
+  - Pertanyaan kedua paling menentukan. Bila keterpilihan berkaitan dengan peubah yang diteliti --- misalnya
+    menghitung tingkat pengangguran dari lowongan daring, padahal pencari kerja tanpa akses internet tidak
+    tercatat --- maka biasnya bersifat sistematis dan tidak dapat diperbaiki dengan memperbesar data.
+  - |-
+    \begin{kotaksalah}[Data besar tidak menyembuhkan bias seleksi]
+    Memperbesar data hanya mengecilkan galat acak, tidak mengurangi bias seleksi. Contoh berjuta amatan dari kelompok yang keliru tetap menduga hal yang keliru --- bahkan dengan selang kepercayaan yang menyesatkan karena tampak sangat sempit. Inilah sebabnya kantor statistik memperlakukan data daring sebagai pelengkap, bukan pengganti survei.
+    \end{kotaksalah}
+  - '### Struktur Dokumen HTML'
+  - Laman web tersusun sebagai pohon elemen bersarang. Setiap elemen ditandai tag pembuka dan penutup,
+    dan dapat memiliki atribut seperti id maupun class yang berguna sebagai penanda saat penelusuran.
+  - |-
+    \begin{kotakinfo}[Elemen yang lazim dicari]\par\smallskip
+    \begin{tabular}{@{}p{2.4cm}p{5.0cm}p{6.8cm}@{}}
+    \textbf{Tag} & \textbf{Arti} & \textbf{Cara mencarinya}\\
+    \hline
+    \texttt{table} & tabel & \texttt{find("table", id="...")}\\[2pt]
+    \texttt{tr} & baris tabel & \texttt{find\_all("tr")}\\[2pt]
+    \texttt{td}, \texttt{th} & sel isi dan sel kepala & \texttt{find\_all("td")}\\[2pt]
+    \texttt{a} & tautan & \texttt{find\_all("a", href=True)}\\[2pt]
+    \texttt{ul}, \texttt{li} & daftar & \texttt{select("ul.kelas li")}\\
+    \end{tabular}
+    \end{kotakinfo}
+  - '### Bentuk Data yang Ditemui di Web'
+  - |-
+    \begin{kotakinfo}[Empat bentuk dan cara menanganinya]\par\smallskip
+    \begin{tabular}{@{}p{2.6cm}p{4.6cm}p{7.0cm}@{}}
+    \textbf{Bentuk} & \textbf{Ciri} & \textbf{Penanganan}\\
+    \hline
+    HTML statis & isi ada pada sumber laman & BeautifulSoup memadai\\[2pt]
+    HTML dinamis & isi dimuat JavaScript & perlu peramban terotomasi\\[2pt]
+    JSON & terstruktur, bertipe & json.loads langsung\\[2pt]
+    XML/RSS & bersarang, berskema & penguraian khusus\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotaksalah}[Isi yang tidak ada pada sumber laman]
+    Banyak situs modern memuat isinya lewat JavaScript setelah laman terbuka. Akibatnya \texttt{requests} hanya memperoleh kerangka kosong, dan mahasiswa kerap menyangka pemilihnya salah padahal isinya memang belum ada. Cara memeriksanya sederhana: cari potongan teks yang tampak di peramban pada hasil \texttt{r.text}. Bila tidak ditemukan, lamannya dinamis dan menuntut pendekatan berbeda --- atau, lebih baik, cari API yang menjadi sumber isinya.
+    \end{kotaksalah}
+  - '### Menakar Beban yang Ditimbulkan'
+  - Beban terhadap peladen dapat diperkirakan sebelum perayapan dijalankan. Bila sebuah laman berukuran
+    seratus lima puluh kilobita dan hendak diambil seribu laman, maka lalu lintas yang ditimbulkan mencapai
+    sekitar seratus lima puluh megabita. Dengan jeda dua detik, pekerjaan itu memakan waktu lebih dari
+    setengah jam --- dan justru lamanya waktu itulah yang membuatnya santun.
+  - |-
+    \begin{kotaktips}
+    Sebelum merayapi banyak laman, hitung lebih dahulu perkiraan lalu lintas dan lamanya. Bila hasilnya tampak mengkhawatirkan, itu pertanda pendekatannya perlu ditinjau --- misalnya dengan mempersempit cakupan, memakai API, atau menanyakan ketersediaan data langsung kepada penyedianya. Cara terakhir ini sering dilupakan padahal paling sederhana.
+    \end{kotaktips}
+  - '### Menangani Kegagalan'
+  - 'Permintaan jaringan dapat gagal karena berbagai sebab: peladen sibuk, jaringan terputus, atau alamat
+    berubah. Kode yang baik memperkirakan kegagalan itu dan menanganinya, bukan berhenti mendadak. Tiga
+    kebiasaan yang perlu dibangun adalah memeriksa kode status, membatasi waktu tunggu, dan mencoba ulang
+    secukupnya dengan jeda yang membesar.'
+  - |-
+    \begin{kotakinfo}[Kode status yang sering ditemui]\par\smallskip
+    \begin{tabular}{@{}p{1.6cm}p{4.4cm}p{8.2cm}@{}}
+    \textbf{200} & berhasil & lanjutkan pengolahan\\[2pt]
+    \textbf{403} & ditolak & tidak diizinkan; jangan dipaksa\\[2pt]
+    \textbf{404} & tidak ditemukan & alamat keliru atau sudah dihapus\\[2pt]
+    \textbf{429} & terlalu banyak permintaan & perlambat, perbesar jeda\\[2pt]
+    \textbf{5xx} & galat pada peladen & coba lagi nanti, bukan segera\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotaktips}
+    Kode status 429 adalah tanda paling jelas bahwa laju permintaan Anda terlalu tinggi. Menanggapinya dengan mencoba ulang seketika justru memperburuk keadaan. Tanggapan yang benar adalah memperbesar jeda secara berlipat --- satu detik, dua, empat, dan seterusnya --- yang lazim disebut \emph{exponential backoff}.
+    \end{kotaktips}
+  - \newpage
+  latihan:
+  - Kerjakan bertahap. Gunakan `data/laman_contoh.html` dan `data/data_perbandingan.csv`. Seluruh latihan
+    bekerja pada berkas lokal; **tidak ada yang merayapi internet**.
+  - '#### Tingkat Dasar (melengkapi kode)'
+  - \latihan{Menelusuri laman}
+  - |-
+    ```{python eval=FALSE}
+    from bs4 import BeautifulSoup
+    with open("data/laman_contoh.html", encoding="utf-8") as f:
+        sup = ____(f, "html.parser")
+    print(sup.title.string)
+    tab = sup.____("table", id="tabel-wilayah")   # cari SATU elemen
+    baris = tab.find("tbody").____("tr")           # cari SEMUA baris
+    print("baris:", len(baris))
+    ```
+  - \latihan{Menyusun DataFrame}
+  - |-
+    ```{python eval=FALSE}
+    import pandas as pd
+    kepala = [th.get_text(strip=____) for th in tab.find("thead").find_all("th")]
+    isi = [[td.get_text(strip=True) for td in tr.find_all("____")] for tr in baris]
+    df = pd.____(isi, columns=kepala)
+    ```
+  - \latihan{Konversi tipe}
+  - |-
+    ```{python eval=FALSE}
+    df["Penduduk"] = pd.____(df["Penduduk"], errors="____")  # numerik, gagal jadi NaN
+    print(df.dtypes)
+    ```
+  - '#### Tingkat Menengah (menulis sendiri)'
+  - \latihan{Ekstraksi lengkap}
+  - 'Tulis satu fungsi `ekstrak(path)` yang menerima jalur berkas HTML dan mengembalikan DataFrame bertipe
+    benar. Fungsi harus: (a) menguraikan laman; (b) mengambil tabel berdasarkan id; (c) mengubah ketiga
+    kolom numerik; (d) mengembalikan pula daftar catatan metodologi. Uji pada `laman_contoh.html` dan
+    tampilkan hasilnya.'
+  - \latihan{Membetulkan kode yang salah}
+  - Kode berikut memuat empat kesalahan (`find_all` dipakai saat hanya satu elemen dicari, `th` dicari
+    pada tbody, konversi tanpa `errors`, dan tidak ada pemeriksaan hasil konversi). Temukan dan perbaiki,
+    lalu jelaskan tiap kesalahannya.
+  - |-
+    ```{python eval=FALSE}
+    from bs4 import BeautifulSoup
+    import pandas as pd
+  - |-
+    with open("data/laman_contoh.html", encoding="utf-8") as f:
+        sup = BeautifulSoup(f, "html.parser")
+  - |-
+    # (a) find_all mengembalikan daftar, bukan satu elemen
+    tab = sup.find_all("table", id="tabel-wilayah")
+  - |-
+    # (b) th dicari pada tbody, padahal berada pada thead
+    kepala = [th.get_text(strip=True) for th in tab.find("tbody").find_all("th")]
+  - |-
+    # (c) konversi tanpa errors -- gagal langsung menghentikan program
+    df["Penduduk"] = pd.to_numeric(df["Penduduk"])
+  - |-
+    # (d) hasil konversi tidak diperiksa
+    print(df.head())
+    ```
+  - '**Keluaran yang benar.** Setelah diperbaiki, kode yang dipakai adalah sebagai berikut.'
+  - |-
+    ```
+    # (a) find mengembalikan satu elemen
+    tab = sup.find("table", id="tabel-wilayah")
+  - |-
+    # (b) kepala kolom diambil dari thead
+    kepala = [th.get_text(strip=True) for th in tab.find("thead").find_all("th")]
+  - |-
+    # (c) errors='coerce' agar kegagalan menjadi NaN, bukan menghentikan program
+    df["Penduduk"] = pd.to_numeric(df["Penduduk"], errors="coerce")
+  - |-
+    # (d) hasil konversi diperiksa
+    print("gagal dikonversi:", int(df["Penduduk"].isna().sum()))
+    ```
+  - 'Pemeriksaan yang wajib berhasil: `df.shape` bernilai **(5, 4)**, dan `int(df["Penduduk"].isna().sum())`
+    bernilai **0**.'
+  - \latihan{Memeriksa laman statis atau dinamis}
+  - Baca `laman_contoh.html` sebagai teks mentah, lalu periksa apakah lima potongan teks yang tampak di
+    tabel benar-benar ada pada sumbernya. Jelaskan mengapa pemeriksaan ini wajib dilakukan sebelum menulis
+    pemilih.
+  - \latihan{Menakar beban perayapan}
+  - Hitung perkiraan lalu lintas dan lamanya untuk merayapi 50, 500, dan 5.000 laman dengan jeda 1 dan
+    3 detik. Sajikan sebagai tabel enam baris, lalu tentukan pada skala berapa Anda menganggap perayapan
+    tidak lagi layak beserta alasannya.
+  - '#### Tingkat Lanjut (penilaian)'
+  - \latihan{Merayapi seluruh halaman dan menggabungkannya}
+  - |-
+    (a) Rayapi ketiga laman daftar, lalu telusuri seluruh tautan rincian --- sembilan wilayah.
+    (b) Gabungkan hasil daftar dan hasil rincian menjadi **satu** data frame. Periksa bahwa tidak ada wilayah yang hilang atau terduplikasi.
+    (c) Ubah seluruh kolom angka menjadi numerik memakai fungsi `ambil_angka()` dari Contoh 4.12, lalu bandingkan hasilnya dengan `data/api_wilayah.json`. Apakah keduanya sama persis?
+    (d) Bila ada selisih, jelaskan sebabnya dan tentukan sumber mana yang Anda percayai.
+  - \latihan{Pemilih CSS}
+  - 'Tulis satu baris pemilih CSS untuk masing-masing:'
+  - |-
+    (a) seluruh tautan di dalam tabel berkelas `daftar`;
+    (b) elemen `dd` yang memiliki atribut `data-nilai`;
+    (c) tautan `Berikutnya` saja, bukan `Sebelumnya`;
+    (d) baris tabel pertama saja pada `tbody`.
+  - Uji tiap jawaban dengan `select()`, lalu laporkan cacah elemen yang ditemukan.
+  - \latihan{Memilih antara API, umpan, dan perayapan}
+  - Anda diminta memantau rilis statistik wilayah setiap hari.
+  - |-
+    (a) Bandingkan ketiga sumber pada folder `data/`: laman HTML, `api_wilayah.json`, dan `umpan_rilis.xml`. Peubah apa yang tersedia pada masing-masing?
+    (b) Hitung berapa banyak baris kode yang diperlukan untuk memperoleh data yang sama dari ketiganya.
+    (c) Sumber mana yang Anda pilih untuk **pemantauan harian**, dan mana untuk **pengambilan data lengkap sekali waktu**? Jelaskan alasannya masing-masing.
+  - \latihan{Mendeteksi perubahan tata letak}
+  - |-
+    (a) Jalankan fungsi `periksa()` dari Contoh 4.16 pada `laman_versi_baru.html` dengan kedua pemilih. Jelaskan perbedaan ketiga keluarannya.
+    (b) Perluas fungsi itu agar juga memeriksa **cacah baris** dan **cacah kolom**, serta memberi peringatan bila cacah baris berubah lebih dari 20 persen dari nilai sebelumnya.
+    (c) Jelaskan mengapa kekeliruan jenis "kepala kolom berubah" lebih berbahaya daripada "tabel tidak ditemukan".
+  - \latihan{Padanan R}
+  - |-
+    (a) Ulangi Contoh 4.10 (merayapi laman berhalaman) dengan **rvest**. Petunjuk: pakai `html_element("nav.paginasi a.berikutnya")` dan `html_attr("href")`.
+    (b) Bandingkan banyaknya baris kode kedua bahasa untuk tugas yang sama.
+    (c) Jalankan `html_table()` pada `laman_versi_baru.html`. Apakah tipe datanya langsung benar? Bandingkan dengan hasil ekstraksi manual di Python.
+  - \latihan{Menilai kelayakan pengumpulan}
+  - 'Untuk masing-masing keadaan berikut, tentukan cara pengumpulan yang Anda sarankan (berkas, API, atau
+    perayapan), sebutkan **satu pertimbangan etika**, dan **satu risiko mutu data**: (a) harga komoditas
+    harian dari situs asosiasi pedagang; (b) data kependudukan dari portal resmi yang menyediakan unduhan
+    CSV; (c) ulasan produk dari lokapasar; (d) cuaca per jam dari penyedia yang memiliki API berbayar.'
+  - \newpage
+  penugasan:
+  - |-
+    \begin{kotaktugas}
+    Sebagai calon analis pada instansi statistik, susun laporan pengumpulan data dari laman tiruan \texttt{laman\_contoh.html}, lengkap dengan penilaian etika, mutu, dan keterwakilannya.
+    \end{kotaktugas}
+  - '**Konteks.** Sebuah unit hendak melengkapi data survei dengan sumber daring. Sebelum diputuskan,
+    perlu dinilai kelayakan teknis maupun etikanya. Seluruh pekerjaan dilakukan atas laman tiruan; **tidak
+    ada situs sungguhan yang dirayapi**.'
+  - \tugas{Penilaian Etika}
+  - 1. Uraikan isi `robots.txt` contoh pada Contoh 4.1. Susun fungsi yang memeriksa apakah suatu jalur
+    boleh dirayapi, lalu uji pada lima jalur berbeda.
+  - 2. Bahas **empat pertimbangan** sebelum mengumpulkan data daring (ketentuan layanan, robots.txt, data
+    pribadi, beban peladen). Untuk masing-masing, sebutkan akibat bila diabaikan.
+  - \tugas{Ekstraksi}
+  - 3. Tulis fungsi `ekstrak(path)` yang mengembalikan DataFrame bertipe benar beserta catatan metodologi.
+    Sertakan penanganan bila tabel tidak ditemukan.
+  - 4. Jalankan fungsi tersebut, tampilkan hasilnya, dan laporkan tipe tiap kolom **sebelum dan sesudah**
+    konversi.
+  - 5. Susun fungsi permintaan HTTP yang santun (jeda, batas waktu, pengulangan berlipat, User-Agent jujur).
+    **Tidak perlu dijalankan**; cukup dijelaskan tiap bagiannya.
+  - \tugas{Penyimpanan dan Penyajian}
+  - 5b. Periksa apakah laman **statis atau dinamis** dengan mencari potongan teks pada sumbernya. Laporkan
+    hasilnya dan jelaskan akibatnya bagi pendekatan yang dipilih.
+  - 5c. Takar **beban** yang ditimbulkan bila laman serupa dirayapi pada tiga skala berbeda. Sajikan tabel
+    perkiraan lalu lintas dan lamanya.
+  - 5d. Simpan hasil ekstraksi beserta **berkas metadata** yang memuat sumber, waktu pengambilan, dimensi,
+    dan catatan status data. Jelaskan mengapa metadata perlu disimpan terpisah.
+  - \tugas{Penilaian Mutu}
+  - '6. Nilai mutu data hasil ekstraksi: kelengkapan, kewajaran rentang, dan konsistensi. Bandingkan pula
+    terhadap `data_perbandingan.csv` yang memuat 40 wilayah --- apakah kelima wilayah hasil ekstraksi
+    mewakili sebarannya?'
+  - 7. Bahas **keterwakilan** data hasil perayapan. Siapa yang tercakup dan siapa yang tidak? Mengapa
+    banyaknya baris bukan ukuran mutu?
+  - '8. Susun laporan R Markdown berisi potongan kode Python, keluaran, dan interpretasi. Tutup dengan
+    **ringkasan (maksimal 300 kata)** memuat: kelayakan sumber, temuan mutu, pertimbangan etika, dan penegasan
+    bahwa laman maupun data merupakan tiruan.'
+  - \vspace{1.2em}
+  - '# Tambahan: Membaca Data dari Antarmuka Pemrograman (API)'
+  - 'Bagian ini melengkapi Contoh dengan tiga hal yang tidak dapat diperagakan pada laman tiruan: antarmuka
+    pemrograman sebagai jalur yang lebih baik daripada perayapan, penerapan nyata pada situs berita detik.com,
+    serta pemanfaatan Google Trends untuk nowcasting yang kini banyak dipakai kantor statistik dunia.'
+  - |-
+    \begin{kotakperhatian}[Bagian ini menghubungi peladen sungguhan]
+    Berbeda dari bagian Contoh, sebagian kode di sini \textbf{benar-benar mengirim permintaan ke internet}. Kerjakan dengan jeda yang cukup, jangan menjalankannya berulang tanpa perlu, dan hentikan segera bila menerima kode status 429. Bila jaringan tidak tersedia, cukup pelajari kodenya beserta keluaran yang dilampirkan.
+    \end{kotakperhatian}
+  - '### Antarmuka Pemrograman (API)'
+  - '**Mengapa API lebih baik.** Data yang dikembalikan sudah terstruktur, formatnya dijanjikan tetap,
+    izin pemakaiannya jelas, dan bebannya terkendali karena penyedia sendiri yang mengatur batas laju.'
+  - \contoh{Membaca tanggapan JSON dari API}
+  - \kode[Python]{json.loads dan pd.DataFrame}
+  - |-
+    ```{python, eval=FALSE}
+    import json
+    import pandas as pd
+  - |-
+    # Tanggapan API DITIRU sebagai teks; tidak ada permintaan jaringan.
+    tanggapan = '''
+    {
+      "status": "ok",
+      "sumber": "API tiruan untuk latihan",
+      "data": [
+        {"wilayah": "Wilayah A", "tahun": 2026, "nilai": 72.4},
+        {"wilayah": "Wilayah B", "tahun": 2026, "nilai": 65.1},
+        {"wilayah": "Wilayah C", "tahun": 2026, "nilai": 81.7}
+      ]
+    }
+    '''
+  - |-
+    hasil = json.loads(tanggapan)
+    print("status:", hasil["status"], "| sumber:", hasil["sumber"])
+  - |-
+    df_api = pd.DataFrame(hasil["data"])
+    print(df_api)
+    print(df_api.dtypes)
+    ```
+  - |-
+    \begin{kotakpenjelasan}
+    Teks JSON diubah menjadi objek Python memakai json.loads. Kunci status diperiksa lebih dahulu, lalu bagian data yang berupa daftar kamus diubah langsung menjadi DataFrame.
+  - \end{kotakpenjelasan}
+  - |-
+    \begin{kotakinterpretasi}
+    Bandingkan dengan hasil perayapan pada Contoh 4.3. Di sini tipe kolom sudah benar sejak awal tanpa konversi apa pun, sebab JSON membawa informasi tipe. Perhatikan pula kebiasaan memeriksa kunci status sebelum mengolah datanya: tanggapan yang gagal kerap tetap berkode 200 tetapi berisi pesan galat di dalamnya.
+  - \end{kotakinterpretasi}
+  - '### Penerapan Nyata: Indeks Berita detik.com'
+  - 'Bagian ini menerapkan seluruh langkah pada situs sungguhan. Urutannya persis seperti yang diajarkan:
+    periksa ketentuan lebih dahulu, telusuri struktur, baru ekstraksi.'
+  - '\contoh{Langkah pertama: membaca robots.txt detik.com}'
+  - \kode[Python]{mengambil robots.txt sungguhan}
+  - |-
+    ```{python, eval=FALSE}
+    import requests
+  - |-
+    kepala = {"User-Agent": "PraktikumSTIS/1.0 (keperluan pendidikan)"}
+    r = requests.get("https://news.detik.com/robots.txt", headers=kepala, timeout=20)
+    print("status:", r.status_code)
+    print(r.text)
+    ```
+  - |-
+    \begin{kotakpenjelasan}
+    Berkas robots.txt diambil dari akar subdomain news.detik.com. Ini adalah satu permintaan yang ringan dan justru dianjurkan sebelum permintaan lainnya.
+  - \end{kotakpenjelasan}
+  - |-
+    \begin{kotakinterpretasi}
+    Isinya perlu dibaca dengan cermat karena mengandung pelajaran penting. Sebagian besar larangan --- termasuk larangan atas jalur indeks --- ditujukan khusus bagi User-agent bernama Googlebot. Sementara itu blok User-agent berlambang bintang, yang mencakup perayap kita, hanya memuat Allow garis miring, artinya seluruh situs diizinkan. Jadi menurut robots.txt, pengambilan halaman indeks oleh perayap biasa tidak dilarang.
+  - \end{kotakinterpretasi}
+  - |-
+    \begin{kotaksalah}[Diizinkan robots.txt belum tentu diizinkan seluruhnya]
+    Kesimpulan bahwa robots.txt mengizinkan bukan akhir pemeriksaan. Ketentuan layanan situs, hak cipta atas isi berita, dan batas kewajaran beban tetap berlaku. Isi berita dilindungi hak cipta sehingga tidak boleh diterbitkan ulang; yang lazim dipakai untuk keperluan statistik adalah \textbf{metadata} seperti judul, waktu terbit, dan kanal --- bukan naskah beritanya. Modul ini pun hanya mengambil metadata.
+    \end{kotaksalah}
+  - \contoh{Menelusuri struktur halaman indeks}
+  - \kode[Python]{menelusuri sebelum mengekstrak}
+  - |-
+    ```{python, eval=FALSE}
+    from bs4 import BeautifulSoup
+    import time
+  - |-
+    time.sleep(2)                     # jeda sebelum permintaan berikutnya
+    r = requests.get("https://news.detik.com/indeks", headers=kepala, timeout=25)
+    print("status:", r.status_code, "| ukuran:", len(r.text), "karakter")
+  - |-
+    sup = BeautifulSoup(r.text, "html.parser")
+    artikel = sup.select("article.list-content__item")
+    print("artikel ditemukan:", len(artikel))
+  - |-
+    # memeriksa susunan satu artikel sebelum mengekstrak semuanya
+    for el in artikel[0].find_all(True, class_=True):
+        print(" ", el.name, ".".join(el.get("class")))
+    ```
+  - |-
+    \begin{kotakpenjelasan}
+    Jeda dua detik diberikan sebelum permintaan. Halaman indeks diambil lalu diuraikan. Pemilih CSS article titik list-content dua garis bawah item menargetkan wadah tiap artikel. Perulangan terakhir mencetak seluruh elemen beratribut class di dalam satu artikel, sehingga susunannya terbaca sebelum pemilih ditetapkan.
+  - \end{kotakpenjelasan}
+  - |-
+    \begin{kotakinterpretasi}
+    Langkah memeriksa satu artikel lebih dahulu ini sering dilewati pemula, padahal justru di sinilah pemilih yang benar ditemukan. Dari keluarannya terlihat bahwa judul berada pada h3 berkelas media dua garis bawah title, tautan pada a berkelas media dua garis bawah link, dan waktu pada div berkelas media dua garis bawah date. Halaman indeks memuat dua puluh artikel.
+  - \end{kotakinterpretasi}
+  - \contoh{Mengekstrak metadata berita}
+  - \kode[Python]{ekstraksi bertahan galat}
+  - |-
+    ```{python, eval=FALSE}
+    import pandas as pd
+  - |-
+    def ambil_metadata(artikel):
+        """Mengambil judul, tautan, dan waktu; mengembalikan None bila tak lengkap."""
+        tautan = artikel.select_one("h3.media__title a") or artikel.select_one("a")
+        if tautan is None:
+            return None
+        waktu = artikel.select_one("div.media__date span")
+        return {
+            "judul": tautan.get_text(strip=True),
+            "tautan": tautan.get("href", ""),
+            "waktu": (waktu.get("title") if waktu is not None and waktu.has_attr("title")
+                      else (waktu.get_text(strip=True) if waktu is not None else None)),
+        }
+  - |-
+    baris = [m for m in (ambil_metadata(a) for a in artikel) if m is not None]
+    berita = pd.DataFrame(baris)
+    print("terkumpul:", len(berita), "dari", len(artikel), "artikel")
+    print(berita[["judul", "waktu"]].head(5).to_string(index=False))
+    ```
+  - |-
+    \begin{kotakpenjelasan}
+    Fungsi ambil\_metadata memakai pemilih cadangan lewat operator or, sehingga artikel yang susunannya sedikit berbeda tetap tertangani. Bila tautan sama sekali tidak ditemukan, fungsi mengembalikan None dan baris itu disaring keluar. Waktu diambil dari atribut title bila ada, sebab atribut itu memuat tanggal lengkap sedangkan teksnya kadang hanya berupa keterangan relatif.
+  - \end{kotakpenjelasan}
+  - |-
+    \begin{kotakinterpretasi}
+    Perhatikan bahwa banyaknya baris terkumpul dibandingkan terhadap banyaknya artikel. Selisih di antara keduanya adalah tanda bahwa sebagian artikel bersusunan berbeda --- misalnya sisipan iklan atau berita bergambar --- dan itu perlu diketahui, bukan disembunyikan. Perlu ditegaskan pula bahwa yang diambil hanya metadata; naskah beritanya tidak diambil karena dilindungi hak cipta.
+  - \end{kotakinterpretasi}
+  - |-
+    \begin{kotakperhatian}[Pemilih berumur pendek]
+    Pemilih seperti \texttt{article.list-content\_\_item} berlaku pada saat modul ini disusun. Situs berita kerap mengubah tata letaknya, sehingga kode yang hari ini berjalan dapat gagal beberapa bulan kemudian. Inilah kerapuhan mendasar perayapan yang tidak dimiliki API. Karena itu kode perayapan wajib memeriksa apakah hasilnya kosong, dan tidak boleh mengandaikan susunan laman tetap.
+    \end{kotakperhatian}
+  - \contoh{Meringkas metadata menjadi statistik}
+  - \kode[Python]{menguraikan waktu dan kanal}
+  - |-
+    ```{python, eval=FALSE}
+    berita["waktu_parsed"] = pd.to_datetime(
+        berita["waktu"].str.replace(" WIB", "", regex=False),
+        format="%A, %d %b %Y %H:%M", errors="coerce")
+  - print("gagal diuraikan:", int(berita["waktu_parsed"].isna().sum()))
+  - |-
+    # kanal diambil dari bagian alamat
+    berita["kanal"] = berita["tautan"].str.extract(r"https?://([a-z]+)\.detik\.com")
+    print(berita["kanal"].value_counts())
+    ```
+  - |-
+    \begin{kotakpenjelasan}
+    Akhiran WIB dibuang lalu teks waktu diubah menjadi tipe waktu dengan format yang ditetapkan; argumen errors bernilai coerce membuat kegagalan menjadi NaT sehingga dapat dihitung. Kanal ditarik dari alamat memakai ekspresi reguler yang menangkap bagian subdomain.
+  - \end{kotakpenjelasan}
+  - |-
+    \begin{kotakinterpretasi}
+    Penguraian waktu kerap gagal karena nama hari dan bulan bergantung pada pengaturan bahasa sistem. Bila hasilnya banyak NaT, atur locale ke bahasa Indonesia atau uraikan secara manual. Kegagalan semacam ini wajib dilaporkan, bukan dibiarkan --- sebab waktu terbit adalah peubah kunci bila metadata ini hendak dipakai untuk analisis kecenderungan pemberitaan.
+  - \end{kotakinterpretasi}
+  - '### Google Trends dan Nowcasting'
+  - 'Google Trends menyediakan indeks minat pencarian menurut waktu dan wilayah. Bagi statistik resmi,
+    daya tariknya terletak pada ketepatan waktu: data pencarian tersedia hampir seketika, sedangkan indikator
+    resmi lazimnya terbit berminggu bahkan berbulan setelah periode acuannya.'
+  - Gagasan nowcasting adalah menduga nilai indikator pada periode berjalan yang datanya belum terbit,
+    dengan memanfaatkan penunjuk yang tersedia lebih cepat. Istilah ini dipopulerkan Choi dan Varian melalui
+    makalah berjudul memperkirakan masa kini dengan Google Trends, dan kini dipakai berbagai kantor statistik
+    untuk menduga pengangguran, penjualan eceran, maupun pariwisata.
+  - |-
+    \begin{kotakinfo}[Nowcasting dibandingkan peramalan]\par\smallskip
+    \begin{tabular}{@{}p{3.2cm}p{5.4cm}p{5.8cm}@{}}
+     & \textbf{Nowcasting} & \textbf{Peramalan}\\
+    \hline
+    Sasaran & periode berjalan atau baru lewat & periode mendatang\\[2pt]
+    Masalah & data belum terbit & masa depan belum terjadi\\[2pt]
+    Penunjuk & tersedia lebih cepat & pola masa lalu\\[2pt]
+    Verifikasi & dapat diperiksa saat data terbit & menunggu waktu berlalu\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotaksalah}[Indeks Google Trends bukan cacah pencarian]
+    Angka yang dikembalikan \textbf{bukan} banyaknya pencarian, melainkan \emph{indeks relatif} berskala 0 sampai 100 terhadap titik tertinggi pada rentang yang diminta. Akibatnya angka menjadi \textbf{tidak sebanding} antar-permintaan: mengubah rentang waktu, wilayah, atau daftar kata kunci akan mengubah seluruh angkanya. Membandingkan hasil dua permintaan berbeda seolah-olah setara adalah kekeliruan yang sering terjadi. Selain itu, nilai bertanda kurang dari satu perlu ditangani karena terbaca sebagai teks, bukan angka.
+    \end{kotaksalah}
+  - \contoh{Mengambil data Google Trends}
+  - \kode{gtrends dengan penanganan galat}
+  - |-
+    ```{r, eval=FALSE}
+    suppressPackageStartupMessages(library(gtrendsR))
+  - |-
+    hasil <- tryCatch(
+      gtrends("lowongan kerja", geo = "ID", time = "today 12-m", onlyInterest = TRUE),
+      error = function(e) { message("pengambilan gagal: ", conditionMessage(e)); NULL })
+  - |-
+    if (!is.null(hasil)) {
+      tren <- hasil$interest_over_time
+      tren$hits <- as.numeric(gsub("<1", "0", as.character(tren$hits)))  # tangani '<1'
+      cat("baris:", nrow(tren),
+          "| rentang:", format(min(tren$date)), "s.d.", format(max(tren$date)), "\n")
+      cat("rata indeks:", round(mean(tren$hits, na.rm = TRUE), 1), "\n")
+    }
+    ```
+  - |-
+    \begin{kotakpenjelasan}
+    Permintaan dibungkus tryCatch karena Google Trends menerapkan batas laju dan kerap menolak permintaan yang terlalu berdekatan. Argumen geo membatasi wilayah ke Indonesia dan time meminta rentang dua belas bulan terakhir. Nilai bertanda kurang dari satu diganti nol lebih dahulu sebelum diubah menjadi numerik, sebab tanpa itu seluruh kolom akan tetap bertipe teks.
+  - \end{kotakpenjelasan}
+  - |-
+    \begin{kotakinterpretasi}
+    Penanganan galat di sini bukan hiasan. Permintaan berturut-turut dalam waktu singkat lazim ditolak, dan kode yang tidak menanganinya akan berhenti mendadak di tengah pengolahan. Perhatikan pula bahwa data mingguan untuk rentang dua belas bulan menghasilkan sekitar lima puluh tiga baris; meminta rentang lebih panjang akan mengubah satuan waktunya menjadi bulanan.
+  - \end{kotakinterpretasi}
+  - \contoh{Peragaan nowcasting sederhana}
+  - \kode{lm sebagai model nowcasting}
+  - |-
+    ```{r, eval=FALSE}
+    if (!is.null(hasil)) {
+      set.seed(2026)
+      # sasaran TIRUAN yang sengaja dibuat terkait dengan tren pencarian
+      tren$sasaran <- 5.2 + 0.03 * scale(tren$hits)[, 1] + rnorm(nrow(tren), 0, 0.05)
+  - |-
+    m0 <- lm(sasaran ~ 1, data = tren)          # model tanpa penunjuk
+      m1 <- lm(sasaran ~ hits, data = tren)       # model dengan penunjuk
+  - |-
+    rmse <- function(m) sqrt(mean(residuals(m)^2))
+      round(c(R2_dengan_tren = summary(m1)$r.squared,
+              RMSE_tanpa = rmse(m0), RMSE_dengan = rmse(m1),
+              penurunan_persen = 100 * (rmse(m0) - rmse(m1)) / rmse(m0)), 4)
+    }
+    ```
+  - |-
+    \begin{kotakpenjelasan}
+    Peubah sasaran dibangkitkan agar sengaja berkaitan dengan indeks pencarian, sehingga peragaannya terkendali. Dua model dibandingkan: model tanpa penunjuk yang hanya berisi konstanta, dan model yang menyertakan indeks pencarian. Akar rerata kuadrat sisaan dihitung bagi keduanya, lalu penurunannya dinyatakan dalam persen.
+  - \end{kotakpenjelasan}
+  - |-
+    \begin{kotakinterpretasi}
+    Penurunan galat inilah yang menjadi ukuran manfaat sebuah penunjuk. Perlu ditegaskan bahwa peubah sasaran di sini adalah tiruan yang memang dibuat berkaitan, sehingga hasilnya tidak membuktikan apa pun mengenai kegunaan Google Trends pada indikator sungguhan. Pada penerapan nyata, sasaran diganti indikator resmi dan penilaiannya wajib memakai data yang tidak dipakai melatih model.
+  - \end{kotakinterpretasi}
+  - |-
+    \begin{kotaktips}
+    Untuk penilaian nowcasting yang valid, pembagian data harus mengikuti \textbf{urutan waktu}: model dilatih pada periode awal dan diuji pada periode akhir. Membagi secara acak akan membocorkan informasi masa depan ke dalam pelatihan sehingga kinerjanya tampak jauh lebih baik daripada sebenarnya. Kekeliruan ini termasuk yang paling sering terjadi pada nowcasting.
+    \end{kotaktips}
+  - |-
+    \begin{kotakinfo}[Empat keterbatasan yang wajib dilaporkan]\par\smallskip
+    \begin{tabular}{@{}p{3.8cm}p{10.6cm}@{}}
+    \textbf{Keterwakilan} & hanya mencakup pengguna internet yang memakai Google; kelompok tanpa akses tidak terwakili\\[3pt]
+    \textbf{Kesebandingan} & indeks berskala relatif; berubah bila rentang atau kata kunci diubah\\[3pt]
+    \textbf{Kesinambungan} & algoritma dan penyaringan Google dapat berubah tanpa pemberitahuan\\[3pt]
+    \textbf{Ambiguitas kata} & satu kata kunci dapat bermakna ganda, sehingga minat tercampur\\
+    \end{tabular}
+    \end{kotakinfo}
+  - Karena keempat keterbatasan itu, praktik yang dianjurkan adalah memakai Google Trends sebagai pelengkap,
+    bukan pengganti. Indikator resmi tetap menjadi acuan, sedangkan penunjuk pencarian dipakai untuk menduga
+    nilai sementara pada periode yang datanya belum terbit, lalu diperiksa kembali ketika data resmi keluar.
+  - |-
+    \begin{kotaktips}
+    Urutan yang dianjurkan ketika mencari data: berkas unduhan, lalu API, baru perayapan. Setiap langkah ke kanan menambah usaha, menambah kerapuhan, dan menambah risiko. Google Trends sendiri tergolong API sehingga lebih baik daripada perayapan, tetapi keterbatasannya menuntut kehati-hatian penafsiran.
+    \end{kotaktips}
+  - \vspace{1.2em}
+  ringkasan:
+  - |-
+    \begin{kotaktujuan}
+    \textbf{Daftar periksa penguasaan:}
+    \begin{itemize}
+    \item[$\square$] Saya dapat membedakan pengumpulan lewat berkas, API, dan perayapan.
+    \item[$\square$] Saya memeriksa ketentuan layanan dan robots.txt sebelum menulis kode.
+    \item[$\square$] Saya memahami bahwa robots.txt adalah permintaan etis, bukan penghalang teknis.
+    \item[$\square$] Saya dapat menelusuri struktur HTML dan menemukan elemen berdasarkan penanda.
+    \item[$\square$] Saya dapat mengekstrak tabel menjadi DataFrame bertipe benar.
+    \item[$\square$] Saya selalu memakai errors coerce lalu memeriksa hasil konversinya.
+    \item[$\square$] Saya dapat menangani kegagalan permintaan beserta jeda berlipat.
+    \item[$\square$] Saya menilai keterwakilan data, bukan sekadar banyaknya baris.
+    \end{itemize}
+    \end{kotaktujuan}
+  - '**Kartu Referensi Cepat.**'
+  - |-
+    \begin{kotakrumus}
+    \begin{tabular}{@{}ll@{}}
+    \textbf{Keperluan} & \textbf{Perintah}\\nMenguraikan HTML & \texttt{BeautifulSoup(f, "html.parser")}\\nSatu elemen & \texttt{sup.find("table", id="...")}\\nSemua elemen & \texttt{sup.find\_all("tr")}\\nPemilih CSS & \texttt{sup.select("ul.kelas li")}\\nAmbil teks & \texttt{el.get\_text(strip=True)}\\nAtribut & \texttt{a{[}"href"{]}}\\nKe DataFrame & \texttt{pd.DataFrame(isi, columns=kepala)}\\nKonversi aman & \texttt{pd.to\_numeric(x, errors="coerce")}\\nPermintaan HTTP & \texttt{requests.get(url, headers=, timeout=)}\\nMembaca JSON & \texttt{json.loads(teks)}\\
+    \end{tabular}
+    \end{kotakrumus}
+  - '**Alur kerja yang dianjurkan.** Berikut urutan yang sebaiknya diikuti pada tiap pekerjaan pengumpulan
+    data daring.'
+  - |-
+    \begin{kotakinfo}[Tujuh langkah pengumpulan yang bertanggung jawab]\par\smallskip
+    \begin{tabular}{@{}p{0.7cm}p{4.2cm}p{9.2cm}@{}}
+    \textbf{1} & Rumuskan kebutuhan & peubah apa yang benar-benar diperlukan\\[2pt]
+    \textbf{2} & Cari berkas atau API & dahulukan sumber terstruktur\\[2pt]
+    \textbf{3} & Periksa ketentuan & robots.txt, ketentuan layanan, hak cipta\\[2pt]
+    \textbf{4} & Takar beban & perkirakan lalu lintas dan lamanya\\[2pt]
+    \textbf{5} & Telusuri struktur & periksa satu laman sebelum mengambil semua\\[2pt]
+    \textbf{6} & Ekstrak dan periksa & konversi tipe, hitung kegagalan\\[2pt]
+    \textbf{7} & Simpan beserta metadata & sumber, waktu, cakupan, status data\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotakcatatan}[Bila ragu, tanyakan]
+    Langkah yang paling sering dilupakan adalah menghubungi penyedia data secara langsung. Banyak instansi bersedia memberikan data dalam bentuk berkas bila diminta untuk keperluan penelitian atau pendidikan. Satu surel dapat menghemat berhari-hari pekerjaan perayapan sekaligus menghindarkan seluruh persoalan etika dan hukumnya.
+    \end{kotakcatatan}
+  - 'Modul ini membahas cara memperoleh data beserta tanggung jawab yang menyertainya. Prinsip yang perlu
+    dibawa: dahulukan berkas dan API sebelum perayapan, patuhi ketentuan meski secara teknis dapat diabaikan,
+    periksa hasil konversi tipe agar tidak kehilangan data diam-diam, dan nilai keterwakilan sebelum menilai
+    jumlah. Modul berikutnya membahas prapemrosesan data, yaitu tahap yang lazimnya menyita porsi waktu
+    terbesar dalam CRISP-DM.'
+  - \vspace{1.2em}
+  referensi:
+  - Mitchell, R. (2018). *Web Scraping with Python* (2nd ed.). O'Reilly Media.
+  - Richardson, L. (2024). *Beautiful Soup Documentation*. Crummy.
+  - 'Han, J., Kamber, M., & Pei, J. (2011). *Data Mining: Concepts and Techniques* (3rd ed.). Morgan Kaufmann.'
+  - UNECE (2013). *What Does Big Data Mean for Official Statistics?* United Nations Economic Commission
+    for Europe.
+  - Krotov, V., & Silva, L. (2018). Legality and ethics of web scraping. *Americas Conference on Information
+    Systems (AMCIS) 2018 Proceedings*.
+  contoh:
+  - contoh: Memeriksa ketentuan sebelum mengambil data
+    narasi: |-
+      \kode[Python]{menguraikan robots.txt}
+
+      ```{python, eval=FALSE}
+      # Contoh isi robots.txt (disalin sebagai teks, bukan diunduh)
+      robots = """\nUser-agent: *\nDisallow: /admin/\nDisallow: /internal/\nAllow: /publik/\nCrawl-delay: 10\n"""
+
+      aturan = {"disallow": [], "allow": [], "crawl_delay": None}
+      for baris in robots.strip().split("\n"):
+          if ":" not in baris:
+              continue
+          kunci, nilai = [b.strip() for b in baris.split(":", 1)]
+          kunci = kunci.lower()
+          if kunci == "disallow":
+              aturan["disallow"].append(nilai)
+          elif kunci == "allow":
+              aturan["allow"].append(nilai)
+          elif kunci == "crawl-delay":
+              aturan["crawl_delay"] = int(nilai)
+
+      print(aturan)
+
+      def boleh(jalur, aturan):
+          for d in aturan["disallow"]:
+              if jalur.startswith(d):
+                  return False
+          return True
+
+      for jalur in ["/publik/data.html", "/admin/pengguna", "/internal/log"]:
+          print(f"{jalur:24s} -> {'boleh' if boleh(jalur, aturan) else 'TIDAK boleh'}")
+      ```
+
+      \begin{kotakpenjelasan}
+      Isi robots.txt diuraikan baris demi baris. Setiap baris dipecah pada tanda titik dua pertama menjadi kunci dan nilai, lalu dikelompokkan menurut jenis ketentuannya. Fungsi boleh memeriksa apakah suatu jalur diawali salah satu ketentuan larangan.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Pemeriksaan semacam ini seharusnya menjadi langkah pertama, bukan langkah yang dilewati. Perhatikan bahwa Crawl-delay bernilai sepuluh berarti penyedia meminta jeda sepuluh detik antar-permintaan; mengabaikannya berarti mengabaikan permintaan yang jelas tertulis. Perlu dicatat bahwa penguraian sederhana ini tidak mencakup seluruh kaidah robots.txt, dan pustaka urllib.robotparser tersedia untuk keperluan yang lebih lengkap.
+
+      \end{kotakinterpretasi}
+  - contoh: Membaca dan menelusuri struktur laman
+    narasi: |-
+      \kode[Python]{BeautifulSoup dan find}
+
+      ```{python, eval=FALSE}
+      from bs4 import BeautifulSoup
+
+      with open("data/laman_contoh.html", encoding="utf-8") as f:
+          sup = BeautifulSoup(f, "html.parser")
+
+      print("judul:", sup.title.string)
+      print("banyaknya tabel:", len(sup.find_all("table")))
+      print("banyaknya tautan:", len(sup.find_all("a", href=True)))
+
+      # menelusuri elemen berdasarkan penanda
+      catatan = sup.find("p", class_="catatan")
+      print("catatan:", catatan.get_text(strip=True))
+      ```
+
+      \begin{kotakpenjelasan}
+      Berkas HTML dibuka lalu diuraikan menjadi pohon elemen memakai penguraiannya bawaan Python. Perintah find mencari elemen pertama yang cocok, sedangkan find\_all mengembalikan seluruhnya. Argumen class ditulis dengan garis bawah di belakang karena class merupakan kata kunci Python.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Langkah pertama pada perayapan selalu berupa penjelajahan struktur, bukan langsung mengambil isi. Mengetahui berapa banyak tabel dan tautan yang ada mencegah pengambilan tabel yang keliru. Perhatikan pula catatan pada laman yang menyatakan bahwa datanya tiruan --- membaca catatan metodologi sebelum memakai data adalah kebiasaan yang wajib.
+
+      \end{kotakinterpretasi}
+  - contoh: Mengekstrak tabel menjadi DataFrame
+    narasi: |-
+      \kode[Python]{menyusun DataFrame dari baris tabel}
+
+      ```{python, eval=FALSE}
+      import pandas as pd
+
+      tab = sup.find("table", id="tabel-wilayah")
+      kepala = [th.get_text(strip=True) for th in tab.find("thead").find_all("th")]
+      baris = [[td.get_text(strip=True) for td in tr.find_all("td")]
+               for tr in tab.find("tbody").find_all("tr")]
+
+      df = pd.DataFrame(baris, columns=kepala)
+      print(df)
+      print("\ntipe sebelum konversi:")
+      print(df.dtypes)
+      ```
+
+      \begin{kotakpenjelasan}
+      Tabel dicari berdasarkan atribut id agar tidak tertukar dengan tabel lain. Kepala kolom diambil dari elemen th di dalam thead, sedangkan isinya diambil dari elemen td pada tiap baris tbody. Argumen strip bernilai True membuang spasi berlebih di kedua ujung teks.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Perhatikan bahwa seluruh kolom bertipe objek, yaitu teks, meski isinya tampak berupa angka. Inilah jebakan paling sering pada perayapan: data yang tampak numerik sesungguhnya masih berupa untaian karakter, sehingga penjumlahan maupun perata-rataan akan gagal atau memberi hasil keliru.
+
+      \end{kotakinterpretasi}
+  - contoh: Mengubah tipe data dan memeriksa hasilnya
+    narasi: |-
+      \kode[Python]{pd.to\_numeric dengan errors coerce}
+
+      ```{python, eval=FALSE}
+      for k in ["Penduduk", "Pengeluaran", "Akses Internet"]:
+          df[k] = pd.to_numeric(df[k], errors="coerce")
+
+      print(df.dtypes)
+      print("\nnilai gagal dikonversi:", int(df.isna().sum().sum()))
+      print(df.describe().round(2))
+      ```
+
+      \begin{kotakpenjelasan}
+      Ketiga kolom diubah menjadi numerik. Argumen errors bernilai coerce membuat nilai yang tidak dapat diubah menjadi NaN alih-alih menghentikan program, sehingga kegagalan konversi dapat dihitung dan diperiksa.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Pemakaian coerce disertai penghitungan NaN adalah kebiasaan penting. Bila ada nilai yang gagal dikonversi, itu pertanda ada isi tak terduga pada laman --- misalnya tanda pemisah ribuan, satuan yang ikut tertulis, atau tanda strip untuk data yang tidak tersedia. Mengabaikan ini berarti kehilangan data diam-diam.
+
+      \end{kotakinterpretasi}
+  - contoh: Mengambil bagian lain dari laman
+    narasi: |-
+      \kode[Python]{select dengan pemilih CSS}
+
+      ```{python, eval=FALSE}
+      metodologi = [li.get_text(strip=True) for li in sup.select("ul.metodologi li")]
+      for m in metodologi:
+          print("-", m)
+
+      tautan = [(a.get_text(strip=True), a["href"]) for a in sup.find_all("a", href=True)]
+      print("\ntautan ditemukan:", tautan)
+      ```
+
+      \begin{kotakpenjelasan}
+      Perintah select memakai pemilih CSS, yang lebih ringkas untuk penelusuran bersarang: ul titik metodologi li berarti elemen li di dalam ul berkelas metodologi. Tautan diambil beserta teksnya sebagai pasangan.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Catatan metodologi kerap memuat informasi yang menentukan sah tidaknya penafsiran, seperti cakupan dan satuan. Mengambil tabel tanpa membaca metodologinya adalah kekeliruan yang berakibat salah tafsir. Adapun daftar tautan menjadi dasar penelusuran berlanjut apabila data tersebar di beberapa halaman.
+
+      \end{kotakinterpretasi}
+  - contoh: Membedakan laman statis dan dinamis
+    narasi: |-
+      \kode[Python]{memeriksa keberadaan isi pada sumber}
+
+      ```{python, eval=FALSE}
+      with open("data/laman_contoh.html", encoding="utf-8") as f:
+          mentah = f.read()
+
+      # apakah isi yang tampak benar-benar ada pada sumber laman?
+      uji = ["Wilayah A", "1250000", "Akses Internet"]
+      for t in uji:
+          print(f"  {t:18s} ada pada sumber: {t in mentah}")
+
+      print("\nada tag script:", "<script" in mentah.lower())
+      print("ukuran sumber :", len(mentah), "karakter")
+      ```
+
+      \begin{kotakpenjelasan}
+      Berkas dibaca sebagai teks mentah, lalu beberapa potongan yang tampak di peramban dicari keberadaannya. Keberadaan tag script juga diperiksa sebagai petunjuk bahwa laman mungkin memuat isi secara dinamis.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Pemeriksaan sesederhana ini menghemat banyak waktu. Bila teks yang tampak di peramban tidak ditemukan pada sumber laman, maka pemilih secanggih apa pun tidak akan menemukannya --- persoalannya bukan pada pemilih melainkan pada cara laman itu dibangun. Laman contoh ini sepenuhnya statis sehingga seluruh pengujian bernilai benar.
+
+      \end{kotakinterpretasi}
+  - contoh: Menakar beban sebelum merayapi
+    narasi: |-
+      \kode[Python]{perkiraan lalu lintas dan waktu}
+
+      ```{python, eval=FALSE}
+      ukuran_laman_kb = len(mentah) / 1024
+
+      for n_laman, jeda in [(10, 1), (100, 2), (1000, 2), (10000, 2)]:
+          total_mb = ukuran_laman_kb * n_laman / 1024
+          menit = n_laman * jeda / 60
+          print(f"  {n_laman:6d} laman | {total_mb:8.1f} MB | {menit:8.1f} menit")
+      ```
+
+      \begin{kotakpenjelasan}
+      Ukuran satu laman dipakai memperkirakan lalu lintas total pada beberapa skala perayapan. Lamanya dihitung dari banyaknya laman dikalikan jeda antar-permintaan lalu dibagi enam puluh agar terbaca dalam menit.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Perhitungan ini sebaiknya dikerjakan pada tahap perencanaan, bukan setelah perayapan berjalan. Angka pada baris terakhir memperlihatkan bahwa merayapi sepuluh ribu laman secara santun memakan waktu berjam-jam --- dan bila waktu itu terasa terlalu lama, jalan keluarnya bukan mempercepat permintaan melainkan mencari sumber data yang lebih baik.
+
+      \end{kotakinterpretasi}
+  - contoh: Menyimpan hasil ekstraksi dengan aman
+    narasi: |-
+      \kode[Python]{menyimpan data beserta metadatanya}
+
+      ```{python, eval=FALSE}
+      import pandas as pd, json, os
+
+      os.makedirs("hasil", exist_ok=True)
+
+      # menyimpan sebagai CSV beserta metadata pengumpulannya
+      df.to_csv("hasil/data_hasil.csv", index=False)
+
+      meta = {
+          "sumber": "data/laman_contoh.html (laman tiruan)",
+          "waktu_ambil": "2026-01-01 00:00:00",
+          "baris": int(len(df)),
+          "kolom": list(df.columns),
+          "catatan": "data simulasi untuk latihan; bukan data resmi",
+      }
+      with open("hasil/metadata.json", "w", encoding="utf-8") as f:
+          json.dump(meta, f, ensure_ascii=False, indent=2)
+
+      print(json.dumps(meta, ensure_ascii=False, indent=2))
+      ```
+
+      \begin{kotakpenjelasan}
+      Folder keluaran dibuat bila belum ada. Data disimpan sebagai CSV, dan keterangan pengumpulannya disimpan terpisah sebagai JSON. Argumen ensure\_ascii bernilai salah agar huruf beraksen tersimpan apa adanya, sedangkan indent membuat berkas mudah dibaca manusia.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Menyimpan metadata bersama datanya adalah kebiasaan yang jarang dilakukan tetapi sangat menolong. Beberapa bulan kemudian, pertanyaan mengenai kapan data diambil dan dari mana asalnya hampir pasti muncul, dan tanpa catatan itu jawabannya hilang. Pada data hasil perayapan, mencantumkan bahwa datanya tiruan atau bahwa cakupannya terbatas mencegah salah tafsir di kemudian hari.
+
+      \end{kotakinterpretasi}
+  - contoh: Menggambarkan hasil ekstraksi
+    narasi: |-
+      \kode[Python]{matplotlib untuk memeriksa hasil}
+
+      ```{python, eval=FALSE}
+      import matplotlib
+      matplotlib.use("Agg")
+      import matplotlib.pyplot as plt
+
+      fig, ax = plt.subplots(1, 2, figsize=(9, 3.6))
+
+      ax[0].barh(df["Wilayah"], df["Akses Internet"], color="#0B6FB4")
+      ax[0].set_xlabel("Akses internet (persen)")
+      ax[0].set_title("Akses Internet per Wilayah")
+
+      ax[1].scatter(df["Penduduk"] / 1e6, df["Pengeluaran"], s=60, color="#F58220")
+      ax[1].set_xlabel("Penduduk (juta)")
+      ax[1].set_ylabel("Pengeluaran")
+      ax[1].set_title("Penduduk vs Pengeluaran")
+
+      fig.suptitle("Hasil Ekstraksi (data tiruan)", y=1.02)
+      fig.tight_layout()
+      plt.savefig("hasil/gambar.png", dpi=120, bbox_inches="tight")
+      print("gambar disimpan")
+      ```
+
+      \begin{kotakpenjelasan}
+      Dua gambar disajikan berdampingan memakai subplots. Backend Agg dipilih agar gambar dapat dibuat tanpa tampilan layar. Argumen bbox\_inches bernilai tight mencegah tepi gambar terpotong saat disimpan.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Menggambarkan hasil ekstraksi bukan sekadar untuk pelaporan melainkan juga untuk pemeriksaan: nilai yang keliru terurai kerap langsung tampak sebagai titik yang jauh menyimpang. Perhatikan pula judul yang mencantumkan bahwa datanya tiruan --- kebiasaan mencantumkan status data pada gambar mencegah gambar itu beredar terlepas dari konteksnya.
+
+      \end{kotakinterpretasi}
+  - contoh: Permintaan HTTP yang santun
+    narasi: |-
+      \kode[Python]{requests dengan penanganan galat}
+
+      ```{python, eval=FALSE}
+      import requests, time
+
+      def ambil_santun(url, jeda=1.0, coba=3, tunggu=10):
+          """Mengambil laman dengan jeda, batas waktu, dan pengulangan berlipat."""
+          kepala = {"User-Agent": "PraktikumSTIS/1.0 (keperluan pendidikan)"}
+          for i in range(coba):
+              try:
+                  r = requests.get(url, headers=kepala, timeout=tunggu)
+                  if r.status_code == 200:
+                      return r.text
+                  if r.status_code == 429:              # terlalu banyak permintaan
+                      time.sleep(jeda * (2 ** i))       # jeda berlipat
+                      continue
+                  print(f"status {r.status_code}; berhenti")
+                  return None
+              except requests.RequestException as e:
+                  print(f"percobaan {i+1} gagal: {type(e).__name__}")
+                  time.sleep(jeda * (2 ** i))
+          return None
+
+      # Fungsi ini TIDAK dijalankan pada praktikum; disajikan sebagai acuan.
+      print("Fungsi ambil_santun siap dipakai bila kelak merayapi situs sungguhan.")
+      ```
+
+      \begin{kotakpenjelasan}
+      Fungsi ini menggabungkan empat kebiasaan baik. Penanda User-Agent menyebutkan identitas dan keperluan secara jujur. Argumen timeout membatasi waktu tunggu. Kode status 429 ditanggapi dengan jeda yang berlipat dua setiap percobaan. Blok try dan except menangkap kegagalan jaringan agar program tidak berhenti.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Perhatikan bahwa hanya status 200 yang dianggap berhasil; status lain ditangani secara berbeda sesuai maknanya. Perhatikan pula bahwa fungsi ini sengaja tidak dijalankan pada praktikum, sejalan dengan prinsip modul untuk tidak membebani peladen pihak mana pun. Menyebutkan identitas pada User-Agent juga merupakan praktik yang dianjurkan agar penyedia dapat menghubungi bila terjadi persoalan.
+
+      \end{kotakinterpretasi}
+  - contoh: Membandingkan hasil ekstraksi terhadap data pembanding
+    narasi: |-
+      \kode[Python]{membandingkan rata-rata dua sumber}
+
+      ```{python, eval=FALSE}
+      import pandas as pd
+
+      pemb = pd.read_csv("data/data_perbandingan.csv")
+      print("pembanding:", pemb.shape, "| hasil ekstraksi:", df.shape)
+
+      banding = pd.DataFrame({
+          "ekstraksi_5": [df["Penduduk"].mean(), df["Pengeluaran"].mean(),
+                          df["Akses Internet"].mean()],
+          "pembanding_40": [pemb["penduduk"].mean(), pemb["pengeluaran"].mean(),
+                            pemb["akses_internet"].mean()],
+      }, index=["penduduk", "pengeluaran", "akses_internet"])
+      banding["selisih_persen"] = (
+          100 * (banding["ekstraksi_5"] - banding["pembanding_40"])
+          / banding["pembanding_40"])
+      print(banding.round(1))
+      ```
+
+      \begin{kotakpenjelasan}
+      Data pembanding berisi empat puluh wilayah dibaca, lalu rata-rata ketiga peubah dibandingkan terhadap lima wilayah hasil ekstraksi. Selisihnya dinyatakan dalam persen terhadap nilai pembanding.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Selisih yang besar bukan pertanda salah hitung melainkan pertanda cakupan yang sempit. Lima wilayah bukan contoh acak dari empat puluh, sehingga rata-ratanya tidak menduga apa pun mengenai keseluruhan. Inilah wujud nyata persoalan keterwakilan: banyaknya baris yang berhasil dikumpulkan sama sekali tidak menjamin bahwa yang terkumpul mewakili apa yang hendak digambarkan.
+
+      \end{kotakinterpretasi}
+  - contoh: 'Pemilih CSS: cara ringkas menelusuri laman'
+    narasi: |-
+      \kode{select dan select-one}
+
+      ```{python css}
+      from bs4 import BeautifulSoup
+      import pandas as pd, json, time, re
+      import xml.etree.ElementTree as ET
+      import urllib.robotparser as robotparser
+
+      def baca_laman(berkas):
+          with open("data/" + berkas, encoding="utf-8") as f:
+              return BeautifulSoup(f, "html.parser")
+
+      s = baca_laman("daftar_1.html")
+
+      # find_all versus select: dua cara menuju hasil yang sama
+      cara_find   = s.find("table", class_="daftar").find("tbody").find_all("tr")
+      cara_select = s.select("table.daftar tbody tr")
+      print("jumlah baris -- find_all:", len(cara_find), " select:", len(cara_select))
+
+      # pemilih CSS memudahkan penelusuran berlapis
+      print("kepala kolom:", [th.get_text(strip=True) for th in s.select("thead th")])
+      print("tautan pertama:", s.select_one("tbody tr td a")["href"])
+      print("judul halaman:", s.select_one("h1").get_text(strip=True))
+      ```
+
+      \begin{kotakpenjelasan}
+      \texttt{select()} menerima \textbf{pemilih CSS} --- sintaks yang sama dengan yang dipakai penata gaya laman. \texttt{table.daftar tbody tr} berarti "setiap \texttt{tr} di dalam \texttt{tbody} di dalam \texttt{table} berkelas \texttt{daftar}". \texttt{select\_one()} mengembalikan elemen pertama saja.
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Kedua cara memberi 3 baris yang sama --- keduanya sah. Bedanya terletak pada keterbacaan ketika struktur laman berlapis.
+
+      Dengan \texttt{find\_all}, tiap tingkat menuntut satu pemanggilan berantai: \texttt{find(...).find(...).find\_all(...)}. Bila salah satu tingkat tidak ditemukan, rantai itu putus dengan galat \texttt{AttributeError} yang menunjuk baris terakhir, bukan tingkat yang sesungguhnya hilang --- sehingga sulit ditelusuri.
+
+      Dengan \texttt{select}, seluruh jalur ditulis sebagai satu untai. Bila tidak ada yang cocok, hasilnya \textbf{daftar kosong}, bukan galat. Itu lebih aman untuk perayapan banyak laman: satu laman yang menyimpang tidak menghentikan seluruh proses.
+
+      Kaidah praktis: pakailah \texttt{select} untuk penelusuran berdasarkan struktur dan kelas, dan \texttt{find} bila perlu menyaring dengan syarat yang tidak dapat dinyatakan sebagai pemilih CSS --- misalnya mencocokkan teks di dalam elemen.
+      \end{kotakinterpretasi}
+  - contoh: Merayapi laman berhalaman
+    narasi: |-
+      \kode{mengikuti tautan Berikutnya sampai habis}
+
+      ```{python paginasi}
+      halaman = "daftar_1.html"
+      baris, tautan_detail, dikunjungi = [], [], []
+
+      while halaman:
+          dikunjungi.append(halaman)
+          s = baca_laman(halaman)
+          for tr in s.select("table.daftar tbody tr"):
+              td = tr.select("td")
+              baris.append({"wilayah": td[0].get_text(strip=True),
+                            "penduduk_teks": td[1].get_text(strip=True),
+                            "pengeluaran_teks": td[2].get_text(strip=True)})
+              tautan_detail.append(tr.select_one("td a")["href"])
+
+          berikutnya = s.select_one("nav.paginasi a.berikutnya")
+          halaman = berikutnya["href"] if berikutnya else None
+          time.sleep(0.2)                 # jeda santun antar-permintaan
+
+      print("halaman dikunjungi:", dikunjungi)
+      print("baris terkumpul:", len(baris), " tautan detail:", len(tautan_detail))
+      daftar = pd.DataFrame(baris)
+      print(daftar.head(4))
+      ```
+
+      \begin{kotakinterpretasi}
+      Perayapan berhenti sendiri setelah tiga halaman --- bukan karena banyaknya halaman dituliskan di dalam kode, melainkan karena laman terakhir \textbf{tidak lagi memuat} tautan \texttt{Berikutnya}, sehingga \texttt{select\_one} mengembalikan \texttt{None} dan pengulangan berakhir.
+
+      Cara ini lebih tahan perubahan daripada menuliskan \texttt{for h in range(1, 4)}. Bila jumlah halaman bertambah menjadi lima, kode ini tetap benar tanpa disunting; kode yang menuliskan angka 3 akan diam-diam melewatkan dua halaman terakhir --- kekeliruan yang tidak menimbulkan galat apa pun dan karena itu sulit ditemukan.
+
+      Tiga hal yang wajib ada pada pengulangan semacam ini:
+
+      \begin{enumerate}
+      \item \textbf{Jeda antar-permintaan} (\texttt{time.sleep}). Di sini 0,2 detik karena berkasnya lokal; pada situs sungguhan ikuti \texttt{Crawl-delay} pada \texttt{robots.txt}, atau minimal 1--2 detik.
+      \item \textbf{Catatan laman yang sudah dikunjungi}. Bila tautan saling menunjuk melingkar, tanpa catatan ini pengulangan tidak akan pernah berhenti.
+      \item \textbf{Batas atas}. Pada perayapan sungguhan tambahkan pencacah dengan batas maksimum, sebagai jaring pengaman bila struktur laman berubah.
+      \end{enumerate}
+      \end{kotakinterpretasi}
+  - contoh: Menelusuri dari daftar ke laman rincian
+    narasi: |-
+      \kode{mengambil rincian tiap wilayah beserta atribut data}
+
+      ```{python detail}
+      rincian = []
+      for t in tautan_detail:
+          s = baca_laman(t)
+          d = {"wilayah": s.select_one("h1.judul-wilayah").get_text(strip=True),
+               "berkas": t}
+          # dt berisi label, dd berisi nilainya -- keduanya berpasangan berurutan
+          for dt, dd in zip(s.select("dl.rincian dt"), s.select("dl.rincian dd")):
+              label = dt.get_text(strip=True).lower().replace(" ", "_")
+              # atribut data-nilai memuat angka bersih; teksnya memuat satuan
+              d[label] = dd.get("data-nilai", dd.get_text(strip=True))
+          rincian.append(d)
+          time.sleep(0.2)
+
+      detail = pd.DataFrame(rincian)
+      print(detail.head(4))
+      print("\ndimensi:", detail.shape, " kolom:", list(detail.columns))
+      ```
+
+      \begin{kotakinterpretasi}
+      Pola \textbf{daftar $\rightarrow$ rincian} ini adalah bentuk perayapan yang paling sering dijumpai: laman indeks memuat ringkasan beserta tautan, dan rincian lengkapnya berada pada laman tersendiri.
+
+      Perhatikan pengambilan nilai. Teks yang tampak pada laman berbunyi "1.250.000 jiwa" --- memuat pemisah ribuan dan satuan, sehingga harus dibersihkan sebelum dapat dihitung. Tetapi laman ini juga menyediakan atribut \texttt{data-nilai} yang memuat angka bersih. \texttt{dd.get("data-nilai", dd.get\_text(strip=True))} mengambil atribut itu bila ada, dan jatuh kembali ke teks bila tidak.
+
+      \textbf{Selalu periksa atribut sebelum mengurai teks.} Laman yang dirancang baik kerap menyimpan nilai mesin pada atribut \texttt{data-*}, \texttt{datetime}, atau \texttt{content}; memakainya menghindarkan seluruh persoalan pembersihan teks --- dan lebih tahan ketika format tampilan berubah.
+
+      Perhatikan pula bahwa laman rincian memuat dua peubah yang \textbf{tidak ada} pada laman daftar: \texttt{pulau} dan \texttt{tahun}. Itulah alasan menelusuri sampai ke laman rincian, bukan berhenti di indeks.
+      \end{kotakinterpretasi}
+  - contoh: Membersihkan teks dengan ekspresi reguler
+    narasi: |-
+      \kode{memisahkan angka dari satuan}
+
+      ```{python regex}
+      s = baca_laman("detail_a.html")
+      teks_dd = [dd.get_text(strip=True) for dd in s.select("dl.rincian dd")]
+      print("teks apa adanya:", teks_dd)
+
+      def ambil_angka(teks):
+          """Ambil angka pertama dari teks, tangani pemisah ribuan titik."""
+          m = re.search(r"[\d][\d.]*(?:,\d+)?", teks)
+          if not m:
+              return None
+          angka = m.group(0)
+          if "," in angka:                       # 72,4 -> desimal
+              angka = angka.replace(".", "").replace(",", ".")
+          elif angka.count(".") >= 1 and len(angka.split(".")[-1]) == 3:
+              angka = angka.replace(".", "")     # 1.250.000 -> ribuan
+          return float(angka)
+
+      for t in teks_dd:
+          print(f"{t!r:45s} -> {ambil_angka(t)}")
+      ```
+
+      \begin{kotakinterpretasi}
+      Fungsi ini menyelesaikan persoalan yang khas data Indonesia: \textbf{titik sebagai pemisah ribuan dan koma sebagai pemisah desimal} --- kebalikan dari kebiasaan Inggris yang menjadi bawaan \texttt{float()}.
+
+      Perhatikan bahwa \texttt{float("1.250.000")} akan gagal, dan \texttt{float("72,4")} juga gagal. Yang lebih berbahaya, \texttt{float("1.250")} \textbf{tidak} gagal melainkan menghasilkan $1{,}25$ --- seribu kali lebih kecil daripada yang dimaksud, tanpa peringatan apa pun. Kekeliruan semacam ini lolos dari pemeriksaan otomatis dan hanya ketahuan bila hasilnya dibandingkan dengan sumber lain.
+
+      Aturan yang dipakai di sini: bila ada koma, ia dianggap pemisah desimal; bila tidak dan bagian setelah titik terakhir tepat tiga angka, titik dianggap pemisah ribuan. Aturan ini \textbf{tidak sempurna} --- "1.234" dapat berarti seribu dua ratus tiga puluh empat atau satu koma dua tiga empat, dan tidak ada cara memastikannya dari teks itu sendiri.
+
+      Karena itu pembersihan berbasis ekspresi reguler harus selalu disertai \textbf{pemeriksaan kewajaran}: bandingkan rentang hasil dengan yang diharapkan, dan periksa sampel secara manual. Bila laman menyediakan atribut \texttt{data-*} seperti pada Contoh sebelumnya, pakailah itu dan hindari seluruh persoalan ini.
+      \end{kotakinterpretasi}
+  - contoh: Periksa apakah tersedia API sebelum merayapi
+    narasi: |-
+      \kode{membaca tanggapan JSON}
+
+      ```{python api}
+      with open("data/api_wilayah.json", encoding="utf-8") as f:
+          tanggapan = json.load(f)
+
+      print("kunci teratas:", list(tanggapan.keys()))
+      print("metadata:", tanggapan["meta"])
+
+      api = pd.DataFrame(tanggapan["data"])
+      print(api.head(4))
+      print("\ntipe data langsung benar:")
+      print(api.dtypes)
+      ```
+
+      \begin{kotakinterpretasi}
+      Bandingkan dengan seluruh contoh sebelumnya. Data yang sama diperoleh dengan \textbf{satu baris} \texttt{pd.DataFrame(tanggapan["data"])}, dan --- ini yang paling penting --- \textbf{tipe datanya sudah benar sejak awal}: \texttt{penduduk} bertipe integer, \texttt{akses\_internet} bertipe float. Tidak ada pemisah ribuan yang perlu dibersihkan, tidak ada satuan yang menempel pada angka, tidak ada risiko salah tafsir titik dan koma.
+
+      Selain itu tanggapan API menyertakan \textbf{metadata}: sumber, tahun, jumlah cacah, dan lisensi. Perayapan HTML jarang memberikan hal itu; ia harus dicatat sendiri oleh perayapnya.
+
+      Kaidah yang wajib dipegang: \textbf{cari API lebih dahulu, rayapi belakangan}. Perayapan HTML adalah pilihan terakhir, bukan pertama. Cara memeriksanya: telusuri laman dokumentasi penyedia data; periksa apakah lamannya memuat panggilan XHR/fetch pada tab Network peramban --- kerap laman dinamis mengambil datanya dari API yang dapat dipanggil langsung; dan tanyakan kepada penyedia datanya.
+
+      Perayapan HTML rapuh terhadap perubahan tata letak, membebani peladen, dan sering berada di wilayah abu-abu dari sisi ketentuan layanan. API dirancang untuk diakses program, stabil, dan izinnya jelas.
+      \end{kotakinterpretasi}
+  - contoh: Membaca umpan XML
+    narasi: |-
+      \kode{ElementTree untuk RSS}
+
+      ```{python xml}
+      akar = ET.parse("data/umpan_rilis.xml").getroot()
+      print("judul umpan:", akar.findtext("./channel/title"))
+
+      butir = [{"judul": it.findtext("title"),
+                "tanggal": it.findtext("pubDate"),
+                "tautan": it.findtext("link"),
+                "ringkasan": it.findtext("description")}
+               for it in akar.iter("item")]
+      umpan = pd.DataFrame(butir)
+      print(umpan[["judul", "tanggal"]].head(5))
+      print("\njumlah butir:", len(umpan))
+      ```
+
+      \begin{kotakinterpretasi}
+      Umpan RSS atau Atom sering menjadi jalan tengah antara API dan perayapan HTML: strukturnya baku, ringan, dan \textbf{memang disediakan untuk dibaca program} --- sehingga memakainya tidak menimbulkan persoalan etika sebagaimana perayapan.
+
+      Bagi pekerjaan statistik, umpan rilis berguna untuk \textbf{memantau pembaruan}: alih-alih merayapi seluruh laman setiap hari untuk memeriksa apakah ada rilis baru, cukup baca umpannya --- jauh lebih murah bagi kedua pihak.
+
+      Perhatikan \texttt{pubDate} yang berbentuk teks. Sebelum dipakai, ia harus diurai menjadi tipe tanggal dengan \texttt{pd.to\_datetime()} beserta \texttt{format=} yang tepat; jangan mengandalkan penebakan otomatis, sebab format tanggal berbeda-beda antar-umpan dan salah tebak menghasilkan tanggal yang keliru tanpa peringatan.
+      \end{kotakinterpretasi}
+  - contoh: Membaca robots.txt secara terprogram
+    narasi: |-
+      \kode{urllib.robotparser}
+
+      ```{python robots}
+      print(open("data/robots_tiruan.txt").read())
+
+      aturan = robotparser.RobotFileParser()
+      aturan.parse(open("data/robots_tiruan.txt").read().splitlines())
+
+      for jalur in ["/rilis", "/admin/pengguna", "/pencarian?q=data", "/data/wilayah"]:
+          print(f"{jalur:25s} boleh diambil: {aturan.can_fetch('*', jalur)}")
+
+      print("\nCrawl-delay bagi perayap umum:", aturan.crawl_delay("*"), "detik")
+      print("PerayapNakal boleh /rilis:", aturan.can_fetch("PerayapNakal", "/rilis"))
+      ```
+
+      \begin{kotakinterpretasi}
+      Contoh 4.1 membaca \texttt{robots.txt} dengan mata; di sini ia dibaca \textbf{oleh program}. Perbedaannya penting pada perayapan berskala besar: memeriksa ribuan alamat satu per satu secara manual tidak mungkin, dan \texttt{RobotFileParser} melakukannya secara konsisten.
+
+      Perhatikan tiga hasilnya. Jalur \texttt{/admin/pengguna} dan \texttt{/pencarian?q=data} \textbf{tidak boleh} diambil karena tercakup aturan \texttt{Disallow}. \texttt{Crawl-delay} bernilai 5 detik --- itulah jeda minimum yang harus dipakai, bukan angka yang dipilih sendiri. Dan perayap bernama \texttt{PerayapNakal} ditolak sepenuhnya, memperlihatkan bahwa aturan dapat berbeda menurut nama perayap.
+
+      Dua penegasan yang wajib menyertai. \textbf{Pertama}, \texttt{robots.txt} bukan pengaman teknis melainkan \textbf{permintaan}; ia dapat diabaikan secara teknis, tetapi mengabaikannya berarti melanggar norma yang berlaku dan dapat berkonsekuensi hukum melalui ketentuan layanan. \textbf{Kedua}, \texttt{robots.txt} yang mengizinkan \textbf{tidak berarti} pengambilan data itu sah: ketentuan layanan, hak cipta atas isi, dan ketentuan pelindungan data pribadi berlaku terpisah dan lebih kuat.
+      \end{kotakinterpretasi}
+  - contoh: Mendeteksi perubahan tata letak sebelum ia merusak data
+    narasi: |-
+      \kode{memeriksa kesesuaian struktur}
+
+      ```{python skema}
+      def ekstrak_tabel(berkas, pemilih):
+          s = baca_laman(berkas)
+          tabel = s.select_one(pemilih)
+          if tabel is None:
+              raise ValueError(f"tabel tidak ditemukan pada {berkas} dengan pemilih {pemilih!r}")
+          kepala = [th.get_text(strip=True) for th in tabel.select("thead th")]
+          isi = [[td.get_text(strip=True) for td in tr.select("td")]
+                 for tr in tabel.select("tbody tr")]
+          return kepala, pd.DataFrame(isi, columns=kepala)
+
+      KEPALA_DIHARAPKAN = ["Wilayah", "Penduduk", "Pengeluaran", "Akses Internet"]
+
+      def periksa(berkas, pemilih):
+          try:
+              kepala, df = ekstrak_tabel(berkas, pemilih)
+          except ValueError as e:
+              return f"GAGAL  -- {e}"
+          if kepala != KEPALA_DIHARAPKAN:
+              return (f"BERUBAH -- kepala kolom tidak sesuai\n"
+                      f"          diharapkan: {KEPALA_DIHARAPKAN}\n"
+                      f"          ditemukan : {kepala}")
+          return f"AMAN   -- {df.shape[0]} baris, kepala kolom sesuai"
+
+      print("laman_contoh.html      :", periksa("laman_contoh.html", "table#tabel-wilayah"))
+      print("laman_versi_baru.html  :", periksa("laman_versi_baru.html", "table#tabel-wilayah"))
+      print("laman_versi_baru.html  :", periksa("laman_versi_baru.html", "table#tabel-statistik-wilayah"))
+      ```
+
+      \begin{kotakinterpretasi}
+      Ketiga baris memperagakan tiga keadaan yang berbeda.
+
+      \textbf{Baris pertama} berhasil: struktur laman sesuai harapan.
+
+      \textbf{Baris kedua} gagal dengan pesan yang jelas: pengenal tabel berubah dari \texttt{tabel-wilayah} menjadi \texttt{tabel-statistik-wilayah}, sehingga \texttt{select\_one} mengembalikan \texttt{None}. Tanpa pemeriksaan \texttt{if tabel is None}, baris berikutnya akan melempar \texttt{AttributeError} yang menunjuk tempat yang keliru --- dan pada perayapan terjadwal yang berjalan tanpa pengawasan, galat semacam itu kerap hanya tercatat di log tanpa dibaca siapa pun.
+
+      \textbf{Baris ketiga} menemukan tabelnya, tetapi \textbf{kepala kolomnya berubah}: "Penduduk" menjadi "Jumlah Penduduk", "Wilayah" menjadi "Nama Wilayah". Inilah keadaan yang paling berbahaya --- ekstraksi \textbf{berhasil}, DataFrame terbentuk, tidak ada galat sama sekali, tetapi nama kolomnya berbeda sehingga kode di hilir yang memanggil \texttt{df["Penduduk"]} akan gagal jauh kemudian, atau lebih buruk, penggabungan dengan data lain menghasilkan kolom kosong tanpa peringatan.
+
+      Karena itu perayap yang dijalankan berulang \textbf{wajib memuat pemeriksaan struktur}: bandingkan kepala kolom, cacah kolom, dan cacah baris terhadap nilai yang diharapkan; hentikan proses dan kirim pemberitahuan bila menyimpang. Pemeriksaan ini lebih penting daripada kode ekstraksinya sendiri, sebab tata letak laman \textbf{pasti} berubah cepat atau lambat.
+      \end{kotakinterpretasi}
+  - contoh: 'Permintaan yang tahan gangguan: batas waktu dan percobaan ulang'
+    narasi: |-
+      \kode{kerangka acuan --- tidak dijalankan}
+
+      ```{python retry, eval=FALSE}
+      import requests, time, random
+
+      def ambil_dengan_ulang(url, maks_ulang=3, jeda_awal=2.0, batas_waktu=10):
+          """Mengambil satu alamat dengan percobaan ulang dan jeda berlipat."""
+          kepala = {"User-Agent": "PraktikumSTIS/1.0 (kontak: nama@stis.ac.id)"}
+          for percobaan in range(1, maks_ulang + 1):
+              try:
+                  r = requests.get(url, headers=kepala, timeout=batas_waktu)
+              except requests.exceptions.Timeout:
+                  print(f"  percobaan {percobaan}: batas waktu terlampaui")
+              else:
+                  if r.status_code == 200:
+                      return r.text
+                  if r.status_code == 429:                  # terlalu sering meminta
+                      jeda = int(r.headers.get("Retry-After", jeda_awal * 2 ** percobaan))
+                      print(f"  percobaan {percobaan}: 429, menunggu {jeda} detik")
+                      time.sleep(jeda); continue
+                  if 400 <= r.status_code < 500:            # galat pada sisi kita
+                      raise RuntimeError(f"{r.status_code} pada {url} -- tidak diulang")
+                  print(f"  percobaan {percobaan}: status {r.status_code}")
+              # jeda berlipat disertai goyangan acak agar permintaan tidak serentak
+              time.sleep(jeda_awal * 2 ** (percobaan - 1) + random.uniform(0, 1))
+          raise RuntimeError(f"gagal setelah {maks_ulang} percobaan: {url}")
+      ```
+
+      \begin{kotakperhatian}[Fungsi ini sengaja tidak dijalankan]
+      Potongan di atas ditulis dengan \texttt{eval=FALSE} karena ia menghubungi alamat di internet. Ia disajikan sebagai \textbf{kerangka acuan} bagi mahasiswa yang kelak melakukan perayapan sungguhan --- dengan izin dan pada situs yang tepat.
+      \end{kotakperhatian}
+
+      \begin{kotakinterpretasi}
+      Enam keputusan penting terkandung di dalamnya, dan seluruhnya lazim dilupakan pemula.
+
+      \textbf{Batas waktu} (\texttt{timeout}). Tanpanya, satu peladen yang menggantung akan membekukan seluruh perayapan tanpa batas.
+
+      \textbf{Nama perayap yang jujur} (\texttt{User-Agent}) beserta alamat kontak. Pengelola situs yang melihat lalu lintas tak lazim dapat menghubungi Anda alih-alih langsung memblokir. Menyamar sebagai peramban justru menandakan niat menghindari deteksi.
+
+      \textbf{Membedakan galat}. Status 4xx berarti kekeliruan ada pada permintaan kita --- mengulangnya hanya menambah beban tanpa manfaat, sehingga langsung dilempar sebagai galat. Status 5xx dan batas waktu berarti gangguan sementara pada peladen, dan layak diulang.
+
+      \textbf{Menghormati 429}. Status ini berarti "terlalu sering meminta". Tajuk \texttt{Retry-After} menyatakan berapa lama harus menunggu --- angka itu wajib dipatuhi, bukan ditawar.
+
+      \textbf{Jeda berlipat} (\emph{exponential backoff}). Jeda menjadi 2, 4, 8 detik --- memberi peladen kesempatan pulih alih-alih menambah tekanan.
+
+      \textbf{Goyangan acak} (\emph{jitter}). Bila banyak proses mengulang pada jeda yang persis sama, permintaannya akan serentak dan membebani peladen sekaligus. Tambahan acak kecil menyebarkannya.
+      \end{kotakinterpretasi}
+
+      # Padanan dengan R: Paket rvest
+
+      Bagian ini mengulang beberapa contoh di atas dengan R, agar mahasiswa yang bekerja di R tidak harus berpindah bahasa hanya untuk mengambil data.
+  - contoh: Ekstraksi dengan rvest
+    narasi: |-
+      \kode{read\_html, html\_element, dan html\_table}
+
+      ```{r rvest}
+      suppressPackageStartupMessages({library(rvest); library(dplyr)})
+
+      laman <- read_html("data/laman_contoh.html")
+
+      # (a) tabel utuh menjadi data frame -- satu baris
+      tabel <- laman |> html_element("table#tabel-wilayah") |> html_table()
+      print(tabel)
+
+      # (b) pemilih CSS dan atribut
+      daftar1 <- read_html("data/daftar_1.html")
+      tautan <- daftar1 |> html_elements("table.daftar tbody tr td a") |> html_attr("href")
+      cat("tautan pada halaman 1:", tautan, "\n")
+
+      # (c) laman rincian: label dan nilai berpasangan
+      detail_a <- read_html("data/detail_a.html")
+      label <- detail_a |> html_elements("dl.rincian dt") |> html_text2()
+      nilai <- detail_a |> html_elements("dl.rincian dd") |> html_attr("data-nilai")
+      teks  <- detail_a |> html_elements("dl.rincian dd") |> html_text2()
+      data.frame(label = label, atribut = nilai, teks = teks)
+      ```
+
+      \begin{kotakinterpretasi}
+      \texttt{html\_table()} adalah keunggulan rvest yang paling menonjol: ia mengubah tabel HTML menjadi data frame \textbf{beserta tipe datanya} dalam satu pemanggilan --- perhatikan bahwa \texttt{Penduduk} langsung bertipe integer dan \texttt{Akses Internet} bertipe double, tanpa pembersihan apa pun. Di Python, langkah itu memerlukan beberapa baris (atau \texttt{pd.read\_html}, yang serupa).
+
+      Perhatikan pula kolom \texttt{atribut} pada keluaran terakhir: dua baris terakhir bernilai \texttt{NA} karena \texttt{Pulau} dan \texttt{Tahun} memang tidak memiliki atribut \texttt{data-nilai} --- nilainya hanya ada sebagai teks. Kolom \texttt{teks} melengkapinya. Pola "ambil atribut, jatuh kembali ke teks" karena itu berlaku sama di kedua bahasa.
+
+      \textbf{Padanan penamaan:}
+
+      \begin{center}
+      \begin{tabular}{@{}p{5.4cm}p{5.4cm}p{4.0cm}@{}}
+      \textbf{Python (BeautifulSoup)} & \textbf{R (rvest)} & \textbf{Kegunaan}\\
+      \hline
+      \texttt{BeautifulSoup(f, "html.parser")} & \texttt{read\_html()} & membaca laman\\[2pt]
+      \texttt{select\_one(pemilih)} & \texttt{html\_element()} & satu elemen\\[2pt]
+      \texttt{select(pemilih)} & \texttt{html\_elements()} & banyak elemen\\[2pt]
+      \texttt{get\_text(strip=True)} & \texttt{html\_text2()} & isi teks\\[2pt]
+      \texttt{elemen["href"]} & \texttt{html\_attr("href")} & nilai atribut\\[2pt]
+      \texttt{pd.read\_html()} & \texttt{html\_table()} & tabel menjadi data frame\\
+      \end{tabular}
+      \end{center}
+
+      Untuk perayapan sungguhan di R, paket \texttt{httr2} menyediakan padanan \texttt{requests} --- termasuk \texttt{req\_retry()} dan \texttt{req\_throttle()} yang menangani percobaan ulang serta pembatasan laju secara bawaan.
+      \end{kotakinterpretasi}
+  - contoh: Menilai mutu dan keterwakilan hasil
+    narasi: |-
+      \kode[Python]{pemeriksaan mutu hasil perayapan}
+
+      ```{python, eval=FALSE}
+      print("baris:", len(df), "| kolom:", len(df.columns))
+      print("nilai hilang:", int(df.isna().sum().sum()))
+      print("wilayah unik:", df['Wilayah'].nunique())
+
+      # pemeriksaan kewajaran
+      masuk_akal = (df["Akses Internet"].between(0, 100)).all()
+      print("akses internet dalam 0-100:", masuk_akal)
+      print("\nringkasan:")
+      print(df[["Penduduk", "Pengeluaran", "Akses Internet"]].agg(["min", "max", "mean"]).round(1))
+      ```
+
+      \begin{kotakpenjelasan}
+      Setelah data terkumpul, ukurannya diperiksa, nilai hilang dihitung, dan kewajaran rentang diuji dengan between yang diikuti all sehingga menghasilkan satu nilai logika. Ringkasan tiga besaran disajikan sekaligus memakai agg.
+
+      \end{kotakpenjelasan}
+
+      \begin{kotakinterpretasi}
+      Data hasil perayapan wajib diperlakukan dengan curiga, sebab tidak ada rancangan penarikan contoh yang menjaminnya. Lima wilayah pada laman tiruan ini jelas tidak mewakili populasi mana pun. Pertanyaan keterwakilan --- siapa yang tercakup dan siapa yang tidak --- jauh lebih penting daripada banyaknya baris yang berhasil dikumpulkan.
+
+      \end{kotakinterpretasi}
+
+      \newpage
+  kunci:
+  - |-
+    \begin{kotakkunci}
+    \textbf{L4.1} (15 poin)
+  - |-
+    Tingkat Dasar: penelusuran laman, penyusunan DataFrame, dan konversi tipe.
+    \end{kotakkunci}
+  - \kode[Python]{Solusi Tingkat Dasar (Python)}
+  - |-
+    ```{python, eval=FALSE}
+    from bs4 import BeautifulSoup
+    import pandas as pd
+  - |-
+    with open("data/laman_contoh.html", encoding="utf-8") as f:
+        sup = BeautifulSoup(f, "html.parser")
+    print(sup.title.string)
+  - |-
+    tab = sup.find("table", id="tabel-wilayah")      # SATU elemen
+    baris = tab.find("tbody").find_all("tr")          # SEMUA baris
+    print("baris:", len(baris))
+  - |-
+    kepala = [th.get_text(strip=True) for th in tab.find("thead").find_all("th")]
+    isi = [[td.get_text(strip=True) for td in tr.find_all("td")] for tr in baris]
+    df = pd.DataFrame(isi, columns=kepala)
+  - |-
+    df["Penduduk"] = pd.to_numeric(df["Penduduk"], errors="coerce")
+    print(df.dtypes)
+  - '```'
+  - |-
+    \begin{kotakinterpretasi}
+    Isian yang benar berturut-turut adalah BeautifulSoup, find, find\_all, True, td, DataFrame, to\_numeric, dan coerce. Pembedaan find dan find\_all adalah sumber kekeliruan tersering: find mengembalikan satu elemen sehingga metode berikutnya dapat langsung dipanggil, sedangkan find\_all mengembalikan daftar yang tidak memiliki metode tersebut.
+  - \end{kotakinterpretasi}
+  - |-
+    \begin{kotakkunci}
+    \textbf{L4.2} (25 poin)
+  - |-
+    Tingkat Menengah dan Lanjut: fungsi ekstraksi lengkap dan penilaian kelayakan.
+    \end{kotakkunci}
+  - \kode[Python]{Solusi Menengah dan Lanjut (Python)}
+  - |-
+    ```{python, eval=FALSE}
+    from bs4 import BeautifulSoup
+    import pandas as pd
+  - |-
+    def ekstrak(path, id_tabel="tabel-wilayah"):
+        """Mengembalikan (DataFrame bertipe benar, daftar catatan metodologi)."""
+        with open(path, encoding="utf-8") as f:
+            sup = BeautifulSoup(f, "html.parser")
+  - |-
+    tab = sup.find("table", id=id_tabel)
+        if tab is None:                       # penanganan bila tabel tak ada
+            raise ValueError(f"tabel dengan id '{id_tabel}' tidak ditemukan")
+  - |-
+    kepala = [th.get_text(strip=True) for th in tab.find("thead").find_all("th")]
+        isi = [[td.get_text(strip=True) for td in tr.find_all("td")]
+               for tr in tab.find("tbody").find_all("tr")]
+        df = pd.DataFrame(isi, columns=kepala)
+  - |-
+    for k in ["Penduduk", "Pengeluaran", "Akses Internet"]:
+            if k in df.columns:
+                df[k] = pd.to_numeric(df[k], errors="coerce")
+  - |-
+    gagal = int(df.isna().sum().sum())
+        if gagal:
+            print(f"peringatan: {gagal} nilai gagal dikonversi")
+  - |-
+    metodologi = [li.get_text(strip=True) for li in sup.select("ul.metodologi li")]
+        return df, metodologi
+  - |-
+    df, catatan = ekstrak("data/laman_contoh.html")
+    print(df)
+    print("tipe:", dict(df.dtypes.astype(str)))
+    for c in catatan:
+        print("-", c)
+  - '```'
+  - |-
+    \begin{kotakinterpretasi}
+    Fungsi ini menerapkan tiga kebiasaan penting. Pertama, keberadaan tabel diperiksa lebih dahulu dan kegagalannya dilaporkan dengan pesan yang jelas, bukan dibiarkan menghasilkan galat yang membingungkan. Kedua, konversi hanya dikenakan pada kolom yang memang ada, sehingga fungsi tetap berjalan pada laman yang susunannya sedikit berbeda. Ketiga, kegagalan konversi dilaporkan sebagai peringatan alih-alih diabaikan diam-diam. Untuk penilaian kelayakan, urutannya jelas: portal resmi berunduhan CSV dipakai langsung, penyedia ber-API dipakai lewat API, dan perayapan hanya bagi situs yang tidak menyediakan keduanya --- disertai catatan bahwa ulasan lokapasar memuat data pribadi sehingga menuntut kehati-hatian tambahan.
+  - \end{kotakinterpretasi}
+  - |-
+    \begin{kotakkunci}
+    \textbf{L4.D} (10 poin)
+  - |-
+    Membetulkan kode: find versus find\_all, letak th, errors coerce, dan pemeriksaan hasil.
+    \end{kotakkunci}
+  - \kode[Python]{Solusi Membetulkan Kode (Python)}
+  - |-
+    ```{python, eval=FALSE}
+    from bs4 import BeautifulSoup
+    import pandas as pd
+  - |-
+    with open("data/laman_contoh.html", encoding="utf-8") as f:
+        sup = BeautifulSoup(f, "html.parser")
+  - |-
+    # (a) find mengembalikan satu elemen, bukan daftar
+    tab = sup.find("table", id="tabel-wilayah")
+  - |-
+    # (b) kepala kolom berada pada thead, bukan tbody
+    kepala = [th.get_text(strip=True) for th in tab.find("thead").find_all("th")]
+    isi = [[td.get_text(strip=True) for td in tr.find_all("td")]
+           for tr in tab.find("tbody").find_all("tr")]
+    df = pd.DataFrame(isi, columns=kepala)
+  - |-
+    # (c) errors='coerce' agar kegagalan menjadi NaN
+    df["Penduduk"] = pd.to_numeric(df["Penduduk"], errors="coerce")
+  - |-
+    # (d) hasil konversi diperiksa
+    print("gagal dikonversi:", int(df["Penduduk"].isna().sum()))
+  - |-
+    # pemeriksaan wajib
+    print(df.shape)                                   # (5, 4)
+    print(int(df["Penduduk"].isna().sum()) == 0)      # True
+  - '```'
+  - |-
+    \begin{kotakinterpretasi}
+    Empat kesalahan diperbaiki. Pertama, find\_all mengembalikan daftar sehingga pemanggilan find berikutnya gagal dengan pesan yang tidak menunjuk sebab sebenarnya. Kedua, elemen th berada pada thead; mencarinya pada tbody menghasilkan daftar kosong sehingga kolom DataFrame tidak bernama. Ketiga, to\_numeric tanpa errors menghentikan program pada nilai pertama yang gagal, padahal pada perayapan kegagalan justru lazim terjadi. Keempat, tanpa pemeriksaan, nilai yang berubah menjadi NaN hilang tanpa disadari --- inilah bentuk kehilangan data yang paling berbahaya karena tidak menimbulkan galat.
+  - \end{kotakinterpretasi}
+  - |-
+    \begin{kotakkunci}
+    \textbf{T4.1} (50 poin)
+  - |-
+    Penugasan: penilaian etika, ekstraksi lengkap, permintaan santun, dan penilaian mutu.
+    \end{kotakkunci}
+  - \kode[Python]{Solusi Penugasan (Python)}
+  - |-
+    ```{python, eval=FALSE}
+    from bs4 import BeautifulSoup
+    import pandas as pd, requests, time
+  - |-
+    # 1) penguraian robots.txt dan pemeriksaan jalur
+    robots = """\nUser-agent: *\nDisallow: /admin/\nDisallow: /internal/\nAllow: /publik/\nCrawl-delay: 10\n"""
+    aturan = {"disallow": [], "allow": [], "crawl_delay": None}
+    for b in robots.strip().split("\n"):
+        if ":" not in b: continue
+        k, v = [x.strip() for x in b.split(":", 1)]
+        k = k.lower()
+        if k == "disallow": aturan["disallow"].append(v)
+        elif k == "allow":  aturan["allow"].append(v)
+        elif k == "crawl-delay": aturan["crawl_delay"] = int(v)
+  - |-
+    def boleh(jalur):
+        return not any(jalur.startswith(d) for d in aturan["disallow"])
+  - |-
+    for j in ["/publik/a.html", "/admin/x", "/internal/log", "/publik/b", "/data/c"]:
+        print(f"{j:20s} -> {'boleh' if boleh(j) else 'TIDAK boleh'}")
+  - |-
+    # 3-4) fungsi ekstraksi
+    def ekstrak(path, id_tabel="tabel-wilayah"):
+        with open(path, encoding="utf-8") as f:
+            sup = BeautifulSoup(f, "html.parser")
+        tab = sup.find("table", id=id_tabel)
+        if tab is None:
+            raise ValueError(f"tabel '{id_tabel}' tidak ditemukan")
+        kepala = [th.get_text(strip=True) for th in tab.find("thead").find_all("th")]
+        isi = [[td.get_text(strip=True) for td in tr.find_all("td")]
+               for tr in tab.find("tbody").find_all("tr")]
+        df = pd.DataFrame(isi, columns=kepala)
+        sebelum = dict(df.dtypes.astype(str))
+        for k in ["Penduduk", "Pengeluaran", "Akses Internet"]:
+            if k in df.columns:
+                df[k] = pd.to_numeric(df[k], errors="coerce")
+        metod = [li.get_text(strip=True) for li in sup.select("ul.metodologi li")]
+        return df, metod, sebelum
+  - |-
+    df, catatan, tipe_sebelum = ekstrak("data/laman_contoh.html")
+    print("tipe SEBELUM:", tipe_sebelum)
+    print("tipe SESUDAH:", dict(df.dtypes.astype(str)))
+  - |-
+    # 5) permintaan santun -- TIDAK dijalankan
+    def ambil_santun(url, jeda=1.0, coba=3, tunggu=10):
+        kepala = {"User-Agent": "PraktikumSTIS/1.0 (keperluan pendidikan)"}
+        for i in range(coba):
+            try:
+                r = requests.get(url, headers=kepala, timeout=tunggu)
+                if r.status_code == 200: return r.text
+                if r.status_code == 429:
+                    time.sleep(jeda * (2 ** i)); continue
+                return None
+            except requests.RequestException:
+                time.sleep(jeda * (2 ** i))
+        return None
+  - |-
+    # 6) penilaian mutu dan pembandingan terhadap data_perbandingan.csv
+    print("\nnilai hilang:", int(df.isna().sum().sum()))
+    print("akses internet dalam 0-100:", bool(df["Akses Internet"].between(0,100).all()))
+  - |-
+    pemb = pd.read_csv("data/data_perbandingan.csv")
+    banding = pd.DataFrame({
+        "hasil_ekstraksi": [df["Penduduk"].mean(), df["Pengeluaran"].mean(),
+                            df["Akses Internet"].mean()],
+        "pembanding_40":   [pemb["penduduk"].mean(), pemb["pengeluaran"].mean(),
+                            pemb["akses_internet"].mean()]},
+        index=["penduduk", "pengeluaran", "akses_internet"])
+    print(banding.round(1))
+  - '```'
+  - |-
+    \begin{kotakinterpretasi}
+    Nomor 4 sengaja meminta tipe dilaporkan sebelum dan sesudah konversi, sebab di situlah letak pelajarannya: seluruh kolom hasil perayapan bertipe teks meski isinya tampak angka. Nomor 5 tidak dijalankan dan memang tidak perlu; yang dinilai adalah pemahaman atas tiap bagiannya. Nomor 6 adalah bagian terpenting: lima wilayah hasil ekstraksi dibandingkan terhadap 40 wilayah pembanding, dan perbedaan rata-ratanya memperlihatkan bahwa cakupan yang sempit dapat menyesatkan. Perlu ditegaskan dalam laporan bahwa kelima wilayah itu bukan contoh acak, sehingga rata-ratanya tidak menduga apa pun --- banyaknya baris tidak menggantikan rancangan penarikan contoh. Laporan juga wajib menegaskan bahwa laman maupun data pembanding merupakan tiruan.
+  - \end{kotakinterpretasi}
+  - '# Kunci Latihan Tambahan (Perayapan Lanjutan)'
+  - |-
+    ```{python k-tambahan}
+    from bs4 import BeautifulSoup
+    import pandas as pd, json, re, time
+    import xml.etree.ElementTree as ET
+  - |-
+    def baca(b):
+        with open("data/" + b, encoding="utf-8") as f:
+            return BeautifulSoup(f, "html.parser")
+  - |-
+    # (1) merayapi seluruh halaman lalu menelusuri rincian
+    halaman, tautan, baris = "daftar_1.html", [], []
+    while halaman:
+        s = baca(halaman)
+        for tr in s.select("table.daftar tbody tr"):
+            td = tr.select("td")
+            baris.append({"wilayah": td[0].get_text(strip=True)})
+            tautan.append(tr.select_one("td a")["href"])
+        nx = s.select_one("nav.paginasi a.berikutnya")
+        halaman = nx["href"] if nx else None
+  - |-
+    rinci = []
+    for t in tautan:
+        s = baca(t)
+        d = {"wilayah": s.select_one("h1.judul-wilayah").get_text(strip=True)}
+        for dt, dd in zip(s.select("dl.rincian dt"), s.select("dl.rincian dd")):
+            d[dt.get_text(strip=True).lower().replace(" ", "_")] = dd.get(
+                "data-nilai", dd.get_text(strip=True))
+        rinci.append(d)
+  - |-
+    hasil = pd.DataFrame(rinci)
+    for k in ["penduduk", "pengeluaran", "akses_internet"]:
+        hasil[k] = pd.to_numeric(hasil[k], errors="coerce")
+    print("baris:", len(hasil), " wilayah unik:", hasil["wilayah"].nunique())
+    print("nilai hilang:", int(hasil.isna().sum().sum()))
+  - |-
+    # (2) bandingkan dengan API
+    api = pd.DataFrame(json.load(open("data/api_wilayah.json", encoding="utf-8"))["data"])
+    gab = hasil.merge(api, left_on="wilayah", right_on="nama", suffixes=("_html", "_api"))
+    for k in ["penduduk", "pengeluaran", "akses_internet"]:
+        sama = (gab[k + "_html"] == gab[k + "_api"]).all()
+        print(f"{k:16s} identik dengan API: {sama}")
+  - |-
+    # (3) pemilih CSS
+    s1 = baca("daftar_1.html"); dA = baca("detail_a.html")
+    print("\n(a) tautan dalam tabel daftar :", len(s1.select("table.daftar a")))
+    print("(b) dd dengan data-nilai     :", len(dA.select("dd[data-nilai]")))
+    print("(c) tautan Berikutnya saja   :", len(s1.select("nav.paginasi a.berikutnya")))
+    print("(d) baris pertama tbody      :", len(s1.select("tbody tr:first-child")))
+  - |-
+    # (4) membandingkan ketiga sumber
+    umpan = ET.parse("data/umpan_rilis.xml").getroot()
+    print("\npeubah pada HTML rincian :", [c for c in hasil.columns])
+    print("peubah pada API          :", list(api.columns))
+    print("peubah pada umpan RSS    :", ["judul", "tautan", "tanggal", "ringkasan"])
+    print("butir umpan:", len(list(umpan.iter("item"))), "dari", len(api), "wilayah")
+    ```
+  - |-
+    \begin{kotakkunci}
+    \textbf{Latihan tambahan 1 --- perayapan lengkap.} Sembilan wilayah terkumpul tanpa duplikasi dan tanpa nilai hilang. Perbandingan dengan API menunjukkan ketiga peubah \textbf{identik}, sebab keduanya bersumber pada berkas tiruan yang sama.
+  - 'Yang harus disimpulkan mahasiswa bukan "keduanya sama" melainkan \textbf{mengapa perbandingan itu
+    perlu dilakukan}: pada data sungguhan, selisih antara hasil perayapan dan sumber resmi adalah petunjuk
+    pertama adanya kekeliruan ekstraksi --- salah kolom, salah tafsir pemisah ribuan, atau baris yang
+    terlewat. Jawaban yang langsung mempercayai hasil perayapannya sendiri tanpa pembanding dikenai pengurangan
+    nilai.'
+  - '\textbf{Latihan tambahan 2 --- pemilih CSS.} Jawaban: (a) \texttt{table.daftar a}; (b) \texttt{dd[data-nilai]}
+    --- perhatikan pemilih berdasar keberadaan atribut, yang menemukan 3 dari 5 \texttt{dd} sebab \texttt{Pulau}
+    dan \texttt{Tahun} tidak memilikinya; (c) \texttt{nav.paginasi a.berikutnya}; (d) \texttt{tbody tr:first-child}.'
+  - \textbf{Latihan tambahan 3 --- memilih sumber.} API menyediakan seluruh peubah dengan tipe data yang
+    sudah benar dan memerlukan paling sedikit baris kode. Umpan RSS hanya memuat judul, tautan, tanggal,
+    dan ringkasan --- \textbf{tidak} memuat angkanya, sehingga tidak memadai untuk pengambilan data.
+  - 'Jawaban yang tepat membedakan keduanya menurut keperluan: \textbf{umpan RSS untuk pemantauan harian}
+    (murah, dirancang untuk itu, cukup untuk mengetahui ada rilis baru), dan \textbf{API untuk pengambilan
+    data lengkap}. Perayapan HTML hanya bila keduanya tidak tersedia.'
+  - '\textbf{Latihan tambahan 4 --- deteksi perubahan.} Ketiga keluaran Contoh 4.16 mewakili tiga keadaan:
+    aman; tabel tidak ditemukan (galat \textbf{berisik} --- proses berhenti, mudah disadari); dan kepala
+    kolom berubah (galat \textbf{senyap} --- ekstraksi berhasil, tidak ada galat, tetapi data yang dihasilkan
+    salah nama kolom).'
+  - 'Jawaban butir (c) harus menyatakan bahwa galat senyap lebih berbahaya justru karena tidak menghentikan
+    proses: ia mengalir ke tahap berikutnya dan baru ketahuan --- kalau ketahuan --- setelah hasilnya
+    dipakai.'
+  - |-
+    \textbf{Latihan tambahan 5 --- padanan R.} Perayapan berhalaman dengan rvest memerlukan jumlah baris yang serupa. Keunggulan rvest terletak pada \texttt{html\_table()} yang menghasilkan data frame beserta tipe datanya sekaligus; keunggulan BeautifulSoup terletak pada keluwesan menelusuri struktur yang tidak berbentuk tabel. Jawaban yang menyimpulkan salah satu "lebih baik" secara mutlak kurang tepat --- keduanya sepadan, dan pilihan sebaiknya mengikuti bahasa yang dipakai pada tahap analisis berikutnya.
+    \end{kotakkunci}
+  - '# Catatan Penskoran untuk Pengajar'
+  - |-
+    \begin{kotakinfo}
+    Toleransi: perbedaan pembulatan dan arah tanda komponen dapat diterima selama interpretasi konsisten.
+    \end{kotakinfo}
+exercises: []
+

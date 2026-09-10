@@ -5,59 +5,59 @@
 \title{Bagian contoh praktikum (menomori contoh & kode)}
 \description{
 Bagian contoh praktikum (menomori contoh & kode)
+
+Bagian contoh praktikum (menomori contoh & kode)
 }
 \section{Super class}{
-\code{\link[modulstis:Section]{Section}} -> \code{ExampleSection}
+\code{\link[modulstis:Section]{modulstis::Section}} -> \code{ExampleSection}
 }
 \section{Methods}{
 \subsection{Public methods}{
-  \itemize{
-    \item \href{#method-ExampleSection-render_body}{\code{ExampleSection$render_body()}}
-    \item \href{#method-ExampleSection-clone}{\code{ExampleSection$clone()}}
-  }
+\itemize{
+\item \href{#method-ExampleSection-render_body}{\code{ExampleSection$render_body()}}
+\item \href{#method-ExampleSection-clone}{\code{ExampleSection$clone()}}
 }
-\if{html}{\out{<details open><summary>Inherited methods</summary>
+}
+\if{html}{\out{
+<details open><summary>Inherited methods</summary>
 <ul>
-  <li><span class="pkg-link" data-pkg="modulstis" data-topic="Section" data-id="initialize"><a href='../../modulstis/html/Section.html#method-Section-initialize'><code>Section$initialize()</code></a></span></li>
-  <li><span class="pkg-link" data-pkg="modulstis" data-topic="Section" data-id="render"><a href='../../modulstis/html/Section.html#method-Section-render'><code>Section$render()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="modulstis" data-topic="Section" data-id="initialize"><a href='../../modulstis/html/Section.html#method-Section-initialize'><code>modulstis::Section$initialize()</code></a></span></li>
+<li><span class="pkg-link" data-pkg="modulstis" data-topic="Section" data-id="render"><a href='../../modulstis/html/Section.html#method-Section-render'><code>modulstis::Section$render()</code></a></span></li>
 </ul>
-</details>}}
+</details>
+}}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ExampleSection-render_body"></a>}}
 \if{latex}{\out{\hypertarget{method-ExampleSection-render_body}{}}}
-\subsection{\code{ExampleSection$render_body()}}{
-  Render isi contoh
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{ExampleSection$render_body(ctx)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{ctx}}{\link{RenderContext}}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{render_body()}}{
+Render isi contoh
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ExampleSection$render_body(ctx)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{ctx}}{\link{RenderContext}}
+}
+\if{html}{\out{</div>}}
+}
+}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-ExampleSection-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-ExampleSection-clone}{}}}
-\subsection{\code{ExampleSection$clone()}}{
-  The objects of this class are cloneable with this method.
-  \subsection{Usage}{
-    \if{html}{\out{<div class="r">}}
-    \preformatted{ExampleSection$clone(deep = FALSE)}
-    \if{html}{\out{</div>}}
-  }
-  \subsection{Arguments}{
-    \if{html}{\out{<div class="arguments">}}
-    \describe{
-      \item{\code{deep}}{Whether to make a deep clone.}
-    }
-    \if{html}{\out{</div>}}
-  }
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ExampleSection$clone(deep = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
 }

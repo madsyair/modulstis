@@ -1,0 +1,972 @@
+number: 6
+title: Konsep Supervised Learning
+short_code: supervised
+topic: Konsep Supervised
+pertemuan: 6
+sub_cpmk: |
+  Sub-CPMK 6: Mahasiswa mampu menjelaskan kerangka supervised learning, membagi data dan melakukan validasi silang dengan benar, memilih ukuran penilaian yang sesuai, serta membandingkan dua kerangka pemodelan di R.
+packages:
+- recipes
+- rsample
+- parsnip
+- workflows
+- tune
+- yardstick
+- caret
+contoh_title: Contoh Praktikum dengan R
+tambahan_title: 'Tambahan: Membandingkan caret dan tidymodels Berdampingan'
+course:
+  matkul: Data Mining dan Big Data
+  matkul_besar: DATA MINING DAN BIG DATA
+  kode: K202505
+  semester: 6 (Genap)
+  prodi: D-IV Statistika
+  penyusun:
+  - Achmad Syahrul Choir
+datasets:
+- name: data_kredit
+  role: contoh
+  recipe:
+    kind: tabular
+    n: 800
+    seed: 2026
+    columns:
+      id:
+        type: integer
+        min: 1
+        max: 800
+      umur:
+        type: integer
+        min: 21
+        max: 65
+      pendapatan:
+        type: numeric
+        min: 2000
+        max: 30000
+        digits: 2
+      lama_kerja:
+        type: numeric
+        min: 0
+        max: 30
+        digits: 1
+      rasio_utang:
+        type: numeric
+        min: 0
+        max: 0.9
+        digits: 3
+      jumlah_tanggungan:
+        type: integer
+        min: 0
+        max: 6
+      pendidikan:
+        type: category
+        levels:
+        - SMP
+        - SMA
+        - D3
+        - S1
+        - S2
+        probs:
+        - 0.1
+        - 0.4
+        - 0.2
+        - 0.25
+        - 0.05
+      status_rumah:
+        type: category
+        levels:
+        - Milik
+        - Sewa
+        - Keluarga
+        probs:
+        - 0.45
+        - 0.35
+        - 0.2
+      gagal_bayar:
+        type: category
+        levels:
+        - ya
+        - tidak
+        probs:
+        - 0.15
+        - 0.85
+body:
+  deskripsi:
+  - |
+    Lima modul sebelumnya menyiapkan data; modul ini mulai memodelkannya. Yang dibahas bukan algoritma tertentu, melainkan kerangka yang berlaku bagi seluruhnya: bagaimana data dibagi, bagaimana kinerja dinilai, dan bagaimana dua model dibandingkan secara adil.
+  - |
+    Kerangka ini perlu dikuasai lebih dahulu karena kekeliruan pada tataran ini tidak dapat diperbaiki oleh algoritma secanggih apa pun. Model yang dinilai dengan cara yang keliru akan tampak baik meski buruk, dan sebaliknya.
+  - |
+    Materi mencakup pembagian data dan validasi silang, ukuran penilaian beserta kapan masing-masing sesuai, gagasan pemodelan berlebih (*overfitting*), serta pengenalan penalaan hiperparameter. Bagian Tambahan menjalankan kasus yang sama pada dua kerangka pemodelan R --- `caret` dan `tidymodels` --- lalu membahas mengapa hasilnya dapat berbeda.
+  - |-
+    \begin{kotakperhatian}[Tentang data]
+    Berkas data pada modul ini adalah \textbf{data simulasi} (\texttt{set.seed(2026)}), \textbf{bukan data nyata} dan \textbf{bukan data resmi} instansi mana pun. Peubah dibangkitkan saling bebas terhadap sasaran, sehingga kinerja model yang mendekati tebakan acak adalah hasil yang benar dan wajib dilaporkan apa adanya.
+    \end{kotakperhatian}
+  tujuan:
+  - 'Setelah menyelesaikan praktikum ini secara tuntas, mahasiswa diharapkan mampu:'
+  - 1. **Menjelaskan** kerangka supervised learning dan perbedaannya dari pemodelan inferensia.
+  - 2. **Membagi** data dengan penstrataan dan menjelaskan mengapa diperlukan.
+  - 3. **Menerapkan** validasi silang serta menjelaskan pilihan banyaknya lipatan.
+  - 4. **Membaca** matriks kekeliruan dan menurunkan ukuran penilaian darinya.
+  - 5. **Memilih** ukuran penilaian yang sesuai dengan sifat persoalan.
+  - 6. **Mengenali** pemodelan berlebih (*overfitting*) beserta gejalanya.
+  - 7. **Melakukan** penalaan hiperparameter sederhana.
+  - 8. **Membandingkan** kerangka `caret` dan `tidymodels` beserta akibat perbedaannya.
+  alat:
+  - 'Perangkat dan bahan yang diperlukan:'
+  - '- **R** (RStudio) dengan paket `recipes`, `rsample`, `parsnip`, `workflows`, `tune`, `yardstick`,
+    dan `caret`.'
+  - '- Pasang inti tidymodels dengan `install.packages(c("recipes","rsample","parsnip","workflows","tune","yardstick","dials"))`.'
+  - '- Mesin model: `install.packages(c("kknn","rpart","ranger"))`.'
+  - '- Berkas data: `data/data_kredit.csv`.'
+  instruksi:
+  - 'Ikuti tahapan berikut:'
+  - '**Sebelum praktikum:** pasang seluruh paket; siapkan berkas data; baca bagian Teori mengenai ukuran
+    penilaian.'
+  - '**Selama praktikum:** kerjakan Contoh berurutan. Bagian Tambahan mengenai perbandingan dua kerangka
+    dikerjakan setelah Penugasan.'
+  - |-
+    **Pembagian kerja:** Contoh dan Latihan dikerjakan di kelas; **Penugasan dikerjakan di luar sesi**.
+
+    **Pengumpulan:** susun laporan R Markdown, render ke PDF atau HTML, kumpulkan melalui Google Classroom.
+  teori:
+  - '### Kedudukan pada CRISP-DM'
+  - |
+    Modul ini menjembatani tahap keempat dan kelima, yaitu Modeling dan Evaluation. Keduanya dibahas bersama karena tidak dapat dipisahkan: cara menilai menentukan model mana yang terpilih, sehingga keputusan penilaian sesungguhnya merupakan bagian dari pemodelan itu sendiri.
+  - '### Kerangka Supervised Learning'
+  - |
+    Pada supervised learning, tersedia pasangan masukan dan sasaran yang diketahui. Tujuannya membentuk fungsi yang memetakan masukan ke sasaran sedemikian rupa sehingga bekerja baik pada data **yang belum pernah dilihat**. Penekanan pada kata terakhir itulah yang membedakannya dari pemodelan inferensia.
+  - |-
+    \begin{kotakinfo}[Empat unsur kerangka]\par\smallskip
+    \begin{tabular}{@{}p{3.2cm}p{4.4cm}p{6.6cm}@{}}
+    \textbf{Unsur} & \textbf{Isi} & \textbf{Keputusan yang diambil}\\
+    \hline
+    Data & masukan dan sasaran & peubah mana yang dipakai\\[2pt]
+    Model & keluarga fungsi & pohon, linear, jarak, ensemble\\[2pt]
+    Ukuran & bagaimana dinilai & akurasi, F1, AUC, RMSE\\[2pt]
+    Prosedur & bagaimana dilatih dan dinilai & pembagian, validasi silang\\
+    \end{tabular}
+    \end{kotakinfo}
+  - '### Pembagian Data dan Validasi Silang'
+  - |
+    Menilai model pada data yang dipakai melatihnya selalu menghasilkan angka yang terlalu bagus, sebab model dapat menghafal. Karena itu data dibagi: sebagian untuk melatih, sebagian disisihkan untuk menilai.
+  - |
+    Persoalannya, satu kali pembagian menghasilkan penilaian yang bergantung pada kebetulan pembagian itu. Validasi silang mengatasinya dengan mengulang: data dibagi menjadi beberapa lipatan, dan tiap lipatan bergiliran menjadi penguji sementara sisanya melatih. Rata-rata hasilnya lebih stabil daripada satu kali pembagian.
+  - |-
+    \begin{kotakinfo}[Memilih banyaknya lipatan]\par\smallskip
+    \begin{tabular}{@{}p{2.4cm}p{5.2cm}p{6.6cm}@{}}
+    \textbf{Lipatan} & \textbf{Sifat} & \textbf{Kapan dipilih}\\
+    \hline
+    5 & lebih cepat, ragam lebih besar & data besar, model lambat\\[2pt]
+    10 & baku, keseimbangan baik & keadaan umum\\[2pt]
+    $n$ (LOOCV) & bias kecil, ragam besar, mahal & data sangat kecil\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |-
+    \begin{kotaktips}
+    Penstrataan pada pembagian dan pada validasi silang menjaga proporsi kelas tetap sama di tiap bagian. Pada data timpang, tanpa penstrataan sebuah lipatan dapat kebetulan memuat sangat sedikit kelas minoritas --- bahkan tidak sama sekali --- sehingga ukuran penilaiannya menjadi tak terdefinisi atau sangat tidak stabil.
+    \end{kotaktips}
+  - '### Matriks Kekeliruan dan Ukuran Turunannya'
+  - |
+    Seluruh ukuran penilaian klasifikasi biner diturunkan dari empat bilangan yang tersusun pada matriks kekeliruan: benar positif, benar negatif, salah positif, dan salah negatif.
+  - |-
+    \begin{kotakrumus}
+    \begin{tabular}{@{}p{3.4cm}p{5.0cm}p{5.6cm}@{}}
+    \textbf{Ukuran} & \textbf{Rumus} & \textbf{Menjawab}\\
+    \hline
+    Akurasi & $\dfrac{BP + BN}{\text{seluruh}}$ & berapa yang benar keseluruhan?\\[8pt]
+    Presisi & $\dfrac{BP}{BP + SP}$ & dari yang ditandai, berapa benar?\\[8pt]
+    Recall & $\dfrac{BP}{BP + SN}$ & dari yang sesungguhnya, berapa tertangkap?\\[8pt]
+    F1 & $\dfrac{2 \cdot P \cdot R}{P + R}$ & rerata harmonik keduanya\\
+    \end{tabular}
+    \end{kotakrumus}
+  - |-
+    \begin{kotaksalah}[Akurasi menyesatkan pada data timpang]
+    Bila hanya lima belas persen amatan berkelas positif, menebak seluruhnya negatif sudah menghasilkan akurasi delapan puluh lima persen --- tanpa mempelajari apa pun dan tanpa pernah menemukan satu pun kasus positif. Karena itu akurasi \textbf{wajib} dibandingkan terhadap acuan tebakan mayoritas, dan pada data timpang sebaiknya diganti F1 atau AUC.
+    \end{kotaksalah}
+  - '### Pertukaran Presisi dan Recall'
+  - |
+    Presisi dan recall bergerak berlawanan. Menurunkan ambang keputusan menaikkan recall karena lebih banyak kasus tertangkap, tetapi menurunkan presisi karena lebih banyak pula yang salah ditandai. Pilihan ambang karena itu bukan keputusan teknis melainkan keputusan kebijakan.
+  - |
+    Pertimbangannya bergantung pada biaya kekeliruan. Pada penapisan penyakit, melewatkan kasus jauh lebih mahal daripada memeriksa orang sehat, sehingga recall diutamakan. Pada penandaan penipuan yang menuntut pemeriksaan manual mahal, presisi lebih diutamakan agar petugas tidak kewalahan.
+  - '### Pemodelan Berlebih (*Overfitting*)'
+  - |
+    Model yang terlalu lentur dapat menghafal derau pada data latih. Gejalanya khas: kinerja pada data latih terus membaik sementara kinerja pada data uji memburuk. Jarak antara keduanya adalah petunjuk paling langsung.
+  - |-
+    \begin{kotakinfo}[Membaca gejala]\par\smallskip
+    \begin{tabular}{@{}p{3.4cm}p{3.4cm}p{7.4cm}@{}}
+    \textbf{Latih} & \textbf{Uji} & \textbf{Tafsiran}\\
+    \hline
+    rendah & rendah & kurang luwes (\emph{underfitting})\\[2pt]
+    tinggi & tinggi & sesuai\\[2pt]
+    tinggi & rendah & mengalami \emph{overfitting}\\[2pt]
+    rendah & tinggi & ada yang keliru pada penilaian\\
+    \end{tabular}
+    \end{kotakinfo}
+  - '### Supervised untuk Sasaran Numerik'
+  - |
+    Seluruh pembahasan sejauh ini mengandaikan sasaran berupa kelas. Bila sasarannya numerik, kerangkanya sama persis --- pembagian, validasi silang, penalaan --- hanya ukuran penilaiannya yang berganti.
+  - |-
+    \begin{kotakrumus}
+    \begin{tabular}{@{}p{2.6cm}p{4.6cm}p{7.0cm}@{}}
+    \textbf{Ukuran} & \textbf{Rumus} & \textbf{Sifat}\\
+    \hline
+    RMSE & $\sqrt{\frac{1}{n}\sum (y - \hat{y})^{2}}$ & bersatuan sama dengan sasaran; peka pencilan\\[8pt]
+    MAE & $\frac{1}{n}\sum |y - \hat{y}|$ & lebih tahan pencilan\\[8pt]
+    $R^{2}$ & proporsi keragaman diterangkan & tak bersatuan; mudah disalahtafsirkan\\
+    \end{tabular}
+    \end{kotakrumus}
+  - |-
+    \begin{kotaksalah}[R-kuadrat bukan ukuran ketepatan ramalan]
+    Nilai $R^{2}$ yang tinggi pada data latih sama sekali tidak menjamin ramalan yang baik pada data baru, sebab menambah peubah selalu menaikkannya. Untuk menilai kemampuan meramal, pakailah RMSE atau MAE yang dihitung pada data uji --- keduanya bersatuan sama dengan sasaran sehingga besarnya galat dapat dinilai kewajarannya.
+    \end{kotaksalah}
+  - '### Dua Kerangka Pemodelan di R'
+  - |-
+    \begin{kotakinfo}[Perbandingan caret dan tidymodels]\par\smallskip
+    \begin{tabular}{@{}p{3.0cm}p{5.2cm}p{6.0cm}@{}}
+     & \textbf{caret} & \textbf{tidymodels}\\
+    \hline
+    Gaya & satu fungsi \texttt{train()} & rangkaian objek\\[2pt]
+    Prapemrosesan & argumen \texttt{preProcess} & \texttt{recipes}, urutan bebas\\[2pt]
+    Kebocoran & rawan bila di luar CV & dicegah oleh rancangan\\[2pt]
+    Kurva belajar & landai & lebih curam\\[2pt]
+    Cakupan model & sangat banyak & memadai, terus bertambah\\[2pt]
+    Status & dirawat, tidak dikembangkan & aktif dikembangkan\\
+    \end{tabular}
+    \end{kotakinfo}
+  - |
+    Modul ini memakai `caret` pada bagian pengenalan karena sintaksnya lebih ringkas, lalu beralih ke `tidymodels` mulai modul berikutnya karena keunggulan resepnya terasa ketika prapemrosesan menjadi rumit. Bagian Tambahan menjalankan keduanya pada kasus sama agar perbedaannya terlihat langsung.
+  contoh:
+  - contoh: Menyiapkan data dan memeriksa sasarannya
+    kode_r: |-
+      kredit <- read.csv("data/data_kredit.csv", stringsAsFactors = TRUE)
+      kredit$gagal_bayar <- factor(kredit$gagal_bayar, levels = c("ya", "tidak"))
+      str(kredit)
+
+      prop <- prop.table(table(kredit$gagal_bayar))
+      round(prop, 4)
+      cat("acuan tebakan mayoritas:", round(max(prop), 4), "\n")
+      cat("rasio timpang:", round(max(prop) / min(prop), 2), "berbanding 1\n")
+    judul_r: membaca data dan memeriksa ketimpangan
+    eval: true
+    penjelasan: |
+      Data dibaca lalu taraf sasaran diurutkan agar kelas positif berada di depan; urutan ini penting sebab yardstick memperlakukan taraf pertama sebagai kelas yang diperhatikan. Proporsi kelas dan acuan tebakan mayoritas dihitung.
+    interpretasi: |
+      Angka acuan inilah pembanding wajib bagi setiap akurasi yang kelak dilaporkan. Urutan taraf sasaran kerap luput diperhatikan padahal berakibat besar: bila taraf yang diperhatikan salah, presisi dan recall yang dilaporkan sesungguhnya mengukur kelas yang keliru.
+  - contoh: Membagi data dengan penstrataan
+    kode_r: |-
+      suppressPackageStartupMessages({library(rsample); library(recipes)})
+      set.seed(2026)
+      bagi <- initial_split(kredit, prop = 0.75, strata = gagal_bayar)
+      lat <- training(bagi); uji <- testing(bagi)
+
+      round(rbind(seluruh = prop.table(table(kredit$gagal_bayar)),
+                  latih   = prop.table(table(lat$gagal_bayar)),
+                  uji     = prop.table(table(uji$gagal_bayar))), 4)
+      cat("\nukuran - latih:", nrow(lat), "| uji:", nrow(uji), "\n")
+    judul_r: initial_split dan pemeriksaan proporsi
+    eval: true
+    penjelasan: |
+      Data dibagi tiga perempat berbanding seperempat dengan penstrataan pada sasaran. Proporsi kelas pada seluruh data, data latih, dan data uji disandingkan untuk memeriksa apakah penstrataannya bekerja.
+    interpretasi: |
+      Ketiga baris seharusnya nyaris sama, dan itulah tanda penstrataan berhasil. Tanpa penstrataan, proporsi pada bagian uji dapat menyimpang cukup jauh terutama pada data timpang, sehingga penilaian kinerjanya menjadi tidak stabil dan sukar dibandingkan antar-percobaan.
+  - contoh: Menyusun resep dan model pertama
+    kode_r: |-
+      suppressPackageStartupMessages({library(parsnip); library(workflows)})
+
+      rec <- recipe(gagal_bayar ~ ., data = lat) |>
+        update_role(id, new_role = "penanda") |>
+        step_impute_median(all_numeric_predictors()) |>
+        step_dummy(all_nominal_predictors()) |>
+        step_normalize(all_numeric_predictors())
+
+      spec_knn <- nearest_neighbor(neighbors = 9) |>
+        set_engine("kknn") |> set_mode("classification")
+
+      wf <- workflow() |> add_recipe(rec) |> add_model(spec_knn)
+      model <- fit(wf, data = lat)
+      cat("model terlatih pada", nrow(lat), "amatan\n")
+    judul_r: recipe, model spec, workflow, fit
+    eval: true
+    penjelasan: |
+      Tiga bagian disusun terpisah lalu dirangkai. Resep menetapkan prapemrosesan, spesifikasi model menetapkan keluarga model beserta mesinnya, dan alur kerja menyatukan keduanya. Fungsi fit melatih seluruh rangkaian sekaligus.
+    interpretasi: |
+      Keunggulan pemisahan ini terlihat pada modul berikutnya: mengganti model cukup dengan mengganti spesifikasinya tanpa menyentuh resep, dan sebaliknya. Yang terpenting, karena resep berada di dalam alur kerja, prapemrosesan otomatis dipelajari hanya dari bagian data yang sedang dipakai melatih --- pencegahan kebocoran secara rancangan.
+  - contoh: Membaca matriks kekeliruan
+    kode_r: |-
+      suppressPackageStartupMessages({library(yardstick); library(dplyr)})
+
+      duga <- predict(model, uji) |>
+        bind_cols(predict(model, uji, type = "prob")) |>
+        bind_cols(uji |> select(gagal_bayar))
+
+      cm <- conf_mat(duga, truth = gagal_bayar, estimate = .pred_class)
+      print(cm)
+
+      tab <- cm$table
+      cat("\nbenar positif :", tab[1, 1], "\n")
+      cat("salah positif :", tab[1, 2], "\n")
+      cat("salah negatif :", tab[2, 1], "\n")
+      cat("benar negatif :", tab[2, 2], "\n")
+    judul_r: conf_mat dan pembacaannya
+    eval: true
+    penjelasan: |
+      Dugaan kelas dan dugaan peluang digabungkan dengan sasaran sebenarnya menjadi satu tabel. Matriks kekeliruan dibentuk, lalu keempat selnya dibaca satu per satu agar penamaannya jelas.
+    interpretasi: |
+      Membaca keempat sel secara terpisah adalah kebiasaan yang menolong, sebab tata letak matriks kekeliruan berbeda antar-perangkat lunak --- sebagian menaruh dugaan pada baris, sebagian pada kolom. Salah membaca berarti salah menghitung seluruh ukuran turunannya.
+  - contoh: Menghitung beberapa ukuran penilaian
+    kode_r: |-
+      ukuran <- metric_set(accuracy, precision, recall, f_meas, specificity)
+      hasil <- ukuran(duga, truth = gagal_bayar, estimate = .pred_class)
+      print(hasil |> mutate(.estimate = round(.estimate, 4)))
+
+      auc <- roc_auc(duga, truth = gagal_bayar, .pred_ya)
+      cat("\nROC-AUC:", round(auc$.estimate, 4), "\n")
+      cat("acuan mayoritas:", round(max(prop.table(table(uji$gagal_bayar))), 4), "\n")
+    judul_r: metric_set dan roc_auc
+    eval: true
+    penjelasan: |
+      Beberapa ukuran dihitung sekaligus memakai metric_set. Ukuran berbasis peluang seperti ROC-AUC dihitung terpisah karena memerlukan kolom peluang, bukan kolom kelas dugaan.
+    interpretasi: |
+      Bandingkan akurasi terhadap acuan mayoritas; bila keduanya berdekatan, model belum menyumbang apa pun. Perhatikan pula bahwa ROC-AUC bernilai sekitar setengah menandakan model tidak lebih baik daripada menebak acak --- dan pada data ini, yang peubahnya dibangkitkan saling bebas terhadap sasaran, hasil itu justru yang benar.
+  - contoh: Memperagakan pertukaran presisi dan recall
+    kode_r: |-
+      ambang <- seq(0.1, 0.9, by = 0.1)
+      hasil_ambang <- t(sapply(ambang, function(t) {
+        d <- duga
+        d$dug <- factor(ifelse(d$.pred_ya > t, "ya", "tidak"),
+                        levels = c("ya", "tidak"))
+        c(presisi = precision(d, gagal_bayar, dug)$.estimate,
+          recall  = recall(d, gagal_bayar, dug)$.estimate,
+          F1      = f_meas(d, gagal_bayar, dug)$.estimate)
+      }))
+      print(round(cbind(ambang, hasil_ambang), 4))
+
+      matplot(ambang, hasil_ambang, type = "b", pch = 19, lwd = 2, lty = 1,
+              col = c("#0B6FB4", "#F58220", "#00A651"),
+              xlab = "Ambang keputusan", ylab = "Nilai ukuran",
+              main = "Pertukaran Presisi, Recall, dan F1")
+      legend("right", c("presisi", "recall", "F1"), bty = "n",
+             col = c("#0B6FB4", "#F58220", "#00A651"), lwd = 2, pch = 19, cex = .85)
+    judul_r: menghitung ukuran pada beberapa ambang
+    eval: true
+    penjelasan: |
+      Sembilan ambang dicoba. Pada tiap ambang, kelas dugaan dibentuk ulang lalu ketiga ukuran dihitung. Hasilnya ditranspos agar tiap baris mewakili satu ambang, kemudian digambar sebagai tiga garis.
+    interpretasi: |
+      Perhatikan arah kedua garis pertama yang berlawanan --- inilah pertukaran yang dibahas pada Teori. Recall tinggi pada ambang rendah karena hampir semua ditandai positif, sedangkan presisi tinggi pada ambang tinggi karena hanya yang paling meyakinkan yang ditandai. Garis F1 memuncak di antaranya. Penting dipahami bahwa ambang yang memaksimumkan F1 belum tentu ambang yang tepat secara kebijakan; biaya kekeliruanlah yang menentukan.
+  - contoh: Menjalankan validasi silang
+    kode_r: |-
+      suppressPackageStartupMessages({library(tune); library(dials)})
+      set.seed(2026)
+      lipatan <- vfold_cv(lat, v = 5, strata = gagal_bayar)
+      print(lipatan)
+
+      hasil_cv <- fit_resamples(
+        wf, resamples = lipatan,
+        metrics = metric_set(roc_auc, f_meas, accuracy))
+
+      collect_metrics(hasil_cv) |>
+        mutate(mean = round(mean, 4), std_err = round(std_err, 4)) |>
+        select(.metric, mean, n, std_err) |>
+        print()
+    judul_r: vfold_cv dan fit_resamples
+    eval: true
+    penjelasan: |
+      Data latih dibagi menjadi lima lipatan berstrata. Fungsi fit_resamples melatih dan menilai model pada tiap lipatan tanpa menyentuh data uji sama sekali. Hasilnya dikumpulkan berupa rata-rata dan galat bakunya.
+    interpretasi: |
+      Kolom galat baku sama pentingnya dengan kolom rata-rata. Ia menyatakan seberapa besar hasil berubah antar-lipatan; galat baku yang besar berarti penilaiannya tidak stabil sehingga selisih kecil antar-model tidak berarti apa-apa. Melaporkan rata-rata tanpa galat bakunya menyembunyikan ketidakpastian itu.
+  - contoh: Memperagakan pemodelan berlebih (*overfitting*)
+    kode_r: |-
+      nilai_k <- c(1, 3, 5, 9, 15, 25, 51)
+      banding <- t(sapply(nilai_k, function(k) {
+        s <- nearest_neighbor(neighbors = k) |>
+          set_engine("kknn") |> set_mode("classification")
+        m <- fit(workflow() |> add_recipe(rec) |> add_model(s), data = lat)
+        d_lat <- predict(m, lat) |> bind_cols(lat |> select(gagal_bayar))
+        d_uji <- predict(m, uji) |> bind_cols(uji |> select(gagal_bayar))
+        c(latih = accuracy(d_lat, gagal_bayar, .pred_class)$.estimate,
+          uji   = accuracy(d_uji, gagal_bayar, .pred_class)$.estimate)
+      }))
+      print(round(cbind(k = nilai_k, banding), 4))
+
+      matplot(nilai_k, banding, type = "b", pch = c(19, 17), lwd = 2, lty = 1,
+              col = c("#C0392B", "#0B6FB4"), log = "x",
+              xlab = "Banyaknya tetangga k (skala log)", ylab = "Akurasi",
+              main = "Akurasi pada Data Latih dan Data Uji")
+      legend("bottomright", c("data latih", "data uji"), bty = "n",
+             col = c("#C0392B", "#0B6FB4"), lwd = 2, pch = c(19, 17), cex = .85)
+    judul_r: membandingkan kinerja latih dan uji
+    eval: true
+    penjelasan: |
+      Tujuh nilai k dicoba. Pada tiap nilai, model dilatih lalu dinilai dua kali: pada data latih dan pada data uji. Keduanya digambar bersama dengan sumbu k berskala logaritma.
+    interpretasi: |
+      Pada k bernilai satu, akurasi latih mencapai nilai tertinggi karena tiap amatan menjadi tetangga terdekat bagi dirinya sendiri --- model menghafal sempurna. Namun akurasi ujinya tidak ikut tinggi, dan jarak antara kedua garis itulah wujud pemodelan berlebih (*overfitting*). Seiring k membesar, model menjadi lebih kaku dan kedua garis mendekat. Pemilihan k karena itu adalah pencarian titik seimbang, bukan pencarian akurasi latih tertinggi.
+  - |-
+    \begin{kotaksalah}[Memilih model berdasarkan kinerja pada data latih]
+    Godaan memilih model berakurasi latih tertinggi selalu ada, sebab angkanya paling menyenangkan. Namun akurasi latih hanya mengukur seberapa baik model menghafal, bukan seberapa baik ia meramal. Pemilihan model \textbf{wajib} berdasarkan validasi silang atau data uji.
+    \end{kotaksalah}
+  - contoh: Menala hiperparameter dengan grid
+    kode_r: |-
+      spec_tune <- nearest_neighbor(neighbors = tune()) |>
+        set_engine("kknn") |> set_mode("classification")
+      wf_tune <- workflow() |> add_recipe(rec) |> add_model(spec_tune)
+
+      set.seed(2026)
+      hasil_tune <- tune_grid(
+        wf_tune, resamples = lipatan,
+        grid = data.frame(neighbors = c(3, 5, 9, 15, 25, 41)),
+        metrics = metric_set(roc_auc, f_meas))
+
+      collect_metrics(hasil_tune) |>
+        filter(.metric == "roc_auc") |>
+        mutate(mean = round(mean, 4), std_err = round(std_err, 4)) |>
+        select(neighbors, mean, std_err) |>
+        print()
+
+      terbaik <- select_best(hasil_tune, metric = "roc_auc")
+      cat("\nk terbaik menurut ROC-AUC:", terbaik$neighbors, "\n")
+    judul_r: tune_grid dan select_best
+    eval: true
+    penjelasan: |
+      Hiperparameter ditandai tune sehingga nilainya dicari, bukan ditetapkan. Enam nilai dicoba pada kelima lipatan, sehingga tiga puluh model dilatih. Fungsi select_best memilih nilai berkinerja terbaik menurut ukuran yang ditetapkan.
+    interpretasi: |
+      Perhatikan galat baku pada tiap baris. Bila selisih rata-rata antar-nilai k lebih kecil daripada galat bakunya, maka pemilihan terbaik sesungguhnya sembarang. Dalam keadaan demikian, memilih nilai k yang lebih besar --- yakni model yang lebih sederhana --- lebih dapat dipertanggungjawabkan daripada memilih yang rata-ratanya kebetulan tertinggi.
+  - contoh: Menyelesaikan alur dan menilai pada data uji
+    kode_r: |-
+      wf_final <- finalize_workflow(wf_tune, terbaik)
+      akhir <- last_fit(wf_final, split = bagi,
+                        metrics = metric_set(roc_auc, f_meas, accuracy))
+
+      collect_metrics(akhir) |>
+        mutate(.estimate = round(.estimate, 4)) |>
+        select(.metric, .estimate) |> print()
+
+      cat("\nacuan tebakan mayoritas:",
+          round(max(prop.table(table(uji$gagal_bayar))), 4), "\n")
+    judul_r: finalize_workflow dan last_fit
+    eval: true
+    penjelasan: |
+      Alur kerja diselesaikan dengan nilai hiperparameter terbaik, lalu last_fit melatih ulang pada seluruh data latih dan menilai satu kali pada data uji. Inilah satu-satunya kali data uji disentuh.
+    interpretasi: |
+      Penekanan pada kalimat terakhir itu penting. Data uji dipakai sekali saja, di akhir, setelah seluruh keputusan diambil. Memakainya berulang untuk memilih di antara beberapa pilihan mengubahnya menjadi data latih terselubung, sehingga angka akhirnya tidak lagi menggambarkan kinerja pada data baru.
+  - contoh: Kerangka yang sama untuk sasaran numerik
+    kode_r: |-
+      spec_reg <- linear_reg() |> set_engine("lm") |> set_mode("regression")
+      rec_reg <- recipe(pendapatan ~ umur + lama_kerja + rasio_utang +
+                          jumlah_tanggungan + pendidikan, data = lat) |>
+        step_dummy(all_nominal_predictors())
+      wf_reg <- workflow() |> add_recipe(rec_reg) |> add_model(spec_reg)
+
+      m_reg <- fit(wf_reg, data = lat)
+      d_reg <- predict(m_reg, uji) |> bind_cols(uji |> select(pendapatan))
+
+      metric_set(rmse, mae, rsq)(d_reg, truth = pendapatan, estimate = .pred) |>
+        mutate(.estimate = round(.estimate, 2)) |> print()
+
+      cat("\nsimpangan baku sasaran:", round(sd(uji$pendapatan), 2), "\n")
+      cat("RMSE model dibandingkan simpangan baku:",
+          round(rmse(d_reg, pendapatan, .pred)$.estimate / sd(uji$pendapatan), 3), "\n")
+    judul_r: linear_reg dan ukuran regresi
+    eval: true
+    penjelasan: |
+      Sasaran diganti menjadi peubah numerik. Spesifikasi model berganti menjadi regresi linear dengan mode regression, dan ukuran penilaiannya berganti menjadi RMSE, MAE, dan R-kuadrat. Sisa kerangkanya sama persis.
+    interpretasi: |
+      Perbandingan RMSE terhadap simpangan baku sasaran adalah acuan yang setara dengan tebakan mayoritas pada klasifikasi. Rasio mendekati satu berarti model tidak lebih baik daripada sekadar menebak rata-rata. Pada data yang peubahnya dibangkitkan saling bebas, rasio mendekati satu justru hasil yang benar.
+  - contoh: Membandingkan tiga model secara adil
+    kode_r: |-
+      daftar_model <- list(
+        knn   = nearest_neighbor(neighbors = 15) |> set_engine("kknn"),
+        pohon = decision_tree(cost_complexity = 0.01) |> set_engine("rpart"),
+        hutan = rand_forest(trees = 200) |> set_engine("ranger"))
+
+      set.seed(2026)
+      banding_model <- lapply(names(daftar_model), function(nm) {
+        spec <- set_mode(daftar_model[[nm]], "classification")
+        w <- workflow() |> add_recipe(rec) |> add_model(spec)
+        cv <- fit_resamples(w, resamples = lipatan,
+                            metrics = metric_set(roc_auc, f_meas))
+        collect_metrics(cv) |> mutate(model = nm)
+      })
+      ringkas_model <- do.call(rbind, banding_model) |>
+        select(model, .metric, mean, std_err) |>
+        mutate(mean = round(mean, 4), std_err = round(std_err, 4))
+      print(as.data.frame(ringkas_model), row.names = FALSE)
+    judul_r: membandingkan model pada lipatan yang sama
+    eval: true
+    penjelasan: |
+      Tiga keluarga model disusun sebagai daftar spesifikasi. Perulangan melatih masing-masing pada **lipatan yang sama**, sehingga perbandingannya adil. Hasilnya digabungkan menjadi satu tabel.
+    interpretasi: |
+      Kunci keadilan perbandingan adalah pemakaian objek lipatan yang sama bagi seluruh model; bila tiap model memakai pembagian sendiri, selisih yang terlihat boleh jadi hanya akibat pembagian yang berbeda. Perhatikan pula bahwa resep yang sama dipakai bagi ketiganya --- padahal pohon dan hutan acak sesungguhnya tidak memerlukan pembakuan. Pembakuan tidak merugikan keduanya, tetapi pada pekerjaan sungguhan resep sebaiknya disesuaikan dengan kebutuhan tiap model, dan itulah bahasan modul berikutnya.
+  - contoh: Menggambarkan perbandingan model
+    kode_r: |-
+      auc_model <- ringkas_model |> filter(.metric == "roc_auc")
+
+      bp <- barplot(auc_model$mean, names.arg = auc_model$model,
+                    col = c("#0B6FB4", "#F58220", "#00A651"), border = "white",
+                    ylim = c(0, max(auc_model$mean + auc_model$std_err) * 1.3),
+                    ylab = "ROC-AUC (validasi silang)",
+                    main = "Perbandingan Tiga Model")
+      arrows(bp, auc_model$mean - auc_model$std_err,
+             bp, auc_model$mean + auc_model$std_err,
+             angle = 90, code = 3, length = 0.06, lwd = 2)
+      abline(h = 0.5, col = "#C0392B", lty = 2, lwd = 2)
+      text(bp, auc_model$mean + auc_model$std_err, round(auc_model$mean, 3),
+           pos = 3, cex = .85)
+    judul_r: barplot dengan palang galat baku
+    eval: true
+    penjelasan: |
+      Rata-rata ROC-AUC tiap model digambar sebagai batang, dilengkapi palang galat baku memakai arrows dengan sudut sembilan puluh derajat di kedua ujungnya. Garis acuan pada nilai setengah menandai kinerja tebakan acak.
+    interpretasi: |
+      Palang galat baku inilah yang mencegah kesimpulan tergesa. Bila palang antar-model saling bertumpang tindih, selisih rata-ratanya tidak dapat dianggap berarti --- dan menyatakan satu model lebih baik dalam keadaan demikian adalah klaim yang tidak didukung data. Garis acuan pada setengah menegaskan apakah model mana pun sudah melampaui tebakan acak.
+  - contoh: Menggambarkan kurva ROC
+    kode_r: |-
+      prob_uji <- collect_predictions(akhir)
+      kurva <- roc_curve(prob_uji, truth = gagal_bayar, .pred_ya)
+
+      plot(1 - kurva$specificity, kurva$sensitivity, type = "l", lwd = 2,
+           col = "#0B6FB4", xlim = c(0, 1), ylim = c(0, 1),
+           xlab = "1 - spesifisitas (laju salah positif)",
+           ylab = "Sensitivitas (recall)",
+           main = "Kurva ROC pada Data Uji")
+      abline(0, 1, col = "#C0392B", lty = 2, lwd = 2)
+      grid(col = "grey88")
+      legend("bottomright", c("model", "tebakan acak"), bty = "n",
+             col = c("#0B6FB4", "#C0392B"), lwd = 2, lty = c(1, 2), cex = .85)
+    judul_r: roc_curve dan penggambarannya
+    eval: true
+    penjelasan: |
+      Dugaan peluang pada data uji diambil, lalu kurva ROC dihitung sebagai pasangan sensitivitas dan spesifisitas pada berbagai ambang. Garis diagonal ditambahkan sebagai acuan tebakan acak.
+    interpretasi: |
+      Kurva yang berimpit dengan garis diagonal menandakan model tidak lebih baik daripada menebak, sedangkan kurva yang membusur ke kiri atas menandakan daya pisah yang baik. Keunggulan ROC dibandingkan akurasi adalah ia menilai seluruh ambang sekaligus, sehingga tidak bergantung pada satu ambang tertentu yang pemilihannya sendiri merupakan keputusan kebijakan.
+  latihan:
+  - Kerjakan bertahap. Gunakan `data/data_kredit.csv`.
+  - '#### Tingkat Dasar (melengkapi kode)'
+  - \latihan{Pembagian berstrata}
+  - |-
+    ```{r eval=FALSE}
+    library(rsample)
+    kredit <- read.csv("data/data_kredit.csv", stringsAsFactors = TRUE)
+    set.seed(2026)
+    bagi <- ____(kredit, prop = 0.75, strata = gagal_bayar)
+    lat <- ____(bagi); uji <- ____(bagi)
+    round(prop.table(table(lat$gagal_bayar)), 4)
+    ```
+  - \latihan{Resep dan alur kerja}
+  - |-
+    ```{r eval=FALSE}
+    library(recipes); library(parsnip); library(workflows)
+    rec <- recipe(gagal_bayar ~ ., data = lat) |>
+      step_dummy(all_nominal_predictors()) |>
+      ____(all_numeric_predictors())          # pembakuan
+    spec <- ____(neighbors = 9) |> set_engine("kknn") |> set_mode("____")
+    wf <- workflow() |> add_recipe(rec) |> ____(spec)
+    ```
+  - \latihan{Ukuran penilaian}
+  - |-
+    ```{r eval=FALSE}
+    library(yardstick)
+    cm <- ____(duga, truth = gagal_bayar, estimate = .pred_class)
+    u <- ____(accuracy, precision, recall, f_meas)
+    u(duga, truth = gagal_bayar, estimate = .pred_class)
+    ____(duga, truth = gagal_bayar, .pred_ya)      # ROC-AUC
+    ```
+  - '#### Tingkat Menengah (menulis sendiri)'
+  - \latihan{Pemodelan berlebih}
+  - Latih model KNN dengan tujuh nilai `k` berbeda. Untuk masing-masing, hitung akurasi pada data latih
+    **dan** data uji. Sajikan sebagai tabel dan grafik, lalu tentukan pada nilai `k` berapa pemodelan
+    berlebih (*overfitting*) paling parah beserta buktinya.
+  - \latihan{Membetulkan kode yang salah}
+  - Kode berikut memuat empat kesalahan (pembagian tanpa penstrataan, model dinilai pada data latih, `roc_auc`
+    diberi kolom kelas bukan peluang, dan data uji dipakai berulang untuk memilih). Temukan dan perbaiki,
+    lalu jelaskan akibat masing-masing.
+  - |-
+    ```{r eval=FALSE}
+    library(rsample); library(yardstick)
+    set.seed(2026)
+
+    # (a) pembagian tanpa penstrataan pada data timpang
+    bagi <- initial_split(kredit, prop = 0.75)
+    lat <- training(bagi); uji <- testing(bagi)
+
+    model <- fit(wf, data = lat)
+
+    # (b) model dinilai pada data yang dipakai melatihnya
+    d <- predict(model, lat) |> bind_cols(lat |> select(gagal_bayar))
+    accuracy(d, gagal_bayar, .pred_class)
+
+    # (c) roc_auc diberi kolom kelas, bukan kolom peluang
+    roc_auc(d, gagal_bayar, .pred_class)
+
+    # (d) data uji dicoba berulang untuk memilih k terbaik
+    for (k in c(3, 5, 9, 15)) {
+      m <- fit(wf_k(k), data = lat)
+      du <- predict(m, uji) |> bind_cols(uji |> select(gagal_bayar))
+      cat(k, accuracy(du, gagal_bayar, .pred_class)$.estimate, "
+    ")
+    }
+    ```
+  - |-
+    **Keluaran yang benar.** Setelah diperbaiki, kode yang dipakai adalah sebagai berikut.
+
+    ```
+    # (a) penstrataan pada data timpang
+    bagi <- initial_split(kredit, prop = 0.75, strata = gagal_bayar)
+    lat <- training(bagi); uji <- testing(bagi)
+
+    # (b) penilaian pada data UJI, bukan data latih
+    model <- fit(wf, data = lat)
+    d <- predict(model, uji) |>
+      bind_cols(predict(model, uji, type = "prob")) |>
+      bind_cols(uji |> select(gagal_bayar))
+    accuracy(d, gagal_bayar, .pred_class)
+
+    # (c) roc_auc memerlukan kolom PELUANG
+    roc_auc(d, gagal_bayar, .pred_ya)
+
+    # (d) pemilihan k memakai VALIDASI SILANG pada data latih
+    set.seed(2026)
+    lipatan <- vfold_cv(lat, v = 5, strata = gagal_bayar)
+    hasil <- tune_grid(wf_tune, resamples = lipatan,
+                       grid = data.frame(neighbors = c(3, 5, 9, 15)),
+                       metrics = metric_set(roc_auc))
+    select_best(hasil, metric = "roc_auc")
+    ```
+
+    Pemeriksaan yang wajib berhasil: proporsi kelas pada `lat` dan `uji` berselisih kurang dari 0,02, dan `roc_auc` menghasilkan nilai tanpa galat.
+  - '#### Tingkat Lanjut (keputusan)'
+  - \latihan{Memilih ukuran penilaian}
+  - 'Untuk masing-masing keadaan berikut, tentukan ukuran penilaian yang Anda utamakan beserta alasannya,
+    dan sebutkan **biaya kekeliruan** mana yang lebih besar: (a) penapisan awal penyakit menular; (b)
+    penandaan transaksi mencurigakan yang menuntut pemeriksaan manual mahal; (c) pendugaan kelayakan kredit
+    dengan kelas gagal bayar hanya 3 persen; (d) pemilihan sasaran promosi berbiaya rendah.'
+  penugasan:
+  - |-
+    \begin{kotaktugas}
+    Sebagai calon analis pada instansi statistik, susun laporan pemodelan awal atas \texttt{data\_kredit.csv} (\emph{data simulasi}) yang menerapkan kerangka supervised learning secara benar, lengkap dengan pembuktian bahwa penilaiannya valid.
+    \end{kotaktugas}
+  - '**Konteks.** Sebuah unit hendak membangun model penduga risiko gagal bayar. Pimpinan meminta bukan
+    hanya angka kinerja, melainkan juga jaminan bahwa angka itu menggambarkan kinerja pada data baru.'
+  - \tugas{Penyiapan dan Pembagian}
+  - 1. Periksa **ketimpangan kelas** sasaran. Laporkan proporsi, rasio, dan akurasi acuan tebakan mayoritas.
+  - 2. Bagi data dengan penstrataan. Buktikan penstrataannya bekerja dengan menyandingkan proporsi kelas
+    pada ketiga bagian.
+  - 3. Susun resep prapemrosesan yang sesuai bagi model berbasis jarak. **Jelaskan mengapa** pembakuan
+    wajib bagi model ini.
+  - \tugas{Pemodelan dan Penilaian}
+  - 4. Latih model KNN, lalu sajikan **matriks kekeliruan** beserta pembacaan keempat selnya.
+  - 5. Hitung **minimal lima ukuran** penilaian. Bandingkan akurasi terhadap acuan mayoritas, lalu simpulkan
+    apakah model menyumbang sesuatu.
+  - 6. Peragakan **pertukaran presisi dan recall** pada minimal tujuh ambang. Sajikan tabel dan grafik,
+    lalu tentukan ambang yang Anda pilih beserta alasan kebijakannya.
+  - \tugas{Validasi dan Penalaan}
+  - 7. Jalankan **validasi silang lima lipatan** berstrata. Laporkan rata-rata beserta galat bakunya,
+    lalu jelaskan makna galat baku itu.
+  - 8. Peragakan **pemodelan berlebih (*overfitting*)** dengan membandingkan kinerja latih dan uji pada
+    tujuh nilai `k`. Sajikan grafik dan tafsirkan.
+  - 9. Lakukan **penalaan hiperparameter** dengan grid. Bila selisih antar-nilai lebih kecil daripada
+    galat bakunya, jelaskan nilai mana yang Anda pilih dan mengapa.
+  - 10. Selesaikan alur dengan `last_fit()`, sajikan kinerja akhir pada data uji beserta **kurva ROC**.
+    Jelaskan mengapa data uji hanya boleh disentuh sekali.
+  - '11. Susun laporan R Markdown berisi kode, keluaran, gambar, dan interpretasi. Tutup dengan **ringkasan
+    (maksimal 300 kata)** memuat: kinerja akhir dibandingkan acuan, ukuran yang diutamakan beserta alasannya,
+    keterbatasan, dan penegasan bahwa data merupakan simulasi sehingga kinerja mendekati tebakan acak
+    adalah hasil yang wajar.'
+  tambahan:
+  - |
+    Bagian ini menjalankan kasus yang sama pada dua kerangka pemodelan R. Tujuannya bukan menentukan mana yang lebih baik, melainkan memahami bahwa hasil pemodelan bergantung pada keputusan teknis yang kerap tak terlihat.
+  - contoh: Kasus yang sama pada caret
+    kode_r: |-
+      suppressPackageStartupMessages(library(caret))
+      set.seed(2026)
+
+      kendali <- trainControl(method = "cv", number = 5,
+                              classProbs = TRUE,
+                              summaryFunction = twoClassSummary)
+
+      lat_caret <- lat[, setdiff(names(lat), "id")]
+      m_caret <- train(gagal_bayar ~ ., data = lat_caret, method = "knn",
+                       preProcess = c("center", "scale"),
+                       tuneGrid = data.frame(k = c(3, 5, 9, 15, 25, 41)),
+                       trControl = kendali, metric = "ROC")
+
+      print(round(m_caret$results[, c("k", "ROC", "Sens", "Spec")], 4))
+      cat("\nk terbaik menurut caret:", m_caret$bestTune$k, "\n")
+    judul_r: caret::train dengan validasi silang
+    eval: true
+    penjelasan: |
+      Seluruh alur ditulis dalam satu pemanggilan train. Prapemrosesan ditetapkan lewat argumen preProcess, skema resampling lewat trainControl, dan ruang pencarian lewat tuneGrid. Kolom id dibuang lebih dahulu karena caret tidak mengenal peran penanda.
+    interpretasi: |
+      Keringkasan inilah keunggulan caret: satu fungsi menangani prapemrosesan, validasi silang, dan penalaan sekaligus. Kekurangannya juga di situ --- urutan prapemrosesan ditentukan caret dan tidak dapat diatur, sedangkan pada recipes urutannya sepenuhnya di tangan penyusun. Perhatikan pula bahwa kolom penanda harus dibuang manual, dan lupa melakukannya berakibat penanda ikut dimodelkan.
+  - contoh: Menyandingkan hasil kedua kerangka
+    kode_r: |-
+      hasil_tm <- collect_metrics(hasil_tune) |>
+        filter(.metric == "roc_auc") |>
+        select(k = neighbors, tidymodels = mean)
+      hasil_ct <- data.frame(k = m_caret$results$k, caret = m_caret$results$ROC)
+
+      banding2 <- merge(hasil_tm, hasil_ct, by = "k")
+      print(round(banding2, 4))
+
+      matplot(banding2$k, banding2[, c("tidymodels", "caret")],
+              type = "b", pch = c(19, 17), lwd = 2, lty = 1, log = "x",
+              col = c("#0B6FB4", "#F58220"),
+              xlab = "Banyaknya tetangga k (skala log)", ylab = "ROC-AUC",
+              main = "Hasil Dua Kerangka pada Kasus yang Sama")
+      legend("bottomright", c("tidymodels", "caret"), bty = "n",
+             col = c("#0B6FB4", "#F58220"), lwd = 2, pch = c(19, 17), cex = .85)
+    judul_r: menggabungkan dan membandingkan hasil
+    eval: true
+    penjelasan: |
+      Hasil ROC-AUC dari kedua kerangka digabungkan menurut nilai k, lalu disandingkan sebagai tabel dan grafik. Sumbu k memakai skala logaritma karena nilainya berlipat.
+    interpretasi: |
+      Kedua garis kemungkinan tidak berimpit, dan justru itulah pelajarannya. Penyebabnya bermacam-macam: pembentukan lipatan yang berbeda meski benihnya sama, penanganan peubah kategori yang berbeda, dan cara menghitung ROC yang sedikit berlainan. Selisih semacam ini lazim dan tidak berarti salah satunya keliru.
+  - |-
+    \begin{kotaksalah}[Melaporkan angka tanpa menyebut prosedurnya]
+    Karena hasil bergantung pada kerangka, benih acak, skema resampling, dan penanganan prapemrosesan, maka melaporkan angka kinerja tanpa menyebutkan seluruhnya membuat hasil itu \textbf{tidak dapat direproduksi}. Laporan yang baik selalu mencantumkan: perangkat lunak beserta versinya, skema pembagian dan resampling, benih acak, urutan prapemrosesan, dan ukuran penilaian yang dipakai.
+    \end{kotaksalah}
+  - |-
+    \begin{kotaksalah}[caret menutupi fungsi yardstick]
+    Memuat \texttt{caret} setelah \texttt{yardstick} membuat \texttt{precision}, \texttt{recall}, dan beberapa fungsi lain merujuk versi caret, sehingga \texttt{metric\_set()} gagal dengan pesan mengenai kombinasi fungsi metrik. Jalan keluarnya menuliskan nama paket secara tegas, misalnya \texttt{yardstick::precision}. Bentrokan nama semacam ini lazim ketika beberapa paket dipakai bersama, dan menuliskan nama paket adalah kebiasaan yang menghematkan banyak penelusuran.
+    \end{kotaksalah}
+  - |-
+    \begin{kotaktips}
+    Bila hasil dua kerangka berselisih jauh --- bukan sekadar sedikit --- itu pertanda ada perbedaan perlakuan yang perlu ditelusuri, bukan sekadar derau. Periksa lebih dahulu: apakah prapemrosesannya sama, apakah kolom yang dipakai sama, dan apakah kelas yang diperhatikan sama.
+    \end{kotaktips}
+  - |
+    Kesimpulan bagian ini: kedua kerangka sama-sama valid. `caret` unggul pada keringkasan dan kelengkapan model, `tidymodels` unggul pada kendali prapemrosesan dan pencegahan kebocoran secara rancangan. Modul berikutnya dan seterusnya memakai `tidymodels`, sedangkan `caret` tetap dikenali agar kode lama dapat dibaca.
+  ringkasan:
+  - |-
+    \begin{kotaktujuan}
+    \textbf{Daftar periksa penguasaan:}
+    \begin{itemize}
+    \item[$\square$] Saya dapat menjelaskan kerangka supervised learning beserta empat unsurnya.
+    \item[$\square$] Saya membagi data dengan penstrataan dan dapat membuktikan hasilnya.
+    \item[$\square$] Saya dapat menjelaskan mengapa validasi silang lebih stabil daripada satu pembagian.
+    \item[$\square$] Saya dapat membaca matriks kekeliruan dan menurunkan ukurannya.
+    \item[$\square$] Saya selalu membandingkan akurasi terhadap acuan tebakan mayoritas.
+    \item[$\square$] Saya memahami pertukaran presisi dan recall serta akibat pemilihan ambang.
+    \item[$\square$] Saya dapat mengenali pemodelan berlebih (\emph{overfitting}) dari jarak kinerja latih dan uji.
+    \item[$\square$] Saya memperhatikan galat baku, bukan hanya rata-rata, saat memilih model.
+    \item[$\square$] Saya menyentuh data uji hanya sekali, di akhir.
+    \item[$\square$] Saya dapat menjelaskan mengapa dua kerangka dapat memberi hasil berbeda.
+    \end{itemize}
+    \end{kotaktujuan}
+  - '**Kartu Referensi Cepat.**'
+  - |-
+    \begin{kotakrumus}
+    \begin{tabular}{@{}ll@{}}
+    \textbf{Keperluan} & \textbf{Perintah}\\nMembagi berstrata & \texttt{initial\_split(d, prop =, strata =)}\\nLipatan validasi silang & \texttt{vfold\_cv(lat, v = 5, strata =)}\\nSpesifikasi model & \texttt{nearest\_neighbor()}, \texttt{decision\_tree()}\\nMenetapkan mesin & \texttt{set\_engine("kknn")}\\nMenetapkan mode & \texttt{set\_mode("classification")}\\nMerangkai & \texttt{workflow() |> add\_recipe() |> add\_model()}\\nMelatih & \texttt{fit(wf, data = lat)}\\nValidasi silang & \texttt{fit\_resamples(wf, resamples =)}\\nPenalaan & \texttt{tune\_grid(wf, resamples =, grid =)}\\nMemilih terbaik & \texttt{select\_best(hasil, metric =)}\\nMenyelesaikan & \texttt{finalize\_workflow()}, \texttt{last\_fit()}\\nMatriks kekeliruan & \texttt{conf\_mat(d, truth =, estimate =)}\\nBeberapa ukuran & \texttt{metric\_set(accuracy, f\_meas)}\\nROC & \texttt{roc\_auc()}, \texttt{roc\_curve()}\\
+    \end{tabular}
+    \end{kotakrumus}
+  - 'Modul ini membangun kerangka yang berlaku bagi seluruh model pada modul berikutnya. Prinsip yang
+    perlu dibawa: bagi data sebelum melakukan apa pun, nilai dengan validasi silang bukan pada data latih,
+    bandingkan selalu terhadap acuan, perhatikan galat baku sebelum menyimpulkan selisih, dan sentuh data
+    uji hanya sekali. Modul berikutnya menyusun proposal proyek yang menerapkan kerangka ini pada persoalan
+    pilihan sendiri.'
+  referensi:
+  - Kuhn, M., & Silge, J. (2022). *Tidy Modeling with R*. O'Reilly Media.
+  - Kuhn, M., & Johnson, K. (2013). *Applied Predictive Modeling*. Springer.
+  - James, G., Witten, D., Hastie, T., & Tibshirani, R. (2021). *An Introduction to Statistical Learning*
+    (2nd ed.). Springer.
+  - Hastie, T., Tibshirani, R., & Friedman, J. (2009). *The Elements of Statistical Learning* (2nd ed.).
+    Springer.
+  - Saito, T., & Rehmsmeier, M. (2015). The precision-recall plot is more informative than the ROC plot
+    on imbalanced datasets. *PLOS ONE*, 10(3).
+exercises:
+- id: L6.1
+  points: 15
+  solution: 'Tingkat Dasar: pembagian berstrata, resep dan alur kerja, ukuran penilaian.'
+  judul_r: Solusi Tingkat Dasar (R)
+  solusi_r: |
+    suppressPackageStartupMessages({
+      library(rsample); library(recipes); library(parsnip)
+      library(workflows); library(yardstick); library(dplyr)})
+
+    kredit <- read.csv("data/data_kredit.csv", stringsAsFactors = TRUE)
+    kredit$gagal_bayar <- factor(kredit$gagal_bayar, levels = c("ya", "tidak"))
+    set.seed(2026)
+    bagi <- initial_split(kredit, prop = 0.75, strata = gagal_bayar)
+    lat <- training(bagi); uji <- testing(bagi)
+    round(prop.table(table(lat$gagal_bayar)), 4)
+
+    rec <- recipe(gagal_bayar ~ ., data = lat) |>
+      update_role(id, new_role = "penanda") |>
+      step_dummy(all_nominal_predictors()) |>
+      step_normalize(all_numeric_predictors())
+    spec <- nearest_neighbor(neighbors = 9) |>
+      set_engine("kknn") |> set_mode("classification")
+    wf <- workflow() |> add_recipe(rec) |> add_model(spec)
+
+    model <- fit(wf, data = lat)
+    duga <- predict(model, uji) |>
+      bind_cols(predict(model, uji, type = "prob")) |>
+      bind_cols(uji |> select(gagal_bayar))
+
+    conf_mat(duga, truth = gagal_bayar, estimate = .pred_class)
+    metric_set(yardstick::accuracy, yardstick::precision,
+               yardstick::recall, yardstick::f_meas)(
+      duga, truth = gagal_bayar, estimate = .pred_class)
+    roc_auc(duga, truth = gagal_bayar, .pred_ya)
+  interpretasi: |
+    Isian yang benar berturut-turut adalah initial_split, training, testing, step_normalize, nearest_neighbor, classification, add_model, conf_mat, metric_set, dan roc_auc. Dua hal patut ditekankan. Pertama, roc_auc memerlukan kolom peluang, bukan kolom kelas dugaan; memberinya kolom kelas menimbulkan galat. Kedua, urutan taraf sasaran menentukan kelas mana yang dianggap positif, sehingga menetapkannya secara tegas mencegah presisi dan recall mengukur kelas yang keliru.
+- id: L6.2
+  points: 25
+  solution: 'Tingkat Menengah dan Lanjut: pemodelan berlebih (*overfitting*) dan pemilihan ukuran penilaian.'
+  judul_r: Solusi Menengah dan Lanjut (R)
+  solusi_r: |
+    suppressPackageStartupMessages({
+      library(parsnip); library(workflows); library(yardstick); library(dplyr)})
+
+    nilai_k <- c(1, 3, 5, 9, 15, 25, 51)
+    banding <- t(sapply(nilai_k, function(k) {
+      s <- nearest_neighbor(neighbors = k) |>
+        set_engine("kknn") |> set_mode("classification")
+      m <- fit(workflow() |> add_recipe(rec) |> add_model(s), data = lat)
+      dl <- predict(m, lat) |> bind_cols(lat |> select(gagal_bayar))
+      du <- predict(m, uji) |> bind_cols(uji |> select(gagal_bayar))
+      c(latih = accuracy(dl, gagal_bayar, .pred_class)$.estimate,
+        uji   = accuracy(du, gagal_bayar, .pred_class)$.estimate)
+    }))
+    tabel <- data.frame(k = nilai_k, round(banding, 4),
+                        jarak = round(banding[, 1] - banding[, 2], 4))
+    print(tabel, row.names = FALSE)
+
+    cat("\npemodelan berlebih terparah pada k =",
+        tabel$k[which.max(tabel$jarak)], "\n")
+
+    matplot(nilai_k, banding, type = "b", pch = c(19, 17), lwd = 2, lty = 1,
+            col = c("#C0392B", "#0B6FB4"), log = "x",
+            xlab = "k (skala log)", ylab = "Akurasi",
+            main = "Kinerja Latih dan Uji")
+    legend("bottomright", c("latih", "uji"), bty = "n",
+           col = c("#C0392B", "#0B6FB4"), lwd = 2, pch = c(19, 17))
+  interpretasi: |
+    Kolom jarak antara akurasi latih dan uji adalah ukuran langsung pemodelan berlebih (*overfitting*), dan nilainya terbesar pada k bernilai satu. Pada k tersebut model menghafal sempurna data latih sebab tiap amatan menjadi tetangga terdekat bagi dirinya sendiri. Untuk pemilihan ukuran penilaian: penapisan penyakit mengutamakan recall karena biaya melewatkan kasus jauh lebih besar daripada memeriksa orang sehat; penandaan transaksi mencurigakan mengutamakan presisi karena tiap penandaan menuntut pemeriksaan manual yang mahal; kelas gagal bayar tiga persen menuntut F1 atau AUC sebab akurasi akan tampak sangat tinggi tanpa makna; sedangkan promosi berbiaya rendah dapat mengutamakan recall karena kekeliruan menandai hanya berbiaya kecil.
+- id: L6.D
+  points: 10
+  solution: 'Membetulkan kode: penstrataan, penilaian pada data uji, kolom peluang, dan validasi silang.'
+  judul_r: Solusi Membetulkan Kode (R)
+  solusi_r: |
+    suppressPackageStartupMessages({
+      library(rsample); library(yardstick); library(tune); library(dplyr)})
+
+    # (a) penstrataan pada data timpang
+    set.seed(2026)
+    bagi <- initial_split(kredit, prop = 0.75, strata = gagal_bayar)
+    lat <- training(bagi); uji <- testing(bagi)
+
+    # (b) penilaian pada data UJI, bukan data latih
+    model <- fit(wf, data = lat)
+    d <- predict(model, uji) |>
+      bind_cols(predict(model, uji, type = "prob")) |>
+      bind_cols(uji |> select(gagal_bayar))
+    accuracy(d, gagal_bayar, .pred_class)
+
+    # (c) roc_auc memerlukan kolom PELUANG
+    roc_auc(d, gagal_bayar, .pred_ya)
+
+    # (d) pemilihan k memakai validasi silang pada data latih
+    spec_t <- nearest_neighbor(neighbors = tune()) |>
+      set_engine("kknn") |> set_mode("classification")
+    wf_t <- workflow() |> add_recipe(rec) |> add_model(spec_t)
+    set.seed(2026)
+    lipatan <- vfold_cv(lat, v = 5, strata = gagal_bayar)
+    hasil <- tune_grid(wf_t, resamples = lipatan,
+                       grid = data.frame(neighbors = c(3, 5, 9, 15)),
+                       metrics = metric_set(roc_auc))
+    select_best(hasil, metric = "roc_auc")
+
+    # pemeriksaan wajib
+    abs(mean(lat$gagal_bayar == "ya") - mean(uji$gagal_bayar == "ya")) < 0.02
+  interpretasi: |
+    Empat kesalahan diperbaiki. Pertama, tanpa penstrataan proporsi kelas minoritas pada data uji dapat menyimpang jauh sehingga penilaiannya tidak stabil. Kedua, menilai pada data latih mengukur kemampuan menghafal, bukan meramal --- dan kekeliruan ini tidak menimbulkan galat sehingga sukar terdeteksi. Ketiga, roc_auc menuntut kolom peluang sebab ia menilai seluruh ambang sekaligus; memberinya kolom kelas menimbulkan galat yang justru menolong karena langsung terlihat. Keempat, dan paling parah, mencoba beberapa nilai k pada data uji lalu memilih yang terbaik mengubah data uji menjadi data latih terselubung; angka akhirnya tidak lagi menggambarkan kinerja pada data baru.
+- id: T6.1
+  points: 50
+  solution: 'Penugasan: kerangka supervised learning lengkap dengan pembuktian validitas penilaian.'
+  judul_r: Solusi Penugasan (R)
+  solusi_r: |
+    suppressPackageStartupMessages({
+      library(rsample); library(recipes); library(parsnip); library(workflows)
+      library(tune); library(yardstick); library(dplyr)})
+
+    kredit <- read.csv("data/data_kredit.csv", stringsAsFactors = TRUE)
+    kredit$gagal_bayar <- factor(kredit$gagal_bayar, levels = c("ya", "tidak"))
+
+    # 1) ketimpangan
+    prop <- prop.table(table(kredit$gagal_bayar))
+    cat("proporsi:", round(prop, 4),
+        "| rasio:", round(max(prop)/min(prop), 2),
+        "| acuan:", round(max(prop), 4), "\n")
+
+    # 2) pembagian berstrata dan pembuktiannya
+    set.seed(2026)
+    bagi <- initial_split(kredit, prop = 0.75, strata = gagal_bayar)
+    lat <- training(bagi); uji <- testing(bagi)
+    print(round(rbind(seluruh = prop.table(table(kredit$gagal_bayar)),
+                      latih = prop.table(table(lat$gagal_bayar)),
+                      uji = prop.table(table(uji$gagal_bayar))), 4))
+
+    # 3) resep bagi model berbasis jarak
+    rec <- recipe(gagal_bayar ~ ., data = lat) |>
+      update_role(id, new_role = "penanda") |>
+      step_impute_median(all_numeric_predictors()) |>
+      step_dummy(all_nominal_predictors()) |>
+      step_normalize(all_numeric_predictors())
+
+    # 4-5) model, matriks kekeliruan, dan ukuran
+    spec <- nearest_neighbor(neighbors = 9) |>
+      set_engine("kknn") |> set_mode("classification")
+    wf <- workflow() |> add_recipe(rec) |> add_model(spec)
+    model <- fit(wf, data = lat)
+    duga <- predict(model, uji) |>
+      bind_cols(predict(model, uji, type = "prob")) |>
+      bind_cols(uji |> select(gagal_bayar))
+    print(conf_mat(duga, gagal_bayar, .pred_class))
+    print(metric_set(yardstick::accuracy, yardstick::precision, yardstick::recall,
+                 yardstick::f_meas, yardstick::specificity)(
+      duga, truth = gagal_bayar, estimate = .pred_class))
+    cat("AUC:", round(roc_auc(duga, gagal_bayar, .pred_ya)$.estimate, 4),
+        "| acuan:", round(max(prop.table(table(uji$gagal_bayar))), 4), "\n")
+
+    # 6) pertukaran presisi-recall
+    amb <- seq(0.1, 0.9, by = 0.1)
+    pr <- t(sapply(amb, function(t) {
+      d <- duga
+      d$dg <- factor(ifelse(d$.pred_ya > t, "ya", "tidak"), levels = c("ya","tidak"))
+      c(presisi = yardstick::precision(d, gagal_bayar, dg)$.estimate,
+        recall = yardstick::recall(d, gagal_bayar, dg)$.estimate,
+        F1 = yardstick::f_meas(d, gagal_bayar, dg)$.estimate)
+    }))
+    print(round(cbind(ambang = amb, pr), 4))
+
+    # 7) validasi silang
+    set.seed(2026)
+    lipatan <- vfold_cv(lat, v = 5, strata = gagal_bayar)
+    cv <- fit_resamples(wf, resamples = lipatan,
+                        metrics = metric_set(roc_auc, f_meas, accuracy))
+    print(collect_metrics(cv) |> mutate(across(where(is.numeric), \(x) round(x, 4))))
+
+    # 9-10) penalaan dan penyelesaian
+    spec_t <- nearest_neighbor(neighbors = tune()) |>
+      set_engine("kknn") |> set_mode("classification")
+    wf_t <- workflow() |> add_recipe(rec) |> add_model(spec_t)
+    set.seed(2026)
+    tun <- tune_grid(wf_t, resamples = lipatan,
+                     grid = data.frame(neighbors = c(3,5,9,15,25,41)),
+                     metrics = metric_set(roc_auc))
+    print(collect_metrics(tun) |> select(neighbors, mean, std_err) |>
+            mutate(across(where(is.numeric), \(x) round(x, 4))))
+    akhir <- last_fit(finalize_workflow(wf_t, select_best(tun, metric = "roc_auc")),
+                      split = bagi, metrics = metric_set(roc_auc, f_meas, accuracy))
+    print(collect_metrics(akhir))
+  interpretasi: |
+    Nomor 2 menuntut pembuktian berupa tabel, bukan pernyataan; ketiga baris yang nyaris sama adalah buktinya. Nomor 5 adalah inti penilaian: bila akurasi berdekatan dengan acuan mayoritas dan AUC mendekati setengah, maka model belum menyumbang apa pun --- dan pada data yang peubahnya dibangkitkan saling bebas terhadap sasaran, itulah hasil yang benar dan wajib dilaporkan apa adanya. Melaporkan sebaliknya berarti mengarang. Pada nomor 9, bila selisih rata-rata antar-nilai k lebih kecil daripada galat bakunya, pemilihan terbaik sesungguhnya sembarang sehingga memilih model yang lebih sederhana lebih dapat dipertanggungjawabkan. Nomor 10 menegaskan bahwa data uji hanya disentuh sekali, setelah seluruh keputusan diambil lewat validasi silang.
+references:
+- Kuhn, M., & Silge, J. (2022). Tidy Modeling with R. O'Reilly Media.
+- Kuhn, M., & Johnson, K. (2013). Applied Predictive Modeling. Springer.
+- James, G., Witten, D., Hastie, T., & Tibshirani, R. (2021). An Introduction to Statistical Learning
+  (2nd ed.). Springer.
+- Hastie, T., Tibshirani, R., & Friedman, J. (2009). The Elements of Statistical Learning (2nd ed.). Springer.
+- Saito, T., & Rehmsmeier, M. (2015). The precision-recall plot is more informative than the ROC plot
+  on imbalanced datasets. PLOS ONE, 10(3).
+

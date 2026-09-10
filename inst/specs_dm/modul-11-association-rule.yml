@@ -1,0 +1,904 @@
+number: 11
+title: Association Rule dan Frequent Itemset Mining
+short_code: association_rule
+topic: Association Rule Mining
+pertemuan: 11
+sub_cpmk: 'Sub-CPMK 11: Mahasiswa mampu menyiapkan data transaksi, menambang himpunan barang sering muncul
+  beserta aturan asosiasinya dengan algoritma Apriori dan Eclat, menafsirkan support, confidence, dan
+  lift secara benar, memangkas aturan yang berlebihan, serta menilai kebermaknaan aturan sebelum dipakai
+  mengambil keputusan.'
+packages:
+- arules
+contoh_title: Contoh Praktikum dengan R
+course:
+  matkul: Data Mining dan Big Data
+  matkul_besar: DATA MINING DAN BIG DATA
+  kode: K202505
+  ta: 2025/2026
+  semester: 6 (Genap)
+  prodi: D-IV Statistika
+  penyusun:
+  - Achmad Syahrul Choir
+body:
+  deskripsi:
+  - 'Sepuluh modul sebelumnya bekerja pada data berbentuk **tabel persegi**: satu baris satu amatan, satu
+    kolom satu peubah. Modul ini berpindah ke bentuk data yang berbeda --- **transaksi**, yakni kumpulan
+    himpunan. Satu transaksi adalah satu keranjang belanja, satu kunjungan pasien, atau satu berkas jawaban
+    survei; isinya sekumpulan barang atau kejadian yang panjangnya berbeda-beda.'
+  - 'Pertanyaan yang diajukan pun berbeda. Bukan "berapa nilai $y$ bila $x$ diketahui" melainkan **"kejadian
+    apa yang cenderung muncul bersamaan"**. Jawabannya berbentuk **aturan asosiasi**: bila roti dan mentega
+    dibeli, susu cenderung ikut dibeli. Teknik ini lahir dari analisis keranjang belanja, tetapi dipakai
+    jauh lebih luas --- pola gejala penyakit yang muncul bersamaan, kombinasi jawaban kuesioner, rangkaian
+    modul yang diambil mahasiswa, atau pola kesalahan pada berkas administrasi.'
+  - 'Modul dipusatkan pada empat hal. **Pertama**, menyiapkan data transaksi dan memahami bentuknya. **Kedua**,
+    menambang himpunan barang sering muncul (*frequent itemsets*) dengan Apriori dan Eclat, beserta gagasan
+    *closed* dan *maximal* yang memampatkan hasilnya. **Ketiga**, membentuk aturan dan menafsirkan **support**,
+    **confidence**, dan **lift** --- dengan penekanan bahwa dua yang pertama saja menyesatkan. **Keempat**,
+    memangkas dan menilai aturan: mana yang berlebihan, mana yang bermakna, dan mana yang hanya cerminan
+    barang yang memang laris. Modul ditutup dengan **penerapan pada statistik resmi** --- kejadian bersama
+    indikator keterbatasan rumah tangga --- yang memperlihatkan bahwa teknik ini bukan alat ritel semata.'
+  - |-
+    \begin{kotakperhatian}[Tentang data]
+    Berkas data pada modul ini adalah \textbf{data simulasi} (\texttt{set.seed(2026)}), \textbf{bukan data nyata} dan \textbf{bukan data resmi} instansi mana pun. Beberapa kaitan antarbarang \textbf{sengaja ditanam} saat pembangkitan agar dapat diperiksa apakah algoritma menemukannya kembali; kaitan lain muncul semata dari kebetulan, dan membedakan keduanya justru menjadi salah satu latihan pada modul ini.
+    \end{kotakperhatian}
+  - \vspace{1.2em}
+  - |-
+    \begin{kotakinfo}
+    \textbf{Identitas Modul}
+  - |-
+    \begin{tabular}{@{}p{4.2cm}p{0.3cm}p{9.6cm}@{}}
+    Mata Kuliah      & : & Data Mining dan Big Data (K202505) \\
+    Pertemuan        & : & Minggu ke-11 \\
+    Bahan Kajian     & : & Association Rule dan Frequent Itemset Mining \\
+    Sub-CPMK         & : & Sub-CPMK 11 \\
+    Alokasi Waktu    & : & Praktikum 1 $\times$ 170 menit \\
+    Pengumpulan      & : & Google Classroom STIS \\
+    \end{tabular}
+    \end{kotakinfo}
+  tujuan:
+  - 'Setelah menyelesaikan praktikum Modul 11, mahasiswa diharapkan mampu:'
+  - |-
+    1. Menjelaskan bentuk data transaksi dan membedakannya dari tabel persegi biasa.
+    2. Membaca data transaksi ke dalam R dari bentuk panjang maupun lebar, serta memeriksa ringkasannya.
+    3. Menjelaskan definisi **support**, **confidence**, dan **lift** beserta hubungan ketiganya.
+    4. Menambang himpunan barang sering muncul dengan **Apriori** dan **Eclat**, serta menjelaskan mengapa keduanya memberi hasil sama dengan cara kerja berbeda.
+    5. Membedakan himpunan **frequent**, **closed**, dan **maximal**, serta menjelaskan pemampatan yang diberikan keduanya.
+    6. Membentuk aturan asosiasi, mengurutkannya, dan menyaringnya menurut barang tertentu.
+    7. Mengenali aturan ber-*confidence* tinggi tetapi ber-*lift* sekitar satu, dan menjelaskan mengapa aturan semacam itu tidak berguna.
+    8. Memangkas aturan **redundan** serta memakai ukuran tambahan (*leverage*, *conviction*, uji Fisher) untuk menilai kebermaknaan.
+    9. Menjelaskan pengaruh ambang *support* terhadap banyaknya aturan dan terhadap kemampuan menemukan pola pada barang langka.
+    10. Menerapkan penambangan aturan pada **data statistik resmi** --- kejadian bersama indikator keterbatasan rumah tangga --- dan menerjemahkan temuannya menjadi usulan penargetan program beserta keterbatasannya.
+  alat:
+  - '## Perangkat Lunak'
+  - |-
+    - **R** versi 4.2 atau lebih baru dan **RStudio**.
+    - Paket R: **`arules`** (penambangan aturan asosiasi). Paket `arulesViz` bersifat pilihan untuk penyajian grafis; modul ini sengaja memakai grafik bawaan R agar dapat dijalankan tanpanya.
+  - \kode{pemasangan dan pemanggilan paket}
+  - |-
+    ```{r pkg-install, eval=FALSE}
+    install.packages("arules")     # jalankan sekali saja
+    ```
+  - |-
+    ```{r pkg-load}
+    suppressPackageStartupMessages(library(arules))
+    ```
+  - '## Bahan (Berkas Data)'
+  - |-
+    | Berkas | Isi |
+    |:-------|:----|
+    | `data/transaksi_ritel.csv` | 5.279 baris; bentuk **panjang**: `id_transaksi`, `item` --- 1.200 transaksi, 20 jenis barang |
+    | `data/keterangan_barang.csv` | padanan tiap barang dengan **kategori**-nya (Minuman, Bahan Pokok, dan seterusnya) |
+    | `data/keterbatasan_rt.csv` | 3.216 baris; 866 rumah tangga $\times$ 12 indikator keterbatasan --- **kasus statistik resmi** (Bagian 11.7) |
+  - Berkas `gen_data.R` memuat kode pembangkit kedua berkas itu lengkap dengan `set.seed()`.
+  instruksi:
+  - |-
+    1. Buat **RStudio Project** dan salin folder `data/` ke dalamnya.
+    2. Kerjakan Contoh secara berurutan; ketik ulang kodenya, jalankan, lalu baca kotak Interpretasi Output.
+    3. Kerjakan **Latihan Mandiri**, lalu **Penugasan** sebagai laporan.
+    4. Tuliskan jawaban, kode, output, dan interpretasi dalam satu berkas `.Rmd`, lalu **Knit** ke PDF.
+  - |-
+    \begin{kotakcatatan}[Kebiasaan baik]
+    Tetapkan ambang \emph{support} dan \emph{confidence} \textbf{beserta alasannya} sebelum menambang, bukan sesudah melihat hasil mana yang enak diceritakan. Menurunkan ambang sampai aturan yang diinginkan muncul adalah pencarian pola, bukan analisis.
+    \end{kotakcatatan}
+  teori:
+  - '## Data Transaksi'
+  - Misalkan $I = \{i_1, i_2, \ldots, i_d\}$ himpunan seluruh **barang** (*item*). Sebuah **transaksi**
+    $t$ adalah himpunan bagian dari $I$, dan basis data transaksi $D$ adalah kumpulan $n$ transaksi. **Himpunan
+    barang** (*itemset*) $X \subseteq I$ berukuran $k$ disebut $k$-itemset.
+  - 'Data transaksi berbeda dari tabel persegi dalam dua hal: panjang tiap transaksi berbeda-beda, dan
+    yang dicatat hanya **kehadiran** --- ketiadaan suatu barang tidak berarti "nol", melainkan sekadar
+    tidak dibeli.'
+  - '## Support, Confidence, dan Lift'
+  - |-
+    \begin{kotakrumus}
+    \textbf{Support} himpunan $X$: proporsi transaksi yang memuat $X$.
+    \[
+    \mathrm{supp}(X) = \frac{|\{t \in D : X \subseteq t\}|}{n}
+    \]
+  - |-
+    \textbf{Aturan asosiasi} $X \Rightarrow Y$ dengan $X \cap Y = \varnothing$:
+    \[
+    \mathrm{supp}(X \Rightarrow Y) = \mathrm{supp}(X \cup Y), \qquad
+    \mathrm{conf}(X \Rightarrow Y) = \frac{\mathrm{supp}(X \cup Y)}{\mathrm{supp}(X)}
+    \]
+  - |-
+    \textbf{Lift} membandingkan \emph{confidence} dengan support ruas kanan:
+    \[
+    \mathrm{lift}(X \Rightarrow Y) = \frac{\mathrm{conf}(X \Rightarrow Y)}{\mathrm{supp}(Y)}
+     = \frac{\mathrm{supp}(X \cup Y)}{\mathrm{supp}(X)\,\mathrm{supp}(Y)}
+    \]
+    $\mathrm{lift} = 1$ berarti $X$ dan $Y$ muncul bersamaan persis sesering yang diharapkan bila keduanya bebas; $> 1$ berarti saling menguatkan; $< 1$ berarti saling meniadakan.
+    \end{kotakrumus}
+  - |-
+    \begin{kotakperhatian}[Mengapa confidence saja menyesatkan]
+    \emph{Confidence} tidak memperhitungkan seberapa laris ruas kanannya. Bila 60\% transaksi memuat air mineral, maka aturan apa pun $\Rightarrow$ air mineral akan ber-\emph{confidence} sekitar 0{,}60 tanpa memuat informasi apa pun. Aturan semacam itu \emph{terlihat} kuat padahal \emph{lift}-nya mendekati 1. Karena itu \textbf{lift wajib dilaporkan bersama confidence}.
+    \end{kotakperhatian}
+  - '## Sifat Apriori dan Dua Algoritma'
+  - |-
+    \begin{kotakrumus}
+    \textbf{Sifat Apriori (anti-monoton).} Bila $X$ sering muncul, maka setiap himpunan bagiannya juga sering muncul. Kontraposisinya yang dipakai: bila $X$ \emph{tidak} sering muncul, maka setiap superhimpunannya pasti tidak sering muncul --- sehingga seluruh cabang itu dapat dipangkas tanpa diperiksa.
+    \end{kotakrumus}
+  - '**Apriori** bekerja per tingkat: cari 1-itemset yang sering, gabungkan menjadi calon 2-itemset, hitung
+    support-nya dengan menyapu basis data, dan seterusnya. Ia menyapu data berulang kali tetapi hemat
+    memori.'
+  - '**Eclat** memakai penyajian **vertikal**: tiap barang disimpan sebagai daftar id transaksi yang memuatnya.
+    Support gabungan dua himpunan diperoleh dengan **mengiriskan** kedua daftar itu, tanpa menyapu ulang
+    data. Ia lebih cepat pada data yang tidak terlalu besar, tetapi lebih boros memori.'
+  - Keduanya menyelesaikan masalah yang sama sehingga **hasilnya identik**; yang berbeda hanya cara mencapainya.
+  - '## Frequent, Closed, dan Maximal'
+  - |-
+    \begin{kotakrumus}
+    Himpunan $X$ yang sering muncul disebut:
+    \begin{itemize}
+    \item \textbf{closed} bila tidak ada superhimpunan langsung yang \emph{support}-nya sama;
+    \item \textbf{maximal} bila tidak ada superhimpunan yang juga sering muncul.
+    \end{itemize}
+    Berlaku: maximal $\subseteq$ closed $\subseteq$ frequent. Himpunan \emph{closed} memampatkan hasil \textbf{tanpa kehilangan informasi support}; \emph{maximal} memampatkan lebih jauh tetapi support himpunan bagiannya tidak lagi dapat dipulihkan.
+    \end{kotakrumus}
+  - '## Aturan Redundan'
+  - Aturan $X \Rightarrow Y$ disebut **redundan** bila ada aturan yang lebih sederhana --- ruas kirinya
+    himpunan bagian --- dengan *confidence* yang sama atau lebih tinggi. Menyajikan keduanya membuat laporan
+    panjang tanpa menambah pengetahuan.
+  - '## Ukuran Tambahan'
+  - |-
+    \begin{kotakrumus}
+    \textbf{Leverage} $= \mathrm{supp}(X \cup Y) - \mathrm{supp}(X)\mathrm{supp}(Y)$: selisih mutlak terhadap keadaan bebas; berguna karena \emph{lift} tinggi pada himpunan yang sangat jarang bisa menyesatkan.
+  - '\textbf{Conviction} $= \dfrac{1 - \mathrm{supp}(Y)}{1 - \mathrm{conf}(X \Rightarrow Y)}$: seberapa
+    sering aturan akan keliru bila $X$ dan $Y$ bebas. Bernilai $\infty$ bila \emph{confidence} tepat 1.'
+  - |-
+    \textbf{Uji Fisher} memberi nilai-$p$ bagi hipotesis bahwa $X$ dan $Y$ bebas --- berguna, tetapi \textbf{harus} dikoreksi terhadap pengujian ganda karena ribuan aturan diuji sekaligus.
+    \end{kotakrumus}
+  - |-
+    \begin{kotaktujuan}
+    \textbf{Alur praktikum Modul 11}
+    \begin{enumerate}
+    \item Membaca data transaksi dan memeriksa ringkasannya.
+    \item Menambang himpunan sering muncul dengan Apriori; memampatkannya menjadi closed dan maximal.
+    \item Membandingkan Apriori dan Eclat.
+    \item Membentuk aturan, mengurutkan menurut lift, dan menafsirkannya.
+    \item Memperagakan jebakan confidence tinggi dengan lift sekitar satu.
+    \item Memangkas aturan redundan dan menilai dengan ukuran tambahan.
+    \item Menelusuri pengaruh ambang support, termasuk pada barang langka.
+    \item Menaikkan analisis ke tingkat kategori barang.
+    \item Menerapkannya pada kasus statistik resmi: kejadian bersama indikator keterbatasan rumah tangga.
+    \end{enumerate}
+    \end{kotaktujuan}
+  latihan:
+  - \latihan{Menyiapkan data dan menelaah frekuensi}
+  - Kerjakan dengan data yang sama.
+  - |-
+    (a) Baca ulang `data/transaksi_ritel.csv` menjadi objek `transactions`, lalu laporkan banyaknya transaksi, banyaknya barang, dan sebaran ukuran keranjang.
+    (b) Hitung support tiap barang. Berapa banyak barang yang support-nya di bawah 0{,}10?
+    (c) Gambar diagram batang sepuluh barang dengan support **terendah**. Barang mana yang paling langka, dan apa akibatnya bagi penambangan pada ambang 5\%?
+  - \latihan{Menambang dan memampatkan himpunan sering muncul}
+  - |-
+    (a) Tambang himpunan sering muncul pada ambang support 0{,}03; laporkan cacahnya menurut ukuran himpunan.
+    (b) Hitung berapa yang *closed* dan berapa yang *maximal*. Berapa persen pemampatan yang diberikan masing-masing?
+    (c) Jalankan `eclat()` pada ambang yang sama, lalu buktikan hasilnya identik dengan Apriori. Jelaskan mengapa demikian.
+  - \latihan{Membentuk dan menyaring aturan}
+  - |-
+    (a) Bentuk aturan pada support 0{,}02 dan confidence 0{,}6. Berapa banyak yang diperoleh, dan berapa yang redundan?
+    (b) Setelah dipangkas, tampilkan sepuluh aturan ber-*lift* tertinggi. Bandingkan dengan sepuluh aturan ber-*confidence* tertinggi --- berapa yang beririsan, dan apa artinya?
+    (c) Saring aturan yang ruas kanannya `susu`. Aturan mana yang ber-*leverage* tertinggi, dan mengapa itu berbeda dari yang ber-*lift* tertinggi?
+  - \latihan{Membetulkan kode yang salah}
+  - Kode berikut memuat **empat kesalahan**; temukan, perbaiki, jalankan versi yang benar, dan jelaskan
+    akibat tiap kesalahan bagi kesimpulan bisnis.
+  - \kode{kode yang harus dibetulkan}
+  - |-
+    ```{r lat-salah, eval=FALSE}
+    trx <- read.csv("data/transaksi_ritel.csv")                       # (1)
+    r <- apriori(trx, parameter = list(support = 0.001, confidence = 0.9))   # (2)
+    inspect(head(sort(r, by = "confidence"), 10))                     # (3)
+    # "aturan teratas berconfidence 0,95: pelanggan yang membeli X PASTI membeli Y,
+    #  jadi promosi X akan menaikkan penjualan Y"                     # (4)
+    ```
+  - 'Petunjuk: satu baris membaca data sebagai `data.frame` biasa, bukan `transactions`; satu baris memakai
+    ambang support yang teramat rendah tanpa alasan; satu baris mengurutkan menurut ukuran yang keliru;
+    dan satu kesimpulan menarik klaim sebab-akibat dari aturan asosiasi.'
+  penugasan:
+  - |-
+    \begin{kotaktugas}
+    \textbf{Konteks: Penataan Rak dan Paket Promosi}
+  - |-
+    Sebuah jaringan ritel meminta Anda menyusun \textbf{usulan penataan rak dan paket promosi} berdasarkan 1.200 transaksi yang tersedia. Manajemen meminta usulan yang \textbf{sedikit tetapi berdasar}, bukan daftar panjang aturan. Anda berperan sebagai analis data yang menyusun laporannya.
+    \end{kotaktugas}
+  - \tugas{Penyiapan dan penelaahan}
+  - |-
+    1. Baca data transaksi; laporkan banyaknya transaksi, barang, dan sebaran ukuran keranjang.
+    2. Tampilkan support seluruh barang. Tetapkan ambang support **beserta alasannya**, dinyatakan sebagai cacah minimum transaksi yang Anda anggap layak menjadi dasar keputusan.
+  - \tugas{Penambangan dan pemangkasan}
+  - |-
+    3. Tambang himpunan sering muncul pada ambang yang Anda tetapkan; laporkan cacahnya menurut ukuran, serta berapa yang *closed* dan *maximal*.
+    4. Bentuk aturan asosiasi; laporkan banyaknya sebelum dan sesudah pemangkasan redundansi.
+    5. Sajikan sepuluh aturan terbaik menurut **lift**, lengkap dengan support, confidence, lift, leverage, dan cacah pendukung.
+  - \tugas{Penilaian dan penyaringan}
+  - |-
+    6. Tunjukkan **satu** aturan ber-confidence tinggi tetapi ber-lift mendekati 1, lalu jelaskan mengapa aturan itu tidak layak dipakai.
+    7. Bandingkan urutan menurut *lift* dan menurut *leverage*. Bila keduanya berbeda, aturan mana yang Anda usulkan untuk ditindaklanjuti, dan mengapa?
+    8. Lakukan analisis pada tingkat **kategori**, lalu bandingkan temuannya dengan tingkat barang. Pola apa yang muncul dan pola apa yang hilang?
+  - \tugas{Usulan dan keterbatasan}
+  - |-
+    9. Susun **tiga** usulan konkret --- penataan rak atau paket promosi --- masing-masing disertai aturan pendukung beserta angkanya, dan perkiraan dampaknya berdasarkan *leverage*.
+    10. Tulis bagian **keterbatasan** (maksimal 250 kata) yang memuat sekurang-kurangnya: sifat asosiatif (bukan sebab-akibat) temuan ini; pengaruh pilihan ambang; risiko pengujian ganda; dan bahwa data bersifat simulasi.
+  - |-
+    \begin{kotakinfo}
+    \textbf{Ketentuan Pengumpulan}
+    \begin{itemize}
+    \item Berkas \texttt{.Rmd} beserta hasil cetak \texttt{PDF}, dinamai \texttt{Tugas11\_NIM\_Nama}.
+    \item Setiap keluaran R wajib disertai interpretasi dengan kalimat sendiri.
+    \item Seluruh \emph{chunk} harus dapat dijalankan ulang dari awal tanpa galat.
+    \end{itemize}
+    \end{kotakinfo}
+  - '## Rubrik Penilaian'
+  - |-
+    | Komponen | Indikator | Bobot |
+    |:---------|:----------|:-----:|
+    | Ketepatan analisis | Kebenaran penyiapan data, penambangan, dan pemangkasan | 30% |
+    | Penetapan ambang | Ambang ditetapkan lebih dahulu dan beralasan | 15% |
+    | Ketepatan interpretasi | Lift dibaca bersama support; jebakan confidence dikenali; kausalitas tidak diklaim | 30% |
+    | Mutu usulan | Usulan sedikit, konkret, dan didukung angka | 15% |
+    | Ketepatan waktu | Dikumpulkan sesuai tenggat | 10% |
+  ringkasan:
+  - |-
+    \begin{kotaktujuan}
+    \textbf{Daftar periksa penguasaan Modul 11}
+    \begin{itemize}
+    \item[$\square$] Saya dapat membaca data transaksi dan menjelaskan mengapa ia disimpan sebagai matriks jarang.
+    \item[$\square$] Saya dapat menghitung dan menafsirkan support, confidence, dan lift.
+    \item[$\square$] Saya dapat menjelaskan sifat anti-monoton dan perannya pada Apriori.
+    \item[$\square$] Saya dapat membedakan himpunan frequent, closed, dan maximal.
+    \item[$\square$] Saya dapat menjelaskan mengapa Apriori dan Eclat memberi hasil sama.
+    \item[$\square$] Saya dapat mengenali aturan ber-confidence tinggi tetapi ber-lift sekitar satu.
+    \item[$\square$] Saya dapat memangkas aturan redundan dan menjelaskan alasannya.
+    \item[$\square$] Saya dapat membedakan lift dan leverage serta memilih yang sesuai kebutuhan.
+    \item[$\square$] Saya dapat menjelaskan pengaruh ambang support, termasuk pada barang langka.
+    \end{itemize}
+    \end{kotaktujuan}
+  - '**Ringkasan fungsi R:**'
+  - |-
+    | Fungsi | Kegunaan |
+    |:-------|:---------|
+    | `read.transactions()` | membaca data transaksi (bentuk `single` atau `basket`) |
+    | `itemFrequency()`, `size()` | support tiap barang; ukuran tiap keranjang |
+    | `apriori()` | menambang himpunan sering muncul atau aturan |
+    | `eclat()` | menambang himpunan sering muncul dengan penyajian vertikal |
+    | `is.closed()`, `is.maximal()` | memampatkan himpunan sering muncul |
+    | `is.redundant()` | menandai aturan yang tidak menambah pengetahuan |
+    | `interestMeasure()` | leverage, conviction, uji Fisher, dan ukuran lain |
+    | `subset()`, `sort()`, `inspect()` | menyaring, mengurutkan, dan menampilkan aturan |
+    | `aggregate(trx, by=)` | menaikkan analisis ke tingkat kategori |
+  - '## Daftar Istilah'
+  - |-
+    \begin{kotakistilah}
+    \textbf{Transaksi} (\emph{transaction}) --- himpunan barang yang muncul bersamaan pada satu kejadian.
+  - \textbf{Himpunan barang} (\emph{itemset}) --- himpunan bagian dari seluruh barang; $k$-itemset bila
+    beranggota $k$.
+  - \textbf{Support} --- proporsi transaksi yang memuat suatu himpunan.
+  - \textbf{Confidence} --- peluang bersyarat ruas kanan bila ruas kiri hadir.
+  - \textbf{Lift} --- nisbah confidence terhadap support ruas kanan; 1 berarti tidak ada kaitan.
+  - \textbf{Leverage} --- selisih mutlak support gabungan terhadap keadaan bebas.
+  - \textbf{Conviction} --- seberapa sering aturan akan keliru bila kedua ruas bebas.
+  - \textbf{Sifat anti-monoton} (\emph{apriori property}) --- himpunan bagian dari himpunan yang sering
+    muncul pasti juga sering muncul.
+  - \textbf{Closed itemset} --- tidak ada superhimpunan langsung yang support-nya sama.
+  - \textbf{Maximal itemset} --- tidak ada superhimpunan yang juga sering muncul.
+  - |-
+    \textbf{Aturan redundan} --- aturan yang confidence-nya tidak melampaui aturan lain yang ruas kirinya lebih sederhana.
+    \end{kotakistilah}
+  referensi:
+  - |-
+    1. Agrawal, R., Imieliński, T., & Swami, A. (1993). Mining association rules between sets of items in large databases. *Proceedings of ACM SIGMOD*, 207--216.
+    2. Agrawal, R. & Srikant, R. (1994). Fast algorithms for mining association rules. *Proceedings of VLDB*, 487--499.
+    3. Zaki, M. J. (2000). Scalable algorithms for association mining. *IEEE Transactions on Knowledge and Data Engineering*, 12(3), 372--390.
+    4. Tan, P.-N., Steinbach, M., Karpatne, A., & Kumar, V. (2019). *Introduction to Data Mining*, 2nd ed. Pearson. (Bab 5)
+    5. Hahsler, M., Grün, B., & Hornik, K. (2005). arules --- A computational environment for mining association rules and frequent item sets. *Journal of Statistical Software*, 14(15).
+    6. Han, J., Pei, J., & Tong, H. (2022). *Data Mining: Concepts and Techniques*, 4th ed. Morgan Kaufmann.
+  contoh:
+  - contoh: Membaca data transaksi dan memeriksa ringkasannya
+    narasi: |-
+      \kode{membaca bentuk panjang menjadi objek transactions}
+
+      ```{r baca}
+      trx <- read.transactions("data/transaksi_ritel.csv", format = "single", sep = ",",
+                               header = TRUE, cols = c("id_transaksi", "item"), quote = "\"")
+      trx
+      cat("banyak transaksi:", nrow(trx), " banyak barang:", ncol(trx), "\n")
+      summary(size(trx))
+      inspect(head(trx, 3))
+      ```
+
+      \begin{kotakinterpretasi}
+      Data memuat \textbf{1.200 transaksi} atas \textbf{20 jenis barang}. Isi keranjang berkisar 1 sampai 12 barang dengan median 4 --- sebaran yang khas pada data ritel: banyak keranjang kecil, sedikit keranjang besar.
+
+      Perhatikan bentuk penyimpanannya. Objek \texttt{transactions} disimpan sebagai matriks jarang (\emph{sparse}): hanya kehadiran yang dicatat. Bila 1.200 transaksi ini disimpan sebagai matriks 0/1 biasa berukuran $1.200 \times 20$, sebagian besar selnya bernilai nol --- dan pada data nyata dengan puluhan ribu barang, penyimpanan padat tidak akan muat di memori. Inilah alasan \texttt{arules} memakai kelas datanya sendiri, bukan \texttt{data.frame}.
+      \end{kotakinterpretasi}
+  - contoh: Melihat barang yang paling sering dibeli
+    narasi: |-
+      \kode{frekuensi relatif tiap barang}
+
+      ```{r frekuensi, fig.cap="Sepuluh barang dengan support tertinggi", fig.width=7, fig.height=3.6, out.width="82%"}
+      frek <- sort(itemFrequency(trx), decreasing = TRUE)
+      round(frek[1:10], 3)
+
+      par(mar = c(8, 4, 2, 1), family = "sans")
+      barplot(frek[1:10], las = 2, col = "#0B6FB4", border = NA,
+              ylab = "support (proporsi transaksi)")
+      abline(h = 0.05, lty = 2, col = "#F58220")
+      ```
+
+      \begin{kotakinterpretasi}
+      \texttt{air\_mineral} muncul pada \textbf{60,4\%} transaksi --- jauh di atas barang lain (beras 30,4\%; gula 29,3\%; susu 28,5\%). Barang selaris ini akan menjadi sumber masalah pada penafsiran \emph{confidence}, sebagaimana diperagakan pada Contoh 11.7.
+
+      Garis putus-putus menandai ambang support 5\% yang akan dipakai nanti. Seluruh sepuluh barang teratas melampauinya, sehingga tidak ada yang tersaring pada tingkat 1-itemset.
+      \end{kotakinterpretasi}
+  - contoh: Menambang himpunan barang yang sering muncul
+    narasi: |-
+      \kode{Apriori dengan target frequent itemsets}
+
+      ```{r apriori-itemset}
+      fis <- apriori(trx, parameter = list(support = 0.05, target = "frequent itemsets",
+                                           minlen = 1),
+                     control = list(verbose = FALSE))
+      cat("banyak himpunan sering muncul:", length(fis), "\n")
+      table(ukuran = size(fis))
+      inspect(head(sort(fis, by = "support"), 5))
+      inspect(head(sort(fis[size(fis) >= 2], by = "support"), 5))
+      ```
+
+      \begin{kotakinterpretasi}
+      Pada ambang support 5\% ditemukan \textbf{103} himpunan sering muncul: 20 himpunan berukuran satu (yakni seluruh barang --- tidak ada yang tersaring), 75 berukuran dua, dan 8 berukuran tiga. Tidak ada himpunan berukuran empat yang melampaui ambang.
+
+      Pola berbentuk piramida terbalik ini khas: makin besar himpunan, makin kecil support-nya --- konsekuensi langsung sifat anti-monoton. Himpunan berpasangan yang paling sering muncul melibatkan \texttt{air\_mineral}, sekali lagi karena barang itu memang laris, bukan karena ada kaitan khusus.
+      \end{kotakinterpretasi}
+  - contoh: 'Memampatkan hasil: closed dan maximal'
+    narasi: |-
+      \kode{is.closed dan is.maximal}
+
+      ```{r closed-maximal}
+      closed  <- fis[is.closed(fis)]
+      maximal <- fis[is.maximal(fis)]
+      cat("frequent:", length(fis), " closed:", length(closed),
+          " maximal:", length(maximal), "\n")
+      inspect(head(sort(maximal, by = "support"), 5))
+      ```
+
+      \begin{kotakinterpretasi}
+      Dari 103 himpunan sering muncul, \textbf{seluruhnya closed} dan \textbf{68 maximal}. Bahwa jumlah closed sama dengan jumlah frequent memberi tahu sesuatu: tidak ada himpunan yang support-nya persis sama dengan superhimpunannya. Itu wajar pada data simulasi dengan keacakan tinggi; pada data nyata --- misalnya barang yang selalu dibeli berpasangan --- pemampatan closed bisa jauh lebih besar.
+
+      Himpunan maximal memampatkan dari 103 menjadi 68. Harganya: support himpunan bagian tidak lagi tercatat. Bila yang diperlukan hanya \emph{daftar} pola terbesar, maximal memadai; bila support tiap himpunan bagian masih diperlukan --- misalnya untuk menghitung \emph{confidence} --- pakailah closed.
+      \end{kotakinterpretasi}
+  - contoh: Apriori dan Eclat memberi hasil yang sama
+    narasi: |-
+      \kode{membandingkan kedua algoritma}
+
+      ```{r eclat}
+      fis2 <- apriori(trx, parameter = list(support = 0.05, target = "frequent itemsets",
+                                            minlen = 2),
+                      control = list(verbose = FALSE))
+      ecl  <- eclat(trx, parameter = list(support = 0.05, minlen = 2),
+                    control = list(verbose = FALSE))
+
+      cat("apriori:", length(fis2), " eclat:", length(ecl), "\n")
+      cat("himpunan yang ditemukan identik:", setequal(labels(fis2), labels(ecl)), "\n")
+
+      banding <- merge(data.frame(itemset = labels(fis2), supp_apriori = quality(fis2)$support),
+                       data.frame(itemset = labels(ecl),  supp_eclat   = quality(ecl)$support),
+                       by = "itemset")
+      cat("selisih support terbesar:", max(abs(banding$supp_apriori - banding$supp_eclat)), "\n")
+      ```
+
+      \begin{kotakinterpretasi}
+      Kedua algoritma menemukan \textbf{83 himpunan yang persis sama} dengan support yang sama pula (selisih nol). Ini bukan kebetulan: keduanya menyelesaikan masalah yang sama secara \emph{eksak}, sehingga perbedaan hasil hanya mungkin terjadi bila ambangnya berbeda.
+
+      Yang membedakan adalah cara mencapainya --- dan itu berdampak pada sumber daya, bukan pada jawaban. Apriori menyapu data berulang kali (hemat memori, banyak I/O); Eclat mengiriskan daftar id transaksi (sedikit I/O, boros memori). Pada data yang muat di memori, Eclat lazimnya lebih cepat; pada data yang jauh lebih besar daripada memori, pendekatan Apriori atau FP-Growth lebih sesuai. Pemilihan algoritma karena itu adalah keputusan \textbf{rekayasa}, bukan keputusan statistik.
+      \end{kotakinterpretasi}
+  - contoh: Membentuk aturan asosiasi dan mengurutkannya menurut lift
+    narasi: |-
+      \kode{apriori dengan target rules}
+
+      ```{r aturan}
+      aturan <- apriori(trx, parameter = list(support = 0.02, confidence = 0.5, minlen = 2),
+                        control = list(verbose = FALSE))
+      cat("banyak aturan:", length(aturan), "\n")
+      inspect(head(sort(aturan, by = "lift"), 8))
+      ```
+
+      \begin{kotakinterpretasi}
+      Dari 1.200 transaksi diperoleh \textbf{162 aturan} pada ambang support 2\% dan confidence 0{,}5. Delapan aturan ber-\emph{lift} tertinggi seluruhnya masuk akal dan --- yang lebih penting --- \textbf{seluruhnya merupakan kaitan yang sengaja ditanam} saat pembangkitan data:
+
+      \begin{itemize}
+      \item \texttt{\{gula, popok\} $\Rightarrow$ \{susu\}} --- confidence 1{,}000, lift 3{,}51
+      \item \texttt{\{popok\} $\Rightarrow$ \{susu\}} --- confidence 0{,}889, lift 3{,}12
+      \item \texttt{\{kopi, teh\} $\Rightarrow$ \{gula\}} --- confidence 0{,}905, lift 3{,}08
+      \item \texttt{\{keju\} $\Rightarrow$ \{roti\}} --- confidence 0{,}794, lift 2{,}82
+      \end{itemize}
+
+      Algoritma berhasil menemukan kembali pola yang ditanam --- itulah gunanya bekerja dengan data simulasi berpola diketahui: kita dapat memeriksa apakah alatnya bekerja sebagaimana mestinya sebelum memakainya pada data yang polanya tidak diketahui.
+
+      Perhatikan aturan pertama: confidence \textbf{1,000} berarti setiap transaksi yang memuat gula dan popok pasti memuat susu. Angka sempurna semacam ini pada data nyata hampir selalu patut dicurigai --- bisa jadi berasal dari cacah yang sangat kecil. Support-nya 0{,}023, yakni hanya \textbf{28 transaksi}. Contoh 11.9 membahas hal ini.
+      \end{kotakinterpretasi}
+  - contoh: 'Jebakan: confidence tinggi dengan lift sekitar satu'
+    narasi: |-
+      \kode{menyaring aturan yang ruas kanannya barang terlaris}
+
+      ```{r jebakan}
+      aturan_air <- subset(aturan, rhs %in% "air_mineral")
+      cat("aturan yang menyimpulkan air_mineral:", length(aturan_air), "\n")
+      inspect(head(sort(aturan_air, by = "confidence"), 5))
+      cat("\nsupport air_mineral:", round(itemFrequency(trx)["air_mineral"], 4), "\n")
+      ```
+
+      \begin{kotakinterpretasi}
+      Lima aturan ini ber-\emph{confidence} \textbf{0,70 sampai 0,72} --- lebih tinggi daripada kebanyakan aturan pada Contoh 11.6. Seorang analis yang mengurutkan aturan menurut \emph{confidence} akan menempatkannya di puncak daftar dan menyimpulkan, misalnya, bahwa pembeli beras dan deterjen "cenderung kuat" membeli air mineral.
+
+      Kesimpulan itu \textbf{keliru}. Support air mineral adalah 0{,}604 --- artinya 60\% transaksi memuatnya \emph{tanpa syarat apa pun}. Confidence 0{,}72 hanya sedikit di atas angka itu, dan \emph{lift}-nya memperlihatkannya: \textbf{1,16 sampai 1,20} --- praktis tidak ada kaitan. Bandingkan dengan lift 3{,}51 pada aturan yang benar-benar bermakna.
+
+      Terjemahan bisnisnya tegas: menaruh air mineral di dekat beras tidak akan menaikkan penjualan, sebab orang membeli air mineral memang karena air mineral. Kaidahnya: \textbf{urutkan menurut lift, bukan confidence}, dan selalu bandingkan confidence dengan support ruas kanannya.
+      \end{kotakinterpretasi}
+  - contoh: Memangkas aturan redundan
+    narasi: |-
+      \kode{is.redundant}
+
+      ```{r redundan}
+      cat("sebelum:", length(aturan), " redundan:", sum(is.redundant(aturan)), "\n")
+      aturan_bersih <- aturan[!is.redundant(aturan)]
+      cat("setelah dipangkas:", length(aturan_bersih), "\n")
+
+      contoh_redundan <- aturan[is.redundant(aturan)]
+      inspect(head(sort(contoh_redundan, by = "lift"), 3))
+      ```
+
+      \begin{kotakinterpretasi}
+      Dari 162 aturan, \textbf{76 di antaranya redundan} --- hampir separuh. Setelah dipangkas tersisa \textbf{86 aturan}.
+
+      Contoh yang lazim: bila \texttt{\{popok\} $\Rightarrow$ \{susu\}} sudah ber-confidence 0{,}889, maka \texttt{\{popok, biskuit\} $\Rightarrow$ \{susu\}} yang ber-confidence serupa tidak menambah pengetahuan --- biskuit tidak memberi sumbangan apa pun; ia hanya menumpang pada kaitan popok--susu.
+
+      Pemangkasan ini bukan sekadar merapikan tampilan. Laporan yang memuat 162 aturan menyembunyikan temuan sesungguhnya di antara pengulangan, dan pembaca dapat keliru menyangka ada 162 pola berbeda padahal hanya ada beberapa puluh.
+      \end{kotakinterpretasi}
+  - contoh: Menilai kebermaknaan dengan ukuran tambahan
+    narasi: |-
+      \kode{leverage, conviction, dan uji Fisher}
+
+      ```{r ukuran-tambahan}
+      lima <- head(sort(aturan_bersih, by = "lift"), 5)
+      tambahan <- interestMeasure(lima, c("support", "confidence", "lift", "leverage",
+                                          "conviction", "fishersExactTest"), trx)
+      hasil <- cbind(aturan = labels(lima), round(tambahan, 4))
+      print(hasil, row.names = FALSE)
+      cat("\ncacah transaksi pendukung:", quality(lima)$count, "\n")
+      ```
+
+      \begin{kotakinterpretasi}
+      Kelima ukuran menceritakan hal yang berbeda dan sebaiknya dibaca bersama.
+
+      \textbf{Lift} tertinggi (3{,}51) dimiliki \texttt{\{gula, popok\} $\Rightarrow$ \{susu\}}, tetapi \textbf{leverage}-nya justru \emph{terkecil} (0{,}0167). Sebabnya: leverage mengukur selisih \textbf{mutlak} terhadap keadaan bebas, sehingga aturan yang hanya didukung 28 transaksi tidak dapat memberi selisih besar. Bandingkan \texttt{\{popok\} $\Rightarrow$ \{susu\}} yang lift-nya lebih rendah (3{,}12) tetapi leverage-nya lebih dari dua kali lipat (0{,}0408) karena didukung 72 transaksi.
+
+      Bagi keputusan bisnis, \textbf{leverage lebih relevan} --- ia mendekati banyaknya transaksi tambahan yang dapat diharapkan. Lift menjawab "seberapa kuat kaitannya"; leverage menjawab "seberapa besar dampaknya".
+
+      \textbf{Conviction} bernilai $\infty$ pada aturan berconfidence 1 --- akibat pembagian dengan nol pada rumusnya, dan itu petunjuk bahwa aturannya berdasar cacah kecil.
+
+      \textbf{Uji Fisher} memberi nilai-$p$ praktis nol untuk kelimanya. Angka itu harus dibaca hati-hati: ratusan aturan diuji sekaligus, sehingga tanpa koreksi pengujian ganda (misalnya Bonferroni atau kendali FDR) sebagian nilai-$p$ kecil pasti muncul dari kebetulan. Nilai-$p$ di sini berguna untuk \emph{menyaring}, bukan untuk \emph{membuktikan}.
+      \end{kotakinterpretasi}
+  - contoh: Pengaruh ambang support
+    narasi: |-
+      \kode{menelusuri empat ambang}
+
+      ```{r ambang, fig.cap="Banyaknya himpunan sering muncul dan aturan menurut ambang support", fig.width=6.4, fig.height=3.4, out.width="76%"}
+      ambang <- c(0.10, 0.05, 0.02, 0.01)
+      telusur <- t(sapply(ambang, function(s) {
+        f <- apriori(trx, parameter = list(support = s, target = "frequent itemsets"),
+                     control = list(verbose = FALSE))
+        a <- apriori(trx, parameter = list(support = s, confidence = 0.5, minlen = 2),
+                     control = list(verbose = FALSE))
+        c(support = s, itemsets = length(f), aturan = length(a))
+      }))
+      print(telusur, row.names = FALSE)
+
+      par(family = "sans", mar = c(4, 4, 1, 1))
+      plot(telusur[, "support"], telusur[, "itemsets"], type = "b", pch = 19, lwd = 2,
+           log = "y", col = "#0B6FB4", xlab = "ambang support", ylab = "cacah (skala log)")
+      lines(telusur[, "support"], telusur[, "aturan"], type = "b", pch = 17, lty = 2,
+            col = "#F58220")
+      legend("topright", c("himpunan sering", "aturan"), bty = "n",
+             col = c("#0B6FB4", "#F58220"), lty = 1:2, pch = c(19, 17))
+      ```
+
+      \begin{kotakinterpretasi}
+      Menurunkan ambang support dari 0{,}10 ke 0{,}01 menaikkan himpunan sering muncul dari \textbf{33} menjadi \textbf{869} --- dua puluh enam kali lipat --- dan aturan dari \textbf{14} menjadi \textbf{456}. Pertumbuhannya jauh lebih cepat daripada linear; perhatikan sumbu tegak berskala logaritma.
+
+      Inilah pertukaran pokok pada penambangan aturan asosiasi. Ambang tinggi memberi sedikit aturan yang seluruhnya berdasar cacah besar, tetapi \textbf{membutakan kita terhadap pola pada barang langka}. Ambang rendah menemukan pola langka itu, tetapi menghasilkan ribuan aturan yang sebagian besar kebetulan --- dan menyaringnya menjadi pekerjaan tersendiri.
+
+      Kaidah praktis: tetapkan ambang dari \textbf{cacah minimum yang bermakna}, bukan dari proporsi. Bila keputusan baru layak diambil atas dasar minimal 30 transaksi, maka pada $n = 1.200$ ambangnya $30/1200 = 0{,}025$. Cara ini memaksa alasannya dinyatakan.
+      \end{kotakinterpretasi}
+  - contoh: 'Barang langka: menurunkan ambang secara terarah'
+    narasi: |-
+      \kode{menambang pola khusus popok}
+
+      ```{r langka}
+      cat("support popok:", round(itemFrequency(trx)["popok"], 4), "\n")
+
+      aturan_langka <- apriori(trx, parameter = list(support = 0.01, confidence = 0.5,
+                                                     minlen = 2),
+                               control = list(verbose = FALSE))
+      pola_popok <- subset(aturan_langka, lhs %in% "popok" & rhs %in% "susu")
+      pola_popok <- pola_popok[!is.redundant(pola_popok)]
+      cat("aturan popok -> susu setelah dipangkas:", length(pola_popok), "\n")
+      inspect(sort(pola_popok, by = "lift"))
+      ```
+
+      \begin{kotakinterpretasi}
+      Popok hanya muncul pada \textbf{6,75\%} transaksi --- barang langka. Pada ambang support 5\% (Contoh 11.3), pola apa pun yang melibatkan popok bersama barang lain akan tersaring habis, padahal kaitan popok--susu adalah salah satu yang \textbf{paling kuat} dalam data ini (lift 3{,}12).
+
+      Setelah ambang diturunkan ke 1\% dan aturan redundan dipangkas, tersisa aturan inti \texttt{\{popok\} $\Rightarrow$ \{susu\}}. Perhatikan bahwa pemangkasan redundansi bekerja persis sebagaimana diharapkan: puluhan aturan bertambahan barang lain --- biskuit, kopi, sabun --- lenyap karena tidak menambah apa pun atas aturan inti tersebut.
+
+      Pelajarannya: ambang support tunggal memperlakukan seluruh barang sama rata, padahal kepentingannya berbeda. Popok bermarjin tinggi dan pembelinya berpola khas; melewatkannya karena ambang yang seragam adalah kerugian nyata. Penanganan yang lazim: menambang dua kali --- sekali dengan ambang umum, sekali dengan ambang rendah yang \textbf{dibatasi} pada barang yang memang menjadi perhatian.
+      \end{kotakinterpretasi}
+  - contoh: Menaikkan analisis ke tingkat kategori
+    narasi: |-
+      \kode{agregasi barang menjadi kategori}
+
+      ```{r kategori}
+      ket <- read.csv("data/keterangan_barang.csv", stringsAsFactors = FALSE)
+      itemInfo(trx)$kategori <- ket$kategori[match(itemInfo(trx)$labels, ket$item)]
+      head(itemInfo(trx), 4)
+
+      trx_kat <- aggregate(trx, by = "kategori")
+      cat("banyak kategori:", ncol(trx_kat), "\n")
+      round(sort(itemFrequency(trx_kat), decreasing = TRUE), 3)
+
+      aturan_kat <- apriori(trx_kat, parameter = list(support = 0.05, confidence = 0.5,
+                                                      minlen = 2),
+                            control = list(verbose = FALSE))
+      aturan_kat <- aturan_kat[!is.redundant(aturan_kat)]
+      cat("aturan tingkat kategori:", length(aturan_kat), "\n")
+      inspect(head(sort(aturan_kat, by = "lift"), 5))
+      ```
+
+      \begin{kotakinterpretasi}
+      Setelah 20 barang diringkas menjadi \textbf{5 kategori}, support tiap kategori melonjak --- sebuah kategori dianggap hadir bila \emph{salah satu} anggotanya dibeli. Akibatnya aturan pada tingkat kategori ber-support tinggi tetapi ber-\emph{lift} rendah: kategori yang luas hampir selalu muncul bersamaan.
+
+      Ini memperlihatkan pertukaran yang khas pada agregasi. Tingkat kategori memberi pola yang \textbf{stabil dan mudah diceritakan} kepada pimpinan, tetapi \textbf{menyembunyikan kaitan yang tajam}: kaitan popok--susu lenyap sepenuhnya karena keduanya melebur ke dalam Perawatan dan Minuman. Sebaliknya tingkat barang memberi kaitan tajam tetapi rapuh terhadap ambang.
+
+      Praktik yang baik pada laporan: sajikan \textbf{keduanya} --- pola kategori sebagai gambaran umum, dan sejumlah kecil aturan tingkat barang berdaya jelas tinggi sebagai temuan yang dapat ditindaklanjuti.
+      \end{kotakinterpretasi}
+
+      # Penerapan pada Statistik Resmi
+
+      \begin{kotakinfo}
+      \textbf{Kasus: Kejadian Bersama Indikator Keterbatasan Rumah Tangga}
+
+      Analisis keranjang belanja pada bagian sebelumnya memakai istilah ritel karena di situlah teknik ini lahir. Bentuk datanya --- kumpulan himpunan dengan panjang berbeda-beda --- sesungguhnya jauh lebih umum. Pada pendataan sosial-ekonomi, tiap rumah tangga dapat dipandang sebagai satu ``keranjang'' yang berisi \textbf{indikator keterbatasan} yang dialaminya: air tidak layak, sanitasi tidak layak, anak putus sekolah, pekerja informal, dan seterusnya.
+
+      Pertanyaannya menjadi sangat relevan bagi perencanaan program: \textbf{keterbatasan apa yang cenderung dialami bersamaan}? Jawabannya menentukan apakah program sebaiknya dirancang sektoral --- air sendiri, pendidikan sendiri --- atau sebagai paket terpadu bagi rumah tangga yang mengalami beberapa keterbatasan sekaligus.
+
+      Berkas \texttt{keterbatasan\_rt.csv} memuat 866 rumah tangga dengan 12 indikator. \textbf{Data ini ilustratif hasil simulasi}, dirancang menyerupai pola yang lazim dijumpai pada pendataan sosial-ekonomi --- bukan data resmi.
+      \end{kotakinfo}
+  - contoh: Membaca data keterbatasan dan menelaah sebarannya
+    narasi: |-
+      \kode{transaksi berisi indikator, bukan barang}
+
+      ```{r os-baca, fig.cap="Prevalensi tiap indikator keterbatasan", fig.width=7, fig.height=3.8, out.width="82%"}
+      rt <- read.transactions("data/keterbatasan_rt.csv", format = "single", sep = ",",
+                              header = TRUE, cols = c("id_rt", "indikator"), quote = "\"")
+      cat("rumah tangga:", nrow(rt), " indikator:", ncol(rt), "\n")
+      cat("rata-rata indikator per rumah tangga:", round(mean(size(rt)), 2), "\n")
+      table(banyak_indikator = size(rt))
+
+      round(sort(itemFrequency(rt), decreasing = TRUE), 3)
+
+      par(mar = c(11, 4, 2, 1), family = "sans")
+      barplot(sort(itemFrequency(rt), decreasing = TRUE), las = 2, col = "#0B6FB4",
+              border = NA, ylab = "prevalensi", cex.names = 0.75)
+      ```
+
+      \begin{kotakinterpretasi}
+      Sebanyak 866 rumah tangga mengalami sekurang-kurangnya satu keterbatasan, dengan rata-rata \textbf{3,71 indikator} per rumah tangga. Sebaran cacah indikator itu sendiri sudah informatif: sebagian rumah tangga hanya mengalami satu-dua keterbatasan, sebagian lain mengalami tujuh atau lebih. Kelompok kedua inilah sasaran program terpadu.
+
+      Prevalensi tertinggi dimiliki \texttt{pekerja\_informal} (59,7\%), disusul \texttt{tanpa\_jaminan\_kesehatan} (44,2\%) dan \texttt{tanpa\_tabungan} (42,8\%). Yang paling jarang adalah \texttt{anak\_putus\_sekolah} (7,5\%).
+
+      Perhatikan bahwa indikator dengan prevalensi tinggi akan menimbulkan persoalan yang sama seperti air mineral pada Contoh 11.7: aturan apa pun yang menyimpulkan \texttt{pekerja\_informal} akan ber-\emph{confidence} tinggi tanpa memuat informasi. Kaidah membaca \emph{lift} berlaku persis sama di sini.
+      \end{kotakinterpretasi}
+  - contoh: Menemukan kelompok keterbatasan yang saling berkaitan
+    narasi: |-
+      \kode{aturan sederhana satu indikator ke satu indikator}
+
+      ```{r os-aturan}
+      r1 <- apriori(rt, parameter = list(support = 0.05, confidence = 0.5,
+                                         minlen = 2, maxlen = 2),
+                    control = list(verbose = FALSE))
+      cat("aturan satu-ke-satu:", length(r1), "\n")
+      inspect(head(sort(r1, by = "lift"), 6))
+      ```
+
+      \begin{kotakinterpretasi}
+      Aturan sederhana --- satu indikator menyimpulkan satu indikator --- paling mudah disampaikan kepada pengguna data, dan di sini sudah cukup tajam. Tiga kelompok muncul dengan jelas:
+
+      \textbf{Kelompok energi rumah tangga.} \texttt{tanpa\_listrik\_memadai} $\Leftrightarrow$ \texttt{bahan\_bakar\_kayu} saling berkaitan dua arah dengan \emph{lift} \textbf{2,78}: rumah tangga yang listriknya terbatas cenderung memasak dengan kayu, dan sebaliknya.
+
+      \textbf{Kelompok permukiman.} \texttt{air\_tak\_layak} $\Rightarrow$ \texttt{sanitasi\_tak\_layak} ber-\emph{confidence} \textbf{0,780} dan \emph{lift} 2,31; arah sebaliknya ber-\emph{confidence} 0,572 dengan \emph{lift} yang sama. Perhatikan asimetri \emph{confidence} ini: 78\% rumah tangga berair tak layak juga bersanitasi tak layak, tetapi hanya 57\% yang sebaliknya --- sebab sanitasi tak layak lebih umum (33,7\%) daripada air tak layak (24,7\%).
+
+      \textbf{Kelompok pendidikan.} \texttt{anak\_putus\_sekolah} $\Rightarrow$ \texttt{kepala\_rt\_pendidikan\_rendah} ber-\emph{confidence} \textbf{0,892} dan \emph{lift} 2,56 --- hampir sembilan dari sepuluh rumah tangga dengan anak putus sekolah dikepalai orang berpendidikan rendah.
+
+      \textbf{Yang tidak boleh disimpulkan:} bahwa pendidikan rendah kepala rumah tangga \emph{menyebabkan} anak putus sekolah. Aturan ini simetris dalam hal kejadian bersama --- keduanya dapat sama-sama bersumber pada keadaan ekonomi, akses sekolah, atau faktor lain yang tidak terekam. Yang sah disimpulkan: keduanya \textbf{menumpuk pada rumah tangga yang sama}, sehingga program yang menyasar salah satunya akan menjumpai yang lain.
+      \end{kotakinterpretasi}
+  - contoh: 'Menelusuri indikator langka: anak putus sekolah'
+    narasi: |-
+      \kode{menurunkan ambang secara terarah}
+
+      ```{r os-langka}
+      cat("prevalensi anak_putus_sekolah:", round(itemFrequency(rt)["anak_putus_sekolah"], 4), "\n")
+
+      r_aps <- apriori(rt, parameter = list(support = 0.02, confidence = 0.5, minlen = 2),
+                       control = list(verbose = FALSE))
+      r_aps <- subset(r_aps, lhs %in% "anak_putus_sekolah")
+      r_aps <- r_aps[!is.redundant(r_aps)]
+      cat("aturan setelah dipangkas:", length(r_aps), "\n")
+      inspect(head(sort(r_aps, by = "lift"), 3))
+      ```
+
+      \begin{kotakinterpretasi}
+      Prevalensi anak putus sekolah hanya \textbf{7,5\%} --- indikator langka, persis keadaan yang dibahas pada Contoh 11.10. Pada ambang 5\%, kombinasi apa pun yang melibatkannya akan tersaring habis.
+
+      Setelah ambang diturunkan ke 2\% secara terarah, muncul pola yang tajam. Rumah tangga dengan anak putus sekolah yang \textbf{sekaligus} berpekerja informal, tanpa jaminan kesehatan, dan tanpa tabungan --- 18 rumah tangga --- \textbf{seluruhnya} dikepalai orang berpendidikan rendah (\emph{confidence} 1,000, \emph{lift} 2,87).
+
+      Angka \emph{confidence} sempurna itu wajib dibaca dengan hati-hati: ia berdasar \textbf{18 rumah tangga}. Untuk perencanaan program, cacah sekecil itu memadai sebagai petunjuk arah tetapi tidak memadai sebagai dasar penetapan sasaran wilayah. Yang tepat dilaporkan: "terdapat indikasi penumpukan keterbatasan pendidikan dan ekonomi pada sejumlah kecil rumah tangga; diperlukan pendataan lanjutan untuk memastikannya".
+
+      Inilah alasan indikator langka menuntut penanganan tersendiri. Menaikkan ambang demi kerapian akan menghapus justru kelompok yang paling membutuhkan --- dan pada statistik resmi, kelompok itulah yang menjadi alasan pendataan dilakukan.
+      \end{kotakinterpretasi}
+  - contoh: Dari aturan menjadi usulan program
+    narasi: |-
+      \kode{menyusun ringkasan yang dapat ditindaklanjuti}
+
+      ```{r os-usulan}
+      r_all <- apriori(rt, parameter = list(support = 0.05, confidence = 0.6, minlen = 2),
+                       control = list(verbose = FALSE))
+      r_all <- r_all[!is.redundant(r_all)]
+      cat("aturan setelah dipangkas:", length(r_all), "\n")
+
+      q <- interestMeasure(r_all, c("support", "confidence", "lift", "leverage"), rt)
+      ringkas <- data.frame(aturan = labels(r_all), round(q, 4),
+                            rt = quality(r_all)$count)
+      ringkas <- ringkas[order(-ringkas$leverage), ]
+      print(head(ringkas, 6), row.names = FALSE)
+
+      # berapa rumah tangga mengalami keterbatasan permukiman sekaligus
+      paket_permukiman <- c("air_tak_layak", "sanitasi_tak_layak")
+      n_paket <- sum(apply(as(rt[, paket_permukiman], "matrix"), 1, all))
+      cat("\nrumah tangga dengan air DAN sanitasi tak layak:", n_paket,
+          sprintf("(%.1f persen)\n", 100 * n_paket / nrow(rt)))
+      ```
+
+      \begin{kotakinterpretasi}
+      Pengurutan menurut \textbf{leverage} --- bukan \emph{lift} --- memberi daftar yang tepat untuk perencanaan, sebab leverage mendekati \textbf{berapa banyak rumah tangga tambahan} yang mengalami kejadian bersama itu dibandingkan bila kedua keterbatasan tidak berkaitan. Aturan ber-\emph{lift} sangat tinggi tetapi hanya mencakup belasan rumah tangga tidak akan mengubah rancangan program.
+
+      Angka terakhir menerjemahkan temuan menjadi bilangan yang dapat dipakai: \textbf{167 rumah tangga} (19,3\%) mengalami air \emph{dan} sanitasi tak layak sekaligus. Bagi perencana, itulah ukuran sasaran paket terpadu air--sanitasi --- bukan menjumlahkan sasaran program air dan program sanitasi secara terpisah, yang akan menghitung ganda rumah tangga tersebut.
+
+      \textbf{Tiga usulan yang dapat ditarik:}
+      \begin{enumerate}
+      \item \textbf{Paket permukiman} (air, sanitasi, atap-lantai) --- ketiganya menumpuk pada rumah tangga yang sama; menanganinya dalam satu kunjungan lebih murah daripada tiga kunjungan terpisah.
+      \item \textbf{Paket energi} (listrik memadai dan bahan bakar bersih) --- kaitan dua arah dengan \emph{lift} 2,78.
+      \item \textbf{Penyaringan berlapis untuk pendidikan} --- rumah tangga dengan kepala berpendidikan rendah dan tanpa tabungan dipakai sebagai penyaring awal untuk menemukan anak putus sekolah, yang prevalensinya terlalu rendah untuk disasar langsung.
+      \end{enumerate}
+
+      \textbf{Keterbatasan yang wajib menyertai:} seluruh temuan bersifat \textbf{asosiatif}. Data lintas seksi tanpa perlakuan yang diacak tidak memungkinkan penarikan kesimpulan sebab-akibat, sehingga tidak dapat disimpulkan bahwa memperbaiki satu keterbatasan akan memperbaiki yang lain. Yang sah: keduanya menumpuk pada rumah tangga yang sama, sehingga \textbf{penargetan} dapat dilakukan bersama.
+      \end{kotakinterpretasi}
+
+      \begin{kotaksalah}
+      \begin{enumerate}
+      \item Mengurutkan aturan menurut \textbf{confidence} lalu menyimpulkan aturan teratas paling penting; barang terlaris akan selalu mendominasi (Contoh 11.7).
+      \item Melaporkan \emph{lift} tanpa \emph{support} atau cacah pendukung; \emph{lift} tinggi pada 5 transaksi bukan temuan.
+      \item Menurunkan ambang support sampai aturan yang diinginkan muncul, lalu melaporkannya seolah-olah ambangnya ditetapkan sejak awal.
+      \item Menyajikan seluruh aturan tanpa memangkas yang redundan; separuh daftar dapat berupa pengulangan.
+      \item Menafsirkan aturan asosiasi sebagai \textbf{sebab-akibat}; $X \Rightarrow Y$ hanya berarti keduanya sering muncul bersamaan, dan aturan sebaliknya sering juga berlaku.
+      \item Lupa bahwa aturan tidak simetris pada \emph{confidence} --- $\mathrm{conf}(X \Rightarrow Y) \neq \mathrm{conf}(Y \Rightarrow X)$ --- meskipun \emph{lift}-nya sama.
+      \item Memakai nilai-$p$ uji Fisher tanpa koreksi pengujian ganda padahal ratusan aturan diuji.
+      \item Menganggap ketiadaan barang sebagai "nol"; data transaksi hanya mencatat kehadiran.
+      \item Menambang pada tingkat kategori lalu menyimpulkan tentang barang tertentu (Contoh 11.11).
+      \end{enumerate}
+      \end{kotaksalah}
+  kunci:
+  - '# Kunci Jawaban Latihan Mandiri'
+  - |-
+    ```{r siap}
+    suppressPackageStartupMessages(library(arules))
+    trx <- read.transactions("data/transaksi_ritel.csv", format = "single", sep = ",",
+                             header = TRUE, cols = c("id_transaksi", "item"), quote = "\"")
+    trx
+    ```
+  - '## Kunci Latihan 11.1 -- Menyiapkan Data dan Menelaah Frekuensi'
+  - |-
+    ```{r k1, fig.cap="Sepuluh barang dengan support terendah", fig.width=7, fig.height=3.4, out.width="80%"}
+    cat("transaksi:", nrow(trx), " barang:", ncol(trx), "\n")          # (a)
+    summary(size(trx))
+  - |-
+    frek <- itemFrequency(trx)                                          # (b)
+    cat("barang dengan support < 0,10:", sum(frek < 0.10), "\n")
+    round(sort(frek)[1:5], 4)
+  - |-
+    par(mar = c(8, 4, 2, 1), family = "sans")                           # (c)
+    barplot(sort(frek)[1:10], las = 2, col = "#F58220", border = NA,
+            ylab = "support"); abline(h = 0.05, lty = 2, col = "#0B6FB4")
+    ```
+  - |-
+    \begin{kotakkunci}
+    \textbf{(a)} 1.200 transaksi atas 20 barang; ukuran keranjang 1--12 dengan median 4 dan rata-rata 4,4.
+  - '\textbf{(b)} Hanya \textbf{dua} barang ber-support di bawah 0,10: \texttt{popok} (0,0675) dan \texttt{selai}
+    bersama \texttt{keju} berada di sekitar ambang itu. Data ini memang dirancang tanpa barang yang sangat
+    langka --- pada data ritel nyata, sebaran support jauh lebih menceng dan puluhan persen barang berada
+    di bawah 1\%.'
+  - '\textbf{(c)} \texttt{popok} paling langka. Akibatnya pada ambang 5\%: pola \emph{apa pun} yang memasangkan
+    popok dengan barang lain akan tersaring, sebab support gabungan pasti lebih kecil daripada 0,0675.
+    Padahal kaitan popok--susu adalah salah satu yang terkuat pada data ini (lift 3,12). Inilah alasan
+    ambang seragam berbahaya --- lihat Contoh 11.10 pada modul.'
+  - |-
+    \textbf{Nilai penuh} bila mahasiswa menghubungkan kelangkaan popok dengan hilangnya pola, bukan sekadar melaporkan angkanya.
+    \end{kotakkunci}
+  - '## Kunci Latihan 11.2 -- Menambang dan Memampatkan Himpunan Sering Muncul'
+  - |-
+    ```{r k2}
+    fis <- apriori(trx, parameter = list(support = 0.03, target = "frequent itemsets"),
+                   control = list(verbose = FALSE))                      # (a)
+    cat("himpunan sering muncul:", length(fis), "\n")
+    table(ukuran = size(fis))
+  - |-
+    cl <- fis[is.closed(fis)]; mx <- fis[is.maximal(fis)]                # (b)
+    cat("closed:", length(cl), " maximal:", length(mx), "\n")
+    cat("pemampatan closed:", round(100 * (1 - length(cl)/length(fis)), 1), "%",
+        " maximal:", round(100 * (1 - length(mx)/length(fis)), 1), "%\n")
+  - |-
+    ecl <- eclat(trx, parameter = list(support = 0.03, minlen = 1),
+                 control = list(verbose = FALSE))                        # (c)
+    cat("eclat:", length(ecl), " identik dengan apriori:",
+        setequal(labels(ecl), labels(fis)), "\n")
+    ```
+  - |-
+    \begin{kotakkunci}
+    \textbf{(a)} Pada ambang 0,03 diperoleh \textbf{213} himpunan --- dua kali lipat lebih daripada 103 himpunan pada ambang 0,05. Menurunkan ambang dua poin persen saja sudah melipatgandakan hasil.
+  - '\textbf{(b)} Seluruh 213 himpunan bersifat \emph{closed} (pemampatan \textbf{0\%}), sedangkan 117
+    bersifat \emph{maximal} (pemampatan sekitar \textbf{45\%}). Bahwa pemampatan closed nol adalah temuan
+    yang layak dijelaskan: tidak ada himpunan yang support-nya persis sama dengan superhimpunannya. Pada
+    data simulasi berkeacakan tinggi hal itu wajar; pada data nyata --- misalnya barang yang selalu dibeli
+    sepaket --- closed dapat memampatkan sangat banyak.'
+  - |-
+    \textbf{(c)} Eclat memberi himpunan yang \textbf{persis sama}. Keduanya menyelesaikan masalah yang sama secara eksak, sehingga perbedaan hasil hanya mungkin terjadi bila ambangnya berbeda; yang berbeda hanyalah cara mencapainya --- Apriori menyapu data berulang kali, Eclat mengiriskan daftar id transaksi.
+    \end{kotakkunci}
+  - '## Kunci Latihan 11.3 -- Membentuk dan Menyaring Aturan'
+  - |-
+    ```{r k3}
+    r <- apriori(trx, parameter = list(support = 0.02, confidence = 0.6, minlen = 2),
+                 control = list(verbose = FALSE))                        # (a)
+    cat("aturan:", length(r), " redundan:", sum(is.redundant(r)), "\n")
+    rb <- r[!is.redundant(r)]
+    cat("setelah dipangkas:", length(rb), "\n")
+  - |-
+    atas_lift <- head(sort(rb, by = "lift"), 10)                         # (b)
+    atas_conf <- head(sort(rb, by = "confidence"), 10)
+    inspect(atas_lift)
+    cat("\nirisan sepuluh besar lift dan confidence:",
+        length(intersect(labels(atas_lift), labels(atas_conf))), "dari 10\n")
+  - |-
+    rs <- subset(rb, rhs %in% "susu")                                    # (c)
+    q <- interestMeasure(rs, c("support", "confidence", "lift", "leverage"), trx)
+    hasil <- data.frame(aturan = labels(rs), round(q, 4), count = quality(rs)$count)
+    print(head(hasil[order(-hasil$lift), ], 4), row.names = FALSE)
+    print(head(hasil[order(-hasil$leverage), ], 4), row.names = FALSE)
+    ```
+  - |-
+    \begin{kotakkunci}
+    \textbf{(a)} Pada confidence 0,6 diperoleh \textbf{94} aturan, \textbf{31} di antaranya redundan; tersisa \textbf{63} setelah dipangkas --- sepertiga terbuang.
+  - '\textbf{(b)} Irisan sepuluh besar menurut \emph{lift} dan menurut \emph{confidence} ternyata \textbf{10
+    dari 10} --- keduanya menunjuk aturan yang sama persis. Hasil ini \textbf{berlawanan} dengan Contoh
+    11.7 pada modul, dan penjelasannya justru pokok latihan ini: ambang confidence dinaikkan menjadi \textbf{0,6}
+    dan aturan redundan dipangkas lebih dahulu. Kedua saringan itu menyingkirkan aturan bercorak "$\Rightarrow$
+    air mineral" --- confidence-nya sekitar 0,70 sehingga lolos ambang, tetapi hampir seluruhnya redundan
+    atas aturan yang lebih sederhana. Yang tersisa hanyalah aturan berlift tinggi, sehingga kedua pengurutan
+    berimpit (confidence terendah pada sepuluh besar lift 0,746; lift terendah pada sepuluh besar confidence
+    2,542).'
+  - 'Kesimpulan yang harus ditarik mahasiswa: kesepakatan ini \textbf{bukan} bukti bahwa pengurutan menurut
+    confidence aman. Ia hanya menunjukkan bahwa pemangkasan redundansi dan ambang confidence yang lebih
+    tinggi sudah membersihkan sebagian besar jebakan. Turunkan ambang ke 0,5 tanpa memangkas --- sebagaimana
+    Contoh 11.7 --- dan jebakan itu muncul kembali. Jawaban yang menyimpulkan "berarti confidence boleh
+    dipakai mengurutkan" \textbf{keliru} dan dikenai pengurangan nilai.'
+  - |-
+    \textbf{(c)} Untuk aturan yang menyimpulkan \texttt{susu}, urutan menurut \emph{lift} dan menurut \emph{leverage} \textbf{berbeda}. Lift tertinggi dimiliki \texttt{\{gula, popok\}} (3,51) yang hanya didukung 28 transaksi; leverage tertinggi dimiliki \texttt{\{popok\}} saja (0,0408) yang didukung 72 transaksi. Sebabnya: leverage mengukur selisih \textbf{mutlak} terhadap keadaan bebas sehingga menghargai cakupan, sedangkan lift mengukur nisbah sehingga dapat sangat tinggi pada himpunan yang jarang. Untuk keputusan bisnis, leverage lebih dekat kepada "berapa transaksi tambahan yang dapat diharapkan".
+    \end{kotakkunci}
+  - '## Kunci Latihan 11.4 -- Membetulkan Kode yang Salah'
+  - |-
+    ```{r k4, eval=FALSE}
+    # KODE ASLI (salah)
+    trx <- read.csv("data/transaksi_ritel.csv")                              # (1)
+    r <- apriori(trx, parameter = list(support = 0.001, confidence = 0.9))   # (2)
+    inspect(head(sort(r, by = "confidence"), 10))                            # (3)
+    # "pelanggan yang membeli X PASTI membeli Y, jadi promosi X menaikkan penjualan Y"  (4)
+    ```
+  - |-
+    ```{r k4b}
+    trx <- read.transactions("data/transaksi_ritel.csv", format = "single", sep = ",",   # (1)
+                             header = TRUE, cols = c("id_transaksi", "item"), quote = "\"")
+  - |-
+    n_min <- 30                                                                          # (2)
+    supp <- n_min / nrow(trx)
+    cat("ambang support dari cacah minimum", n_min, "transaksi:", round(supp, 4), "\n")
+  - |-
+    r <- apriori(trx, parameter = list(support = supp, confidence = 0.6, minlen = 2),
+                 control = list(verbose = FALSE))
+    r <- r[!is.redundant(r)]
+    inspect(head(sort(r, by = "lift"), 5))                                               # (3)
+    ```
+  - |-
+    \begin{kotakkunci}
+    \textbf{(1)} \texttt{read.csv()} menghasilkan \texttt{data.frame} berisi dua kolom, bukan objek \texttt{transactions}. \texttt{apriori()} akan menolaknya atau --- lebih berbahaya --- memperlakukan tiap \textbf{baris} sebagai satu transaksi beranggota dua, sehingga seluruh hasil keliru tanpa pesan galat yang jelas.
+  - '\textbf{(2)} Support 0,001 pada 1.200 transaksi berarti cacah minimum \textbf{1,2 transaksi} ---
+    praktis tanpa ambang. Digabung dengan confidence 0,9, hasilnya adalah ribuan aturan berconfidence
+    tinggi yang seluruhnya berdasar dua atau tiga transaksi. Ambang seharusnya ditetapkan dari \textbf{cacah
+    minimum yang bermakna}: bila keputusan baru layak diambil atas dasar 30 transaksi, maka ambangnya
+    $30/1200 = 0{,}025$.'
+  - \textbf{(3)} Pengurutan menurut \emph{confidence} menempatkan aturan yang ruas kanannya barang terlaris
+    di puncak. Urutkan menurut \textbf{lift}, dan pangkas aturan redundan lebih dahulu.
+  - '\textbf{(4)} Dua kekeliruan sekaligus. Pertama, "PASTI" --- confidence 0,9 berarti sembilan dari
+    sepuluh, bukan kepastian. Kedua dan lebih serius, \textbf{klaim sebab-akibat}: aturan asosiasi hanya
+    menyatakan kedua barang sering muncul bersamaan. Promosi X dapat saja tidak menaikkan Y sama sekali
+    bila keduanya sekadar dibeli oleh jenis pelanggan yang sama. Untuk klaim sebab-akibat diperlukan percobaan
+    --- misalnya uji A/B pada sebagian gerai.'
+  - |-
+    \textbf{Nilai penuh} bila keempat kesalahan ditemukan \emph{dan} akibat butir (4) dijelaskan sebagai persoalan kausalitas, bukan sekadar "kalimatnya berlebihan".
+    \end{kotakkunci}
+  - '# Kunci Jawaban Penugasan'
+  - |-
+    \begin{kotakkunci}
+    Penugasan bersifat terbuka; kunci berikut memuat \textbf{kerangka penilaian} beserta angka acuan pada ambang yang lazim dipilih.
+  - '\textbf{Butir 1--2 (penyiapan dan ambang).} Angka acuan: 1.200 transaksi, 20 barang, ukuran keranjang
+    median 4. Ambang harus dinyatakan sebagai \textbf{cacah minimum} lalu diubah menjadi proporsi, disertai
+    alasannya. Ambang mana pun antara 0,02 dan 0,05 dapat diterima; yang dinilai adalah \emph{alasannya},
+    bukan angkanya.'
+  - '\textbf{Butir 3--5 (penambangan).} Pada support 0,02: 345 himpunan sering muncul dan 162 aturan (confidence
+    0,5), 76 di antaranya redundan. Sepuluh aturan terbaik menurut lift harus memuat \texttt{\{gula, popok\}
+    $\Rightarrow$ \{susu\}} (lift 3,51), \texttt{\{popok\} $\Rightarrow$ \{susu\}} (3,12), \texttt{\{kopi,
+    teh\} $\Rightarrow$ \{gula\}} (3,08), dan \texttt{\{keju\} $\Rightarrow$ \{roti\}} (2,82) --- seluruhnya
+    kaitan yang ditanam pada pembangkitan data.'
+  - '\textbf{Butir 6 (jebakan confidence).} Contoh yang benar: \texttt{\{beras, deterjen\} $\Rightarrow$
+    \{air\_mineral\}} berconfidence 0,725 tetapi ber-lift hanya 1,199 --- sebab support air mineral sudah
+    0,604. Jawaban harus menyebut support ruas kanan sebagai penjelasnya.'
+  - \textbf{Butir 7 (lift versus leverage).} Urutan keduanya berbeda; aturan yang diusulkan untuk ditindaklanjuti
+    sebaiknya berdasar \textbf{leverage} karena mencerminkan cakupan. Jawaban yang memilih lift tetap
+    dapat diterima bila alasannya dinyatakan (mis. menyasar ceruk bermarjin tinggi).
+  - '\textbf{Butir 8 (tingkat kategori).} Pada 5 kategori, support melonjak dan lift merosot mendekati
+    1; kaitan popok--susu \textbf{lenyap} karena melebur ke Perawatan dan Minuman. Jawaban harus menyebut
+    pertukaran ini: kategori memberi pola stabil tetapi menyembunyikan kaitan tajam.'
+  - \textbf{Butir 9 (usulan).} Tiga usulan konkret, masing-masing disertai aturan pendukung beserta support,
+    confidence, lift, leverage, dan cacah. Usulan tanpa angka pendukung tidak memperoleh nilai penuh,
+    demikian pula daftar panjang tanpa prioritas.
+  - |-
+    \textbf{Butir 10 (keterbatasan).} Wajib memuat: (i) sifat \textbf{asosiatif}, bukan sebab-akibat; (ii) pengaruh pilihan ambang terhadap banyaknya aturan; (iii) risiko \textbf{pengujian ganda} bila nilai-$p$ dipakai; (iv) data bersifat simulasi. Kurang dari tiga butir tersebut dikenai pengurangan nilai.
+    \end{kotakkunci}
+  - '# Catatan Penskoran'
+  - |-
+    \begin{kotakinfo}
+    \begin{itemize}
+    \item \textbf{Nilai penuh} bila: data dibaca sebagai \texttt{transactions}; ambang ditetapkan lebih dahulu beserta alasannya; aturan diurutkan menurut \textbf{lift} dan aturan redundan dipangkas; jebakan confidence dikenali dan dijelaskan lewat support ruas kanan; perbedaan lift dan leverage dipahami; serta keterbatasan --- terutama ketiadaan klaim sebab-akibat --- dinyatakan terus terang.
+    \item \textbf{Pengurangan nilai} bila: aturan diurutkan menurut confidence; \emph{lift} dilaporkan tanpa support atau cacah pendukung; ambang diturunkan sampai aturan yang diinginkan muncul; aturan redundan disajikan tanpa pemangkasan; atau kesimpulan sebab-akibat ditarik dari aturan asosiasi.
+    \item Mahasiswa yang menemukan bahwa aturan berconfidence 1{,}000 hanya didukung 28 transaksi --- lalu menyatakannya sebagai keterbatasan --- layak memperoleh nilai tambahan.
+    \end{itemize}
+    \end{kotakinfo}
+exercises: []
+
