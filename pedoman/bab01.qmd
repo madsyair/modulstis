@@ -1,0 +1,154 @@
+# Apa yang Dikerjakan modulstis untuk Anda? {#sec-bab01}
+
+```{r}
+#| include: false
+source("_setup.R")
+dir.create(file.path(KERJA, "bab01"), showWarnings = FALSE)
+spec_asli <- system.file("specs_ps", "modul-07-deskriptif.yml", package = "modulstis")
+h <- render_diam(spec_asli, file.path(KERJA, "bab01"))
+n_modul <- pdf_halaman(h$modul$path)
+n_kunci <- pdf_halaman(h$kunci$path)
+```
+
+Mengapa kunci jawaban modul tahun lalu sering tidak cocok lagi dengan soalnya? Biasanya
+bukan karena dosennya lalai. Soal ada di satu berkas, kunci di berkas lain, dan data di
+tempat ketiga. Setiap kali satu berkas diubah, dua berkas lain harus diubah dengan tangan.
+Satu perubahan yang terlewat sudah cukup untuk membuat ketiganya tidak cocok.
+
+Bab ini menjelaskan bagaimana `modulstis` menghilangkan masalah itu, dan apa yang Anda
+dapatkan ketika memakainya. Setelah membaca bab ini, Anda dapat menyebutkan tiga keluaran
+yang dihasilkan paket dari satu berkas spesifikasi, dan menjelaskan mengapa ketiganya tidak
+mungkin saling bertentangan.
+
+## Masalah menyusun empat belas modul
+
+Bayangkan cara yang umum dipakai. Modul ditulis di Word. Contoh kode disalin dari RStudio,
+lalu keluarannya disalin juga sebagai teks atau tangkapan layar. Data latihan disimpan di
+folder bersama. Kunci jawaban ditulis di berkas Word lain.
+
+Cara ini punya tiga kelemahan yang baru terasa setelah beberapa semester:
+
+1. **Keluaran kode menjadi usang.** Ketika versi R atau paket berubah, keluaran yang
+   ditempel di modul tidak lagi sama dengan yang dilihat mahasiswa. Tidak ada yang
+   memeriksanya kecuali ada mahasiswa yang bertanya.
+2. **Kunci tertinggal.** Soal nomor 3 diganti, tetapi kunci nomor 3 lupa diganti.
+3. **Tampilan tidak seragam.** Empat belas modul yang disunting di waktu berbeda lambat laun
+   punya ukuran huruf, warna, dan gaya judul yang berbeda-beda.
+
+Ketiga kelemahan itu berakar pada hal yang sama: **isi yang sama disimpan di beberapa
+tempat**.
+
+## Satu sumber, tiga keluaran
+
+`modulstis` memindahkan seluruh isi modul ke satu berkas teks yang disebut
+**spesifikasi**. Spesifikasi adalah berkas berakhiran `.yml` yang memuat identitas modul,
+teks setiap bagian, contoh kode, soal latihan, solusi, dan resep data. Dari berkas itu
+paket menghasilkan tiga hal sekaligus:
+
+- **modul praktikum** dalam PDF, lengkap dengan sampul, daftar isi, dan sebelas bagian baku;
+- **kunci jawaban** dalam PDF, yang hanya memuat solusi dan pembahasan;
+- **berkas data latihan** dalam CSV, yang dipakai oleh contoh di modul maupun solusi di
+  kunci.
+
+Kode di dalam spesifikasi **dijalankan** setiap kali modul dibuat. Keluaran yang tercetak
+di modul adalah keluaran R di komputer Anda saat itu, bukan teks yang Anda tempel.
+
+@fig-tiga-keluaran memperlihatkan hasilnya untuk Modul 7 Pemrograman Statistika, yang
+spesifikasinya disertakan di dalam paket. Dari satu berkas sepanjang
+`r length(readLines(spec_asli))` baris, paket menghasilkan modul `r n_modul` halaman dan
+kunci `r n_kunci` halaman.
+
+```{r}
+#| include: false
+g1 <- halaman_png(h$modul$path, 1, "bab01-modul")
+g2 <- halaman_png(h$modul$path, cari_halaman(h$modul$path, "Contoh 7\\.1"), "bab01-modul")
+g3 <- halaman_png(h$kunci$path, 3, "bab01-kunci")
+```
+
+```{r}
+#| label: fig-tiga-keluaran
+#| echo: false
+#| fig-cap: "Tiga halaman yang dihasilkan dari satu spesifikasi Modul 7."
+#| fig-subcap:
+#|   - "Sampul modul"
+#|   - "Contoh praktikum dan keluaran kodenya"
+#|   - "Kunci jawaban"
+#| layout-ncol: 3
+knitr::include_graphics(c(g1, g2, g3))
+```
+
+Perhatikan halaman tengah. Blok berwarna di bawah kode adalah keluaran yang dihasilkan R
+ketika modul dibuat. Bila suatu hari Anda mengubah data atau kodenya, keluaran itu ikut
+berubah dengan sendirinya pada render berikutnya.
+
+Data latihannya juga ikut dibuat. Berikut lima baris pertama berkas CSV yang dihasilkan
+untuk modul yang sama:
+
+```{r}
+#| echo: false
+d <- read.csv(file.path(KERJA, "bab01", "modul-07", "data", "data_rumahtangga.csv"))
+head(d, 5)
+```
+
+### Mengapa tidak mungkin tertinggal
+
+Kunci jawaban tidak ditulis sebagai berkas terpisah. Paket merakitnya dari bagian
+`exercises` pada spesifikasi yang sama dengan soalnya. Data latihannya dibangkitkan dari
+resep yang sama, dengan bilangan acak awal (*seed*) yang sama, sehingga isinya identik untuk
+modul dan kunci. Bila Anda mengubah soal, Anda mengubahnya di satu berkas, dan render
+berikutnya menghasilkan modul serta kunci yang sudah menyesuaikan.
+
+::: {.callout-important}
+## Salah paham umum: "Saya harus menguasai LaTeX dulu"
+
+Modul `modulstis` memang disusun dengan LaTeX, tetapi Anda tidak menulis LaTeX untuk
+sebagian besar isinya. Paragraf, daftar bernomor, huruf tebal, dan kode ditulis dengan
+penanda sederhana seperti `**tebal**`. Sampul, kepala halaman, warna, dan kotak sudah
+disiapkan paket. Contoh Modul 7 di Bab 6 sampai Bab 9 tidak memuat satu pun perintah LaTeX.
+LaTeX baru dipakai di Bab 10, untuk kotak rumus dan kotak peringatan, dan bab itu
+menjelaskan perintah yang diperlukan satu per satu.
+:::
+
+## Apa yang tidak dikerjakan paket ini
+
+Supaya harapan Anda tepat, ada beberapa hal yang memang bukan tugas `modulstis`:
+
+- **Menulis isi modul.** Paket menyusun dan merapikan, tetapi teori, contoh, dan soal tetap
+  Anda yang menulis.
+- **Menyunting PDF.** PDF adalah hasil akhir. Bila ada yang ingin diubah, ubahlah
+  spesifikasinya lalu render ulang. Menyunting PDF secara langsung akan hilang pada render
+  berikutnya.
+- **Menghasilkan Word.** Keluaran paket adalah PDF. Berkas antara (`.Rmd` atau `.qmd`) memang
+  ikut tersimpan, tetapi tidak dirancang untuk diubah ke Word.
+- **Menyediakan data resmi.** Resep data menghasilkan data simulasi. Bila Anda memerlukan
+  data nyata, paket dapat memakai berkas data yang Anda sediakan (@sec-bab08).
+
+## Peta pedoman ini
+
+Buku ini dibagi menjadi tiga bagian yang mengikuti urutan kerja Anda.
+
+| Bagian | Bab | Hasil yang Anda peroleh |
+|:--|:--|:--|
+| Memulai | 1--3 | perangkat terpasang dan modul pertama berhasil dibuat |
+| Menyusun Isi | 4--10 | spesifikasi Modul 7 yang lengkap: isi, contoh, data, latihan, kunci |
+| Menerbitkan | 11--15 | seluruh modul dirender, buku modul dan buku kunci, alur kerja satu semester |
+
+: Peta isi buku {#tbl-peta}
+
+## Ringkasan
+
+`modulstis` menyusun modul praktikum, kunci jawaban, dan data latihan dari satu berkas
+spesifikasi. Karena ketiganya berasal dari sumber yang sama dan kode dijalankan setiap kali
+modul dibuat, keluaran di modul selalu mutakhir dan kunci tidak dapat tertinggal dari soal.
+Anda tetap menulis isinya; paket mengerjakan penyusunan, tampilan, dan sinkronisasi.
+
+Bab berikutnya menyiapkan komputer Anda supaya dapat menjalankan semua ini.
+
+## Uji pemahaman
+
+1. Sebutkan tiga keluaran yang dihasilkan `modulstis` dari satu spesifikasi.
+2. Seorang rekan menyunting langsung PDF modul untuk memperbaiki salah ketik. Apa yang
+   terjadi pada perbaikan itu ketika modul dirender ulang? Di mana seharusnya ia memperbaiki?
+3. Mengapa data latihan di modul dan di kunci jawaban selalu sama?
+4. (Transfer) Anda mengganti versi paket `dplyr` di komputer. Bagian mana dari modul yang
+   mungkin berubah pada render berikutnya, dan mengapa perubahan itu justru diinginkan?

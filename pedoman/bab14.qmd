@@ -1,0 +1,208 @@
+# Ketika Render Gagal {#sec-bab14}
+
+```{r}
+#| include: false
+source("_setup.R")
+pasang_tahap(10)
+dir.create(file.path(KERJA, "bab14"), showWarnings = FALSE)
+asal <- readLines(file.path(PEDOMAN, "contoh", "modul-07-tahap-10.yml"))
+# spesifikasi dengan tiga kesalahan isian
+v <- asal
+v <- v[!grepl("^number:", v)]
+v <- v[!grepl("^    points: 60", v)]
+writeLines(v, file.path(KERJA, "bab14", "isian-salah.yml"))
+# spesifikasi dengan kode contoh yang galat
+k <- sub('rt <- read.csv("data/data_rumahtangga.csv")', 'rt <- read.csv("data/data_rumahtangga.cvs")',
+         asal, fixed = TRUE)
+writeLines(k, file.path(KERJA, "bab14", "kode-salah.yml"))
+```
+
+Dari mana mulai mencari ketika render berhenti dengan pesan merah yang panjang? Pesan galat
+render sering terlihat menakutkan karena memuat keluaran tiga program sekaligus: YAML, R, dan
+LaTeX. Kabar baiknya, hampir semua galat berasal dari salah satu dari empat sumber, dan setiap
+sumber meninggalkan tanda yang khas.
+
+Setelah membaca bab ini, Anda dapat mengenali sumber sebuah galat dari pesannya, menemukan baris
+yang salah di spesifikasi, dan memeriksa hasil yang tampak benar, tetapi keliru.
+
+## Urutan penelusuran
+
+Bila render gagal atau hasilnya mencurigakan, telusuri dengan urutan berikut. Setiap langkah lebih
+murah daripada langkah sesudahnya.
+
+1. **Baca baris `WARN` dan `ERROR`**, bukan baris terakhir saja. Kenali sumbernya dengan
+   @tbl-sumber-galat.
+2. **Baca ulang spesifikasi dan periksa** dengan `module_spec_from_yaml()` lalu `validate()`.
+   Langkah ini hanya beberapa detik dan menemukan semua galat YAML dan isian.
+3. **Render satu modul saja** dengan `render_module()`, bukan seluruh proyek, supaya log hanya
+   memuat modul yang bermasalah.
+4. **Buka berkas antara** di folder hasil: `.Rmd` untuk galat kode R, `.log` untuk galat LaTeX.
+
+| Tanda di pesan | Sumber | Bahas di |
+|:--|:--|:--|
+| `Scanner error`, `Parser error`, `line ..., column ...` | YAML | @sec-yaml-galat |
+| `✖ Spesifikasi tidak valid` | isian spesifikasi | @sec-isian-galat |
+| `Quitting from lines ...` lalu `Render gagal ... Penyebab: ...` | kode R di contoh atau solusi | @sec-kode-galat |
+| `WARN ... LaTeX melaporkan galat` | LaTeX di dalam kotak, atau font | @sec-latex-galat |
+| `there is no package called ...`, `xelatex not found` | pemasangan | @sec-bab02 |
+
+: Mengenali sumber galat dari pesannya {#tbl-sumber-galat}
+
+::: {.callout-important}
+## Salah paham umum: "Baris yang disebut pesan galat adalah baris yang salah"
+
+Nomor baris pada pesan galat menunjuk tempat **program menyadari** ada masalah, bukan selalu
+tempat kesalahan dibuat. Pada @sec-bab04 Anda melihat galat yang ada di baris 1, tetapi dilaporkan
+di baris 2. Nomor pada `Quitting from lines` merujuk berkas `.Rmd` antara, dan nomor `l.` pada
+galat LaTeX merujuk berkas `.tex` antara, bukan spesifikasi Anda. Gunakan nomor itu sebagai titik
+awal pencarian, lalu cocokkan isinya dengan spesifikasi.
+:::
+
+## Galat YAML {#sec-yaml-galat}
+
+Galat YAML muncul saat spesifikasi dibaca, sebelum render dimulai. Pesannya selalu diawali nama
+berkas dalam kurung, lalu `Scanner error` atau `Parser error`, dan menyebut baris serta kolomnya.
+@sec-bab04 membahas lima galat yang paling sering beserta pesannya (@tbl-galat-yaml).
+
+## Galat isian spesifikasi {#sec-isian-galat}
+
+Spesifikasi yang lolos dibaca YAML belum tentu lengkap. `validate()` memeriksa isian yang wajib dan
+melaporkan **semua** masalah sekaligus, bukan hanya yang pertama. Berikut Modul 7 yang kehilangan
+kunci `number` dan skor salah satu solusinya:
+
+```{rproyek}
+#| wd: !expr file.path(KERJA, "bab14")
+library(modulstis)
+sp <- module_spec_from_yaml("isian-salah.yml")
+sp$validate()
+```
+
+| Pesan `validate()` | Arti |
+|:--|:--|
+| `` `number` harus bilangan bulat 1..99 `` | `number` hilang atau bukan angka |
+| `` `title` tidak boleh kosong `` | `title` hilang |
+| `exercises[2].points hilang` | solusi kedua tidak memiliki `points` |
+| `dataset '...' tidak punya recipe.kind` | resep data tanpa `kind` |
+| `dataset '...': berkas tidak ditemukan (...)` | `path` pada `kind: file` salah |
+| `jenis bagian tidak dikenal: ...` | `type` pada `sections` salah ketik |
+
+: Pesan `validate()` dan artinya {#tbl-validate}
+
+## Galat kode R {#sec-kode-galat}
+
+Kode di contoh atau solusi dijalankan saat render. Bila kode itu galat, render berhenti dan PDF
+tidak dibuat. Berikut Modul 7 dengan salah ketik ekstensi berkas data, `.cvs` alih-alih `.csv`:
+
+```{rproyek}
+#| wd: !expr file.path(KERJA, "bab14")
+#| stderr: true
+#| tampil: "c(1, grep('Quitting|Render gagal|Warning: cannot', hasil))"
+sp <- module_spec_from_yaml("kode-salah.yml")
+h <- render_module(sp, output_dir = "hasil")
+```
+
+Pesan ini terdiri atas dua bagian:
+
+- `Quitting from lines ...` menyebut baris di berkas **`.Rmd` antara** tempat R berhenti;
+- `Render gagal: ... Penyebab: ...` menyebut pesan galat R-nya.
+
+\langkah{Temukan contoh yang galat}
+
+Buka berkas `.Rmd` di folder hasil, yaitu `hasil/modul-07/Modul_07_deskriptif.Rmd`, lalu lompat
+ke nomor baris yang disebut lewat menu **Code → Go To Line** (**Shift+Alt+G**). Anda akan menemukan
+kode contoh yang galat, lengkap dengan judul contohnya di atasnya. Judul itu menunjukkan contoh mana
+di spesifikasi yang harus diperbaiki.
+
+```{rproyek}
+#| wd: !expr file.path(KERJA, "bab14")
+rmd <- readLines("hasil/modul-07/Modul_07_deskriptif.Rmd")
+grep("data_rumahtangga.cvs", rmd)
+```
+
+::: {.callout-note}
+Bila kode yang galat ada di **solusi**, PDF modul tetap terbentuk, tetapi kunci jawabannya gagal.
+Pesan yang sama muncul dengan `Kunci_07_...Rmd` sebagai nama berkasnya.
+:::
+
+## Galat LaTeX {#sec-latex-galat}
+
+Galat LaTeX berbeda dari tiga galat sebelumnya: **PDF biasanya tetap terbentuk**. Paket memulihkan
+render dengan menjalankan XeLaTeX sekali lagi tanpa berhenti pada galat, lalu mencetak dua baris
+`WARN` (@sec-bab10):
+
+- `render tunggal gagal; memulihkan via 2x xelatex` menandakan bahwa pemulihan berjalan;
+- `LaTeX melaporkan galat; isi PDF di sekitar baris ini rusak` menyebut galat pertama beserta
+  potongan teks tempat galat itu muncul.
+
+Potongan teks sesudah `baris=l.NNN` adalah petunjuk terkuat: carilah teks itu di spesifikasi Anda.
+Penyebab yang paling sering adalah karakter khusus yang tidak diloloskan di dalam kotak
+(@tbl-karakter), lingkungan kotak yang tidak ditutup dengan `\end{...}`, dan font yang tidak
+terpasang (@sec-bab13).
+
+| Pesan LaTeX | Penyebab yang paling mungkin |
+|:--|:--|
+| `Missing $ inserted` | `_` atau `^` di luar rumus di dalam kotak |
+| `Misplaced alignment tab character &` | `&` tidak diloloskan |
+| `Environment kotak... undefined` | nama kotak salah ketik |
+| `\begin{...} ended by \end{document}` | `\end{...}` lupa ditulis |
+| `The font "..." cannot be found` | font belum terpasang atau namanya salah |
+
+: Pesan LaTeX dan penyebabnya {#tbl-galat-latex}
+
+Berkas `.log` di folder hasil memuat laporan lengkap XeLaTeX. Setiap galat diawali tanda seru di
+awal baris, sehingga mudah dicari dengan **Ctrl+F** dan tanda `!`.
+
+## Hasil tampak salah walau tanpa galat
+
+Kesalahan yang paling berbahaya adalah yang tidak menimbulkan pesan apa pun. Buku ini telah
+menunjukkan beberapa di antaranya. Gunakan daftar berikut ketika memeriksa PDF:
+
+| Gejala di PDF | Penyebab | Bab |
+|:--|:--|:--|
+| sampul menyebut *Analisis Peubah Ganda* | blok `course` hilang | @sec-bab05 |
+| bagian bertuliskan *belum diisi* padahal sudah diisi | nama bagian di `body` salah ketik | @sec-bab06 |
+| kode contoh tanpa keluaran | `eval: true` tidak ditulis | @sec-bab07 |
+| keluaran kode tidak masuk akal, misalnya `NULL` atau `NA` | nama kolom salah ketik di kode | @sec-bab07 |
+| kata terpenggal tidak sesuai EYD | pola pemenggalan Indonesia belum terpasang | @sec-bab02 |
+| teks miring seperti rumus, atau kalimat terpotong | galat LaTeX yang dipulihkan | @sec-bab10 |
+| soal dan solusi tidak berpasangan | `id` dan urutan `exercises` tidak diperbarui | @sec-bab09 |
+| nomor halaman kembali ke 1 di buku | PDF digabung tanpa `render_berlanjut()` | @sec-bab12 |
+
+: Gejala hasil yang keliru tanpa pesan galat {#tbl-gejala}
+
+::: {.callout-caution}
+Ambil Modul 7 Anda dan buat sendiri satu kesalahan dari setiap baris @tbl-sumber-galat, satu per
+satu. Untuk setiap kesalahan, catat pesan yang muncul sebelum membaca penjelasannya di bab ini.
+Latihan ini membuat Anda mengenali pesan-pesan itu ketika kelak muncul tanpa sengaja.
+:::
+
+## Meminta bantuan
+
+Bila Anda tetap buntu, siapkan tiga hal sebelum bertanya kepada rekan atau melapor ke repositori
+paket:
+
+1. spesifikasi terkecil yang masih menimbulkan galat, misalnya Modul 7 yang dikurangi sampai
+   tinggal satu contoh;
+2. seluruh keluaran render, termasuk baris `WARN` dan `Quitting from`;
+3. hasil `cek_kesiapan()` dan `packageVersion("modulstis")`.
+
+Laporan masalah paket dapat dikirim ke <https://github.com/madsyair/modulstis/issues>.
+
+## Ringkasan
+
+Galat render berasal dari empat sumber utama: YAML, isian spesifikasi, kode R, dan LaTeX, ditambah
+masalah pemasangan. Galat YAML dan isian ditemukan dalam hitungan detik dengan
+`module_spec_from_yaml()` dan `validate()`. Galat kode R menghentikan render dan ditelusuri lewat
+berkas `.Rmd` antara. Galat LaTeX biasanya tidak menghentikan render, tetapi ditandai baris
+`WARN` yang harus ditindaklanjuti. Sebagian kesalahan tidak menimbulkan pesan apa pun, sehingga
+PDF tetap perlu diperiksa dengan @tbl-gejala.
+
+## Uji pemahaman
+
+1. Sebutkan urutan empat langkah penelusuran galat dan alasan urutannya.
+2. Pesan render menyebut `Quitting from lines 109-113`. Di berkas mana baris itu berada, dan
+   bagaimana Anda menemukan contoh yang harus diperbaiki di spesifikasi?
+3. Mengapa galat LaTeX lebih mudah terlewat daripada galat kode R?
+4. (Transfer) Seorang rekan mengirim PDF modul yang tampak rapi dan mengatakan render berhasil
+   tanpa galat. Tiga pemeriksaan apa yang Anda lakukan pada PDF itu sebelum modul dibagikan, dan
+   mengapa ketiganya?

@@ -1,6 +1,6 @@
 name: "Kunci Jawaban Modul (BPS/STIS)"
 description: >
-  Kerangka buku kunci jawaban bergaya BPS (cover hijau, badge KUNCI JAWABAN)
+  Kerangka buku kunci jawaban bernuansa warna logo BPS (cover hijau, badge KUNCI JAWABAN)
   dengan tema dari package modulstis. Ubah nomor modul dan topik pada chunk
   'bootstrap'.
 create_dir: true

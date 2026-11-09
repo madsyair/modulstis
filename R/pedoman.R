@@ -1,7 +1,9 @@
 #' Buka Buku Pedoman `modulstis`
 #'
-#' Buku Pedoman *Menyusun Modul Praktikum dengan Paket R `modulstis`* (82 halaman)
-#' disertakan sebagai PDF di `inst/pedoman/`, bukan sebagai vignette PDF di
+#' Buku Pedoman *Menyusun Modul Praktikum dengan modulstis: Pedoman Langkah demi
+#' Langkah untuk Dosen* disertakan sebagai PDF di `inst/pedoman/`. Sumber
+#' Quarto-nya ada di folder `pedoman/` repositori paket. Buku tidak dipasang
+#' sebagai vignette PDF di
 #' `inst/doc/`. Penempatan itu disengaja: `R CMD check` memeriksa ukuran PDF di
 #' bawah `inst/doc` dan memberi WARNING bila masih dapat dimampatkan `gs+qpdf`,
 #' sedangkan buku ini memuat ilustrasi beresolusi cetak.

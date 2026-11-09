@@ -1,14 +1,14 @@
 Package: modulstis
 Title: Generator Template Modul Praktikum Bernuansa Warna Logo BPS (Bookdown/Quarto
         + LaTeX)
-Version: 0.3.10
+Version: 0.3.11
 SystemRequirements: XeLaTeX; pola pemenggalan bahasa Indonesia
         (hyph-id). Pada TeX Live berbasis Debian pasang melalui
         'texlive-lang-other'; pada TinyTeX melalui
         tinytex::tlmgr_install('hyphen-indonesian'). Periksa dengan
         'kpsewhich hyph-id.tex'.
 Authors@R: 
-    person("Achmad Syahrul", "Choir", email = "syahrul@example.ac.id",
+    person("Achmad Syahrul", "Choir", email = "madsyair@stis.ac.id",
            role = c("aut", "cre"))
 Description: Menghasilkan template modul praktikum dan buku kunci jawaban dari
     satu spesifikasi deklaratif (YAML/objek). Mendukung backend bookdown dan
@@ -22,10 +22,10 @@ RoxygenNote: 7.3.1
 Depends: R (>= 4.1.0)
 Imports: R6, yaml, purrr, fs
 Suggests: rmarkdown, knitr, bookdown, quarto, testthat (>= 3.0.0),
-        pdftools, rstudioapi
+        pdftools, qpdf, rstudioapi
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 NeedsCompilation: no
 Packaged: 2026-09-05 05:21:00 UTC; root
 Author: Achmad Syahrul Choir [aut, cre]
-Maintainer: Achmad Syahrul Choir <syahrul@example.ac.id>
+Maintainer: Achmad Syahrul Choir <madsyair@stis.ac.id>

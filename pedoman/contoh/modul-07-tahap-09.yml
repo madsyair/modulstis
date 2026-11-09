@@ -1,0 +1,180 @@
+# Modul 7 Pemrograman Statistika -- tahap Bab 9: latihan, penugasan, dan kunci
+number: 7
+title: "Statistik Deskriptif dan Eksplorasi Data"
+short_code: "deskriptif"
+topic: "Statistik Deskriptif & Eksplorasi Data"
+pertemuan: 7
+sub_cpmk: >
+  Sub-CPMK 7: Mahasiswa mampu menjelaskan, menampilkan, dan menerapkan
+  statistik deskriptif serta melakukan eksplorasi data secara grafis dengan R.
+packages: [dplyr]
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  semester: "3 (Ganjil)"
+  prodi: "D-IV Statistika"
+  penyusun:
+    - "Achmad Syahrul Choir"
+
+datasets:
+  - name: data_rumahtangga
+    role: contoh
+    recipe:
+      kind: tabular
+      "n": 60
+      seed: 2025
+      columns:
+        wilayah: {type: category, levels: [Perkotaan, Perdesaan], probs: [0.45, 0.55]}
+        provinsi: {type: category, levels: [Provinsi A, Provinsi B, Provinsi C], probs: [0.4, 0.35, 0.25]}
+        pengeluaran: {type: numeric, min: 500, max: 5000, digits: 1}
+        pendapatan: {type: numeric, min: 800, max: 7000, digits: 1}
+        art: {type: integer, min: 1, max: 8}
+        umur_krt: {type: integer, min: 25, max: 70}
+
+body:
+  deskripsi:
+    - >
+      Modul ini membahas langkah yang selalu mendahului analisis inferensia:
+      mengenali data lewat ringkasan angka dan gambar. Statistik deskriptif
+      memampatkan ratusan amatan menjadi beberapa ukuran yang bermakna, sedangkan
+      eksplorasi grafis menampakkan pola dan keganjilan yang tidak terlihat dari
+      angka ringkasan saja.
+    - >
+      Keterampilan dari Modul 2 (tipe data), Modul 3 (menulis fungsi), dan
+      Modul 5 (meringkas per kelompok dengan `dplyr`) dipakai kembali di sini.
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini, mahasiswa diharapkan mampu:"
+    - "1. **Menghitung** ukuran pemusatan, penyebaran, dan posisi."
+    - "2. **Memilih** ukuran yang tepat sesuai bentuk sebaran data."
+    - "3. **Membuat** dan **membaca** histogram serta diagram kotak-garis."
+  alat:
+    - "Perangkat dan bahan yang diperlukan:"
+    - "- **R** dan **RStudio**."
+    - "- Paket `dplyr`."
+    - "- Berkas data `data/data_rumahtangga.csv`."
+  instruksi:
+    - "**Sebelum praktikum:** letakkan berkas data di subfolder `data/` pada direktori kerja."
+    - "**Selama praktikum:** kerjakan Contoh berurutan, lalu Latihan Mandiri."
+    - "**Setelah praktikum:** kerjakan Penugasan sebagai tugas terstruktur."
+  teori:
+    - "### Pemusatan, Penyebaran, dan Posisi"
+    - >
+      **Pemusatan** menjawab "di mana pusat data": rata-rata, median, dan modus.
+      **Penyebaran** menjawab "seberapa bervariasi": jangkauan, simpangan kuartil,
+      ragam, dan simpangan baku. **Posisi** menjawab "di mana letak suatu
+      amatan": kuartil dan persentil.
+    - "### Memilih Ukuran yang Tepat"
+    - >
+      Rata-rata peka terhadap nilai ekstrem, sedangkan median tidak. Pada data
+      yang menceng ke kanan, seperti pengeluaran rumah tangga, median biasanya
+      lebih mewakili keadaan umum.
+  contoh:
+    - contoh: "Ringkasan cepat seluruh peubah"
+      judul_r: "str dan summary"
+      kode_r: |
+        rt <- read.csv("data/data_rumahtangga.csv")
+        str(rt)
+        summary(rt[, c("pengeluaran", "pendapatan", "art")])
+      eval: true
+      penjelasan: >
+        Data dibaca dengan `read.csv()`. Fungsi `str()` menampilkan struktur
+        data: banyaknya baris, nama kolom, dan tipe setiap kolom. Fungsi
+        `summary()` diberi tiga kolom numerik saja.
+      interpretasi: >
+        Bandingkan rata-rata (Mean) dan median setiap peubah. Bila keduanya
+        berbeda cukup jauh, sebarannya kemungkinan menceng dan perlu diperiksa
+        dengan histogram.
+    - contoh: "Ukuran pemusatan termasuk modus"
+      judul_r: "mean, median, dan modus buatan"
+      kode_r: |
+        peng <- rt$pengeluaran
+        mean(peng)
+        median(peng)
+        # R tidak punya fungsi modus bawaan; buat sendiri (Modul 3)
+        modus <- function(x) {
+          tab <- table(x)
+          as.numeric(names(tab)[which.max(tab)])
+        }
+        modus(rt$art)
+      eval: true
+      penjelasan: >
+        Fungsi `modus()` menghitung frekuensi setiap nilai dengan `table()`,
+        lalu mengambil nilai yang frekuensinya terbesar.
+      interpretasi: >
+        Modus paling bermakna untuk peubah diskret seperti banyaknya anggota
+        rumah tangga (`art`).
+    - contoh: "Histogram dan diagram kotak-garis"
+      judul_r: "hist dan boxplot"
+      kode_r: |
+        hist(rt$pengeluaran, breaks = 8, col = "#0B6FB4", border = "white",
+             main = "Pengeluaran rumah tangga", xlab = "ribu rupiah per bulan")
+        boxplot(pengeluaran ~ wilayah, data = rt, col = "#6FB3E0",
+                ylab = "ribu rupiah per bulan")
+      eval: true
+      penjelasan: >
+        `hist()` membagi rentang nilai menjadi selang (`breaks`) dan menghitung
+        banyaknya amatan di setiap selang. `boxplot()` dengan rumus
+        `pengeluaran ~ wilayah` menggambar satu kotak untuk setiap wilayah.
+      interpretasi: >
+        Histogram menampakkan bentuk sebaran pengeluaran, sedangkan diagram
+        kotak-garis membandingkan median dan sebaran kedua wilayah secara
+        berdampingan.
+  latihan:
+    - "Kerjakan latihan berikut dengan berkas `data/data_rumahtangga.csv`."
+    - judul: "Ukuran pemusatan dan penyebaran"
+      isi: |
+        Lengkapi kode berikut untuk peubah `pendapatan`.
+
+        ```{r eval=FALSE}
+        rt <- read.csv("data/data_rumahtangga.csv")
+        ____(rt$pendapatan)   # rata-rata
+        ____(rt$pendapatan)   # median
+        ____(rt$pendapatan)   # simpangan baku
+        ```
+    - judul: "Membandingkan wilayah"
+      isi: >
+        Hitung median `pengeluaran` untuk setiap `wilayah` dengan `dplyr`.
+        Wilayah mana yang median pengeluarannya lebih tinggi?
+  penugasan:
+    - judul: "Profil deskriptif rumah tangga"
+      isi: >
+        Susun laporan R Markdown berisi ringkasan angka dan grafik untuk
+        `pengeluaran` dan `pendapatan`, dipisahkan menurut `provinsi`. Tutup
+        dengan ringkasan paling banyak 200 kata.
+  ringkasan:
+    - >
+      Statistik deskriptif dan eksplorasi grafis saling melengkapi. Angka
+      ringkasan memberi ukuran yang ringkas, gambar menampakkan bentuk dan
+      keganjilan. Modul 9 melanjutkan eksplorasi grafis dengan `ggplot2`.
+  referensi:
+    - "Wickham, H., Çetinkaya-Rundel, M., & Grolemund, G. (2023). *R for Data Science* (2nd ed.). O'Reilly."
+    - "Walpole, R. E., Myers, R. H., Myers, S. L., & Ye, K. (2012). *Probability and Statistics for Engineers and Scientists* (9th ed.). Pearson."
+
+exercises:
+  - id: "L7.1"
+    points: 40
+    solution: "mean, median, dan sd."
+    judul_r: "Solusi Latihan 7.1"
+    solusi_r: |
+      rt <- read.csv("data/data_rumahtangga.csv")
+      mean(rt$pendapatan)
+      median(rt$pendapatan)
+      sd(rt$pendapatan)
+    interpretasi: >
+      Tiga fungsi ringkasan dasar dipakai sesuai perannya. Nilai yang dihasilkan
+      harus sama dengan keluaran di atas karena datanya dibangkitkan dengan seed
+      yang sama.
+  - id: "L7.2"
+    points: 60
+    solution: "group_by(wilayah) lalu summarise(median(pengeluaran))."
+    judul_r: "Solusi Latihan 7.2"
+    solusi_r: |
+      suppressPackageStartupMessages(library(dplyr))
+      rt <- read.csv("data/data_rumahtangga.csv")
+      rt |>
+        group_by(wilayah) |>
+        summarise(median_pengeluaran = median(pengeluaran))
+    interpretasi: >
+      Bandingkan kedua median. Karena datanya simulasi, selisih antarwilayah
+      tidak mencerminkan keadaan nyata.

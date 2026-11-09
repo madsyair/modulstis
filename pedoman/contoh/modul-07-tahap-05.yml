@@ -1,0 +1,18 @@
+# Modul 7 Pemrograman Statistika -- tahap Bab 5: identitas saja
+number: 7
+title: "Statistik Deskriptif dan Eksplorasi Data"
+short_code: "deskriptif"
+topic: "Statistik Deskriptif & Eksplorasi Data"
+pertemuan: 7
+sub_cpmk: >
+  Sub-CPMK 7: Mahasiswa mampu menjelaskan, menampilkan, dan menerapkan
+  statistik deskriptif serta melakukan eksplorasi data secara grafis dengan R.
+packages: [dplyr]
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  semester: "3 (Ganjil)"
+  prodi: "D-IV Statistika"
+  penyusun:
+    - "Achmad Syahrul Choir"

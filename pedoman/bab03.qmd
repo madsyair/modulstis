@@ -1,0 +1,269 @@
+# Modul Pertama dalam Lima Belas Menit {#sec-bab03}
+
+```{r}
+#| include: false
+source("_setup.R")
+unlink(PROYEK, recursive = TRUE)
+```
+
+Apa langkah paling pendek dari folder kosong ke PDF modul pertama? Jawabannya: biarkan
+paket membuatkan proyek yang sudah berisi satu spesifikasi contoh, lalu render. Bab ini
+mengerjakan persis itu, kemudian mengubah satu baris untuk melihat bahwa modul memang
+mengikuti spesifikasinya.
+
+Setelah membaca bab ini, Anda dapat membuat proyek modul baru, merender modul dan kunci
+jawabannya, serta menemukan berkas hasilnya.
+
+Bab ini memulai contoh berjalan buku: proyek mata kuliah **Pemrograman Statistika**.
+
+## Membuat proyek
+
+**Proyek** dalam RStudio adalah sebuah folder yang dibuka sebagai satu kesatuan kerja.
+Ketika proyek dibuka, folder itu otomatis menjadi direktori kerja, sehingga semua nama berkas
+dapat ditulis pendek, misalnya `spec/modul-07-deskriptif.yml`, tanpa jalur lengkap.
+
+\langkah{Buat proyek dari menu RStudio}
+
+Pilih **File → New Project → New Directory**. Dalam daftar jenis proyek, pilih **Proyek
+Modul Praktikum (modulstis)**. Pilihan ini muncul setelah `modulstis` terpasang. Isi kotak
+isian sebagai berikut, lalu klik **Create Project**.
+
+| Isian | Nilai untuk contoh berjalan |
+|:--|:--|
+| Directory name | `pemrograman-statistika` |
+| Nama mata kuliah | Pemrograman Statistika |
+| Kode mata kuliah | K242310 |
+| Program studi | D-IV Statistika |
+| Semester | 3 (Ganjil) |
+| Penyusun | nama Anda |
+| Banyaknya modul | 14 |
+| Sertakan spesifikasi contoh | dicentang |
+
+: Isian proyek baru {#tbl-isian-proyek}
+
+RStudio membuka proyek baru dan menampilkan dua berkas di panel Source: `README.md` dan
+`render_modul.R`.
+
+::: {.callout-note}
+## Tanpa menu RStudio
+
+Perintah berikut menghasilkan proyek yang sama. Jalankan di Console dari folder tempat Anda
+ingin menaruh proyek, lalu buka proyeknya dengan **File → Open Project**.
+
+```{rproyek}
+#| wd: !expr KERJA
+library(modulstis)
+buat_proyek_modul("pemrograman-statistika",
+  matkul = "Pemrograman Statistika", kode = "K242310",
+  prodi = "D-IV Statistika", semester = "3 (Ganjil)",
+  penyusun = "Achmad Syahrul Choir", n_modul = 14)
+```
+:::
+
+## Mengenali isi folder proyek
+
+\langkah{Lihat isi folder}
+
+Buka panel **Files**, atau jalankan:
+
+```{rproyek}
+list.files(recursive = TRUE)
+```
+
+Ada tiga folder dan tiga berkas:
+
+- `spec/` menyimpan spesifikasi, **satu berkas `.yml` per modul**. Folder ini sudah berisi
+  satu spesifikasi contoh, `modul-01-contoh.yml`.
+- `modul/` menampung hasil render. Isinya dibuat ulang setiap kali Anda merender.
+- `buku/` disiapkan untuk bagian awal dan akhir buku gabungan (@sec-bab12).
+- `render_modul.R` adalah skrip yang merender semua spesifikasi di `spec/`.
+- `README.md` berisi catatan proyek dan prasyaratnya.
+- Berkas `.gitkeep` hanyalah penanda kosong agar folder yang belum berisi tetap ikut tersalin.
+  Anda tidak perlu menyentuhnya.
+
+Bila Anda membuat proyek lewat menu RStudio, ada juga berkas `pemrograman-statistika.Rproj`.
+Klik dua kali berkas itu untuk membuka proyek di lain waktu.
+
+::: {.callout-important}
+## Salah paham umum: "Isi modul diubah di PDF atau di berkas .Rmd hasil render"
+
+Folder `modul/` berisi hasil, bukan sumber. Setiap render menulis ulang berkas di sana,
+termasuk berkas `.Rmd` dan `.tex` antara. Perubahan yang Anda buat langsung di folder itu akan
+hilang pada render berikutnya. Satu-satunya tempat menyunting isi modul adalah berkas `.yml` di
+folder `spec/`.
+:::
+
+## Membaca spesifikasi contoh
+
+\langkah{Buka spesifikasi contoh}
+
+Klik dua kali `spec/modul-01-contoh.yml` di panel Files. Baris-baris pertamanya seperti ini:
+
+```{r}
+#| echo: false
+#| output: asis
+pastikan_proyek()
+tampil_berkas(file.path(PROYEK, "spec", "modul-01-contoh.yml"), baris = 1:18)
+```
+
+Anda belum perlu memahami setiap baris. Untuk sekarang cukup kenali polanya: setiap baris
+berbentuk `nama: nilai`. Nama di kiri titik dua disebut **kunci**, dan isi di kanan disebut
+**nilai**. Baris yang menjorok ke dalam merupakan bagian dari kunci di atasnya; misalnya
+`matkul` dan `kode` adalah bagian dari `course`. Aturan lengkapnya dibahas di @sec-bab04.
+
+## Memeriksa spesifikasi
+
+\langkah{Periksa spesifikasi sebelum merender}
+
+```{rproyek}
+library(modulstis)
+sp <- module_spec_from_yaml("spec/modul-01-contoh.yml")
+sp$validate()
+```
+
+`module_spec_from_yaml()` membaca berkas YAML menjadi objek spesifikasi di R, dan
+`validate()` memeriksa isinya. Pemeriksaan ini hanya beberapa detik, sedangkan render bisa
+memakan setengah menit. Karena itu, biasakan memeriksa lebih dahulu.
+
+::: {.callout-tip}
+Konsol menampilkan `✔ Spesifikasi valid.` Bila yang muncul `✖ Spesifikasi tidak valid`
+beserta daftar pesan, baca pesannya: setiap baris menyebut kunci yang bermasalah.
+:::
+
+## Merender
+
+\langkah{Render semua spesifikasi}
+
+Buka `render_modul.R` di panel Source, lalu klik tombol **Source** di kanan atas panel.
+Tombol itu sama dengan menjalankan perintah berikut di Console:
+
+```{rproyek}
+source("render_modul.R")
+```
+
+Keluaran ini terdiri atas tiga jenis baris:
+
+- Baris berawalan `INFO` adalah catatan kerja paket. Ada satu baris untuk modul
+  (`jenis=modul`) dan satu untuk kunci jawabannya (`jenis=kunci`).
+- Baris `Warning: Package tocloft Warning` berasal dari LaTeX ketika menyusun daftar isi.
+  Peringatan ini muncul pada setiap render dan **tidak memengaruhi hasil**, sehingga boleh
+  diabaikan.
+- Baris terakhir, `selesai: Modul01_contoh`, menyebut folder hasilnya.
+
+Render satu modul biasanya memakan waktu sepuluh sampai tiga puluh detik. Render pertama
+setelah memasang TinyTeX bisa jauh lebih lama karena TinyTeX mengunduh paket LaTeX yang
+dibutuhkan.
+
+::: {.callout-note}
+## Dari terminal
+
+Skrip yang sama dapat dijalankan dari tab **Terminal** RStudio. Cara ini berguna ketika Anda
+hanya ingin merender sebagian modul:
+
+```bash
+Rscript render_modul.R          # semua spesifikasi
+Rscript render_modul.R 3 5      # modul ketiga sampai kelima dalam urutan berkas
+```
+:::
+
+## Melihat hasil
+
+\langkah{Buka berkas hasil}
+
+```{rproyek}
+list.files("modul", recursive = TRUE, pattern = "\\.(pdf|csv)$")
+```
+
+Setiap spesifikasi menghasilkan satu folder di `modul/`. Nama foldernya dibentuk dari nomor
+modul dan kode singkatnya: `Modul01_contoh`. Di dalamnya ada tiga hal yang kita bahas di
+@sec-bab01: modul PDF, kunci jawaban PDF, dan folder `data/` berisi berkas CSV.
+
+Klik berkas PDF di panel Files, lalu pilih **View File**. @fig-modul-pertama memperlihatkan
+sampul dan satu halaman isi modul tersebut.
+
+```{r}
+#| include: false
+pdf1 <- file.path(PROYEK, "modul", "Modul01_contoh", "Modul_01_contoh.pdf")
+p1 <- halaman_png(pdf1, 1, "bab03-awal")
+p2 <- halaman_png(pdf1, cari_halaman(pdf1, "Contoh 1\\.1"), "bab03-awal")
+```
+
+```{r}
+#| label: fig-modul-pertama
+#| echo: false
+#| fig-cap: "Modul pertama yang dihasilkan dari spesifikasi contoh."
+#| fig-subcap:
+#|   - "Sampul"
+#|   - "Contoh praktikum beserta keluaran kodenya"
+#| layout-ncol: 2
+knitr::include_graphics(c(p1, p2))
+```
+
+::: {.callout-tip}
+Sampul menampilkan nomor modul **1**, judul **JUDUL MODUL PERTAMA**, dan nama mata kuliah
+yang Anda isi saat membuat proyek. Bila nama mata kuliah di sampul berbeda dari isian Anda,
+buka kembali spesifikasinya dan periksa blok `course`.
+:::
+
+## Mengubah satu baris, lalu merender ulang
+
+Sekarang kita buktikan bahwa modul benar-benar mengikuti spesifikasinya.
+
+\langkah{Ganti judul modul}
+
+Di `spec/modul-01-contoh.yml`, ubah baris kedua menjadi:
+
+```yaml
+title: "Pengenalan R dan RStudio"
+```
+
+Simpan berkas (**Ctrl+S**, atau **Cmd+S** di macOS), lalu klik **Source** pada
+`render_modul.R` sekali lagi.
+
+```{r}
+#| include: false
+f <- file.path(PROYEK, "spec", "modul-01-contoh.yml")
+x <- readLines(f)
+x[2] <- 'title: "Pengenalan R dan RStudio"'
+writeLines(x, f)
+invisible(jalankan('invisible(capture.output(source("render_modul.R")))'))
+p3 <- halaman_png(pdf1, 1, "bab03-ubah")
+```
+
+```{r}
+#| label: fig-judul-baru
+#| echo: false
+#| fig-cap: "Sampul setelah judul diubah dan modul dirender ulang."
+#| out-width: "45%"
+knitr::include_graphics(p3)
+```
+
+Judul di sampul, di daftar isi, dan di kepala setiap halaman berubah sekaligus. Anda hanya
+mengubah satu baris.
+
+::: {.callout-caution}
+Ubah nilai `pertemuan` di spesifikasi contoh dari `1` menjadi `2`, simpan, lalu render ulang.
+Cari di sampul tulisan yang berubah. Kemudian kembalikan nilainya menjadi `1`.
+:::
+
+## Ringkasan
+
+Proyek `modulstis` adalah folder dengan susunan tetap: spesifikasi di `spec/`, hasil di
+`modul/`, dan skrip `render_modul.R` untuk merender semuanya. Alur kerjanya selalu sama:
+sunting spesifikasi, periksa dengan `validate()`, render, lalu buka hasilnya. Hasil render
+selalu dibuat ulang dari spesifikasi, sehingga perubahan dilakukan di spesifikasi, bukan di
+PDF.
+
+Spesifikasi contoh tadi masih berisi teks pengisi. Bagian II menulis spesifikasi sungguhan,
+yaitu Modul 7 Pemrograman Statistika. Sebelum itu, @sec-bab04 membahas aturan penulisan YAML
+yang perlu Anda ketahui.
+
+## Uji pemahaman
+
+1. Sebutkan isi ketiga folder dalam proyek `modulstis` dan fungsi masing-masing.
+2. Mengapa `validate()` sebaiknya dijalankan sebelum merender?
+3. Seorang asisten menyunting berkas `Modul_01_contoh.Rmd` di folder `modul/` untuk
+   memperbaiki salah ketik. Apa yang terjadi pada render berikutnya?
+4. (Transfer) Anda baru saja menambahkan berkas `spec/modul-02-dasar.yml`. Tanpa membaca
+   ulang bab ini, tebak nama folder dan nama berkas PDF modul yang akan muncul di `modul/`
+   setelah render, bila nilai `short_code` di berkas itu adalah `dasar`.

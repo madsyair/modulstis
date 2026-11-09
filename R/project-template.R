@@ -52,6 +52,13 @@ buat_proyek_modul <- function(path,
 
 # ---- pembantu internal -------------------------------------------------------
 
+# Versi paket yang sedang terpasang; dipakai agar README proyek tidak menulis
+# nomor versi yang usang.
+versi_modulstis <- function() {
+  tryCatch(as.character(utils::packageVersion("modulstis")),
+           error = function(e) "terbaru")
+}
+
 contoh_spec_yaml <- function(matkul, kode, prodi, semester, penyusun) {
   c(
     "number: 1",
@@ -212,7 +219,7 @@ readme_proyek <- function(matkul, kode, prodi, semester, penyusun, n_modul) {
     "| Kebutuhan | Keterangan |",
     "|---|---|",
     "| R 4.1+ | mesin penjalan kode |",
-    "| `modulstis` 0.3.1 | generator template modul |",
+    sprintf("| `modulstis` %s | generator template modul |", versi_modulstis()),
     "| XeLaTeX | mesin penyusun PDF |",
     "| Font Carlito | font tata letak modul |",
     "| poppler-utils | menyediakan `pdfunite`, `pdfinfo` |",
@@ -222,7 +229,7 @@ readme_proyek <- function(matkul, kode, prodi, semester, penyusun, n_modul) {
     "(`meny-atakan` alih-alih `me-nyatakan`). Periksa dengan `kpsewhich hyph-id.tex`.", "",
     "## Panduan lengkap", "",
     "```r",
-    "buka_pedoman()              # Buku Pedoman (PDF, 82 halaman)",
+    "buka_pedoman()              # Buku Pedoman (PDF)",
     "vignette(\"pedoman-modulstis\")   # keterangan ringkas + daftar isi",
     "vignette(\"contoh-penerapan-penuh\")",
     "```"

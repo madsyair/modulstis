@@ -1,0 +1,98 @@
+# Kata Pengantar {.unnumbered}
+
+```{r}
+#| include: false
+source("_setup.R")
+```
+
+Setiap semester, dosen pengampu mata kuliah praktikum menghadapi pekerjaan yang sama:
+menyiapkan empat belas modul, memperbarui contoh kode, membangkitkan data latihan, lalu
+menyusun kunci jawaban yang cocok dengan soalnya. Pekerjaan ini sering dikerjakan dengan
+menyalin berkas tahun lalu dan menyunting bagian yang berubah. Cara itu cepat pada minggu
+pertama, tetapi lama-kelamaan menimbulkan masalah: keluaran kode di modul tidak lagi sama
+dengan keluaran di komputer mahasiswa, data latihan berbeda antara modul dan kunci, dan nomor
+soal di kunci tertinggal ketika soal di modul diubah.
+
+Paket R `modulstis` dibuat untuk memindahkan pekerjaan itu ke satu tempat. Dosen menulis
+isi modul dalam satu berkas teks berstruktur. Dari berkas itu, paket menyusun modul PDF,
+kunci jawaban PDF, dan berkas data latihan. Karena ketiganya berasal dari sumber yang sama,
+ketiganya selalu sinkron.
+
+Buku ini memandu Anda memakai paket tersebut dari awal, mulai dari memasang perangkat di
+komputer sampai menerbitkan buku modul satu semester. Buku ini ditulis untuk dosen yang
+sudah memakai R untuk mengajar, tetapi belum pernah menulis YAML, R Markdown, Quarto, atau
+LaTeX. Setiap istilah baru dijelaskan ketika pertama kali muncul, dan setiap langkah
+disertai hasil yang seharusnya Anda lihat.
+
+Contoh dalam buku ini memakai mata kuliah **Pemrograman Statistika** (K242310) Program
+Studi D-IV Statistika. Spesifikasi empat belas modulnya disertakan di dalam paket. Sepanjang
+buku, kita membangun ulang **Modul 7: Statistik Deskriptif dan Eksplorasi Data** sedikit
+demi sedikit, sehingga Anda melihat akibat setiap perubahan pada modul yang dihasilkan.
+
+Seluruh kode di buku ini dijalankan ketika buku dibangun dengan `modulstis` versi
+`r as.character(packageVersion("modulstis"))`. Keluaran yang tercetak adalah keluaran
+paket yang sebenarnya, dan gambar halaman modul adalah tangkapan dari PDF hasil render.
+
+Jakarta, `r format(Sys.Date(), "%B %Y")`
+
+Achmad Syahrul Choir
+
+# Cara Membaca Buku Ini {.unnumbered}
+
+## Dua jalur pembacaan {.unnumbered}
+
+**Jalur cepat.** Bila Anda ingin segera melihat hasil, baca Bab 1 sampai Bab 3. Setelah
+Bab 3, Anda sudah memiliki satu modul PDF yang dihasilkan dari komputer Anda sendiri.
+Kembali ke bab lain ketika Anda membutuhkannya.
+
+**Jalur lengkap.** Bila Anda akan menyusun modul satu semester, baca berurutan. Bab 4
+sampai Bab 10 membangun Modul 7 bagian demi bagian. Bab 11 sampai Bab 15 membahas
+penerbitan, penyesuaian tampilan, penanganan galat, dan alur kerja selama semester.
+
+## Kotak dan penanda {.unnumbered}
+
+Buku ini memakai beberapa kotak berwarna. Masing-masing punya tugas tetap.
+
+::: {.callout-tip}
+Kotak hijau menunjukkan apa yang seharusnya muncul di layar atau di berkas setelah sebuah
+langkah. Bila yang Anda lihat berbeda, berhentilah dan baca kembali langkah sebelumnya.
+:::
+
+::: {.callout-warning}
+Kotak oranye menandai langkah yang mudah keliru.
+:::
+
+::: {.callout-important}
+Kotak merah membahas keyakinan yang wajar, tetapi keliru, beserta contoh yang
+menunjukkan mengapa keliru.
+:::
+
+::: {.callout-caution}
+Kotak biru tua berisi satu perubahan kecil yang dapat Anda coba sendiri, beserta akibat yang
+seharusnya terjadi.
+:::
+
+Langkah kerja diberi nomor seperti ini:
+
+\langkah{Contoh penanda langkah}
+
+Kalimat sesudah penanda menjelaskan apa yang dikerjakan.
+
+Langkah yang berbeda menurut sistem operasi diberi penanda \windows{}, \macos{}, atau
+\linux{}. Kerjakan hanya bagian yang sesuai dengan komputer Anda.
+
+## Kesepakatan penulisan {.unnumbered}
+
+- Kode yang Anda ketik di konsol R ditulis dalam blok abu-abu. Baris yang diawali `#>`
+  adalah keluaran R, bukan bagian dari kode; jangan ikut diketik.
+- Perintah untuk terminal (bukan konsol R) diberi tanda `bash` di sudut blok kode.
+- Nama berkas, folder, fungsi, dan kunci YAML ditulis dengan huruf mesin tik, misalnya
+  `spec/modul-07-deskriptif.yml`.
+- Fungsi R ditulis dengan tanda kurung, misalnya `render_module()`, supaya mudah dibedakan
+  dari nama objek.
+
+## Prasyarat {.unnumbered}
+
+Anda diharapkan sudah dapat menjalankan kode R di RStudio, membaca berkas CSV, dan memakai
+fungsi dasar seperti `mean()` atau `summary()`. Anda tidak perlu menguasai LaTeX, YAML,
+atau Git. Bagian yang memerlukannya akan menjelaskan secukupnya.

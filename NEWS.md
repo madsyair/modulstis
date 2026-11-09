@@ -1,3 +1,56 @@
+# modulstis 0.3.11
+
+## Buku Pedoman baru
+
+* Buku Pedoman ditulis ulang sebagai buku Quarto: *Menyusun Modul Praktikum dengan
+  modulstis: Pedoman Langkah demi Langkah untuk Dosen*. Langkah pemasangan mencakup
+  Windows, macOS, dan Linux; contoh berjalannya Modul 7 Pemrograman Statistika D-IV;
+  seluruh kode di dalamnya dijalankan saat buku dibangun. Sumbernya di folder `pedoman/`
+  (dikecualikan dari paket), PDF-nya di `inst/pedoman/Pedoman_modulstis.pdf` dan dibuka
+  dengan `buka_pedoman()`. Sumber R Markdown pedoman lama dihapus dari `inst/pedoman/`.
+
+## Fungsi baru
+
+* `LatexTheme$new()` dan `theme_factory()` menerima argumen `font` untuk mengganti font
+  Carlito dengan font lain yang terpasang di sistem operasi.
+* `cek_kesiapan()` memeriksa perangkat yang diperlukan untuk merender modul: versi R,
+  paket pendukung, XeLaTeX, font Carlito, pola pemenggalan bahasa Indonesia, penggabung
+  PDF, dan Quarto. Font dan pola pemenggalan diuji dengan mengompilasi dokumen LaTeX kecil,
+  sehingga hasilnya berlaku sama di Windows, macOS, dan Linux.
+
+## Perbaikan
+
+* **Palet warna tema kini benar-benar dipakai.** `LatexTheme$new(palette = list(...))` dan
+  `theme_factory(palette = ...)` sebelumnya menyimpan warna tetapi tidak menerapkannya,
+  karena warna di templat preamble ditulis tetap. Kini keenam warna palet menggantikan
+  warna di preamble, dan warna yang tidak berbentuk heksadesimal enam digit ditolak dengan
+  pesan yang jelas.
+* **Render tidak lagi menghasilkan PDF berisi isi lama ketika kode contoh galat.**
+  Sebelumnya, bila sebuah chunk berisi `eval: true` gagal dijalankan, knitr berhenti,
+  lalu jalur pemulihan mengompilasi ulang berkas `.tex` dari render sebelumnya. Hasilnya
+  PDF lama tampak sebagai hasil render yang berhasil. Kini berkas `.tex` dan `.pdf` lama
+  dihapus sebelum render, dan render berhenti dengan pesan yang menyertakan penyebab galat.
+* Bila LaTeX menemukan galat tetapi PDF tetap terbentuk lewat jalur pemulihan, misalnya
+  karena garis bawah atau tanda persen yang tidak diloloskan di dalam kotak, paket kini
+  mencetak peringatan `LaTeX melaporkan galat` beserta pesan dan baris galat pertama.
+  Sebelumnya hal ini hanya terlihat dari isi PDF yang rusak.
+* `render_berlanjut()` kini membangkitkan berkas data setiap modul di folder keluarannya
+  sebelum merender. Sebelumnya, modul yang contohnya membaca `data/...` gagal dirender
+  dengan pesan `cannot open the connection`.
+* `pdf_halaman()` tidak lagi memanggil `grep` lewat shell, sehingga `render_berlanjut()`
+  kini bekerja di Windows. Jumlah halaman dibaca dengan `pdftools` atau `qpdf` bila
+  terpasang, dan `pdfinfo` hanya sebagai cadangan.
+* `gabung_pdf()` memakai paket `qpdf` bila `pdfunite` tidak ada di PATH (umumnya di
+  Windows), dan kini menghentikan proses dengan pesan yang jelas bila penggabungan gagal.
+  `qpdf` ditambahkan ke `Suggests`.
+* README proyek yang dibuat `buat_proyek_modul()` mencantumkan versi paket yang sedang
+  terpasang, bukan angka 0.3.1 yang tertulis tetap.
+* Sisa frasa "bergaya BPS" pada templat proyek RStudio dan templat R Markdown diganti
+  menjadi "bernuansa warna logo BPS", melengkapi perubahan 0.3.10.
+* Surel pengelola paket diperbaiki menjadi `madsyair@stis.ac.id`.
+* README ditulis ulang: contoh cepat sebelumnya memanggil folder `inst/specs` yang sudah
+  tidak ada; kini memakai `specs_ps`, `specs_d3`, dan `specs_dm`.
+
 # modulstis 0.3.10
 
 * Keterangan paket diperbaiki: frasa "bergaya publikasi BPS" diganti menjadi

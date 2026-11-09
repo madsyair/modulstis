@@ -13,54 +13,45 @@ knitr::opts_chunk$set(eval = FALSE, comment = "#>")
 
 ## Buku Pedoman dalam bentuk PDF
 
-Buku Pedoman **Menyusun Modul Praktikum dengan Paket R `modulstis`** (82 halaman, 11 bab dan
-5 lampiran) disertakan dalam paket sebagai berkas PDF. Buka dengan:
+Buku Pedoman **Menyusun Modul Praktikum dengan modulstis: Pedoman Langkah demi Langkah untuk
+Dosen** disertakan dalam paket sebagai berkas PDF. Buka dengan:
 
 ```{r}
-buka_pedoman()          # membuka PDF dengan pembaca bawaan sistem
+buka_pedoman()               # membuka PDF dengan pembaca bawaan sistem
 buka_pedoman(buka = FALSE)   # hanya mengembalikan path-nya
 ```
 
-atau langsung:
+Buku ini ditulis untuk dosen penyusun modul yang sudah memakai R, tetapi belum tentu pernah
+menulis YAML, R Markdown, Quarto, atau LaTeX. Contoh berjalannya adalah Modul 7 Pemrograman
+Statistika D-IV, yang dibangun ulang bagian demi bagian dari Bab 5 sampai Bab 13. Seluruh kode di
+dalamnya dijalankan ketika buku dibangun, sehingga keluaran yang tercetak adalah keluaran paket
+yang sebenarnya.
 
-```{r}
-system.file("pedoman", "Pedoman_modulstis.pdf", package = "modulstis")
-```
+## Isi buku
+
+| Bagian | Bab | Isi |
+|:--|:--|:--|
+| I Memulai | 1--3 | apa yang dikerjakan paket; pemasangan di Windows, macOS, dan Linux; modul pertama dalam lima belas menit |
+| II Menyusun Isi | 4--10 | YAML secukupnya; identitas modul; sebelas bagian isi; contoh berkode; data latihan; latihan dan kunci; kotak, rumus, dan tabel |
+| III Menerbitkan | 11--15 | merender satu atau banyak modul; buku modul dan buku kunci; tampilan; penanganan galat; alur kerja satu semester |
+| Lampiran | A--E | rujukan cepat YAML, templat siap salin, katalog kotak, daftar fungsi, kunci uji pemahaman |
+
+Setiap bab berisi langkah bernomor dengan hasil yang seharusnya terlihat, kotak salah paham umum,
+latihan *Coba sendiri*, dan uji pemahaman.
 
 ## Mengapa PDF-nya tidak dipasang sebagai vignette PDF
 
 `R CMD check` memeriksa ukuran seluruh PDF di bawah `inst/doc` dan memberi WARNING bila
-`gs+qpdf` masih dapat memampatkannya secara berarti. Buku ini memuat sampul dan ilustrasi
-beresolusi cetak, sehingga hasil render mentahnya sekitar 1,5 Mb --- selalu memicu peringatan
-itu bila belum dipadatkan lebih dahulu.
-
-Karena pemeriksaan tersebut **hanya** berlaku untuk `inst/doc`, buku disimpan di
-`inst/pedoman/` dan halaman ini yang menjadi vignette-nya. Dengan begitu peringatan tidak
-mungkin muncul, siapa pun yang membangun paket dan dengan atau tanpa
-`--compact-vignettes=both`.
-
-## Isi buku
-
-| Bagian | Isi | Halaman |
-|:-------|:----|:-------:|
-| I | Memulai: pemasangan hingga modul pertama (Bab 1--3) | 1--13 |
-| II | Menyusun isi: spesifikasi, bagian modul, contoh dan latihan (Bab 4--6) | 14--30 |
-| III | Sintaks LaTeX dan R Markdown (Bab 7--8) | 31--43 |
-| IV | Menyesuaikan tampilan dan menerbitkan buku (Bab 9--11) | 44--54 |
-| Lampiran | Rujukan YAML, kartu LaTeX, rujukan API, pemecahan masalah, studi kasus | 55--70 |
-| Akhir | Glosarium, indeks perintah, daftar pustaka | 71--75 |
-
-Bagian **2.10** membahas pemilihan backend (R Markdown/bookdown versus Quarto), dan
-**Lampiran A** memuat rujukan cepat spesifikasi YAML termasuk `kind: file` untuk memakai data
-nyata tanpa simulasi.
+`gs+qpdf` masih dapat memampatkannya secara berarti. Buku ini memuat banyak gambar halaman modul,
+sehingga disimpan di `inst/pedoman/` dan halaman ini yang menjadi vignette-nya.
 
 ## Membangun ulang buku
 
-Sumbernya disertakan di `inst/pedoman/`:
+Sumber Quarto buku ada di folder `pedoman/` repositori paket
+(<https://github.com/madsyair/modulstis/tree/main/pedoman>):
 
 ```bash
-cd inst/pedoman && Rscript bangun_pedoman.R    # atau: make pedoman
+cd pedoman && Rscript bangun.R
 ```
 
-Skrip merender ketujuh bagian, menggabungkannya dengan `pdfunite`, memadatkan hasilnya, lalu
-membersihkan berkas antara.
+Skrip merender buku dengan Quarto, menyalinnya ke `inst/pedoman/`, lalu memadatkannya.

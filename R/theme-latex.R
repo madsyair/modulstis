@@ -23,10 +23,19 @@ LatexTheme <- R6::R6Class("LatexTheme",
   public = list(
     #' @field palette daftar warna (navy, biru, ...)
     palette = NULL,
+    #' @field font nama font utama untuk teks dan judul
+    font = "Carlito",
 
     #' @description Buat tema baru
-    #' @param palette "bps" atau list warna kustom
-    initialize = function(palette = "bps") {
+    #' @param palette "bps" atau list warna kustom; unsur yang tidak disebut
+    #'   memakai warna bawaan [bps_palette()]
+    #' @param font nama font yang terpasang di sistem operasi (bawaan
+    #'   `"Carlito"`)
+    initialize = function(palette = "bps", font = "Carlito") {
+      if (!is.character(font) || length(font) != 1L || !nzchar(font)) {
+        stop("font harus berupa satu nama font", call. = FALSE)
+      }
+      self$font <- font
       if (identical(palette, "bps")) {
         self$palette <- bps_palette()
       } else if (is.list(palette)) {
@@ -78,6 +87,7 @@ LatexTheme <- R6::R6Class("LatexTheme",
       out <- gsub("@@PRODI@@", esc_latex(cc$prodi), out, fixed = TRUE)
       out <- gsub("@@PENYUSUN@@", cc$penyusun, out, fixed = TRUE)
       out <- gsub("@@HALAWAL@@", as.character(cc$halaman_awal), out, fixed = TRUE)
+      out <- private$terapkan_tampilan(out)
       if (variant == "kunci") out <- private$recolor_cover_green(out)
       out
     },
@@ -109,6 +119,26 @@ LatexTheme <- R6::R6Class("LatexTheme",
     }
   ),
   private = list(
+    # Menerapkan palet dan font tema ke preamble. Templat menulis warna BPS
+    # dan font Carlito secara tetap; nilai-nilai itu diganti dengan milik tema.
+    terapkan_tampilan = function(x) {
+      peta <- c(navy = "bpsnavy", biru = "bpsbiru", birumuda = "bpsbirumuda",
+                oranye = "bpsoranye", hijau = "bpshijau", abuteks = "abuteks")
+      for (k in names(peta)) {
+        hex <- toupper(sub("^#", "", self$palette[[k]] %||% ""))
+        if (!grepl("^[0-9A-F]{6}$", hex)) {
+          stop(sprintf("warna '%s' harus berbentuk heksadesimal enam digit, mis. \"#123A6B\"", k),
+               call. = FALSE)
+        }
+        pola <- sprintf("\\\\definecolor\\{%s\\}\\{HTML\\}\\{[0-9A-Fa-f]{6}\\}", peta[[k]])
+        ganti <- sprintf("\\\\definecolor{%s}{HTML}{%s}", peta[[k]], hex)
+        x <- sub(pola, ganti, x, perl = TRUE)
+      }
+      font <- gsub("\\\\", "\\\\\\\\", self$font)
+      x <- gsub("\\\\set(main|sans)font\\{Carlito\\}",
+                paste0("\\\\set\\1font{", font, "}"), x, perl = TRUE)
+      x
+    },
     read_template = function() {
       path <- system.file("templates", "preamble.tex.tmpl", package = "modulstis")
       if (path == "" || !file.exists(path)) {
@@ -133,9 +163,10 @@ LatexTheme <- R6::R6Class("LatexTheme",
 )
 
 #' Factory tema
-#' @param palette "bps" atau list warna
+#' @param palette "bps" atau list warna, mis. `list(navy = "#5B2C6F")`
+#' @param font nama font yang terpasang di sistem operasi
 #' @return objek [LatexTheme]
 #' @export
-theme_factory <- function(palette = "bps") {
-  LatexTheme$new(palette = palette)
+theme_factory <- function(palette = "bps", font = "Carlito") {
+  LatexTheme$new(palette = palette, font = font)
 }

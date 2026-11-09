@@ -1,0 +1,64 @@
+# Modul 7 Pemrograman Statistika -- tahap Bab 6: sebelas bagian isi
+number: 7
+title: "Statistik Deskriptif dan Eksplorasi Data"
+short_code: "deskriptif"
+topic: "Statistik Deskriptif & Eksplorasi Data"
+pertemuan: 7
+sub_cpmk: >
+  Sub-CPMK 7: Mahasiswa mampu menjelaskan, menampilkan, dan menerapkan
+  statistik deskriptif serta melakukan eksplorasi data secara grafis dengan R.
+packages: [dplyr]
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  semester: "3 (Ganjil)"
+  prodi: "D-IV Statistika"
+  penyusun:
+    - "Achmad Syahrul Choir"
+
+body:
+  deskripsi:
+    - >
+      Modul ini membahas langkah yang selalu mendahului analisis inferensia:
+      mengenali data lewat ringkasan angka dan gambar. Statistik deskriptif
+      memampatkan ratusan amatan menjadi beberapa ukuran yang bermakna, sedangkan
+      eksplorasi grafis menampakkan pola dan keganjilan yang tidak terlihat dari
+      angka ringkasan saja.
+    - >
+      Keterampilan dari Modul 2 (tipe data), Modul 3 (menulis fungsi), dan
+      Modul 5 (meringkas per kelompok dengan `dplyr`) dipakai kembali di sini.
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini, mahasiswa diharapkan mampu:"
+    - "1. **Menghitung** ukuran pemusatan, penyebaran, dan posisi."
+    - "2. **Memilih** ukuran yang tepat sesuai bentuk sebaran data."
+    - "3. **Membuat** dan **membaca** histogram serta diagram kotak-garis."
+  alat:
+    - "Perangkat dan bahan yang diperlukan:"
+    - "- **R** dan **RStudio**."
+    - "- Paket `dplyr`."
+    - "- Berkas data `data/data_rumahtangga.csv`."
+  instruksi:
+    - "**Sebelum praktikum:** letakkan berkas data di subfolder `data/` pada direktori kerja."
+    - "**Selama praktikum:** kerjakan Contoh berurutan, lalu Latihan Mandiri."
+    - "**Setelah praktikum:** kerjakan Penugasan sebagai tugas terstruktur."
+  teori:
+    - "### Pemusatan, Penyebaran, dan Posisi"
+    - >
+      **Pemusatan** menjawab "di mana pusat data": rata-rata, median, dan modus.
+      **Penyebaran** menjawab "seberapa bervariasi": jangkauan, simpangan kuartil,
+      ragam, dan simpangan baku. **Posisi** menjawab "di mana letak suatu
+      amatan": kuartil dan persentil.
+    - "### Memilih Ukuran yang Tepat"
+    - >
+      Rata-rata peka terhadap nilai ekstrem, sedangkan median tidak. Pada data
+      yang menceng ke kanan, seperti pengeluaran rumah tangga, median biasanya
+      lebih mewakili keadaan umum.
+  ringkasan:
+    - >
+      Statistik deskriptif dan eksplorasi grafis saling melengkapi. Angka
+      ringkasan memberi ukuran yang ringkas, gambar menampakkan bentuk dan
+      keganjilan. Modul 9 melanjutkan eksplorasi grafis dengan `ggplot2`.
+  referensi:
+    - "Wickham, H., Çetinkaya-Rundel, M., & Grolemund, G. (2023). *R for Data Science* (2nd ed.). O'Reilly."
+    - "Walpole, R. E., Myers, R. H., Myers, S. L., & Ye, K. (2012). *Probability and Statistics for Engineers and Scientists* (9th ed.). Pearson."

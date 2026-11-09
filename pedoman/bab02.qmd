@@ -1,0 +1,298 @@
+# Menyiapkan Komputer Langkah demi Langkah {#sec-bab02}
+
+```{r}
+#| include: false
+source("_setup.R")
+```
+
+Bagaimana Anda tahu komputer sudah siap sebelum mencoba merender modul pertama? Tanpa
+pemeriksaan, Anda baru tahu ada yang kurang ketika render gagal dengan pesan panjang yang
+sukar dibaca. Bab ini memasang perangkat yang diperlukan satu per satu, lalu memeriksanya
+dengan satu perintah.
+
+Setelah membaca bab ini, Anda dapat memasang semua perangkat di Windows, macOS, atau
+Linux, dan membaca laporan `cek_kesiapan()` untuk mengetahui apa yang masih kurang.
+
+## Daftar periksa kesiapan
+
+Modul `modulstis` dibuat melalui rantai kerja berikut: R membaca spesifikasi dan
+menjalankan kode, R Markdown menyusun dokumen, lalu **XeLaTeX** mengubahnya menjadi PDF.
+XeLaTeX adalah program penyusun dokumen yang mengatur letak huruf, rumus, dan halaman.
+Setiap mata rantai memerlukan perangkatnya sendiri.
+
+| No. | Komponen | Untuk apa | Wajib? |
+|:-:|:--|:--|:-:|
+| 1 | R (versi 4.1 atau lebih baru) | menjalankan paket dan kode di modul | ya |
+| 2 | RStudio | tempat Anda bekerja sehari-hari | dianjurkan |
+| 3 | TinyTeX (XeLaTeX) | menyusun PDF | ya |
+| 4 | Pola pemenggalan bahasa Indonesia | memenggal kata di akhir baris dengan benar | ya |
+| 5 | Font Carlito | huruf yang dipakai modul | ya |
+| 6 | Paket `rmarkdown`, `bookdown`, `pdftools`, `qpdf` | menyusun dokumen dan menggabung PDF | ya |
+| 7 | Quarto | hanya bila memakai backend Quarto | tidak |
+| 8 | `modulstis` | paket itu sendiri | ya |
+
+: Perangkat yang diperlukan {#tbl-perangkat}
+
+Urutan di tabel adalah urutan pemasangan yang dianjurkan. Pasang berurutan, karena
+beberapa langkah bergantung pada langkah sebelumnya.
+
+::: {.callout-warning}
+Pemasangan memerlukan koneksi internet, dan TinyTeX mengunduh sekitar 100 MB. Pada render
+pertama, TinyTeX juga mengunduh paket LaTeX tambahan yang dibutuhkan modul. Karena itu, render
+pertama bisa memakan waktu beberapa menit. Render berikutnya jauh lebih cepat.
+:::
+
+## Memasang R dan RStudio
+
+\langkah{Pasang R}
+
+Buka <https://cran.r-project.org>, lalu pilih tautan untuk sistem operasi Anda.
+
+\windows{} Pilih **Download R for Windows**, lalu **base**, lalu **Download R-x.y.z for
+Windows**. Jalankan berkas `.exe` yang terunduh dan terima semua pilihan bawaan.
+
+\macos{} Pilih **Download R for macOS**. Ada dua berkas `.pkg`: pilih yang berakhiran
+`arm64` untuk Mac dengan cip Apple (M1, M2, dan seterusnya) dan yang berakhiran
+`x86_64` untuk Mac dengan prosesor Intel. Bila ragu, buka menu Apple, lalu **About This Mac**,
+dan lihat baris **Chip** atau **Processor**.
+
+\linux{} Pada Ubuntu atau Debian, cara paling ringkas adalah melalui terminal:
+
+```bash
+sudo apt update
+sudo apt install r-base r-base-dev
+```
+
+Versi R dari repositori bawaan distro kadang tertinggal. Bila Anda memerlukan versi terbaru,
+ikuti petunjuk di halaman **Download R for Linux** pada situs CRAN.
+
+\langkah{Pasang RStudio}
+
+Buka <https://posit.co/download/rstudio-desktop/>, unduh RStudio Desktop untuk sistem
+operasi Anda, lalu pasang seperti aplikasi biasa. RStudio otomatis menemukan R yang sudah
+terpasang.
+
+::: {.callout-tip}
+Buka RStudio. Panel kiri bawah (Console) menampilkan baris pertama seperti
+`R version 4.x.y`. Angka setelah `4.` harus 1 atau lebih besar.
+:::
+
+@fig-rstudio memperlihatkan tata letak RStudio yang akan dirujuk sepanjang buku ini.
+
+![Skema tata letak RStudio. Panel Source untuk menyunting berkas, Console untuk mengetik perintah R, Environment untuk melihat objek, dan Files untuk menjelajah folder proyek. Gambar ini skema, bukan tangkapan layar.](gambar/tataletak_rstudio.pdf){#fig-rstudio width="95%"}
+
+## Memasang TinyTeX dan pola pemenggalan Indonesia
+
+TinyTeX adalah distribusi LaTeX ringkas yang dipasang dan dikelola dari R. Kelebihannya
+bagi kita: paket LaTeX yang kurang diunduh sendiri ketika diperlukan, dan cara memasangnya
+sama di ketiga sistem operasi.
+
+\langkah{Pasang TinyTeX}
+
+Ketik di Console RStudio:
+
+```{r}
+#| eval: false
+install.packages("tinytex")
+tinytex::install_tinytex()
+```
+
+Tunggu sampai selesai, lalu **tutup dan buka kembali RStudio** supaya RStudio mengenali
+lokasi XeLaTeX yang baru.
+
+::: {.callout-warning}
+Bila komputer Anda sudah memiliki distribusi LaTeX lain, misalnya MiKTeX di Windows atau
+MacTeX di macOS, `install_tinytex()` akan menanyakan apakah Anda tetap ingin memasang TinyTeX.
+Anda boleh tetap memakai distribusi lama, tetapi langkah pemasangan pola pemenggalan dan
+paket LaTeX di buku ini mengikuti TinyTeX.
+:::
+
+\langkah{Pasang pola pemenggalan bahasa Indonesia}
+
+```{r}
+#| eval: false
+tinytex::tlmgr_install("hyphen-indonesian")
+```
+
+\linux{} Bila Anda memakai TeX Live dari repositori distro, bukan TinyTeX, pola ini ada di
+paket `texlive-lang-other`:
+
+```bash
+sudo apt install texlive-xetex texlive-latex-extra texlive-lang-other
+```
+
+::: {.callout-important}
+## Salah paham umum: "Modul tersusun tanpa galat, berarti pemenggalannya sudah benar"
+
+Tanpa pola pemenggalan Indonesia, render **tetap berhasil** dan tidak ada pesan galat.
+Bedanya hanya pada kata yang terpotong di akhir baris: XeLaTeX memakai kaidah bahasa
+Inggris, sehingga *menyatakan* bisa terpotong menjadi *meny-atakan*, padahal kaidah EYD
+memenggalnya *me-nya-ta-kan*. Kesalahan ini baru terlihat ketika seseorang membaca modulnya
+dengan teliti. Karena itulah `cek_kesiapan()` di akhir bab ini memeriksa pola pemenggalan
+secara khusus.
+:::
+
+## Memasang font Carlito
+
+Modul memakai font **Carlito**, yaitu font terbuka yang ukuran hurufnya sama dengan Calibri.
+Font ini harus terpasang di sistem operasi, bukan di R.
+
+\windows{} Buka <https://fonts.google.com/specimen/Carlito>, klik **Get font**, lalu
+**Download all**. Ekstrak berkas ZIP-nya. Pilih keempat berkas `.ttf`, klik kanan, lalu
+pilih **Install for all users** (pada Windows 11, pilihan ini ada di bawah **Show more
+options**).
+
+::: {.callout-warning}
+Di Windows, pilih **Install for all users**, bukan sekadar **Install**. Pilihan **Install**
+menaruh font di folder milik akun Anda saja, dan XeLaTeX sering tidak menemukannya di sana.
+Gejalanya adalah pesan `The font "Carlito" cannot be found` ketika render.
+:::
+
+\macos{} Bila Anda memakai Homebrew, jalankan di Terminal:
+
+```bash
+brew install --cask font-carlito
+```
+
+Tanpa Homebrew, unduh font dari Google Fonts seperti langkah Windows, lalu klik dua kali
+setiap berkas `.ttf` dan pilih **Install Font**.
+
+\linux{} Pada Ubuntu atau Debian:
+
+```bash
+sudo apt install fonts-crosextra-carlito
+```
+
+Pada Fedora, nama paketnya `google-carlito-fonts`.
+
+## Memasang paket R pendukung
+
+\langkah{Pasang paket R yang diperlukan}
+
+```{r}
+#| eval: false
+install.packages(c("rmarkdown", "bookdown", "knitr", "pdftools", "qpdf", "remotes"))
+```
+
+Paket `pdftools` dan `qpdf` dipakai untuk menghitung halaman dan menggabung PDF ketika Anda
+menyusun buku modul (@sec-bab12).
+
+\linux{} Pada Linux, `pdftools` dipasang dari kode sumber dan memerlukan pustaka Poppler.
+Pasang lebih dahulu:
+
+```bash
+sudo apt install libpoppler-cpp-dev
+```
+
+## Memasang Quarto (opsional)
+
+Bagian ini hanya perlu bila Anda ingin memakai backend Quarto (@sec-bab11). Backend bawaan,
+yaitu bookdown, tidak memerlukannya. Bila ragu, lewati dulu bagian ini.
+
+Unduh pemasang dari <https://quarto.org/docs/get-started/> untuk sistem operasi Anda, pasang,
+lalu jalankan di Console:
+
+```{r}
+#| eval: false
+install.packages("quarto")
+```
+
+## Memasang modulstis dari GitHub
+
+`modulstis` belum tersedia di CRAN, sehingga dipasang langsung dari repositori GitHub-nya
+dengan paket `remotes`.
+
+\langkah{Pasang modulstis}
+
+```{r}
+#| eval: false
+remotes::install_github("madsyair/modulstis")
+```
+
+`remotes` akan memasang juga paket yang dibutuhkan `modulstis`, yaitu `R6`, `yaml`,
+`purrr`, dan `fs`, bila belum ada.
+
+::: {.callout-note}
+\windows{} Anda mungkin melihat peringatan bahwa **Rtools** diperlukan. Rtools hanya
+dibutuhkan untuk paket yang berisi kode C atau C++. `modulstis` seluruhnya ditulis dalam R,
+sehingga peringatan itu boleh diabaikan selama pemasangan diakhiri dengan pesan
+`* DONE (modulstis)`.
+:::
+
+## Memeriksa kesiapan dengan satu perintah
+
+\langkah{Jalankan pemeriksaan}
+
+Setelah semua langkah di atas, jalankan:
+
+```{rproyek}
+#| wd: !expr KERJA
+library(modulstis)
+cek_kesiapan()
+```
+
+Fungsi ini tidak hanya mencari program di komputer Anda. Untuk font dan pola pemenggalan, ia
+benar-benar menyusun dokumen kecil dengan XeLaTeX. Bila dokumen itu berhasil menjadi PDF,
+komponen tersebut dianggap siap. Dengan cara ini, hasilnya berlaku sama di Windows, macOS,
+dan Linux.
+
+::: {.callout-tip}
+Semua baris komponen wajib bertanda `[OK]`, dan baris terakhir berbunyi *Semua komponen
+wajib siap*. Baris Quarto boleh bertanda `[ - ]`; itu berarti Quarto belum terpasang, dan
+tidak masalah selama Anda memakai backend bookdown.
+:::
+
+Bila ada komponen yang belum siap, laporan menuliskan saran di bawah baris tersebut. Contoh
+berikut adalah keluaran `cek_kesiapan()` yang dijalankan pada komputer yang belum memiliki
+XeLaTeX:
+
+```{rproyek}
+#| wd: !expr KERJA
+#| echo: false
+Sys.setenv(PATH = file.path(R.home(), "bin"))
+library(modulstis)
+cek_kesiapan()
+```
+
+Kerjakan saran pada baris bertanda `[BELUM]` dari atas ke bawah, lalu jalankan
+`cek_kesiapan()` sekali lagi. Ulangi sampai semua komponen wajib bertanda `[OK]`.
+
+::: {.callout-caution}
+Jalankan `cek_kesiapan()`, lalu simpan hasilnya ke objek:
+`lap <- cek_kesiapan(tampilkan = FALSE)`. Ketik `lap$status` dan bandingkan dengan
+laporan yang tercetak. Anda akan melihat bahwa laporan tercetak hanyalah tampilan yang lebih
+rapi dari tabel yang sama.
+:::
+
+## Galat pemasangan yang paling sering
+
+| Gejala | Penyebab | Penyelesaian |
+|:--|:--|:--|
+| `xelatex not found` setelah memasang TinyTeX | RStudio belum dimulai ulang | tutup dan buka kembali RStudio |
+| `The font "Carlito" cannot be found` | Windows: font dipasang untuk satu pengguna | hapus font, pasang ulang dengan **Install for all users** |
+| `there is no package called 'modulstis'` | pemasangan dari GitHub gagal atau belum dijalankan | jalankan ulang `remotes::install_github()` dan baca pesan terakhirnya |
+| pemasangan `pdftools` gagal di Linux | pustaka Poppler belum ada | `sudo apt install libpoppler-cpp-dev` |
+| kata terpenggal tidak sesuai EYD | pola pemenggalan Indonesia belum dipasang | `tinytex::tlmgr_install("hyphen-indonesian")` |
+
+: Galat pemasangan dan penyelesaiannya {#tbl-galat-pasang}
+
+## Ringkasan
+
+Modul dibuat lewat rantai R, R Markdown, dan XeLaTeX. Setiap mata rantai memerlukan
+perangkatnya: R dan RStudio, TinyTeX beserta pola pemenggalan Indonesia, font Carlito, paket R
+pendukung, dan `modulstis` sendiri. Quarto hanya diperlukan untuk backend Quarto.
+`cek_kesiapan()` memeriksa semuanya sekaligus dan memberi saran untuk setiap komponen yang
+belum siap.
+
+Komputer Anda sekarang siap. Bab berikutnya membuat modul pertama.
+
+## Uji pemahaman
+
+1. Mengapa render modul tetap berhasil walaupun pola pemenggalan Indonesia belum dipasang?
+   Bagaimana Anda tahu pola itu belum terpasang?
+2. Seorang rekan di Windows sudah memasang Carlito, tetapi render gagal dengan pesan bahwa
+   font tidak ditemukan. Apa dugaan Anda, dan apa yang perlu ia lakukan?
+3. Komponen mana di @tbl-perangkat yang boleh dilewati, dan dalam keadaan apa?
+4. (Transfer) Laboratorium kampus memasang ulang semua komputer setiap awal semester. Tuliskan
+   urutan perintah paling ringkas yang perlu dijalankan asisten untuk menyiapkan satu komputer,
+   lalu jelaskan perintah mana yang memastikan pekerjaannya sudah benar.

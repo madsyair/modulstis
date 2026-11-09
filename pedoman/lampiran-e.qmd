@@ -1,0 +1,154 @@
+# Kunci Uji Pemahaman {#sec-lampiran-e}
+
+## Bab 1 {.unnumbered .unlisted}
+
+1. Modul praktikum (PDF), kunci jawaban (PDF), dan berkas data latihan (CSV).
+2. Perbaikan itu hilang, karena PDF dibuat ulang dari spesifikasi pada setiap render. Ia
+   seharusnya memperbaiki berkas `.yml` di folder `spec/`.
+3. Keduanya dibangkitkan dari resep yang sama dengan `seed` yang sama, dalam render yang sama.
+4. Keluaran kode yang memakai `dplyr` dapat berubah, misalnya format tabel atau pesan. Perubahan ini
+   diinginkan karena modul menampilkan apa yang akan dilihat mahasiswa dengan versi paket terbaru.
+
+## Bab 2 {.unnumbered .unlisted}
+
+1. Ketiadaan pola pemenggalan tidak menimbulkan galat; XeLaTeX memakai kaidah bahasa Inggris. Anda
+   mengetahuinya dari `cek_kesiapan()`, yang menandai baris pola pemenggalan dengan `[BELUM]`.
+2. Font kemungkinan dipasang hanya untuk akun pengguna. Hapus font itu, lalu pasang ulang dengan
+   **Install for all users**.
+3. RStudio (dianjurkan, tetapi tidak wajib) dan Quarto (hanya untuk backend Quarto).
+4. `install.packages(c("tinytex", "rmarkdown", "bookdown", "knitr", "pdftools", "qpdf",
+   "remotes"))`, `tinytex::install_tinytex()`, `tinytex::tlmgr_install("hyphen-indonesian")`,
+   pemasangan font Carlito, `remotes::install_github("madsyair/modulstis")`, lalu
+   `modulstis::cek_kesiapan()`. Perintah terakhir memastikan semuanya sudah benar.
+
+## Bab 3 {.unnumbered .unlisted}
+
+1. `spec/` untuk spesifikasi, `modul/` untuk hasil render, `buku/` untuk bagian awal dan akhir buku
+   gabungan.
+2. `validate()` hanya beberapa detik, sedangkan render memakan waktu lebih lama; kesalahan isian
+   lebih murah ditemukan sebelum render.
+3. Berkas itu ditulis ulang, sehingga suntingannya hilang.
+4. Folder `modul/Modul02_dasar/` dengan berkas `Modul_02_dasar.pdf`.
+
+## Bab 4 {.unnumbered .unlisted}
+
+1. `>` menggabungkan baris menjadi satu paragraf; `|` mempertahankan pergantian baris. Kode R
+   ditulis dengan `|`; bila tertukar, baris-baris kode digabung menjadi satu dan R gagal
+   menjalankannya.
+2. ` #` mengawali komentar, sehingga `#revisi` dan teks sesudahnya dibuang.
+3. Keduanya terbaca sebagai `TRUE` dan `FALSE`. Tulis `["on", "off"]`.
+4. Periksa baris sebelumnya: kesalahan seperti tidak adanya spasi sesudah titik dua atau tanda kutip
+   yang tidak ditutup baru disadari YAML pada baris berikutnya atau di akhir berkas.
+
+## Bab 5 {.unnumbered .unlisted}
+
+1. `number` dan `title`.
+2. `topic`; bila dihilangkan, kepala halaman memakai `title`.
+3. Tanpa blok `course`, paket memakai identitas bawaannya, yaitu mata kuliah Analisis Peubah Ganda.
+4. `prodi` di blok `course`, dan biasanya juga `title`, `sub_cpmk`, atau isinya. Bila keduanya
+   bernomor 7 dan dirender ke folder yang sama, keduanya ditulis ke `build/modul-07/` dan data
+   salah satunya tertimpa. Proyek terpisah menghindari tabrakan ini.
+
+## Bab 6 {.unnumbered .unlisted}
+
+1. `instruksi` yang kosong tetap tercetak dengan tulisan *belum diisi*; `tambahan` yang kosong
+   dilewati sepenuhnya.
+2. Setiap butir YAML menjadi satu paragraf, dan butir yang diawali `1. ` membentuk daftar bernomor.
+3. Tanda hubung pertama menandai butir YAML; tanda hubung kedua, di dalam tanda kutip, menandai
+   butir daftar Markdown.
+4. Nama bagian salah ketik di `body` (misalnya `ringkasn`), atau indentasinya membuat `ringkasan`
+   tidak berada di bawah `body`.
+
+## Bab 7 {.unnumbered .unlisted}
+
+1. Judul contoh, kode beserta keluarannya, Penjelasan Kode, dan Interpretasi Output.
+2. Kodenya tidak dijalankan; di PDF, kotak kode tidak diikuti keluaran.
+3. Render berhenti dengan galat, karena objek `rt` belum ada ketika Contoh 7.2 dijalankan.
+4. Tulis contoh itu dengan `eval: false`. Di PDF, kodenya tampil tanpa keluaran; sebaiknya
+   jelaskan juga di `penjelasan` bahwa kode itu hanya untuk dijalankan sendiri oleh mahasiswa.
+
+## Bab 8 {.unnumbered .unlisted}
+
+1. Kunci `name` pada butir `datasets`.
+2. Kolom `numeric` pada resep `tabular` tersebar merata. Untuk dua peubah yang berkorelasi, pakai
+   resep `mvn` dengan peragam yang tidak nol di `Sigma`.
+3. `path: "data/survei.csv"`, karena jalur dihitung dari letak berkas spesifikasi.
+4. Angka di modul baru tidak lagi cocok dengan pekerjaan mahasiswa yang sudah mengerjakan modul
+   lama. Sarannya: pertahankan `seed`, atau umumkan perubahan dan tandai versi modulnya.
+
+## Bab 9 {.unnumbered .unlisted}
+
+1. Soal di `body` → `latihan` dan `penugasan`; solusi di `exercises`. Pemisahan ini membuat modul
+   tidak memuat jawaban, sementara keduanya tetap berasal dari berkas yang sama.
+2. Supaya kode yang belum lengkap tidak dijalankan; tanpa itu render gagal.
+3. Kode contoh dijalankan hanya bila `eval: true`; kode solusi dijalankan kecuali `eval: false`.
+4. Sisipkan solusi baru pada urutan yang sesuai dan perbarui `id` solusi sesudahnya. Paket tidak
+   melakukannya karena tidak ada hubungan otomatis antara soal di `body` dan solusi di `exercises`.
+
+## Bab 10 {.unnumbered .unlisted}
+
+1. Kotak berwarna dan susunan rumus khusus, misalnya beberapa rumus sejajar dalam satu kotak.
+2. Spesifikasi bawaan menulis kotak di dalam tanda kutip ganda, tempat YAML memakai `\` sebagai
+   awalan karakter khusus. Buku ini memakai penanda `|`, yang menyalin teks apa adanya.
+3. Contoh:
+
+   ```yaml
+       - |
+         \begin{kotakperhatian}[Tentang data]
+         Sebanyak 25\% data adalah data hilang.
+         \end{kotakperhatian}
+   ```
+
+   Tanda `%` harus diloloskan.
+4. Cari tanda `&` yang tidak diloloskan, kemungkinan besar di dalam sebuah kotak, misalnya pada
+   nama seperti *Statistik & Data*.
+
+## Bab 11 {.unnumbered .unlisted}
+
+1. `render_module()` selama menyunting satu modul; `ModuleProject` untuk memeriksa dan merender
+   seluruh folder.
+2. Merender spesifikasi kedua dan ketiga menurut urutan nama berkas di `spec/`.
+3. Baris `OK` dan `GAGAL` di akhir log, karena baris itu merangkum hasil setiap modul.
+4. Dari baris `GAGAL modul=... pesan=...` di log `render_all()`, atau dengan memeriksa unsur
+   `error` pada objek hasil `render_all()` untuk setiap modul.
+
+## Bab 12 {.unnumbered .unlisted}
+
+1. Tahap pertama mengukur tebal setiap modul; tahap kedua merender ulang dengan nomor halaman awal
+   yang dihitung dari tebal modul-modul sebelumnya.
+2. Setiap modul tetap bernomor mulai dari 1, dan nomor di daftar isi modul tidak cocok dengan
+   letaknya di buku.
+3. Halaman 30.
+4. Bila tebalnya tetap, cukup render ulang Modul 5 dengan `halaman_awal` yang sama, tetapi cara
+   paling aman tetap menyusun ulang buku. Bila tebalnya bertambah satu halaman, semua modul sesudah
+   Modul 5 harus bergeser satu halaman; tanpa penyusunan ulang, nomor halaman akan bertabrakan.
+
+## Bab 13 {.unnumbered .unlisted}
+
+1. Di objek tema, supaya satu perubahan berlaku untuk semua modul tanpa menyunting setiap
+   spesifikasi.
+2. Hanya `oranye` yang berubah; lima warna lain tetap memakai warna bawaan.
+3. Kunci `sections` menggantikan susunan bawaan sepenuhnya; bagian Tambahan tidak disebut di sana.
+4. Mereka perlu membuat tema dengan palet warna kampusnya dan memakainya saat merender. Spesifikasi
+   modul tidak perlu diubah sama sekali.
+
+## Bab 14 {.unnumbered .unlisted}
+
+1. Baca baris `WARN` dan `ERROR`; baca ulang dan periksa spesifikasi; render satu modul; buka berkas
+   antara. Urutannya dari yang paling murah ke yang paling mahal.
+2. Di berkas `.Rmd` antara di folder hasil. Buka baris itu dan lihat judul contoh di atasnya.
+3. Galat LaTeX biasanya tidak menghentikan render; PDF tetap terbentuk dan tandanya hanya baris
+   `WARN`.
+4. Misalnya, cari tulisan *belum diisi*; periksa bahwa setiap kotak kode berkeluaran dan
+   keluarannya masuk akal; periksa sampul dan blok `course`. Ketiganya mendeteksi kesalahan yang
+   tidak menimbulkan pesan galat.
+
+## Bab 15 {.unnumbered .unlisted}
+
+1. Sunting spesifikasinya; baca ulang dan periksa; render modul itu saja dan periksa PDF-nya;
+   susun ulang buku bila perlu.
+2. Isinya selalu dapat dibuat ulang dari spesifikasi.
+3. Kode yang keliru dapat berjalan tanpa galat dan menghasilkan keluaran yang tidak bermakna, misalnya
+   `NULL`; log yang bersih tidak menjamin isinya benar.
+4. Tampilan atau perilaku modul dapat berbeda antarbagian buku. Sepakati satu versi, catat di
+   `README.md`, dan minta semua anggota memasang versi itu.

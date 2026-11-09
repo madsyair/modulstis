@@ -1,0 +1,50 @@
+# Katalog Kotak, Warna, dan Karakter Khusus {#sec-lampiran-c}
+
+## Kotak {.unnumbered .unlisted}
+
+Kotak ditulis sebagai butir `|` di `body`:
+
+```yaml
+    - |
+      \begin{kotakperhatian}[Judul pengganti]
+      Isi kotak.
+      \end{kotakperhatian}
+```
+
+| Kotak | Judul bawaan | Judul dapat diganti |
+|:--|:--|:-:|
+| `kotakinfo` | tanpa judul | ya |
+| `kotakcatatan` | Catatan | ya |
+| `kotakperhatian` | Perhatian | ya |
+| `kotaksalah` | Kesalahan Umum | ya |
+| `kotaktips` | Tips dan Praktik Baik | ya |
+| `kotakvariasi` | Variasi dan Alternatif | ya |
+| `kotakrumus` | tanpa judul | tidak |
+| `kotaktujuan` | tanpa judul | tidak |
+| `kotaktugas` | tanpa judul | tidak |
+| `kotakkunci` | Kunci & Pembahasan | tidak |
+
+Tampilannya ada di @fig-katalog.
+
+## Warna palet {.unnumbered .unlisted}
+
+| Nama palet | Nama warna LaTeX | Bawaan |
+|:--|:--|:--|
+| `navy` | `bpsnavy` | `#123A6B` |
+| `biru` | `bpsbiru` | `#0B6FB4` |
+| `birumuda` | `bpsbirumuda` | `#6FB3E0` |
+| `oranye` | `bpsoranye` | `#F58220` |
+| `hijau` | `bpshijau` | `#00A651` |
+| `abuteks` | `abuteks` | `#45505C` |
+
+Nama warna LaTeX dapat dipakai di dalam kotak, misalnya `\textcolor{bpsoranye}{teks}`.
+
+## Karakter yang harus diloloskan di dalam kotak {.unnumbered .unlisted}
+
+| Karakter | Tulis | Karakter | Tulis |
+|:-:|:-:|:-:|:-:|
+| `_` | `\_` | `#` | `\#` |
+| `%` | `\%` | `$` | `\$` |
+| `&` | `\&` | `~` | `\textasciitilde{}` |
+
+Di luar kotak, pada paragraf Markdown biasa, karakter-karakter ini ditulis apa adanya.

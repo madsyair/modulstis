@@ -1,0 +1,300 @@
+# YAML Secukupnya untuk Menulis Modul {#sec-bab04}
+
+```{r}
+#| include: false
+source("_setup.R")
+pastikan_proyek()
+```
+
+Mengapa satu spasi yang bergeser bisa membuat modul gagal dirender? Karena spesifikasi
+ditulis dalam **YAML**, dan YAML memakai spasi di awal baris untuk menyatakan bagian mana
+yang termasuk ke dalam bagian mana. Bagi kita spasi itu hanya kerapian. Bagi YAML, spasi itu
+adalah struktur.
+
+Bab ini membahas YAML secukupnya untuk menulis modul: lima aturan yang mencegah hampir semua
+galat, dan cara membaca pesan galat bila aturan itu terlanggar. Setelah membaca bab ini, Anda
+dapat membaca spesifikasi apa pun di buku ini, menulis teks panjang dan kode dengan benar,
+serta menemukan letak kesalahan dari pesan galat YAML.
+
+## Kunci, nilai, dan indentasi
+
+YAML adalah cara menulis data berstruktur dalam teks biasa, sehingga mudah dibaca manusia
+dan mudah dibaca program. Satuan terkecilnya adalah pasangan **kunci** dan **nilai**, dipisah
+oleh titik dua dan satu spasi:
+
+```yaml
+number: 7
+title: "Statistik Deskriptif dan Eksplorasi Data"
+pertemuan: 7
+```
+
+Ketika R membaca tiga baris ini, hasilnya adalah daftar bernama (*list*) dengan tiga
+unsur. Anda dapat melihatnya sendiri:
+
+```{rproyek}
+yaml::yaml.load('
+number: 7
+title: "Statistik Deskriptif dan Eksplorasi Data"
+pertemuan: 7
+') |> str()
+```
+
+Bagaimana bila sebuah nilai terdiri atas beberapa bagian? Tuliskan kuncinya, akhiri dengan
+titik dua tanpa nilai, lalu tulis bagian-bagiannya di baris berikut dengan **menjorok** ke
+dalam. Jarak menjorok di awal baris itu disebut **indentasi**.
+
+```yaml
+course:
+  matkul: "Pemrograman Statistika"
+  kode: "K242310"
+```
+
+Di sini `matkul` dan `kode` adalah bagian dari `course` karena keduanya menjorok dua spasi di
+bawahnya. Bila `kode` ditulis tanpa indentasi, ia bukan lagi bagian dari `course`, melainkan
+kunci tersendiri di tingkat atas.
+
+::: {.callout-note}
+## Satu aturan indentasi untuk seluruh buku
+
+Semua spesifikasi di buku ini memakai **dua spasi** untuk setiap tingkat. YAML sebenarnya
+menerima jumlah spasi lain, asalkan konsisten dalam satu tingkat. Memakai dua spasi di mana
+pun adalah cara termudah untuk tetap konsisten.
+:::
+
+## Daftar
+
+Daftar ditulis dengan tanda hubung dan satu spasi di awal setiap butir:
+
+```yaml
+penyusun:
+  - "Achmad Syahrul Choir"
+  - "Rudi Salam"
+```
+
+Daftar pendek boleh ditulis dalam satu baris dengan kurung siku:
+
+```yaml
+packages: [dplyr, ggplot2]
+```
+
+Butir daftar boleh berisi pasangan kunci dan nilai. Bentuk inilah yang dipakai untuk contoh
+praktikum dan latihan. Perhatikan bahwa kunci kedua dan seterusnya sejajar dengan kunci
+pertama, yaitu sejajar dengan huruf setelah tanda hubung:
+
+```yaml
+contoh:
+  - contoh: "Ringkasan cepat seluruh peubah"
+    judul_r: "str dan summary"
+    eval: true
+  - contoh: "Ukuran pemusatan"
+    judul_r: "mean dan median"
+    eval: true
+```
+
+Potongan ini berisi satu kunci, `contoh`, yang nilainya daftar dengan dua butir. Setiap butir
+memiliki tiga kunci.
+
+## Teks panjang: perbedaan `>` dan `|`
+
+Paragraf modul biasanya lebih panjang dari satu baris. YAML menyediakan dua penanda untuk
+teks panjang, dan keduanya sering tertukar.
+
+- `>` **melipat** baris. Baris-baris di bawahnya digabung menjadi satu paragraf, dan
+  pergantian baris diganti spasi. Pakai untuk **prosa**.
+- `|` **mempertahankan** pergantian baris apa adanya. Pakai untuk **kode**.
+
+```{rproyek}
+teks <- yaml::yaml.load('
+prosa: >
+  Statistik deskriptif memampatkan
+  ratusan amatan menjadi beberapa ukuran.
+kode: |
+  rt <- read.csv("data/data_rumahtangga.csv")
+  summary(rt)
+')
+cat(teks$prosa)
+cat(teks$kode)
+```
+
+Pada keluaran pertama, dua baris prosa menjadi satu kalimat. Pada keluaran kedua, dua baris
+kode tetap dua baris. Bila Anda menulis kode dengan `>`, kedua baris kode akan digabung menjadi
+satu baris dan R gagal menjalankannya.
+
+## Kapan teks harus diberi tanda kutip
+
+Sebagian besar teks boleh ditulis tanpa tanda kutip. Namun, ada beberapa keadaan yang membuat
+YAML salah membaca teks Anda. Aturan paling aman bagi pemula: **beri tanda kutip ganda pada
+setiap teks yang ditulis dalam satu baris**. Aturan ini juga dipakai di semua spesifikasi bawaan
+paket.
+
+Tiga keadaan berikut paling sering menimbulkan masalah bila tanda kutip dilupakan.
+
+**Teks berisi titik dua diikuti spasi.** YAML mengira bagian sesudahnya adalah nilai baru.
+
+**Teks berisi tanda pagar didahului spasi.** Bagian sesudah ` #` dianggap komentar dan
+dibuang tanpa peringatan:
+
+```{rproyek}
+yaml::yaml.load('title: Modul 7 #revisi')$title
+```
+
+**Teks yang kebetulan berarti benar atau salah.** YAML membaca `yes`, `no`, `on`, `off`,
+`y`, dan `n` sebagai nilai logis `TRUE` atau `FALSE`, bukan sebagai teks:
+
+```{rproyek}
+yaml::yaml.load('levels: [yes, no, Ya, Tidak]')$levels |> str()
+```
+
+`Ya` dan `Tidak` aman, tetapi `yes` dan `no` berubah menjadi `TRUE` dan `FALSE`. Bila sebuah
+kategori data simulasi Anda bernama `yes`, tulislah `"yes"`.
+
+::: {.callout-important}
+## Salah paham umum: "Tanda kutip pada `"n": 60` hanyalah selera penulis"
+
+Resep data di buku ini menulis `"n": 60` dengan tanda kutip, sedangkan kunci lain tidak.
+Ini bukan selera. Tanpa tanda kutip, YAML membaca kunci `n` sebagai `FALSE`:
+
+```{rproyek}
+names(yaml::yaml.load('n: 60\nseed: 2025'))
+```
+
+`modulstis` memperbaiki nama kunci ini secara otomatis untuk resep data, sehingga modul Anda
+tetap benar. Namun, membiasakan tanda kutip pada `"n"` membuat spesifikasi tetap benar ketika
+dibaca program lain, dan mengingatkan Anda pada perilaku YAML ini.
+:::
+
+## Komentar
+
+Baris yang diawali `#` adalah komentar. YAML mengabaikannya, sehingga Anda bebas menulis
+catatan untuk diri sendiri:
+
+```yaml
+# Revisi semester ganjil 2026: contoh 3 diganti data baru
+number: 7
+```
+
+## Lima galat YAML yang paling sering
+
+Bagian ini sengaja membuat kesalahan, supaya Anda mengenali pesannya bila kelak melihatnya
+sendiri. Setiap contoh membaca spesifikasi pendek yang rusak dengan
+`module_spec_from_yaml()`.
+
+```{rproyek}
+#| include: false
+dir.create("latihan-yaml", showWarnings = FALSE)
+writeLines(c('number: 7', 'title: Modul 7: Statistik Deskriptif'),
+           "latihan-yaml/galat-1.yml")
+writeLines(c('number: 7', 'title: "Statistik Deskriptif"', 'course:',
+             '\tmatkul: "Pemrograman Statistika"'), "latihan-yaml/galat-2.yml")
+writeLines(c('number: 7', 'title: "Statistik Deskriptif"', 'course:',
+             '  matkul: "Pemrograman Statistika"', '   kode: "K242310"'),
+           "latihan-yaml/galat-3.yml")
+writeLines(c('number: 7', 'title: "Statistik Deskriptif', 'pertemuan: 7'),
+           "latihan-yaml/galat-4.yml")
+writeLines(c('number:7', 'title: "Statistik Deskriptif"'), "latihan-yaml/galat-5.yml")
+```
+
+**Galat 1: titik dua di dalam nilai tanpa tanda kutip.**
+
+```yaml
+title: Modul 7: Statistik Deskriptif
+```
+
+```{rproyek}
+library(modulstis)
+module_spec_from_yaml("latihan-yaml/galat-1.yml")
+```
+
+Pesan *mapping values are not allowed in this context* berarti YAML menemukan titik dua yang
+tidak ia harapkan. `line 2, column 15` menunjuk titik dua kedua di baris 2. Perbaikannya:
+`title: "Modul 7: Statistik Deskriptif"`.
+
+**Galat 2: indentasi memakai tab.**
+
+```{rproyek}
+module_spec_from_yaml("latihan-yaml/galat-2.yml")
+```
+
+*found character that cannot start any token* pada kolom 1 hampir selalu berarti ada karakter
+tab di awal baris. YAML tidak menerima tab untuk indentasi.
+
+::: {.callout-tip}
+## Mencegah tab di RStudio
+
+Buka **Tools → Global Options → Code → Editing**, lalu pastikan **Insert spaces for Tab**
+dicentang dan **Tab width** bernilai 2. Setelah itu, tombol Tab menghasilkan dua spasi.
+:::
+
+**Galat 3: indentasi tidak sejajar.**
+
+```yaml
+course:
+  matkul: "Pemrograman Statistika"
+   kode: "K242310"
+```
+
+```{rproyek}
+module_spec_from_yaml("latihan-yaml/galat-3.yml")
+```
+
+Baris `kode` menjorok tiga spasi, sedangkan `matkul` dua spasi. Pesan *did not find expected
+key* berarti YAML sedang membaca sekelompok kunci yang sejajar, lalu menemukan baris yang tidak
+sejajar dengan kelompok itu. Letak yang disebut, baris 5 kolom 4, menunjuk baris yang menjorok
+berlebih.
+
+**Galat 4: tanda kutip tidak ditutup.**
+
+```{rproyek}
+module_spec_from_yaml("latihan-yaml/galat-4.yml")
+```
+
+Tanda kutip pembuka di baris 2 tidak punya pasangan, sehingga YAML terus membaca sampai akhir
+berkas. Perhatikan bahwa pesannya menyebut letak **awal** teks yang bermasalah, bukan letak
+yang seharusnya diberi tanda kutip penutup.
+
+**Galat 5: tidak ada spasi sesudah titik dua.**
+
+```{rproyek}
+module_spec_from_yaml("latihan-yaml/galat-5.yml")
+```
+
+Ini galat yang paling licik. Tanpa spasi sesudah titik dua, `number:7` dibaca sebagai teks
+biasa, bukan pasangan kunci dan nilai. YAML baru kebingungan pada baris **berikutnya**, ketika
+menemukan pasangan kunci dan nilai sesudah teks biasa. Karena itu, pesannya menunjuk baris 2,
+padahal kesalahannya ada di baris 1.
+
+| Pesan yang muncul | Penyebab yang paling mungkin |
+|:--|:--|
+| `mapping values are not allowed in this context` | titik dua dalam nilai tanpa tanda kutip, atau tidak ada spasi sesudah titik dua di baris **sebelumnya** |
+| `found character that cannot start any token` | tab di awal baris |
+| `found unexpected end of stream` | tanda kutip tidak ditutup |
+| `did not find expected key` | indentasi kunci atau butir daftar tidak sejajar |
+
+: Pesan galat YAML dan penyebabnya {#tbl-galat-yaml}
+
+::: {.callout-caution}
+Buka `spec/modul-01-contoh.yml` dari @sec-bab03. Hapus spasi sesudah titik dua pada baris
+`number: 1`, simpan, lalu jalankan
+`module_spec_from_yaml("spec/modul-01-contoh.yml")`. Bandingkan pesan yang muncul dengan
+@tbl-galat-yaml, lalu kembalikan spasinya.
+:::
+
+## Ringkasan
+
+YAML menyusun data dengan pasangan `kunci: nilai`, daftar berawalan tanda hubung, dan
+indentasi dua spasi untuk menyatakan bagian mana termasuk ke mana. Teks panjang ditulis dengan
+`>` untuk prosa dan `|` untuk kode. Tanda kutip ganda pada teks satu baris mencegah hampir
+semua salah baca. Bila terjadi galat, pesan YAML menyebut baris dan kolom tempat pembaca YAML
+kebingungan, dan @tbl-galat-yaml memetakan pesan itu ke penyebabnya.
+
+Dengan bekal ini, kita mulai menulis spesifikasi Modul 7 di bab berikutnya.
+
+## Uji pemahaman
+
+1. Apa beda `>` dan `|`? Mana yang Anda pakai untuk menulis kode R, dan apa akibatnya bila
+   tertukar?
+2. Mengapa baris `title: Modul 7 #revisi` menghasilkan judul `Modul 7`?
+3. Sebuah resep data memiliki kolom kategori dengan taraf `[on, off]`. Apa yang terjadi pada
+   kedua taraf itu, dan bagaimana menuliskannya dengan benar?
+4. (Transfer) Pesan galat menyebut `line 12, column 5`, tetapi baris 12 tampak benar. Ke mana
+   Anda mencari berikutnya, dan mengapa? Gunakan galat 4 dan galat 5 sebagai petunjuk.

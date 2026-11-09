@@ -1,0 +1,200 @@
+# Menyusun Buku Modul dan Buku Kunci {#sec-bab12}
+
+```{r}
+#| include: false
+source("_setup.R")
+pastikan_proyek()
+pasang_tahap(10)
+b <- system.file("specs_ps", package = "modulstis")
+file.copy(file.path(b, c("modul-03-pemrograman-r.yml", "modul-05-dplyr.yml")),
+          file.path(PROYEK, "spec"), overwrite = TRUE)
+unlink(file.path(PROYEK, "spec", c("modul-01-contoh.yml", "modul-98-uji.yml")))
+file.copy(file.path(PEDOMAN, "contoh", "bagian_awal.Rmd"),
+          file.path(PROYEK, "buku"), overwrite = TRUE)
+file.copy(file.path(PEDOMAN, "contoh", "susun_buku.R"), PROYEK, overwrite = TRUE)
+```
+
+Mengapa nomor halaman kembali ke 1 di setiap modul, dan bagaimana memperbaikinya? Setiap modul
+dirender sendiri-sendiri, sehingga masing-masing memulai penomoran dari 1. Bila PDF-nya langsung
+digabung, buku Anda memuat banyak halaman bernomor 1, dan daftar isi tidak dapat dipakai untuk
+mencari halaman. Bab ini menyusun buku modul dan buku kunci dengan nomor halaman yang berlanjut.
+
+Setelah membaca bab ini, Anda dapat menyusun buku satu semester lengkap dengan sampul, daftar
+modul, dan penomoran berlanjut, serta memeriksa hasilnya.
+
+## Susunan sebuah buku
+
+Buku modul `modulstis` terdiri atas dua bagian:
+
+1. **bagian awal**: sampul buku, kata pengantar, dan daftar modul, bernomor romawi (i, ii, ...);
+2. **isi**: semua modul berurutan, bernomor arab yang berlanjut dari modul ke modul.
+
+Buku kunci jawaban disusun dengan cara yang sama dari PDF kunci, dengan sampul berwarna hijau.
+
+## Mengapa penomoran perlu dua tahap
+
+Nomor halaman pertama Modul 5 bergantung pada tebal Modul 3, dan tebal Modul 3 baru diketahui
+setelah dirender. Karena itu, paket bekerja dua tahap:
+
+1. **Tahap 1** merender semua modul dan menghitung banyaknya halaman masing-masing.
+2. Paket menghitung nomor awal setiap modul: satu ditambah jumlah halaman semua modul sebelumnya.
+3. **Tahap 2** merender ulang semua modul dengan nomor awal yang sudah dihitung.
+
+Nomor awal itu disimpan di `course` → `halaman_awal` (@sec-bab05), tetapi Anda tidak perlu
+mengisinya sendiri; fungsi `render_berlanjut()` mengerjakan ketiga langkah di atas. Karena setiap
+modul dirender dua kali, prosesnya memakan waktu dua kali render biasa. Jalankan hanya ketika
+menyusun buku, bukan setiap kali menyunting modul.
+
+## Menyiapkan bagian awal
+
+Sampul buku dibuat oleh fungsi `sampul_buku()`, yang menghasilkan potongan LaTeX bernuansa warna
+yang sama dengan modul. Potongan itu disisipkan ke berkas R Markdown kecil bersama kata pengantar
+dan daftar modul.
+
+\langkah{Buat berkas bagian awal}
+
+Buat berkas `buku/bagian_awal.Rmd` dengan isi berikut, lalu sesuaikan judul, penyusun, dan kata
+pengantarnya:
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(file.path(PEDOMAN, "contoh", "bagian_awal.Rmd"), bahasa = "markdown")
+```
+
+Berkas ini dipakai untuk kedua buku. Parameter `jenis` menentukan apakah yang dibuat sampul
+modul (pita biru) atau sampul kunci (pita hijau). Daftar modul dibaca dari berkas
+`daftar_modul.rds` atau `daftar_kunci.rds`, yang dibuat oleh skrip di langkah berikutnya.
+
+| Argumen `sampul_buku()` | Isi |
+|:--|:--|
+| `judul1`, `judul2` | dua baris judul besar |
+| `kode`, `semester` | kode mata kuliah dan semester |
+| `penyusun` | satu nama atau vektor beberapa nama |
+| `jenis` | label di atas judul |
+| `ringkas` | satu baris keterangan, misalnya program studi |
+| `varian` | `"modul"` atau `"kunci"` |
+
+: Argumen `sampul_buku()` {#tbl-sampul}
+
+## Menjalankan penyusunan
+
+\langkah{Buat skrip penyusun buku}
+
+Simpan skrip berikut sebagai `susun_buku.R` di folder proyek:
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(file.path(PEDOMAN, "contoh", "susun_buku.R"), bahasa = "r")
+```
+
+Skrip ini mengerjakan empat hal untuk setiap jenis buku: merender modul dengan penomoran
+berlanjut, membuat bagian awal, mengumpulkan PDF dalam urutan yang benar, lalu menggabungkannya
+dengan `gabung_pdf()`.
+
+\langkah{Jalankan skrip}
+
+Dari tab **Terminal**, jalankan `Rscript susun_buku.R`, atau dari Console:
+
+```{rproyek}
+#| tampil: "c(1, grep('halaman|spec|^#> [0-9] ', hasil))"
+source("susun_buku.R")
+```
+
+Tabel di akhir keluaran menunjukkan tebal setiap modul (`hal`) beserta nomor halaman pertama
+(`mulai`) dan terakhirnya (`akhir`) di dalam buku. Modul 5 dimulai tepat satu halaman sesudah
+Modul 3 berakhir, dan begitu seterusnya.
+
+::: {.callout-tip}
+Folder proyek kini berisi `Buku_Modul_Pemrograman_Statistika.pdf` dan
+`Buku_Kunci_Pemrograman_Statistika.pdf`. Halaman kedua buku modul berisi kata pengantar dan daftar
+modul beserta nomor halamannya.
+:::
+
+```{r}
+#| include: false
+bm <- file.path(PROYEK, "Buku_Modul_Pemrograman_Statistika.pdf")
+bk <- file.path(PROYEK, "Buku_Kunci_Pemrograman_Statistika.pdf")
+x1 <- halaman_png(bm, 1, "bab12-modul")
+x2 <- halaman_png(bm, 2, "bab12-modul")
+x3 <- halaman_png(bk, 1, "bab12-kunci")
+tab <- readRDS(file.path(PROYEK, "buku", "daftar_modul.rds"))
+awal5 <- tab$mulai[2]
+nbm <- pdf_halaman(bm)
+nawal <- nbm - sum(tab$hal)
+x4 <- halaman_png(bm, nawal + awal5 + 1, "bab12-modul")
+```
+
+```{r}
+#| label: fig-buku
+#| echo: false
+#| fig-cap: "Buku modul dan buku kunci hasil susun_buku.R."
+#| fig-subcap:
+#|   - "Sampul buku modul"
+#|   - "Daftar modul"
+#|   - "Sampul buku kunci"
+#|   - "Daftar isi Modul 5 dengan nomor halaman berlanjut"
+#| layout-ncol: 4
+knitr::include_graphics(c(x1, x2, x3, x4))
+```
+
+## Memeriksa buku hasil gabungan
+
+\langkah{Periksa tiga hal}
+
+Sebelum membagikan buku, periksa tiga hal berikut.
+
+**Banyaknya halaman.** Buku modul harus setebal bagian awal ditambah jumlah halaman semua modul.
+Buku contoh kita `r nbm` halaman: `r nawal` halaman bagian awal (sampul serta kata pengantar dan
+daftar modul) ditambah `r sum(tab$hal)` halaman modul.
+
+```{rproyek}
+pdf_halaman("Buku_Modul_Pemrograman_Statistika.pdf")
+```
+
+**Urutan modul.** Buka daftar modul di halaman kedua, lalu lompat ke nomor halaman yang
+tercantum untuk setiap modul. Sampul modul yang benar harus muncul di sana.
+
+**Nomor halaman.** Buka dua halaman di perbatasan modul, misalnya halaman terakhir Modul 3 dan
+daftar isi Modul 5. Nomornya harus berurutan tanpa kembali ke 1.
+
+::: {.callout-important}
+## Salah paham umum: "Cukup gabungkan PDF modul apa adanya"
+
+`gabung_pdf()` hanya menempelkan berkas satu per satu; ia tidak mengubah nomor halaman. Bila PDF
+dari `render_module()` atau `render_modul.R` langsung digabung, setiap modul tetap bernomor mulai
+dari 1, dan nomor halaman di daftar isi setiap modul tidak cocok dengan letaknya di buku.
+Penomoran berlanjut hanya terjadi bila modul dirender ulang dengan `render_berlanjut()`.
+:::
+
+::: {.callout-warning}
+Urutan modul di buku mengikuti urutan nama berkas di folder `spec/`. Inilah alasan nama berkas
+memakai nomor dua digit (@sec-bab05): tanpa itu, `modul-10` akan diletakkan sebelum `modul-2`.
+:::
+
+::: {.callout-caution}
+Tambahkan satu kalimat ke kata pengantar di `buku/bagian_awal.Rmd`, lalu jalankan ulang
+`susun_buku.R`. Perhatikan bahwa semua modul ikut dirender ulang dua kali. Pikirkan: bila Anda
+hanya mengubah kata pengantar, bagian mana dari skrip yang sebenarnya perlu dijalankan?
+:::
+
+## Ringkasan
+
+Buku modul terdiri atas bagian awal bernomor romawi dan modul-modul bernomor arab yang
+berlanjut. `render_berlanjut()` merender semua modul dua kali supaya setiap modul dimulai di
+nomor halaman yang benar. Bagian awal dibuat dari R Markdown kecil yang memakai `sampul_buku()`,
+lalu semuanya digabung dengan `gabung_pdf()`. Skrip `susun_buku.R` mengerjakan seluruh langkah
+untuk buku modul dan buku kunci sekaligus.
+
+Bab berikutnya membahas cara mengubah tampilan seluruh modul tanpa menyunting setiap berkas.
+
+## Uji pemahaman
+
+1. Mengapa `render_berlanjut()` merender setiap modul dua kali?
+2. Apa yang terjadi bila PDF hasil `render_modul.R` langsung digabung dengan `gabung_pdf()`?
+3. Pada tabel hasil `render_berlanjut()`, Modul 3 tebalnya 29 halaman dan dimulai di halaman 1.
+   Di halaman berapa Modul 5 dimulai?
+4. (Transfer) Di tengah semester, Anda memperbaiki satu salah ketik di Modul 5 tanpa mengubah
+   tebalnya. Apakah buku perlu disusun ulang seluruhnya? Jelaskan risikonya bila salah ketik itu
+   ternyata menambah satu halaman.

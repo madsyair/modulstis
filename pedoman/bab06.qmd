@@ -1,0 +1,202 @@
+# Sebelas Bagian Isi Modul {#sec-bab06}
+
+```{r}
+#| include: false
+source("_setup.R")
+pasang_tahap(6)
+SPEC7 <- file.path(PROYEK, "spec", "modul-07-deskriptif.yml")
+```
+
+Di mana menulis teori, instruksi, dan ringkasan supaya muncul di tempat yang benar? Semua isi
+modul ditulis di bawah satu kunci, `body`, yang dibagi menurut bagian modul. Paket sudah
+menyiapkan sebelas bagian baku dengan judul dan urutan yang tetap, sehingga Anda cukup mengisi
+teksnya.
+
+Setelah membaca bab ini, Anda dapat mengisi bagian-bagian modul dengan paragraf, daftar, dan
+subjudul, serta menjelaskan bagaimana paket menentukan urutan bagian di PDF.
+
+## Peta sebelas bagian
+
+Setiap modul `modulstis` tersusun atas sebelas bagian. Daftarnya dapat Anda lihat langsung
+dari paket:
+
+```{rproyek}
+library(modulstis)
+bagian <- default_sections()
+data.frame(
+  kunci = sapply(bagian, `[[`, "id"),
+  judul_di_modul = sapply(bagian, `[[`, "title")
+)
+```
+
+Kolom `kunci` adalah nama yang Anda tulis di bawah `body`. Kolom `judul_di_modul` adalah
+judul yang tercetak. Di PDF, bagian-bagian ini diberi nomor mengikuti nomor modul: 7.1, 7.2,
+dan seterusnya.
+
+Sembilan bagian berisi teks biasa. Tiga bagian berisi unsur khusus dan dibahas di bab
+tersendiri:
+
+- `contoh` dan `tambahan` berisi contoh praktikum yang kodenya dijalankan (@sec-bab07);
+- `latihan` dan `penugasan` berisi soal, sedangkan solusinya ditulis di luar `body`
+  (@sec-bab09).
+
+## Bentuk umum pengisian
+
+Setiap bagian ditulis sebagai **daftar**, dan setiap butir daftar menjadi satu paragraf di
+modul. Berikut bagian `deskripsi` dan `tujuan` Modul 7:
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(SPEC7, baris = baris_dari(SPEC7, "^body:", "^  alat:"))
+```
+
+Perhatikan tiga hal:
+
+1. `body:` adalah kunci tingkat atas. Nama bagian (`deskripsi`, `tujuan`) menjorok dua
+   spasi, dan butir-butirnya menjorok empat spasi.
+2. Paragraf panjang memakai `- >` supaya baris-barisnya digabung. Paragraf pendek cukup
+   ditulis dalam tanda kutip pada satu baris.
+3. Di dalam teks, Anda dapat memakai penanda Markdown: `**tebal**`, `*miring*`, dan
+   `` `kode` `` untuk nama fungsi atau paket.
+
+### Daftar bernomor dan daftar berbutir
+
+Bagian `tujuan` pada contoh di atas menulis setiap tujuan sebagai butir tersendiri yang
+diawali `1. `, `2. `, dan seterusnya. Karena setiap butir YAML menjadi satu paragraf, butir
+yang diawali angka dan titik akan tersusun sebagai daftar bernomor di modul. Hal yang sama
+berlaku untuk tanda hubung: butir yang diawali `- ` menjadi daftar berbutir, seperti pada
+bagian `alat`:
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(SPEC7, baris = baris_dari(SPEC7, "^  alat:", "^  instruksi:"))
+```
+
+Perhatikan bahwa tanda hubung pertama di setiap baris adalah penanda butir **YAML**, dan
+tanda hubung kedua, di dalam tanda kutip, adalah penanda daftar **Markdown**.
+
+### Subjudul di dalam bagian
+
+Bagian `teori` biasanya panjang dan perlu dibagi. Tulis butir yang diawali `###` untuk
+membuat subjudul:
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(SPEC7, baris = baris_dari(SPEC7, "^  teori:", "^  ringkasan:"))
+```
+
+Di modul, kedua subjudul itu menjadi subbab bernomor 7.5.1 dan 7.5.2.
+
+## Bagian penutup
+
+Bagian `ringkasan` dan `referensi` ditulis dengan cara yang sama:
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(SPEC7, baris = baris_dari(SPEC7, "^  ringkasan:"))
+```
+
+Daftar pustaka yang tercetak di modul diambil dari `body` → `referensi`. Kunci tingkat atas
+`references`, yang Anda lihat di spesifikasi contoh pada @sec-bab03, saat ini hanya disimpan
+dan tidak dicetak.
+
+## Merender dan melihat hasilnya
+
+\langkah{Lengkapi bagian isi dan render}
+
+Salin seluruh blok `body` di atas ke `spec/modul-07-deskriptif.yml`, di bawah blok `course`,
+lalu render:
+
+```{rproyek}
+sp7 <- module_spec_from_yaml("spec/modul-07-deskriptif.yml")
+sp7$validate()
+h <- render_module(sp7, output_dir = "build")
+```
+
+```{r}
+#| include: false
+pdf7 <- file.path(PROYEK, "build", "modul-07", "Modul_07_deskriptif.pdf")
+r1 <- halaman_png(pdf7, cari_halaman(pdf7, "Modul ini membahas langkah"), "bab06")
+r2 <- halaman_png(pdf7, cari_halaman(pdf7, "Rata-rata peka terhadap"), "bab06")
+```
+
+```{r}
+#| label: fig-isi
+#| echo: false
+#| fig-cap: "Modul 7 setelah bagian isi diisi."
+#| fig-subcap:
+#|   - "Deskripsi, tujuan, dan alat"
+#|   - "Teori dengan dua subjudul"
+#| layout-ncol: 2
+knitr::include_graphics(c(r1, r2))
+```
+
+::: {.callout-tip}
+Bagian 7.1 sampai 7.5 kini berisi teks Anda. Daftar tujuan tercetak bernomor, daftar alat
+berbutir, dan teori terbagi menjadi dua subbab. Bagian Contoh, Latihan, dan Penugasan masih
+menampilkan tulisan *belum diisi*; ketiganya diisi pada bab-bab berikutnya.
+:::
+
+## Bagian yang boleh dikosongkan
+
+Bagian yang tidak Anda isi tetap tercetak dengan judulnya dan tulisan *(Konten bagian ... belum
+diisi.)*. Tulisan itu sengaja dibuat mencolok supaya bagian yang terlupa mudah terlihat ketika
+Anda memeriksa PDF.
+
+Satu-satunya pengecualian adalah bagian `tambahan`. Bila tidak diisi, bagian ini dilewati
+sepenuhnya dan tidak muncul di daftar isi. Karena itu, Modul 7 kita saat ini hanya memiliki
+sepuluh bagian bernomor, 7.1 sampai 7.10. Bagian ini disediakan untuk materi pengayaan,
+misalnya penyelesaian ulang contoh dengan fungsi siap pakai.
+
+## Mengganti judul bagian Contoh dan Tambahan
+
+Judul bagian Contoh bawaannya *Contoh Praktikum dengan R*. Bila modul Anda memakai R dan
+Python, judul itu dapat diganti dengan kunci tingkat atas `contoh_title`:
+
+```yaml
+contoh_title: "Contoh Praktikum dengan R dan Python"
+```
+
+Dengan cara yang sama, `tambahan_title` mengganti judul bagian Tambahan. Judul sembilan bagian
+lainnya tetap.
+
+::: {.callout-important}
+## Salah paham umum: "Urutan bagian di YAML menentukan urutan di PDF"
+
+Di berkas Modul 7, Anda boleh menulis `ringkasan` sebelum `deskripsi`; PDF-nya tetap dimulai
+dari Deskripsi Modul. Paket menyusun bagian menurut urutan tetap dari `default_sections()`,
+bukan menurut urutan penulisan di `body`. Kunci di bawah `body` hanya menunjukkan bagian mana
+yang diisi. Konsekuensinya, salah ketik nama bagian, misalnya `deskirpsi`, tidak menimbulkan
+galat: teksnya tidak tercetak di mana pun, dan bagian Deskripsi tetap bertuliskan *belum
+diisi*.
+:::
+
+::: {.callout-caution}
+Ubah nama kunci `ringkasan` menjadi `rangkuman`, render ulang, lalu buka bagian Ringkasan
+Modul. Apa yang tercetak? Kembalikan namanya menjadi `ringkasan`.
+:::
+
+## Ringkasan
+
+Isi modul ditulis di bawah `body`, dibagi menurut sebelas bagian baku. Setiap bagian adalah
+daftar YAML, dan setiap butirnya menjadi satu paragraf. Penanda Markdown dipakai untuk huruf
+tebal, kode, daftar, dan subjudul. Urutan dan judul bagian ditetapkan paket; Anda hanya
+mengisi teksnya, dan bagian yang terlupa terlihat jelas di PDF.
+
+Bagian yang paling penting dalam modul praktikum, yaitu contoh berkode, kita isi di bab
+berikutnya.
+
+## Uji pemahaman
+
+1. Apa akibatnya bila Anda tidak mengisi bagian `instruksi`? Apa bedanya dengan tidak
+   mengisi bagian `tambahan`?
+2. Mengapa setiap tujuan pada bagian `tujuan` ditulis sebagai butir YAML tersendiri?
+3. Di bagian `alat`, baris `- "- **R** dan **RStudio**."` memuat dua tanda hubung. Jelaskan
+   peran masing-masing.
+4. (Transfer) Seorang rekan mengeluh bahwa teks Ringkasan yang sudah ia tulis tidak muncul di
+   PDF, padahal render berhasil tanpa galat. Sebutkan dua kemungkinan penyebabnya
+   berdasarkan bab ini dan @sec-bab04.

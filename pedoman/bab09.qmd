@@ -1,0 +1,200 @@
+# Latihan, Penugasan, dan Kunci Jawaban {#sec-bab09}
+
+```{r}
+#| include: false
+source("_setup.R")
+pasang_tahap(9)
+SPEC7 <- file.path(PROYEK, "spec", "modul-07-deskriptif.yml")
+```
+
+Bagaimana kunci jawaban tetap cocok dengan soal walaupun soalnya direvisi? Di `modulstis`, soal
+dan solusinya ditulis di berkas yang sama dan dirender bersama. Anda mengubah keduanya di satu
+tempat, dan solusinya dijalankan ulang terhadap data yang sama dengan data mahasiswa. Bab ini
+menunjukkan cara menulis keduanya, dan satu hal yang tetap menjadi tanggung jawab Anda.
+
+Setelah membaca bab ini, Anda dapat menulis latihan dan penugasan, menulis solusi berkode
+beserta skornya, dan memeriksa kunci jawaban hasil render.
+
+## Soal di `body`, solusi di `exercises`
+
+Soal dan solusi ditulis di dua tempat yang berbeda dalam spesifikasi yang sama:
+
+- **soal** untuk mahasiswa ditulis di `body` → `latihan` dan `body` → `penugasan`, dan tercetak di
+  **modul**;
+- **solusi** ditulis di kunci tingkat atas `exercises`, dan tercetak hanya di **kunci jawaban**.
+
+Pemisahan ini membuat modul tidak pernah memuat jawaban, sementara kunci jawaban selalu dibuat
+dari berkas yang sama dengan modulnya.
+
+## Latihan
+
+Latihan ditulis sebagai daftar. Butir berupa teks dicetak sebagai paragraf. Butir yang memiliki
+kunci `judul` dan `isi` menjadi satu soal bernomor:
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(SPEC7, baris = baris_dari(SPEC7, "^  latihan:", "^  penugasan:"))
+```
+
+Paket memberi nomor otomatis: soal pertama menjadi *Latihan 7.1*, soal kedua *Latihan 7.2*,
+dan seterusnya. Anda tidak perlu menulis nomornya.
+
+Perhatikan soal pertama. Isinya memuat blok kode dengan garis kosong `____` yang harus diisi
+mahasiswa. Blok itu ditulis dengan pembuka `` ```{r eval=FALSE} ``, sehingga kode ditampilkan
+tetapi tidak dijalankan. Tanpa `eval=FALSE`, R akan mencoba menjalankan `____(rt$pendapatan)` dan
+render gagal.
+
+::: {.callout-note}
+## Latihan berjenjang
+
+Untuk latihan yang bertingkat, sisipkan subjudul sebagai butir teks, misalnya
+`"#### Tingkat Dasar (melengkapi kode)"` sebelum soal-soal dasar dan
+`"#### Tingkat Menengah (menulis sendiri)"` sebelum soal berikutnya. Spesifikasi Modul 7 bawaan
+paket memakai pola ini dengan tiga tingkat.
+:::
+
+## Penugasan
+
+Penugasan ditulis dengan cara yang sama, dan setiap butir ber-`judul` diberi nomor
+*Tugas 7.1*, *Tugas 7.2*, dan seterusnya:
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(SPEC7, baris = baris_dari(SPEC7, "^  penugasan:", "^  ringkasan:"))
+```
+
+Bagian Penugasan selalu dimulai di halaman baru, sehingga mudah dicetak terpisah bila diperlukan.
+
+## Solusi, skor, dan interpretasi
+
+Solusi ditulis di `exercises`, kunci tingkat atas di bagian akhir spesifikasi:
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(SPEC7, baris = baris_dari(SPEC7, "^exercises:"))
+```
+
+| Kunci | Isi | Wajib? |
+|:--|:--|:-:|
+| `id` | label soal, misalnya `L7.1` | dianjurkan |
+| `points` | skor soal | ya |
+| `solution` | ringkasan jawaban dalam satu kalimat | dianjurkan |
+| `judul_r`, `solusi_r` | judul dan kode solusi R | tidak |
+| `judul_py`, `solusi_py` | judul dan kode solusi Python | tidak |
+| `eval` | `false` bila kode solusi tidak boleh dijalankan | tidak |
+| `interpretasi` | pembahasan untuk pengajar | dianjurkan |
+
+: Kunci pada satu solusi {#tbl-kunci-solusi}
+
+`validate()` memeriksa bahwa setiap solusi memiliki `points`. Solusi tanpa skor menghasilkan
+pesan `exercises[2].points hilang`, misalnya untuk solusi kedua.
+
+::: {.callout-warning}
+## Perhatikan perbedaan bawaan `eval`
+
+Kode **contoh** hanya dijalankan bila ditulis `eval: true` (@sec-eval). Kode **solusi**
+sebaliknya: selalu dijalankan, kecuali ditulis `eval: false`. Bawaan yang berbeda ini disengaja,
+karena kunci jawaban yang kodenya tidak dijalankan tidak dapat memastikan jawabannya benar.
+:::
+
+## Merender dan memeriksa kunci jawaban
+
+\langkah{Tambahkan latihan, penugasan, dan solusi, lalu render}
+
+```{rproyek}
+library(modulstis)
+sp7 <- module_spec_from_yaml("spec/modul-07-deskriptif.yml")
+sp7$validate()
+h <- render_module(sp7, output_dir = "build")
+h$kunci$path
+```
+
+```{r}
+#| include: false
+pdfm <- file.path(PROYEK, "build", "modul-07", "Modul_07_deskriptif.pdf")
+pdfk <- file.path(PROYEK, "build", "kunci-07", "Kunci_07_deskriptif.pdf")
+v1 <- halaman_png(pdfm, cari_halaman(pdfm, "Latihan 7\\.1"), "bab09-modul")
+v2 <- halaman_png(pdfk, cari_halaman(pdfk, "Solusi Latihan 7\\.1"), "bab09-kunci")
+nk <- pdf_halaman(pdfk)
+```
+
+```{r}
+#| label: fig-latihan-kunci
+#| echo: false
+#| fig-cap: "Soal di modul dan solusinya di kunci jawaban, keduanya dari spesifikasi yang sama."
+#| fig-subcap:
+#|   - "Latihan Mandiri di modul"
+#|   - "Kunci jawaban: ringkasan, kode solusi, keluaran, dan pembahasan"
+#| layout-ncol: 2
+knitr::include_graphics(c(v1, v2))
+```
+
+Kunci jawaban Modul 7 kini `r nk` halaman. Susunannya:
+
+1. sampul hijau berlabel **KUNCI JAWABAN**;
+2. untuk setiap solusi: kotak berisi `id`, skor, dan `solution`; kode solusi beserta
+   keluarannya; lalu kotak interpretasi;
+3. bagian **Catatan Penskoran untuk Pengajar**, yang ditambahkan otomatis.
+
+\langkah{Periksa kunci jawaban}
+
+Bacalah kunci jawaban dengan pertanyaan berikut:
+
+- Apakah keluaran kode solusi masuk akal? Untuk Latihan 7.1, rata-rata pendapatan harus berada
+  di antara `min` dan `max` resep, yaitu 800 dan 7000.
+- Apakah setiap soal di modul memiliki solusi di kunci, dengan urutan yang sama?
+- Apakah skor seluruh soal berjumlah sesuai rencana penilaian Anda? Pada contoh ini,
+  40 + 60 = 100.
+
+::: {.callout-important}
+## Salah paham umum: "Paket mencocokkan setiap soal dengan solusinya"
+
+Paket tidak menghubungkan *Latihan 7.2* di modul dengan butir kedua `exercises` secara otomatis.
+Keduanya ditulis terpisah, dan hubungannya hanya lewat kebiasaan Anda: `id: "L7.2"` dan urutan
+yang sama. Bila Anda menyisipkan soal baru di tengah latihan, nomor soal di modul bergeser
+dengan sendirinya, tetapi `id` di `exercises` tidak. Yang dijamin paket adalah hal lain: data dan
+kode solusi selalu dijalankan ulang terhadap data yang sama dengan data mahasiswa. Karena itu,
+setiap kali menambah atau menghapus soal, periksa ulang `id` dan urutan solusinya.
+:::
+
+::: {.callout-caution}
+Hapus baris `points: 60` dari solusi kedua, lalu jalankan `sp7$validate()` setelah membaca ulang
+spesifikasinya. Baca pesannya, kemudian kembalikan baris itu.
+:::
+
+## Kunci berupa prosa panjang
+
+Sebagian penugasan dijawab dengan uraian, bukan kode. Untuk kunci seperti itu, tulislah uraiannya
+di `body` → `kunci`. Butir-butir di sana dicetak apa adanya di kunci jawaban, sesudah semua solusi
+`exercises`, dan tidak pernah muncul di modul:
+
+```yaml
+body:
+  kunci:
+    - "#### Pembahasan Tugas 7.1"
+    - >
+      Laporan yang baik membandingkan median pengeluaran antarprovinsi, bukan hanya
+      rata-ratanya, dan menyebut bahwa datanya simulasi.
+```
+
+## Ringkasan
+
+Soal ditulis di `body` → `latihan` dan `body` → `penugasan`, diberi nomor otomatis, dan tercetak
+di modul. Solusi ditulis di `exercises`, dengan `points` yang wajib, dan tercetak di kunci
+jawaban. Kode solusi dijalankan secara bawaan terhadap data yang sama dengan data mahasiswa.
+Hubungan antara nomor soal dan solusinya dijaga lewat `id` dan urutan, sehingga perlu diperiksa
+setiap kali soal ditambah atau dihapus.
+
+Modul 7 kini lengkap dari sampul sampai kunci. @sec-bab10 merapikan tampilannya dengan kotak dan
+rumus.
+
+## Uji pemahaman
+
+1. Di mana soal ditulis, dan di mana solusinya ditulis? Mengapa keduanya dipisah?
+2. Mengapa blok kode berisi garis kosong `____` harus ditulis dengan `eval=FALSE`?
+3. Apa beda bawaan `eval` pada kode contoh dan kode solusi?
+4. (Transfer) Anda menyisipkan soal baru di antara Latihan 7.1 dan Latihan 7.2. Sebutkan dua hal
+   yang harus Anda ubah di `exercises`, dan jelaskan mengapa paket tidak mengubahnya sendiri.

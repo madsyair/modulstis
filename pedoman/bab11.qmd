@@ -1,0 +1,217 @@
+# Merender: Satu Modul, Banyak Modul, Dua Backend {#sec-bab11}
+
+```{r}
+#| include: false
+source("_setup.R")
+pasang_tahap(10)
+unlink(file.path(PROYEK, "spec", "modul-01-contoh.yml"))
+unlink(file.path(PROYEK, "spec", c("modul-03-pemrograman-r.yml", "modul-05-dplyr.yml")))
+unlink(file.path(PROYEK, c("build", "modul"), "*"), recursive = TRUE)
+```
+
+Bagaimana merender empat belas modul tanpa membuka empat belas berkas? Paket menyediakan tiga
+cara, dari yang paling sederhana sampai yang paling lengkap. Bab ini membahas ketiganya, kapan
+memakai masing-masing, dan cara memilih backend bookdown atau Quarto.
+
+Setelah membaca bab ini, Anda dapat merender satu modul atau seluruh mata kuliah, membaca log
+render, dan berpindah backend.
+
+## Menyiapkan beberapa spesifikasi
+
+Sampai bab lalu, proyek kita berisi spesifikasi contoh dan Modul 7. Untuk berlatih merender
+banyak modul, kita hapus spesifikasi contoh, lalu salin dua spesifikasi Pemrograman Statistika
+yang disertakan paket: Modul 3 dan Modul 5.
+
+\langkah{Salin dua spesifikasi bawaan}
+
+```{rproyek}
+library(modulstis)
+file.remove("spec/modul-01-contoh.yml")
+bawaan <- system.file("specs_ps", package = "modulstis")
+file.copy(file.path(bawaan, c("modul-03-pemrograman-r.yml", "modul-05-dplyr.yml")),
+          "spec")
+list.files("spec", pattern = "\\.yml$")
+```
+
+```{rproyek}
+#| include: false
+unlink("spec/modul-01-contoh.yml")
+```
+
+Seluruh empat belas spesifikasi bawaan dapat Anda lihat dengan
+`list.files(system.file("specs_ps", package = "modulstis"))`. Spesifikasi itu adalah titik awal
+yang baik untuk mata kuliah Anda sendiri: salin, lalu sunting.
+
+## Tiga cara merender
+
+| Cara | Merender | Hasil di | Cocok untuk |
+|:--|:--|:--|:--|
+| `render_module()` | satu spesifikasi | `build/modul-NN/`, `build/kunci-NN/` | menyunting satu modul |
+| `ModuleProject` | semua spesifikasi di satu folder | `build/modul-NN/`, `build/kunci-NN/` | membangun seluruh mata kuliah dari R |
+| `render_modul.R` | semua, atau rentang tertentu | `modul/ModulNN_kode/` | membangun dari terminal |
+
+: Tiga cara merender {#tbl-cara-render}
+
+Ketiganya menghasilkan PDF yang sama. Yang berbeda adalah cakupannya dan susunan folder hasilnya.
+
+### Satu modul dengan `render_module()`
+
+Cara ini sudah Anda pakai sejak @sec-bab05. Selama menyunting satu modul, inilah cara tercepat,
+karena hanya modul itu yang dirender:
+
+```{rproyek}
+sp5 <- module_spec_from_yaml("spec/modul-05-dplyr.yml")
+h5 <- render_module(sp5, output_dir = "build")
+c(h5$modul$path, h5$kunci$path)
+```
+
+### Seluruh folder dengan `ModuleProject`
+
+`ModuleProject` membaca semua berkas `.yml` di satu folder, lalu memeriksa, membangkitkan data, dan
+merender semuanya:
+
+\langkah{Render seluruh mata kuliah}
+
+```{rproyek}
+proj <- ModuleProject$new(specs_dir = "spec", backend = "bookdown",
+                          output_dir = "build")
+proj$validate_all()
+hasil <- proj$render_all()
+```
+
+`validate_all()` memeriksa semua spesifikasi sekaligus dan mengembalikan `TRUE` hanya bila
+semuanya valid. Bila ada yang tidak valid, log menyebut nomor modul dan pesannya, sehingga Anda
+dapat memperbaiki semuanya sebelum mulai merender.
+
+`render_all()` merender modul dan kunci untuk setiap spesifikasi, lalu menutup dengan satu baris
+`OK` atau `GAGAL` per modul. Baris itulah yang perlu Anda baca pertama kali.
+
+::: {.callout-tip}
+Log diakhiri tiga baris `INFO ... OK modul=3`, `modul=5`, dan `modul=7`. Folder `build/` berisi
+enam subfolder: `modul-03`, `kunci-03`, `modul-05`, `kunci-05`, `modul-07`, dan `kunci-07`.
+:::
+
+```{rproyek}
+list.files("build", pattern = "\\.pdf$", recursive = TRUE)
+```
+
+### Dari terminal dengan `render_modul.R`
+
+Skrip `render_modul.R` yang dibuat bersama proyek (@sec-bab03) memeriksa setiap spesifikasi,
+melewati yang tidak valid, lalu merender sisanya ke folder `modul/`. Dari tab **Terminal**:
+
+```bash
+Rscript render_modul.R        # semua spesifikasi
+Rscript render_modul.R 2 3    # spesifikasi kedua dan ketiga dalam urutan nama berkas
+```
+
+Angka pada perintah kedua adalah urutan berkas di folder `spec/`, bukan nomor modul. Dengan isi
+folder kita sekarang, `2 3` berarti `modul-05-dplyr.yml` dan `modul-07-deskriptif.yml`.
+
+## Ketika satu modul gagal
+
+::: {.callout-important}
+## Salah paham umum: "Satu modul yang gagal menghentikan seluruh proses"
+
+`render_all()` merender setiap modul secara terpisah. Bila satu modul gagal, modul lain tetap
+dirender, dan kegagalan itu dicatat. Untuk memperlihatkannya, kita tambahkan sementara satu
+spesifikasi yang contohnya pasti galat:
+
+```{rproyek}
+#| include: false
+writeLines(c('number: 98', 'title: "Modul Uji Galat"', 'short_code: "uji"',
+  'course:', '  matkul: "Pemrograman Statistika"', '  kode: "K242310"',
+  '  prodi: "D-IV Statistika"', '  penyusun: ["Penguji"]',
+  'body:', '  contoh:', '    - contoh: "Kode yang galat"', '      judul_r: "galat"',
+  '      kode_r: "stop(\'data belum dibaca\')"', '      eval: true'),
+  "spec/modul-98-uji.yml")
+```
+
+```{rproyek}
+#| stderr: true
+#| tampil: "c(1:2, grep('OK|GAGAL', hasil))"
+proj <- ModuleProject$new(specs_dir = "spec", output_dir = "build")
+hasil <- proj$render_all()
+```
+
+Keluaran di atas hanya menampilkan baris penutup `render_all()`. Modul 3, 5, dan 7 tetap
+selesai, sedangkan Modul 98 dicatat `GAGAL` lengkap dengan penyebabnya.
+
+```{rproyek}
+#| include: false
+unlink(c("spec/modul-98-uji.yml", "build/modul-98", "build/kunci-98"), recursive = TRUE)
+```
+:::
+
+## Membaca log render
+
+Setiap baris log diawali tingkatnya:
+
+| Tingkat | Arti | Yang perlu dilakukan |
+|:--|:--|:--|
+| `INFO` | kemajuan biasa | tidak ada |
+| `WARN` | ada yang tidak beres, tetapi proses berlanjut | baca pesannya; periksa PDF di bagian yang disebut |
+| `ERROR` | satu modul gagal | perbaiki penyebabnya; lihat @sec-bab14 |
+
+: Tingkat log {#tbl-log}
+
+Pesan `Warning: Package tocloft Warning` yang muncul pada setiap render berasal dari LaTeX, bukan
+dari paket, dan dapat diabaikan (@sec-bab03).
+
+`ModuleProject` menerima argumen `log_level` untuk mengatur tingkat terendah yang ditampilkan:
+`"info"` (bawaan), `"warn"`, atau `"error"`.
+
+## Bookdown atau Quarto
+
+Paket memiliki dua **backend**, yaitu dua mesin yang mengubah spesifikasi menjadi PDF:
+
+- **bookdown** (bawaan) menulis berkas antara `.Rmd` dan merendernya dengan R Markdown;
+- **Quarto** menulis berkas antara `.qmd` dan merendernya dengan Quarto.
+
+Isi modul, tampilan, dan warnanya sama. Untuk berpindah, cukup ubah satu argumen:
+
+```{rproyek}
+hq <- render_module(sp5, backend = "quarto", output_dir = "build-quarto")
+list.files("build-quarto/modul-05")
+```
+
+Perhatikan berkas antaranya: `.qmd`, bukan `.Rmd`.
+
+| | bookdown | Quarto |
+|:--|:--|:--|
+| Perangkat tambahan | tidak ada | Quarto dan paket R `quarto` |
+| Berkas antara | `.Rmd` | `.qmd` |
+| Didukung `render_modul.R` dan `render_berlanjut()` | ya | tidak |
+| Pemulihan galat LaTeX | ya | tidak; galat LaTeX menghentikan render |
+
+: Perbandingan dua backend {#tbl-backend}
+
+Saran kami: pakai bookdown kecuali Anda memang memerlukan Quarto, misalnya karena seluruh bahan
+ajar Anda yang lain sudah memakai Quarto. Bila Quarto belum terpasang, paket hanya menulis berkas
+`.qmd` dan mencatat peringatan `Quarto tidak tersedia`, tanpa membuat PDF.
+
+::: {.callout-caution}
+Render Modul 7 dengan backend Quarto ke folder `build-quarto`, lalu buka kedua PDF Modul 7
+berdampingan. Carilah perbedaan tampilan di antara keduanya.
+:::
+
+## Ringkasan
+
+`render_module()` merender satu modul dan paling cocok selama menyunting. `ModuleProject`
+memeriksa dan merender seluruh folder spesifikasi, dan satu modul yang gagal tidak menghentikan
+yang lain. `render_modul.R` melakukan hal serupa dari terminal dengan susunan folder hasil yang
+berbeda. Log render dibaca dari tingkatnya: `INFO` dapat dilewati, sedangkan `WARN` dan `ERROR`
+harus ditindaklanjuti. Backend bookdown adalah pilihan bawaan; Quarto dapat dipakai dengan satu
+argumen bila Quarto terpasang.
+
+Modul-modul sudah menjadi PDF terpisah. @sec-bab12 merangkainya menjadi satu buku.
+
+## Uji pemahaman
+
+1. Kapan Anda memakai `render_module()`, dan kapan `ModuleProject`?
+2. Apa arti perintah `Rscript render_modul.R 2 3` untuk proyek yang folder `spec/`-nya berisi
+   lima berkas?
+3. Pada log `render_all()`, baris mana yang Anda baca pertama kali, dan mengapa?
+4. (Transfer) Seorang asisten menjalankan `render_all()` untuk empat belas modul sebelum pulang.
+   Pagi harinya ia menemukan dua belas modul berhasil. Bagaimana ia mengetahui dua modul mana
+   yang gagal beserta penyebabnya, tanpa merender ulang semuanya?

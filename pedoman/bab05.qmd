@@ -1,0 +1,229 @@
+# Mengisi Identitas Modul dan Mata Kuliah {#sec-bab05}
+
+```{r}
+#| include: false
+source("_setup.R")
+pasang_tahap(5)
+SPEC7 <- file.path(PROYEK, "spec", "modul-07-deskriptif.yml")
+```
+
+Dari mana sampul modul mengambil nama mata kuliah dan nama penyusun? Dari bagian paling atas
+spesifikasi, yaitu identitas modul dan blok `course`. Bagian ini pendek, tetapi muncul di
+banyak tempat: sampul, kepala setiap halaman, kaki halaman, dan nama berkas PDF.
+
+Mulai bab ini, kita menulis spesifikasi Modul 7 Pemrograman Statistika dari awal. Setelah
+membaca bab ini, Anda dapat menulis identitas sebuah modul, menjelaskan di mana setiap nilai
+muncul di PDF, dan memilih `short_code` yang aman.
+
+## Berkas baru untuk Modul 7
+
+\langkah{Buat berkas spesifikasi}
+
+Di panel Files, buka folder `spec/`, klik **New Blank File → Text File**, lalu beri nama
+`modul-07-deskriptif.yml`.
+
+Nama berkas boleh bebas, tetapi kebiasaan berikut memudahkan pekerjaan: awali dengan
+`modul-`, lanjutkan dengan **nomor dua digit**, lalu kata kunci topik. Nomor dua digit
+(`07`, bukan `7`) membuat berkas tersusun berurutan di panel Files dan ketika dirender, karena
+komputer mengurutkan nama secara abjad: `modul-10` akan mendahului `modul-7`, tetapi tidak
+mendahului `modul-07`.
+
+\langkah{Tulis identitas modul}
+
+Ketik isi berikut ke berkas tersebut, lalu simpan.
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(SPEC7)
+```
+
+## Kunci tingkat atas dan letaknya di PDF
+
+Kunci yang tidak menjorok disebut **kunci tingkat atas**. @tbl-kunci-atas menjelaskan
+masing-masing.
+
+| Kunci | Isi | Muncul di |
+|:--|:--|:--|
+| `number` | nomor modul, bilangan bulat 1 sampai 99 | sampul, kepala halaman, nomor subbab (7.1, 7.2, ...) |
+| `title` | judul lengkap | sampul (huruf kapital) |
+| `short_code` | kode singkat tanpa spasi | nama folder dan berkas PDF |
+| `topic` | judul ringkas | kepala setiap halaman; bila kosong, memakai `title` |
+| `pertemuan` | pertemuan ke berapa menurut RPS | sampul: *Pertemuan Minggu ke-7* |
+| `sub_cpmk` | capaian pembelajaran modul | sampul, di bawah nomor pertemuan |
+| `packages` | paket R yang dipakai modul | tidak dicetak; catatan untuk Anda |
+
+: Kunci tingkat atas spesifikasi {#tbl-kunci-atas}
+
+Hanya `number` dan `title` yang wajib. Kunci lain boleh dihilangkan, tetapi sampul akan
+terlihat kosong tanpa `pertemuan` dan `sub_cpmk`.
+
+`sub_cpmk` ditulis dengan `>` karena teksnya panjang. Ingat dari @sec-bab04: `>` menggabungkan
+baris-baris di bawahnya menjadi satu paragraf.
+
+## Blok `course`
+
+Blok `course` berisi identitas mata kuliah. @tbl-course merangkum isinya.
+
+| Kunci | Isi | Muncul di |
+|:--|:--|:--|
+| `matkul` | nama mata kuliah | kepala halaman kanan: *Praktikum Pemrograman Statistika* |
+| `matkul_besar` | nama mata kuliah dalam huruf kapital | pita atas sampul |
+| `kode` | kode mata kuliah | pita atas sampul, dalam kurung |
+| `semester` | semester penyelenggaraan | pita bawah sampul |
+| `prodi` | program studi | sampul dan kaki halaman kanan |
+| `penyusun` | daftar nama penyusun | bagian bawah sampul, dipisah koma |
+| `halaman_awal` | nomor halaman pertama | nomor halaman; diatur otomatis di @sec-bab12 |
+
+: Isi blok `course` {#tbl-course}
+
+`penyusun` ditulis sebagai daftar, sehingga Anda dapat mencantumkan lebih dari satu orang.
+Semua nama akan dicetak di sampul, dipisah koma.
+
+::: {.callout-important}
+## Salah paham umum: "Blok `course` boleh dihilangkan karena sudah diisi saat membuat proyek"
+
+Isian saat membuat proyek hanya dipakai untuk menulis spesifikasi **contoh**. Setiap
+spesifikasi membaca identitas mata kuliahnya dari blok `course` miliknya sendiri. Bila blok itu
+tidak ada, paket memakai identitas bawaan, yaitu mata kuliah **Analisis Peubah Ganda**. Berikut
+sampul spesifikasi Modul 7 yang blok `course`-nya dihapus:
+
+```{r}
+#| include: false
+dir.create(file.path(KERJA, "bab05"), showWarnings = FALSE)
+x <- readLines(SPEC7)
+x <- x[!grepl("^course:|^  [a-z_]+:|^    - ", x)]
+tanpa <- file.path(KERJA, "bab05", "tanpa-course.yml")
+writeLines(x, tanpa)
+ht <- render_diam(tanpa, file.path(KERJA, "bab05", "tanpa"))
+```
+
+```{rproyek}
+#| echo: false
+x <- pdftools::pdf_text(file.path("..", "bab05", "tanpa", "modul-07",
+                                  "Modul_07_deskriptif.pdf"))[1]
+b <- trimws(strsplit(x, "\n")[[1]])
+cat(head(b[nzchar(b)], 3), sep = "\n")
+```
+
+Sampul menyebut mata kuliah yang salah, dan tidak ada pesan galat apa pun. Karena itu, salin
+blok `course` yang sama ke setiap spesifikasi dalam satu mata kuliah (@sec-course-sama).
+:::
+
+## `short_code` dan nama berkas
+
+`short_code` menentukan nama berkas hasil render. Untuk Modul 7 dengan `short_code:
+"deskriptif"`, berkasnya bernama `Modul_07_deskriptif.pdf` dan `Kunci_07_deskriptif.pdf`.
+
+`short_code` dipakai apa adanya sebagai bagian nama berkas, termasuk oleh XeLaTeX ketika
+menyusun PDF. Karena itu, tulislah hanya dengan huruf kecil, angka, dan garis bawah. Bila Anda
+menghilangkan `short_code`, paket membuatnya sendiri dari judul.
+
+::: {.callout-warning}
+`short_code` yang berisi spasi membuat render gagal. Berikut yang terjadi bila Modul 7
+diberi `short_code: "statistik deskriptif"`:
+
+```{r}
+#| include: false
+y <- readLines(SPEC7)
+y <- sub('short_code: "deskriptif"', 'short_code: "statistik deskriptif"', y, fixed = TRUE)
+writeLines(y, file.path(KERJA, "bab05", "spasi.yml"))
+```
+
+```{rproyek}
+#| wd: !expr file.path(KERJA, "bab05")
+#| tampil: "c(2:3, length(hasil))"
+library(modulstis)
+sp <- module_spec_from_yaml("spasi.yml")
+h <- render_module(sp, output_dir = "spasi")
+```
+
+Pesannya hanya menyebut bahwa PDF tidak dihasilkan, tanpa menyebut spasinya. Gantilah
+spasi dengan garis bawah: `"statistik_deskriptif"`.
+:::
+
+## Memeriksa dan merender identitas
+
+\langkah{Periksa dan render Modul 7}
+
+Kali ini kita merender satu modul saja dengan `render_module()`, supaya tidak perlu menunggu
+spesifikasi lain:
+
+```{rproyek}
+library(modulstis)
+sp7 <- module_spec_from_yaml("spec/modul-07-deskriptif.yml")
+sp7$validate()
+h <- render_module(sp7, output_dir = "build")
+h$modul$path
+```
+
+`render_module()` menaruh hasilnya di folder yang Anda sebut pada `output_dir`, yaitu
+`build/`. Susunan foldernya sedikit berbeda dari `render_modul.R`: modul di
+`build/modul-07/`, kunci di `build/kunci-07/`. Keduanya sama-sama benar; @sec-bab11 membahas
+kapan masing-masing dipakai.
+
+```{r}
+#| include: false
+pdf7 <- file.path(PROYEK, "build", "modul-07", "Modul_07_deskriptif.pdf")
+q1 <- halaman_png(pdf7, 1, "bab05")
+q2 <- halaman_png(pdf7, 3, "bab05")
+```
+
+```{r}
+#| label: fig-identitas
+#| echo: false
+#| fig-cap: "Modul 7 yang baru berisi identitas. Semua nilai di sampul berasal dari kunci tingkat atas dan blok course."
+#| fig-subcap:
+#|   - "Sampul"
+#|   - "Halaman isi: kepala halaman memakai topic dan matkul"
+#| layout-ncol: 2
+knitr::include_graphics(c(q1, q2))
+```
+
+::: {.callout-tip}
+Halaman isi menampilkan judul setiap bagian diikuti tulisan miring seperti
+*(Konten bagian 'deskripsi' belum diisi.)*. Itu tanda bahwa identitas sudah benar dan
+sebelas bagian isi menunggu diisi, yang kita kerjakan di @sec-bab06.
+:::
+
+## Satu blok `course` untuk semua modul {#sec-course-sama}
+
+Dalam satu mata kuliah, blok `course` di keempat belas spesifikasi isinya sama. Cara paling
+aman adalah menyalin blok itu dari spesifikasi yang sudah benar, bukan mengetiknya ulang.
+Ketika sesuatu berubah, misalnya ada penyusun baru, ubahlah di semua berkas. Fitur **Find in
+Files** di RStudio (**Edit → Find in Files**, atau **Ctrl+Shift+F**) dapat mencari teks yang
+sama di seluruh folder `spec/` sekaligus.
+
+::: {.callout-caution}
+Tambahkan nama kedua pada `penyusun`:
+
+```yaml
+  penyusun:
+    - "Achmad Syahrul Choir"
+    - "Rudi Salam"
+```
+
+Render ulang Modul 7 dan lihat bagian bawah sampul. Lalu coba hapus tanda hubung di depan
+nama kedua, render lagi, dan amati pesan yang muncul.
+:::
+
+## Ringkasan
+
+Identitas modul terdiri atas kunci tingkat atas (`number`, `title`, `short_code`, `topic`,
+`pertemuan`, `sub_cpmk`) dan blok `course` untuk identitas mata kuliah. Nilai-nilai itu
+dicetak di sampul, kepala dan kaki halaman, serta dipakai untuk nama berkas. Blok `course`
+harus ada di setiap spesifikasi, karena tanpanya paket diam-diam memakai identitas bawaan.
+`short_code` hanya boleh berisi huruf kecil, angka, dan garis bawah.
+
+Modul 7 kini punya sampul yang benar, tetapi isinya kosong. @sec-bab06 mengisinya.
+
+## Uji pemahaman
+
+1. Sebutkan dua kunci yang wajib ada pada setiap spesifikasi.
+2. Kunci mana yang menentukan teks di kepala halaman, dan apa yang terjadi bila kunci itu
+   dihilangkan?
+3. Mengapa sampul Modul 7 tanpa blok `course` menampilkan *Analisis Peubah Ganda*?
+4. (Transfer) Anda mengampu mata kuliah yang sama untuk program studi D-III dan D-IV, dengan
+   isi modul yang hampir sama. Kunci mana saja yang berbeda di antara dua spesifikasi Modul 7
+   tersebut? Mengapa lebih aman menyimpan keduanya di dua proyek terpisah daripada di satu
+   folder `spec/`? Petunjuk: perhatikan nama folder hasil di `build/`.
