@@ -79,12 +79,16 @@ ModuleProject <- R6::R6Class("ModuleProject",
       doc_k <- AnswerKeyBuilder$new(private$theme, self$logger)$build(spec)
       dirm <- file.path(private$output_dir, sprintf("modul-%02d", spec$number))
       dirk <- file.path(private$output_dir, sprintf("kunci-%02d", spec$number))
-      # Kunci membaca berkas data dengan path relatif "data/..." sama seperti modul,
-      # sehingga direktori kunci juga harus memuat data tersebut.
+      # Modul dan kunci membaca berkas data dengan path relatif "data/...", sehingga
+      # kedua direktori harus memuat data tersebut sebelum render. Data dibangkitkan
+      # di sini, bukan hanya oleh generate_data(), agar render_all() tetap berhasil
+      # walaupun generate_data() tidak dipanggil lebih dahulu.
       if (length(spec$datasets)) {
-        dir.create(dirk, recursive = TRUE, showWarnings = FALSE)
-        generate_module_data(spec, output_dir = dirk)
-        self$logger$debug("Data disalin ke direktori kunci", modul = spec$number)
+        for (d in c(dirm, dirk)) {
+          dir.create(d, recursive = TRUE, showWarnings = FALSE)
+          generate_module_data(spec, output_dir = d)
+        }
+        self$logger$debug("Data disiapkan untuk modul dan kunci", modul = spec$number)
       }
       am <- self$logger$with_timing("render modul",
               rnd$render(doc_m, dirm), modul = spec$number)
