@@ -1,0 +1,47 @@
+---
+output:
+  pdf_document:
+    latex_engine: xelatex
+geometry: "left=2.6cm,right=2.4cm,top=3.0cm,bottom=2.4cm"
+fontsize: 11pt
+header-includes:
+  - \usepackage{fontspec}
+  - \setmainfont{Carlito}
+  - \usepackage{xcolor}
+  - \definecolor{bpsnavy}{HTML}{123A6B}
+  - \definecolor{bpsbiru}{HTML}{0B6FB4}
+  - \definecolor{bpsbirumuda}{HTML}{6FB3E0}
+  - \definecolor{bpsoranye}{HTML}{F58220}
+  - \definecolor{bpshijau}{HTML}{00A651}
+  - \usepackage{tikz}
+  - \usetikzlibrary{calc}
+  - \pagenumbering{roman}
+params:
+  jenis: "modul"
+---
+
+```{r, include=FALSE}
+library(modulstis)
+daftar <- readRDS(sprintf("daftar_%s.rds", params$jenis))
+```
+
+```{r, results="asis", echo=FALSE}
+cat(sampul_buku(
+  judul1 = "Pemrograman", judul2 = "Statistika",
+  kode = "K242310", semester = "3 (Ganjil)",
+  penyusun = "Achmad Syahrul Choir",
+  jenis = if (params$jenis == "kunci") "BUKU KUNCI JAWABAN" else "BUKU MODUL PRAKTIKUM",
+  ringkas = "Program Studi D-IV Statistika",
+  varian = params$jenis))
+```
+
+# Kata Pengantar {-}
+
+Buku ini memuat modul praktikum Pemrograman Statistika semester ganjil.
+
+# Daftar Modul {-}
+
+```{r, echo=FALSE}
+knitr::kable(data.frame(Modul = daftar$judul, Halaman = daftar$mulai),
+             col.names = c("Modul", "Halaman"))
+```

@@ -1,0 +1,49 @@
+# Fungsi Paket untuk Penyusun Modul {#sec-lampiran-d}
+
+Lampiran ini mencantumkan fungsi yang dipakai di buku ini. Bantuan lengkap setiap fungsi dapat
+dibuka di RStudio dengan `?nama_fungsi`, misalnya `?render_module`.
+
+## Menyiapkan {.unnumbered .unlisted}
+
+| Fungsi | Kegunaan | Bab |
+|:--|:--|:-:|
+| `cek_kesiapan()` | memeriksa perangkat yang diperlukan | 2 |
+| `buat_proyek_modul()` | membuat folder proyek beserta spesifikasi contoh | 3 |
+| `buka_pedoman()` | membuka buku pedoman ini | -- |
+
+## Membaca dan memeriksa {.unnumbered .unlisted}
+
+| Fungsi | Kegunaan | Bab |
+|:--|:--|:-:|
+| `module_spec_from_yaml(path)` | membaca spesifikasi menjadi objek | 3 |
+| `spec$validate()` | memeriksa isian spesifikasi | 3, 14 |
+| `default_sections()` | menampilkan sebelas bagian bawaan | 6 |
+| `generate_module_data(spec)` | membangkitkan data tanpa merender | 8 |
+| `generate_dataset(recipe)` | membangkitkan satu data dari resep | 8 |
+
+## Merender {.unnumbered .unlisted}
+
+| Fungsi | Kegunaan | Bab |
+|:--|:--|:-:|
+| `render_module(spec, backend, theme, output_dir)` | merender satu modul dan kuncinya | 5, 11 |
+| `ModuleProject$new(specs_dir, backend, theme, output_dir, log_level)` | membuat proyek dari satu folder spesifikasi | 11 |
+| `proj$validate_all()` | memeriksa semua spesifikasi | 11 |
+| `proj$generate_data()` | membangkitkan data semua modul | 11 |
+| `proj$render_all()` | merender semua modul dan kunci | 11 |
+
+## Menerbitkan {.unnumbered .unlisted}
+
+| Fungsi | Kegunaan | Bab |
+|:--|:--|:-:|
+| `render_berlanjut(specs, out_dirs, jenis, theme, mulai)` | render dua tahap dengan nomor halaman berlanjut | 12 |
+| `sampul_buku(...)` | potongan LaTeX sampul buku | 12 |
+| `gabung_pdf(berkas, keluaran)` | menggabung PDF | 12 |
+| `pdf_halaman(path)` | menghitung halaman PDF | 12 |
+
+## Tampilan {.unnumbered .unlisted}
+
+| Fungsi | Kegunaan | Bab |
+|:--|:--|:-:|
+| `bps_palette()` | palet warna bawaan | 13 |
+| `theme_factory(palette, font)` | membuat tema | 13 |
+| `load_glossary(path)` | membaca bank istilah dari berkas YAML | 13 |

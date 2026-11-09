@@ -4,10 +4,12 @@
 \alias{theme_factory}
 \title{Factory tema}
 \usage{
-theme_factory(palette = "bps")
+theme_factory(palette = "bps", font = "Carlito")
 }
 \arguments{
-\item{palette}{"bps" atau list warna}
+\item{palette}{"bps" atau list warna, mis. \code{list(navy = "#5B2C6F")}}
+
+\item{font}{nama font yang terpasang di sistem operasi}
 }
 \value{
 objek \link{LatexTheme}

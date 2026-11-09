@@ -1,0 +1,88 @@
+project:
+  type: book
+  output-dir: _book
+  pre-render: siapkan.R
+
+book:
+  title: "Aplikasi modulstis"
+  subtitle: "Paket R Penyusun Modul Praktikum dan Kunci Jawaban dari Satu Spesifikasi"
+  author: "Achmad Syahrul Choir"
+  date: last-modified
+  date-format: "D MMMM YYYY"
+  output-file: Pedoman_modulstis
+  chapters:
+    - index.qmd
+    - bab1-latar-belakang.qmd
+    - bab2-program.qmd
+    - bab3-penggunaan.qmd
+  appendices:
+    - lampiran-a.qmd
+    - lampiran-b.qmd
+    - lampiran-c.qmd
+    - lampiran-d.qmd
+    - lampiran-e.qmd
+
+lang: id
+language:
+  crossref-fig-title: "Gambar"
+  crossref-tbl-title: "Tabel"
+  crossref-ch-prefix: "Bab"
+  crossref-apx-prefix: "Lampiran"
+  section-title-appendices: "Lampiran"
+  callout-tip-title: "Hasil yang seharusnya terlihat"
+  callout-note-title: "Catatan"
+  callout-warning-title: "Perhatian"
+  callout-important-title: "Penting"
+  toc-title-document: "Daftar Isi"
+
+execute:
+  echo: true
+  warning: false
+  message: false
+  freeze: false
+
+knitr:
+  opts_chunk:
+    comment: "#>"
+    collapse: true
+    R.options:
+      width: 72
+
+format:
+  pdf:
+    documentclass: scrbook
+    classoption: [oneside, open=any, fontsize=11pt]
+    papersize: a4
+    geometry:
+      - top=28mm
+      - bottom=26mm
+      - left=26mm
+      - right=24mm
+      - headsep=8mm
+    pdf-engine: xelatex
+    mainfont: Carlito
+    sansfont: Carlito
+    monofont: DejaVu Sans Mono
+    monofontoptions:
+      - Scale=0.78
+    linestretch: 1.2
+    toc: true
+    toc-depth: 2
+    number-sections: true
+    number-depth: 2
+    colorlinks: true
+    linkcolor: "bpsbiru"
+    urlcolor: "bpsbiru"
+    code-block-bg: "F4F7FB"
+    code-block-border-left: "0B6FB4"
+    highlight-style: tango
+    fig-pos: "H"
+    fig-align: center
+    callout-appearance: default
+    callout-icon: false
+    include-in-header:
+      - tex/versi.tex
+      - tex/preamble.tex
+    template-partials:
+      - partials/before-body.tex
+    keep-tex: true

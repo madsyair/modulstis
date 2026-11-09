@@ -1,0 +1,98 @@
+# ===================================================================
+# Templat spesifikasi modul modulstis
+# Ganti semua teks di dalam tanda kutip, lalu hapus bagian yang tidak perlu.
+# Indentasi: dua spasi per tingkat. Jangan memakai tab.
+# ===================================================================
+number: 1                                # 1 sampai 99
+title: "Judul Lengkap Modul"
+short_code: "kode_singkat"               # huruf kecil, angka, garis bawah
+topic: "Judul Ringkas untuk Kepala Halaman"
+pertemuan: 1
+sub_cpmk: >
+  Sub-CPMK 1: Mahasiswa mampu ...
+packages: [dplyr]                        # catatan saja, tidak dicetak
+# contoh_title: "Contoh Praktikum dengan R dan Python"
+
+course:                                  # salin sama persis ke semua modul
+  matkul: "Nama Mata Kuliah"
+  matkul_besar: "NAMA MATA KULIAH"
+  kode: "K000000"
+  semester: "1 (Ganjil)"
+  prodi: "D-IV Statistika"
+  penyusun:
+    - "Nama Penyusun"
+
+datasets:
+  - name: data_latihan                   # menjadi data/data_latihan.csv
+    role: contoh
+    recipe:
+      kind: tabular
+      "n": 50
+      seed: 2026                         # ganti per modul
+      columns:
+        kelompok: {type: category, levels: [A, B], probs: [0.5, 0.5]}
+        nilai: {type: numeric, min: 0, max: 100, digits: 1}
+
+body:
+  deskripsi:
+    - >
+      Gambaran modul: apa yang dibahas, mengapa penting, dan kaitannya dengan
+      modul sebelum dan sesudahnya.
+    - |
+      \begin{kotakperhatian}[Tentang data]
+      Berkas data pada modul ini adalah \textbf{data simulasi}, bukan data nyata.
+      \end{kotakperhatian}
+  tujuan:
+    - "Setelah menyelesaikan praktikum ini, mahasiswa diharapkan mampu:"
+    - "1. **Menjelaskan** ..."
+    - "2. **Menerapkan** ..."
+  alat:
+    - "Perangkat dan bahan yang diperlukan:"
+    - "- **R** dan **RStudio**."
+    - "- Berkas data `data/data_latihan.csv`."
+  instruksi:
+    - "Kerjakan Contoh berurutan, lalu Latihan Mandiri dan Penugasan."
+  teori:
+    - "### Subjudul Teori"
+    - >
+      Teori singkat ditulis di sini.
+  contoh:
+    - contoh: "Judul contoh pertama"
+      judul_r: "Judul kode"
+      kode_r: |
+        d <- read.csv("data/data_latihan.csv")
+        summary(d)
+      eval: true                         # tanpa baris ini kode tidak dijalankan
+      penjelasan: >
+        Apa yang dikerjakan kode, baris demi baris.
+      interpretasi: >
+        Apa arti keluarannya bagi persoalan yang dibahas.
+  latihan:
+    - judul: "Judul latihan pertama"
+      isi: |
+        Perintah latihan.
+
+        ```{r eval=FALSE}
+        d <- read.csv("data/data_latihan.csv")
+        ____(d$nilai)   # rata-rata
+        ```
+  penugasan:
+    - judul: "Judul tugas"
+      isi: >
+        Perintah tugas.
+  ringkasan:
+    - >
+      Rangkuman modul dan kaitannya dengan modul berikutnya.
+  referensi:
+    - "Penulis, A. (Tahun). *Judul Buku*. Penerbit."
+
+exercises:
+  - id: "L1.1"
+    points: 100
+    solution: "Ringkasan jawaban dalam satu kalimat."
+    judul_r: "Solusi Latihan 1.1"
+    solusi_r: |
+      d <- read.csv("data/data_latihan.csv")
+      mean(d$nilai)
+    interpretasi: >
+      Pembahasan untuk pengajar.

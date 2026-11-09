@@ -2,3 +2,12 @@
 .Rhistory
 .RData
 .Ruserdata
+
+# Buku Pedoman: hasil pembangunan
+pedoman/_book/
+pedoman/_kerja/
+pedoman/.quarto/
+pedoman/gambar/hasil/
+pedoman/tex/versi.tex
+pedoman/*.tex
+pedoman/*_files/

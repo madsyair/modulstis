@@ -158,7 +158,7 @@ ModuleSpec <- R6::R6Class("ModuleSpec",
   )
 )
 
-#' Sepuluh bagian baku modul praktikum
+#' Sebelas bagian baku modul praktikum
 #' @param contoh_title judul khusus bagian Contoh; `NULL` memakai judul bawaan
 #' @param tambahan_title judul khusus bagian Tambahan; `NULL` memakai judul bawaan
 #' @return list SectionSpec (list bernama)

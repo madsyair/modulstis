@@ -109,25 +109,56 @@ BookdownRenderer <- R6::R6Class("BookdownRenderer", inherit = Renderer,
       fmt <- rmarkdown::pdf_document(
         latex_engine = "xelatex", number_sections = TRUE, keep_tex = TRUE,
         includes = rmarkdown::includes(in_header = header_file))
+      tex <- file.path(output_dir, paste0(stem, ".tex"))
+      pdf <- file.path(output_dir, paste0(stem, ".pdf"))
+      # Hapus hasil render sebelumnya. Tanpa ini, bila knitr gagal (mis. kode
+      # contoh galat), pemulihan di bawah akan mengompilasi .tex LAMA dan
+      # menghasilkan PDF berisi isi lama seolah-olah render berhasil.
+      unlink(c(tex, pdf))
+      galat <- NULL
       out <- tryCatch(
         rmarkdown::render(rmd_path, output_format = fmt,
                           quiet = TRUE, output_dir = output_dir),
         error = function(e) {
-          private$logger$warn("render tunggal gagal; memulihkan via 2x xelatex",
-                              modul = doc$number, pesan = conditionMessage(e))
+          galat <<- conditionMessage(e)
+          if (file.exists(tex)) {
+            private$logger$warn("render tunggal gagal; memulihkan via 2x xelatex",
+                                modul = doc$number, pesan = galat)
+          }
           NA_character_
         })
-      tex <- file.path(output_dir, paste0(stem, ".tex"))
-      if (file.exists(tex)) private$xelatex_twice(tex, output_dir)
-      pdf <- file.path(output_dir, paste0(stem, ".pdf"))
+      if (file.exists(tex)) {
+        private$xelatex_twice(tex, output_dir)
+        private$laporkan_galat_latex(sub("\\.tex$", ".log", tex), doc$number)
+      }
       if (!file.exists(pdf)) {
-        stop(sprintf("Render gagal: PDF tidak dihasilkan untuk modul %s", doc$number),
+        stop(sprintf("Render gagal: PDF tidak dihasilkan untuk modul %s%s",
+                     doc$number,
+                     if (is.null(galat)) "" else paste0(". Penyebab: ", galat)),
              call. = FALSE)
       }
       Artifact$new(pdf, "pdf")
     }
   ),
   private = list(
+    # Pemulihan xelatex memakai -halt-on-error=false, sehingga PDF tetap jadi
+    # walaupun LaTeX menemukan galat (mis. garis bawah tak diloloskan di dalam
+    # kotak). Isi PDF di sekitar galat itu rusak; karena itu galat pertama di
+    # berkas .log dilaporkan sebagai peringatan yang jelas.
+    laporkan_galat_latex = function(log, nomor) {
+      if (!file.exists(log)) return(invisible(character(0)))
+      baris <- readLines(log, warn = FALSE)
+      i <- grep("^! ", baris)
+      if (!length(i)) return(invisible(character(0)))
+      pesan <- sub("^! ", "", baris[i[1]])
+      letak <- grep("^l\\.[0-9]+ ", baris[i[1]:min(length(baris), i[1] + 10)],
+                    value = TRUE)
+      letak <- if (length(letak)) trimws(letak[1]) else ""
+      private$logger$warn("LaTeX melaporkan galat; isi PDF di sekitar baris ini rusak",
+                          modul = nomor, galat = pesan, baris = letak,
+                          jumlah = length(i), log = basename(log))
+      invisible(pesan)
+    },
     # dua lintasan xelatex agar sampul penuh (remember-picture anchoring)
     xelatex_twice = function(tex, output_dir) {
       xe <- Sys.which("xelatex")

@@ -1,6 +1,6 @@
 name: "Modul Praktikum (BPS/STIS)"
 description: >
-  Kerangka modul praktikum bergaya BPS (10 bagian bernomor) dengan tema warna
+  Kerangka modul praktikum bernuansa warna logo BPS (10 bagian bernomor) dengan tema warna
   BPS dari package modulstis. Preamble LaTeX di-bootstrap otomatis saat render.
   Ubah nomor modul dan topik pada chunk 'bootstrap'.
 create_dir: true

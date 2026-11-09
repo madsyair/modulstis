@@ -1,0 +1,54 @@
+# Spesifikasi peraga untuk katalog kotak di Bab 10 Buku Pedoman
+number: 99
+title: "Katalog Kotak"
+short_code: "katalog"
+topic: "Katalog Kotak"
+course:
+  matkul: "Pemrograman Statistika"
+  matkul_besar: "PEMROGRAMAN STATISTIKA"
+  kode: "K242310"
+  semester: "3 (Ganjil)"
+  prodi: "D-IV Statistika"
+  penyusun: ["Achmad Syahrul Choir"]
+body:
+  deskripsi:
+    - |
+      \begin{kotakinfo}[Info]
+      Kotak info, dengan judul opsional.
+      \end{kotakinfo}
+    - |
+      \begin{kotakcatatan}
+      Kotak catatan; judul bawaan \textbf{Catatan}.
+      \end{kotakcatatan}
+    - |
+      \begin{kotakperhatian}
+      Kotak perhatian; judul bawaan \textbf{Perhatian}.
+      \end{kotakperhatian}
+    - |
+      \begin{kotaksalah}
+      Kotak kesalahan umum; judul bawaan \textbf{Kesalahan Umum}.
+      \end{kotaksalah}
+    - |
+      \begin{kotaktips}
+      Kotak tips; judul bawaan \textbf{Tips dan Praktik Baik}.
+      \end{kotaktips}
+    - |
+      \begin{kotakvariasi}
+      Kotak variasi; judul bawaan \textbf{Variasi dan Alternatif}.
+      \end{kotakvariasi}
+    - |
+      \begin{kotakrumus}
+      Kotak rumus:\quad $\bar{x} = \dfrac{1}{n}\sum_{i=1}^{n} x_i$
+      \end{kotakrumus}
+    - |
+      \begin{kotaktujuan}
+      Kotak tujuan, tanpa judul.
+      \end{kotaktujuan}
+    - |
+      \begin{kotaktugas}
+      Kotak tugas, tanpa judul.
+      \end{kotaktugas}
+    - |
+      \begin{kotakkunci}
+      Kotak kunci; judul tetap \textbf{Kunci \& Pembahasan}.
+      \end{kotakkunci}

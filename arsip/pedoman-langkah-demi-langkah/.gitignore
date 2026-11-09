@@ -1,0 +1,10 @@
+/.quarto/
+**/*.quarto_ipynb
+_book/
+_kerja/
+gambar/hasil/
+tex/versi.tex
+*.tex
+!tex/preamble.tex
+!partials/*.tex
+!gambar/*.tex

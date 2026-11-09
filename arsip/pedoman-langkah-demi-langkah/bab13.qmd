@@ -1,0 +1,213 @@
+# Menyesuaikan Tampilan {#sec-bab13}
+
+```{r}
+#| include: false
+source("_setup.R")
+pasang_tahap(13)
+SPEC7 <- file.path(PROYEK, "spec", "modul-07-deskriptif.yml")
+```
+
+Bagaimana mengganti warna atau font semua modul sekaligus? Tampilan modul tidak disimpan di
+setiap spesifikasi, tetapi di satu **objek tema** yang dipakai saat merender. Mengubah tema berarti
+mengubah tampilan semua modul yang dirender dengannya, tanpa menyentuh satu pun berkas `.yml`.
+
+Setelah membaca bab ini, Anda dapat membuat tema dengan palet warna dan font sendiri, memakainya
+pada ketiga cara merender, dan menambahkan daftar istilah ke sebuah modul.
+
+## Objek tema dan palet warna
+
+Tema bawaan memakai enam warna yang diambil dari nuansa logo BPS:
+
+```{rproyek}
+library(modulstis)
+str(bps_palette())
+```
+
+| Nama | Dipakai untuk |
+|:--|:--|
+| `navy` | pita sampul, judul bagian, kotak rumus |
+| `biru` | pita sampul, judul subbagian, kotak info dan interpretasi |
+| `birumuda` | latar kotak penjelasan |
+| `oranye` | aksen sampul, pita judul contoh, kotak perhatian |
+| `hijau` | sampul kunci jawaban, kotak catatan dan tips |
+| `abuteks` | warna teks |
+
+: Enam warna palet {#tbl-palet}
+
+Tema dibuat dengan `theme_factory()`. Sebutkan hanya warna yang ingin diganti; warna lain tetap
+memakai warna bawaan. Warna ditulis dalam kode heksadesimal enam digit, seperti yang tampil di
+pemilih warna kebanyakan aplikasi.
+
+\langkah{Buat tema dan render dengannya}
+
+```{rproyek}
+tema_ungu <- theme_factory(palette = list(navy = "#4A235A", biru = "#7D3C98"))
+sp7 <- module_spec_from_yaml("spec/modul-07-deskriptif.yml")
+h <- render_module(sp7, theme = tema_ungu, output_dir = "build-ungu")
+```
+
+```{r}
+#| include: false
+pu <- file.path(PROYEK, "build-ungu", "modul-07", "Modul_07_deskriptif.pdf")
+y1 <- halaman_png(pu, 1, "bab13-ungu")
+y2 <- halaman_png(pu, cari_halaman(pu, "Contoh 7\\.1"), "bab13-ungu")
+```
+
+```{r}
+#| label: fig-tema-ungu
+#| echo: false
+#| fig-cap: "Modul 7 dirender dengan tema berpalet ungu. Spesifikasinya tidak berubah."
+#| fig-subcap:
+#|   - "Sampul"
+#|   - "Halaman contoh"
+#| layout-ncol: 2
+knitr::include_graphics(c(y1, y2))
+```
+
+::: {.callout-warning}
+Warna harus ditulis lengkap enam digit, boleh dengan atau tanpa tanda `#`. Nama warna seperti
+`"ungu"` ditolak dengan pesan `warna 'biru' harus berbentuk heksadesimal enam digit`. Pastikan
+juga warna `navy` dan `biru` cukup gelap, karena keduanya menjadi latar teks putih di sampul.
+:::
+
+## Mengganti font
+
+Font utama diganti dengan argumen `font`. Font itu harus terpasang di sistem operasi, seperti
+Carlito pada @sec-bab02:
+
+```{rproyek}
+tema_dejavu <- theme_factory(font = "DejaVu Sans")
+h <- render_module(sp7, theme = tema_dejavu, output_dir = "build-font")
+```
+
+```{r}
+#| include: false
+pf <- file.path(PROYEK, "build-font", "modul-07", "Modul_07_deskriptif.pdf")
+y3 <- halaman_png(pf, cari_halaman(pf, "Modul ini membahas langkah"), "bab13-font")
+```
+
+```{r}
+#| label: fig-tema-font
+#| echo: false
+#| fig-cap: "Halaman Deskripsi Modul 7 dengan font DejaVu Sans."
+#| out-width: "50%"
+knitr::include_graphics(y3)
+```
+
+Bila nama font salah ketik atau font belum terpasang, PDF tetap terbentuk dengan font cadangan,
+tetapi log memuat dua baris `WARN`. Baris kedua menyebut penyebabnya, misalnya
+`Package fontspec Error: The font "Calibrri" cannot be found`. Render semacam ini juga jauh lebih
+lambat dari biasanya. Karena itu, uji font baru pada satu modul lebih dahulu dan pastikan log
+bebas dari `WARN` sebelum merender semuanya.
+
+## Memakai tema pada ketiga cara merender
+
+Tema yang sama dapat dipakai di ketiga cara merender dari @sec-bab11:
+
+```{r}
+#| eval: false
+# satu modul
+render_module(sp7, theme = tema_ungu, output_dir = "build")
+
+# seluruh folder
+proj <- ModuleProject$new(specs_dir = "spec", theme = tema_ungu, output_dir = "build")
+
+# buku dengan nomor halaman berlanjut
+render_berlanjut(specs, dirs, jenis = "modul", theme = tema_ungu)
+```
+
+Untuk `render_modul.R`, ubah satu baris di skrip tersebut:
+
+```{r}
+#| eval: false
+th <- theme_factory(palette = list(navy = "#4A235A", biru = "#7D3C98"))
+```
+
+::: {.callout-important}
+## Salah paham umum: "Tampilan diubah dengan menyunting berkas .tex hasil render"
+
+Setiap folder hasil render memuat `preamble.tex`, yang berisi warna dan font modul. Menyunting
+berkas itu memang mengubah PDF, tetapi hanya sampai render berikutnya, karena paket menulis
+ulang `preamble.tex` setiap kali merender. Perubahan tampilan yang bertahan hanya dapat dibuat
+melalui objek tema.
+:::
+
+## Menambahkan daftar istilah
+
+Modul yang memperkenalkan banyak istilah baru dapat diberi bagian **Daftar Istilah**. Bagian ini
+tidak termasuk sebelas bagian bawaan, sehingga perlu dua langkah.
+
+\langkah{Tulis susunan bagian lengkap}
+
+Tambahkan kunci tingkat atas `sections` yang menyebut semua bagian modul, termasuk satu bagian
+berjenis `glossary`. Urutan di daftar ini menjadi urutan di PDF:
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(SPEC7, baris = baris_dari(SPEC7, "^# Susunan bagian", "^body:") )
+```
+
+Kunci `sections` menggantikan susunan bawaan sepenuhnya. Bagian yang tidak Anda sebut di sini
+tidak dicetak, walaupun isinya ada di `body`.
+
+\langkah{Tulis istilahnya}
+
+Isi bagian itu di `body`, dengan kunci yang sama dengan `id`-nya, yaitu `istilah`:
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(SPEC7, baris = baris_dari(SPEC7, "^  istilah:", "^  referensi:"))
+```
+
+Setiap istilah memiliki `istilah`, `inggris`, `definisi`, dan boleh ditambah `kbbi` untuk catatan
+kebakuan. Paket mengurutkan istilah menurut abjad.
+
+```{rproyek}
+sp7 <- module_spec_from_yaml("spec/modul-07-deskriptif.yml")
+sp7$validate()
+h <- render_module(sp7, output_dir = "build")
+```
+
+```{r}
+#| include: false
+pi <- file.path(PROYEK, "build", "modul-07", "Modul_07_deskriptif.pdf")
+y4 <- halaman_png(pi, cari_halaman(pi, "Nilai tengah data yang sudah diurutkan"), "bab13-istilah")
+```
+
+```{r}
+#| label: fig-istilah
+#| echo: false
+#| fig-cap: "Bagian Daftar Istilah pada Modul 7, terurut menurut abjad."
+#| out-width: "50%"
+knitr::include_graphics(y4)
+```
+
+::: {.callout-note}
+Bila bagian `glossary` dicantumkan, tetapi tidak diisi, paket memakai bank istilah bawaannya, yang
+disusun untuk mata kuliah Analisis Peubah Ganda. Isilah daftar istilah sendiri untuk mata kuliah
+lain.
+:::
+
+::: {.callout-caution}
+Pindahkan baris `istilah` di `sections` ke posisi kedua, sesudah `deskripsi`, lalu render ulang.
+Di mana Daftar Istilah kini muncul, dan berapa nomor bagiannya?
+:::
+
+## Ringkasan
+
+Tampilan modul ditentukan oleh objek tema, bukan oleh spesifikasi. `theme_factory()` membuat
+tema dengan palet warna dan font sendiri, dan tema itu dipakai lewat argumen `theme` pada
+`render_module()`, `ModuleProject`, dan `render_berlanjut()`. Menyunting `preamble.tex` hasil
+render tidak bertahan. Daftar istilah ditambahkan dengan menuliskan susunan bagian lengkap di
+`sections`, termasuk satu bagian berjenis `glossary`, lalu mengisinya di `body`.
+
+## Uji pemahaman
+
+1. Di mana tampilan modul disimpan, dan mengapa tidak di spesifikasi?
+2. Anda membuat tema dengan `palette = list(oranye = "#E67E22")`. Warna apa saja yang berubah, dan
+   mana yang tetap?
+3. Setelah menambahkan `sections`, bagian Tambahan di modul Anda menghilang. Mengapa?
+4. (Transfer) Program studi lain ingin memakai `modulstis` dengan warna kampusnya sendiri. Apa saja
+   yang perlu mereka ubah, dan apa yang tidak perlu diubah sama sekali?

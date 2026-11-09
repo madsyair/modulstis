@@ -1,0 +1,317 @@
+# Menyiapkan Data Latihan: Simulasi atau Data Nyata {#sec-bab08}
+
+```{r}
+#| include: false
+source("_setup.R")
+pasang_tahap(8)
+SPEC7 <- file.path(PROYEK, "spec", "modul-07-deskriptif.yml")
+```
+
+Bagaimana memberi setiap modul data latihan tanpa mengirim berkas terpisah kepada mahasiswa,
+dan tanpa khawatir data di modul berbeda dari data di kunci jawaban? Di `modulstis`, data
+ditulis sebagai **resep** di dalam spesifikasi. Setiap kali modul dirender, paket membuat berkas
+CSV dari resep itu dan menaruhnya di samping modul. Bila Anda memerlukan data nyata, resep dapat
+menunjuk berkas data yang Anda sediakan.
+
+Setelah membaca bab ini, Anda dapat menulis resep data simulasi, memilih jenis resep yang
+sesuai, memakai berkas data nyata, dan menjelaskan mengapa data simulasi tidak berubah dari
+render ke render.
+
+## Untuk apa data simulasi
+
+Data simulasi adalah data yang dibangkitkan komputer dengan aturan yang Anda tentukan. Untuk
+modul praktikum, data simulasi punya tiga kelebihan dibanding data nyata:
+
+- **Tidak ada masalah izin.** Data simulasi bebas dibagikan. Data mikro resmi umumnya tidak.
+- **Ukurannya dapat diatur.** Enam puluh baris cukup untuk mempelajari `summary()` dan
+  mudah diperiksa dengan mata.
+- **Tidak berubah.** Data dibangkitkan dari bilangan acak awal yang tetap, sehingga angka di
+  modul, kunci, dan komputer mahasiswa selalu sama.
+
+Kelemahannya juga perlu disadari: data simulasi tidak membawa pola nyata. Bagian
+@sec-tabular-seragam membahas akibatnya.
+
+## Anatomi blok `datasets`
+
+Blok `datasets` adalah kunci tingkat atas. Berikut blok Modul 7, yang di bab ini mendapat satu
+kolom baru, `umur_krt`:
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(SPEC7, baris = baris_dari(SPEC7, "^datasets:", "^body:"))
+```
+
+| Kunci | Isi |
+|:--|:--|
+| `name` | nama data; menjadi nama berkas `data/<name>.csv` |
+| `role` | keterangan peran data, misalnya `contoh` atau `latihan`; tidak memengaruhi hasil |
+| `recipe` → `kind` | jenis resep: `tabular`, `mvn`, `grouped_mvn`, atau `file` |
+| `recipe` → `"n"` | banyaknya baris |
+| `recipe` → `seed` | bilangan acak awal; lihat @sec-seed |
+| `recipe` → `columns` | daftar kolom beserta jenis dan rentangnya (untuk `tabular`) |
+
+: Kunci pada satu data {#tbl-kunci-data}
+
+Satu modul boleh memiliki lebih dari satu data. Tambahkan butir baru di bawah `datasets`, dengan
+`name` yang berbeda.
+
+## Resep `tabular` dan jenis kolomnya
+
+Resep `tabular` cocok untuk sebagian besar modul pemrograman dan statistika dasar: setiap kolom
+ditentukan sendiri-sendiri. Empat jenis kolom tersedia.
+
+| `type` | Kunci tambahan | Nilai yang dihasilkan |
+|:--|:--|:--|
+| `numeric` | `min`, `max`, `digits` | bilangan desimal, tersebar **merata** antara `min` dan `max`, dibulatkan `digits` angka |
+| `integer` | `min`, `max` | bilangan bulat, tersebar merata antara `min` dan `max` |
+| `category` | `levels`, `probs` | kategori dipilih acak; `probs` adalah peluang tiap kategori |
+| `balanced` | `levels`, `each` | kategori berulang teratur, untuk rancangan percobaan |
+
+: Jenis kolom pada resep `tabular` {#tbl-jenis-kolom}
+
+Kolom `category` tanpa `probs` memberi peluang yang sama kepada setiap kategori. Bila `probs`
+ditulis, banyaknya angka harus sama dengan banyaknya `levels`, dan jumlahnya sebaiknya 1.
+
+Anda dapat melihat data yang akan dihasilkan tanpa merender modul, dengan
+`generate_module_data()`:
+
+```{rproyek}
+library(modulstis)
+sp7 <- module_spec_from_yaml("spec/modul-07-deskriptif.yml")
+d <- generate_module_data(sp7)$data_rumahtangga
+str(d)
+table(d$wilayah)
+```
+
+Perhatikan bahwa `wilayah` dan `provinsi` terbaca sebagai `Factor`, sedangkan di berkas CSV
+keduanya tersimpan sebagai teks biasa. Ketika mahasiswa membaca CSV dengan `read.csv()`, kolom
+itu menjadi `chr`, seperti yang terlihat pada keluaran Contoh 7.1.
+
+### Kolom numerik tersebar merata {#sec-tabular-seragam}
+
+Kolom `numeric` dan `integer` dibangkitkan dari sebaran **seragam** (*uniform*): setiap nilai di
+antara `min` dan `max` sama mungkinnya. Akibatnya, histogram kolom tersebut cenderung datar.
+
+```{r}
+#| include: false
+h8 <- render_diam(SPEC7, file.path(KERJA, "bab08"))
+u1 <- halaman_png(h8$modul$path, cari_halaman(h8$modul$path, "Contoh 7\\.3"), "bab08")
+```
+
+```{r}
+#| label: fig-seragam
+#| echo: false
+#| fig-cap: "Contoh 7.3 yang ditambahkan pada bab ini. Histogram pengeluaran dari resep tabular tampak datar, tidak menceng seperti pengeluaran rumah tangga yang sebenarnya."
+#| out-width: "55%"
+knitr::include_graphics(u1)
+```
+
+::: {.callout-important}
+## Salah paham umum: "Data simulasi meniru bentuk data nyata"
+
+Resep `tabular` hanya mengatur rentang setiap kolom, bukan bentuk sebarannya, dan tidak
+membangun hubungan antarkolom. Pengeluaran dan pendapatan pada data Modul 7 tidak berkorelasi,
+dan sebaran pengeluaran tidak menceng ke kanan. Bila sebuah contoh ingin menunjukkan data
+menceng atau korelasi, pakailah resep `mvn` (@sec-mvn) atau data nyata (@sec-file), dan
+sesuaikan kalimat interpretasi dengan data yang benar-benar dihasilkan. Selalu cantumkan kotak
+*Tentang data* yang menyatakan bahwa datanya simulasi.
+:::
+
+\langkah{Tambahkan kolom dan contoh grafik}
+
+Tambahkan kolom `umur_krt` ke resep, dan tambahkan contoh ketiga berikut di bawah dua contoh
+sebelumnya:
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(SPEC7, baris = baris_dari(SPEC7, 'contoh: "Histogram dan diagram kotak-garis"', "^  ringkasan:"))
+```
+
+Grafik yang dibuat kode contoh otomatis tercetak di modul, tepat di bawah kodenya.
+
+## Resep `mvn` dan `grouped_mvn` {#sec-mvn}
+
+Resep `mvn` membangkitkan beberapa peubah numerik dari sebaran **normal ganda**. Anda menentukan
+rata-rata setiap peubah (`mu`) dan matriks ragam-peragam (`Sigma`), sehingga hubungan
+antarpeubah dapat diatur.
+
+```yaml
+datasets:
+  - name: nilai_ujian
+    role: contoh
+    recipe:
+      kind: mvn
+      "n": 80
+      seed: 2026
+      vars: [uts, uas]
+      mu: [70, 72]
+      Sigma: [[64, 40], [40, 81]]
+```
+
+`Sigma` ditulis sebagai daftar baris: baris pertama `[64, 40]` dan baris kedua `[40, 81]`. Angka
+di diagonal adalah ragam setiap peubah (simpangan baku 8 dan 9), dan angka di luar diagonal
+adalah peragamnya. Resep ini menyatakan korelasi populasi $40/(8 \times 9) \approx 0{,}56$.
+Korelasi pada 80 amatan yang dibangkitkan akan sedikit berbeda dari angka itu, karena datanya
+adalah sampel acak:
+
+```{rproyek}
+resep <- list(kind = "mvn", n = 80, seed = 2026, vars = c("uts", "uas"),
+              mu = c(70, 72), Sigma = list(c(64, 40), c(40, 81)))
+nilai <- generate_dataset(resep)
+round(cor(nilai$uts, nilai$uas), 2)
+```
+
+Resep `grouped_mvn` membangkitkan data normal ganda untuk beberapa kelompok sekaligus, dengan
+rata-rata yang berbeda per kelompok. Resep ini cocok untuk modul perbandingan kelompok:
+
+```yaml
+    recipe:
+      kind: grouped_mvn
+      seed: 2026
+      vars: [uts, uas]
+      groups: {Kelas_A: 30, Kelas_B: 30}
+      means: {Kelas_A: [70, 72], Kelas_B: [75, 78]}
+      Sigma: [[64, 40], [40, 81]]
+```
+
+`groups` menyebut nama dan banyaknya amatan setiap kelompok. Hasilnya memiliki kolom tambahan
+`kelompok`.
+
+## Memakai data nyata dengan `kind: file` {#sec-file}
+
+Bila modul memerlukan data nyata, simpan berkasnya di proyek, lalu tunjuk berkas itu dengan
+`kind: file`. Paket tidak membangkitkan apa pun; ia membaca berkas Anda dan menyalinnya ke
+folder `data/` di samping modul.
+
+Sebagai contoh, kita pakai data `airquality` bawaan R, yaitu pengukuran kualitas udara di New
+York pada 1973, dan menyimpannya di folder `data-asli/` proyek:
+
+```{rproyek}
+dir.create("data-asli", showWarnings = FALSE)
+write.csv(airquality, "data-asli/kualitas_udara.csv", row.names = FALSE)
+```
+
+```{rproyek}
+#| include: false
+writeLines(c(
+  'number: 99', 'title: "Uji data nyata"',
+  'datasets:',
+  '  - name: udara',
+  '    role: contoh',
+  '    recipe:',
+  '      kind: file',
+  '      path: "../data-asli/kualitas_udara.csv"',
+  '      columns: [Ozone, Temp, Month]',
+  '      rename: {Ozone: ozon, Temp: suhu, Month: bulan}'),
+  "spec/uji-data-nyata.yml")
+```
+
+Resepnya:
+
+```yaml
+datasets:
+  - name: udara
+    role: contoh
+    recipe:
+      kind: file
+      path: "../data-asli/kualitas_udara.csv"
+      columns: [Ozone, Temp, Month]
+      rename: {Ozone: ozon, Temp: suhu, Month: bulan}
+```
+
+| Kunci | Isi |
+|:--|:--|
+| `path` | letak berkas data, **relatif terhadap letak berkas spesifikasi** |
+| `columns` | (opsional) kolom yang diambil |
+| `rename` | (opsional) nama baru kolom, dengan bentuk `lama: baru` |
+| `"n"` | (opsional) ambil hanya sekian baris pertama |
+| `na` | (opsional) teks yang dibaca sebagai data hilang; bawaannya `NA` dan sel kosong |
+
+: Kunci pada resep `file` {#tbl-kunci-file}
+
+Berkas spesifikasi ada di `spec/`, sedangkan data ada di `data-asli/`. Karena itu `path` ditulis
+`../data-asli/...`: `..` berarti naik satu folder dari `spec/`. Berkas berakhiran `.csv`,
+`.tsv`, `.txt`, dan `.rds` dapat dibaca.
+
+```{rproyek}
+sp_nyata <- module_spec_from_yaml("spec/uji-data-nyata.yml")
+sp_nyata$validate()
+head(generate_module_data(sp_nyata)$udara, 4)
+```
+
+```{rproyek}
+#| include: false
+unlink("spec/uji-data-nyata.yml")
+```
+
+`validate()` memeriksa apakah berkas di `path` benar-benar ada. Bila jalurnya salah, pesannya
+menyebut nama data dan jalur yang dicari, sehingga kesalahan ketik terlihat sebelum render.
+
+::: {.callout-warning}
+Data nyata ikut tersalin ke setiap folder hasil render dan ikut terbagi ketika modul
+dibagikan. Pastikan Anda berhak membagikan data tersebut kepada mahasiswa.
+:::
+
+## Peran `seed` dan mengapa data tidak berubah {#sec-seed}
+
+Komputer tidak membangkitkan bilangan yang benar-benar acak. Ia menghitung barisan bilangan
+yang tampak acak dari satu bilangan awal, yaitu `seed`. Dengan `seed` yang sama, barisan yang
+dihasilkan selalu sama. Itulah sebabnya data Modul 7 identik pada setiap render, di modul, di
+kunci, dan di komputer mahasiswa:
+
+```{rproyek}
+d1 <- generate_module_data(sp7)$data_rumahtangga
+d2 <- generate_module_data(sp7)$data_rumahtangga
+identical(d1, d2)
+```
+
+Mengganti `seed` menghasilkan data yang berbeda. Gunakan `seed` yang berbeda untuk setiap
+modul, misalnya tahun ditambah nomor modul, supaya data antarmodul tidak kembar.
+
+::: {.callout-caution}
+Ubah `seed: 2025` pada Modul 7 menjadi `seed: 2032`, lalu jalankan
+`generate_module_data(sp7)$data_rumahtangga |> head(3)` sebelum dan sesudah perubahan. Ingat
+untuk membaca ulang spesifikasinya dengan `module_spec_from_yaml()` setelah menyimpan berkas.
+:::
+
+::: {.callout-warning}
+Bila Anda mengubah resep atau `seed` di tengah semester, semua angka di contoh, latihan, dan kunci
+ikut berubah. Modul dan kunci tetap cocok satu sama lain karena dirender ulang bersama, tetapi
+modul yang sudah dibagikan kepada mahasiswa tidak lagi cocok dengan modul baru.
+:::
+
+## Di mana berkas data berada
+
+Setelah render, berkas data ada di subfolder `data/` di samping setiap PDF:
+
+```{rproyek}
+h <- render_module(sp7, output_dir = "build")
+list.files("build", pattern = "\\.csv$", recursive = TRUE)
+```
+
+Berkas di `build/modul-07/data/` adalah yang dibagikan kepada mahasiswa bersama modulnya.
+Berkas di folder kunci isinya sama; berkas itu ada supaya kode solusi di kunci jawaban dapat
+dijalankan.
+
+## Ringkasan
+
+Data latihan ditulis sebagai resep di blok `datasets`. Resep `tabular` mengatur setiap kolom
+sendiri-sendiri, dengan kolom numerik yang tersebar merata. Resep `mvn` dan `grouped_mvn` membangun
+peubah numerik yang saling berkorelasi. Resep `file` memakai berkas data nyata yang jalurnya
+dihitung dari letak spesifikasi. Karena setiap resep memakai `seed` yang tetap, data yang sama
+dihasilkan pada setiap render, sehingga modul dan kunci jawaban selalu memakai angka yang sama.
+
+Data dan contoh sudah siap. @sec-bab09 menambahkan latihan untuk mahasiswa beserta kunci
+jawabannya.
+
+## Uji pemahaman
+
+1. Apa yang menentukan nama berkas CSV yang dihasilkan sebuah resep?
+2. Mengapa histogram kolom `pengeluaran` pada Modul 7 tampak datar? Resep apa yang Anda pilih bila
+   ingin menunjukkan dua peubah yang berkorelasi?
+3. Spesifikasi Anda ada di `spec/`, dan data nyata di `spec/data/survei.csv`. Bagaimana menulis
+   `path`-nya?
+4. (Transfer) Di tengah semester, seorang rekan mengganti `seed` Modul 5 karena ingin data yang
+   "lebih bagus". Apa akibatnya bagi mahasiswa yang sudah mengerjakan Modul 5, dan apa saran Anda?

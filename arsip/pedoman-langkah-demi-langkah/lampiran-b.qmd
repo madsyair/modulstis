@@ -1,0 +1,20 @@
+# Templat Spesifikasi Siap Salin {#sec-lampiran-b}
+
+```{r}
+#| include: false
+source("_setup.R")
+TK <- file.path(PEDOMAN, "contoh", "templat-kosong.yml")
+```
+
+Templat berikut berisi semua bagian yang umum dipakai. Salin ke folder `spec/`, beri nama sesuai
+nomor modul, ganti teks di dalam tanda kutip, lalu hapus bagian yang tidak diperlukan. Templat ini
+lolos `validate()` dan dapat langsung dirender, sehingga Anda dapat memulai dari keadaan yang pasti
+berhasil.
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(TK, buang_komentar = FALSE)
+```
+
+Templat ini juga tersimpan di repositori paket, di berkas `pedoman/contoh/templat-kosong.yml`.

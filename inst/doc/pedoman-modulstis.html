@@ -12,7 +12,7 @@
 
 
 
-<title>Buku Pedoman: Menyusun Modul Praktikum dengan modulstis</title>
+<title>Buku Pedoman Aplikasi modulstis</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -336,98 +336,86 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<h1 class="title toc-ignore">Buku Pedoman: Menyusun Modul Praktikum
-dengan modulstis</h1>
+<h1 class="title toc-ignore">Buku Pedoman Aplikasi modulstis</h1>
 
 
 
 <div id="buku-pedoman-dalam-bentuk-pdf" class="section level2">
 <h2>Buku Pedoman dalam bentuk PDF</h2>
-<p>Buku Pedoman <strong>Menyusun Modul Praktikum dengan Paket R
-<code>modulstis</code></strong> (82 halaman, 11 bab dan 5 lampiran)
-disertakan dalam paket sebagai berkas PDF. Buka dengan:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">buka_pedoman</span>()          <span class="co"># membuka PDF dengan pembaca bawaan sistem</span></span>
+<p>Buku Pedoman <strong>Aplikasi modulstis: Paket R Penyusun Modul
+Praktikum dan Kunci Jawaban dari Satu Spesifikasi</strong> disertakan
+dalam paket sebagai berkas PDF. Buka dengan:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">buka_pedoman</span>()               <span class="co"># membuka PDF dengan pembaca bawaan sistem</span></span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">buka_pedoman</span>(<span class="at">buka =</span> <span class="cn">FALSE</span>)   <span class="co"># hanya mengembalikan path-nya</span></span></code></pre></div>
-<p>atau langsung:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">system.file</span>(<span class="st">&quot;pedoman&quot;</span>, <span class="st">&quot;Pedoman_modulstis.pdf&quot;</span>, <span class="at">package =</span> <span class="st">&quot;modulstis&quot;</span>)</span></code></pre></div>
-</div>
-<div id="mengapa-pdf-nya-tidak-dipasang-sebagai-vignette-pdf" class="section level2">
-<h2>Mengapa PDF-nya tidak dipasang sebagai vignette PDF</h2>
-<p><code>R CMD check</code> memeriksa ukuran seluruh PDF di bawah
-<code>inst/doc</code> dan memberi WARNING bila <code>gs+qpdf</code>
-masih dapat memampatkannya secara berarti. Buku ini memuat sampul dan
-ilustrasi beresolusi cetak, sehingga hasil render mentahnya sekitar 1,5
-Mb — selalu memicu peringatan itu bila belum dipadatkan lebih
-dahulu.</p>
-<p>Karena pemeriksaan tersebut <strong>hanya</strong> berlaku untuk
-<code>inst/doc</code>, buku disimpan di <code>inst/pedoman/</code> dan
-halaman ini yang menjadi vignette-nya. Dengan begitu peringatan tidak
-mungkin muncul, siapa pun yang membangun paket dan dengan atau tanpa
-<code>--compact-vignettes=both</code>.</p>
+<p>Buku ini disusun sebagai dokumen pendamping program komputer. Seluruh
+contoh kode di dalamnya dijalankan ketika buku dibangun, dan kode sumber
+di lampiran dibaca langsung dari berkas paket versi yang sama.</p>
 </div>
 <div id="isi-buku" class="section level2">
 <h2>Isi buku</h2>
 <table>
 <colgroup>
-<col width="36%" />
-<col width="22%" />
-<col width="40%" />
+<col width="50%" />
+<col width="50%" />
 </colgroup>
 <thead>
 <tr class="header">
 <th align="left">Bagian</th>
 <th align="left">Isi</th>
-<th align="center">Halaman</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">I</td>
-<td align="left">Memulai: pemasangan hingga modul pertama (Bab 1–3)</td>
-<td align="center">1–13</td>
+<td align="left">Sampul dan halaman identitas</td>
+<td align="left">judul, versi, pencipta, institusi, jenis ciptaan, dan
+lisensi</td>
 </tr>
 <tr class="even">
-<td align="left">II</td>
-<td align="left">Menyusun isi: spesifikasi, bagian modul, contoh dan
-latihan (Bab 4–6)</td>
-<td align="center">14–30</td>
+<td align="left">Bab 1 Latar Belakang</td>
+<td align="left">masalah penyusunan modul praktikum, tujuan, manfaat,
+ruang lingkup, sasaran pengguna, identitas aplikasi</td>
 </tr>
 <tr class="odd">
-<td align="left">III</td>
-<td align="left">Sintaks LaTeX dan R Markdown (Bab 7–8)</td>
-<td align="center">31–43</td>
+<td align="left">Bab 2 Penjelasan Model dan Program</td>
+<td align="left">model satu spesifikasi tiga keluaran, arsitektur dan
+alur kerja, komponen R6 dan pola desain, struktur spesifikasi, resep
+data, buku dua tahap, penanganan galat</td>
 </tr>
 <tr class="even">
-<td align="left">IV</td>
-<td align="left">Menyesuaikan tampilan dan menerbitkan buku (Bab
-9–11)</td>
-<td align="center">44–54</td>
+<td align="left">Bab 3 Bahasa Pemrograman, Perangkat, dan Contoh
+Penggunaan</td>
+<td align="left">R, R6, YAML, R Markdown, LaTeX, Python; perangkat dan
+pemasangan di Windows, macOS, dan Linux; contoh penggunaan dengan Modul
+7 Pemrograman Statistika D-IV; galat umum</td>
 </tr>
 <tr class="odd">
-<td align="left">Lampiran</td>
-<td align="left">Rujukan YAML, kartu LaTeX, rujukan API, pemecahan
-masalah, studi kasus</td>
-<td align="center">55–70</td>
+<td align="left">Lampiran A–D</td>
+<td align="left">kode sumber inti: <code>spec-module.R</code>,
+<code>project.R</code>, <code>builder.R</code>,
+<code>renderer.R</code></td>
 </tr>
 <tr class="even">
-<td align="left">Akhir</td>
-<td align="left">Glosarium, indeks perintah, daftar pustaka</td>
-<td align="center">71–75</td>
+<td align="left">Lampiran E</td>
+<td align="left">spesifikasi lengkap Modul 7</td>
 </tr>
 </tbody>
 </table>
-<p>Bagian <strong>2.10</strong> membahas pemilihan backend (R
-Markdown/bookdown versus Quarto), dan <strong>Lampiran A</strong> memuat
-rujukan cepat spesifikasi YAML termasuk <code>kind: file</code> untuk
-memakai data nyata tanpa simulasi.</p>
+</div>
+<div id="mengapa-pdf-nya-tidak-dipasang-sebagai-vignette-pdf" class="section level2">
+<h2>Mengapa PDF-nya tidak dipasang sebagai vignette PDF</h2>
+<p><code>R CMD check</code> memeriksa ukuran seluruh PDF di bawah
+<code>inst/doc</code> dan memberi WARNING bila <code>gs+qpdf</code>
+masih dapat memampatkannya secara berarti. Buku ini memuat banyak gambar
+halaman modul, sehingga disimpan di <code>inst/pedoman/</code> dan
+halaman ini yang menjadi vignette-nya.</p>
 </div>
 <div id="membangun-ulang-buku" class="section level2">
 <h2>Membangun ulang buku</h2>
-<p>Sumbernya disertakan di <code>inst/pedoman/</code>:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="bu">cd</span> inst/pedoman <span class="kw">&amp;&amp;</span> <span class="ex">Rscript</span> bangun_pedoman.R    <span class="co"># atau: make pedoman</span></span></code></pre></div>
-<p>Skrip merender ketujuh bagian, menggabungkannya dengan
-<code>pdfunite</code>, memadatkan hasilnya, lalu membersihkan berkas
-antara.</p>
+<p>Sumber Quarto buku ada di folder <code>pedoman/</code> repositori
+paket (<a href="https://github.com/madsyair/modulstis/tree/main/pedoman" class="uri">https://github.com/madsyair/modulstis/tree/main/pedoman</a>):</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="bu">cd</span> pedoman <span class="kw">&amp;&amp;</span> <span class="ex">Rscript</span> bangun.R</span></code></pre></div>
+<p>Skrip merender buku dengan Quarto, menyalinnya ke
+<code>inst/pedoman/</code>, lalu memadatkannya.</p>
 </div>
 
 

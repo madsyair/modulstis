@@ -1,0 +1,19 @@
+# Kode Sumber Spesifikasi Modul {#sec-lampiran-a}
+
+```{r}
+#| include: false
+source("_setup.R")
+f <- file.path(PEDOMAN, "..", "R", "spec-module.R")
+```
+
+Berkas ini mendefinisikan kosakata jenis bagian (`section_types()`), kelas `ValidationReport`, kelas `ModuleSpec` beserta metode `validate()`, susunan bagian baku (`default_sections()`), serta pembaca spesifikasi YAML (`module_spec_from_yaml()`). `ModuleSpec` adalah sumber tunggal isi sebuah modul.
+
+Kode di bawah ini adalah isi berkas `R/spec-module.R` pada `modulstis` versi
+`r as.character(packageVersion("modulstis"))`, sepanjang `r length(readLines(f))` baris. Baris
+berawalan `#'` adalah dokumentasi roxygen2 yang diolah menjadi halaman bantuan fungsi.
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(f, bahasa = "r", nomor = TRUE)
+```

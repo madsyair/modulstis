@@ -13,5 +13,7 @@ pdf_halaman(path)
 integer banyaknya halaman, atau \code{NA} bila gagal dibaca
 }
 \description{
-Banyaknya halaman sebuah berkas PDF
+Memakai paket \code{pdftools} atau \code{qpdf} bila terpasang, sehingga bekerja juga di
+Windows tanpa perangkat baris perintah. Bila keduanya tidak ada, fungsi ini
+memanggil \code{pdfinfo} dari poppler-utils.
 }

@@ -1,0 +1,262 @@
+# Kotak, Rumus, Tabel, dan Gambar {#sec-bab10}
+
+```{r}
+#| include: false
+source("_setup.R")
+pasang_tahap(10)
+SPEC7 <- file.path(PROYEK, "spec", "modul-07-deskriptif.yml")
+```
+
+Mengapa tanda persen atau garis bawah bisa merusak sebuah kotak di modul? Karena di dalam kotak
+Anda menulis LaTeX secara langsung, dan bagi LaTeX kedua tanda itu punya arti khusus. Bab ini
+membahas sedikit LaTeX yang diperlukan untuk modul: kapan memakainya, kotak apa saja yang
+tersedia, cara menulis rumus dan tabel, dan karakter mana yang harus diloloskan.
+
+Setelah membaca bab ini, Anda dapat menyisipkan kotak berwarna dan rumus ke Modul 7, serta
+mengenali dan memperbaiki galat LaTeX yang paling sering.
+
+## Kapan Markdown cukup dan kapan perlu LaTeX
+
+Sampai bab ini, semua isi Modul 7 ditulis dengan Markdown: `**tebal**`, `*miring*`,
+`` `kode` ``, daftar, dan subjudul `###`. Markdown juga sanggup menulis rumus sebaris di antara
+dua tanda dolar, misalnya `$\bar{x}$`, dan rumus terpisah di antara dua pasang tanda dolar,
+`$$s^2 = \frac{1}{n-1}\sum (x_i - \bar{x})^2$$`. Untuk paragraf biasa, Markdown cukup.
+
+LaTeX baru diperlukan untuk dua hal: **kotak berwarna**, yang tidak dapat dibuat dengan Markdown,
+dan rumus yang perlu disusun khusus, misalnya beberapa rumus sejajar di dalam satu kotak.
+
+## Menulis LaTeX di dalam spesifikasi
+
+Kotak ditulis sebagai satu butir pada bagian mana pun di `body`, dengan bentuk
+`\begin{nama-kotak}` ... `\end{nama-kotak}`. Cara paling aman menuliskannya adalah dengan penanda
+`|`, karena teks di bawahnya disalin apa adanya, termasuk garis miring terbalik:
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(SPEC7, baris = baris_dari(SPEC7, '\\\\begin\\{kotaksalah\\}', '\\\\end\\{kotaksalah\\}', inklusif = TRUE, sebelum = 1))
+```
+
+::: {.callout-warning}
+## Garis miring terbalik di dalam tanda kutip
+
+Spesifikasi bawaan paket menulis kotak di dalam tanda kutip ganda, seperti
+`"\\begin{kotakperhatian}[Tentang data]\n...\n\\end{kotakperhatian}"`. Di dalam tanda kutip ganda,
+YAML memperlakukan `\` sebagai awalan karakter khusus: `\n` berarti ganti baris, dan `\\` berarti
+satu garis miring terbalik. Karena itu, setiap perintah LaTeX harus ditulis dengan **dua** garis
+miring. Dengan penanda `|`, cukup satu garis miring, dan ganti baris ditulis sebagai ganti baris
+biasa. Kedua cara menghasilkan modul yang sama; pilih `|` bila Anda menulis kotak sendiri.
+:::
+
+## Katalog kotak bawaan
+
+Paket menyediakan sepuluh kotak untuk isi modul. @fig-katalog memperlihatkan tampilannya.
+
+```{r}
+#| include: false
+hk <- render_diam(file.path(PEDOMAN, "contoh", "katalog-kotak.yml"), file.path(KERJA, "bab10"))
+k1 <- halaman_png(hk$modul$path, cari_halaman(hk$modul$path, "Kotak info"), "bab10-katalog", dpi = 130)
+```
+
+```{r}
+#| label: fig-katalog
+#| echo: false
+#| fig-cap: "Sepuluh kotak bawaan, dirender dari spesifikasi peraga contoh/katalog-kotak.yml."
+#| out-width: "70%"
+knitr::include_graphics(k1)
+```
+
+| Kotak | Judul bawaan | Judul dapat diganti? | Untuk |
+|:--|:--|:-:|:--|
+| `kotakinfo` | tanpa judul | ya | keterangan umum, tabel ringkas |
+| `kotakcatatan` | Catatan | ya | catatan sampingan |
+| `kotakperhatian` | Perhatian | ya | hal yang mudah keliru; kotak *Tentang data* |
+| `kotaksalah` | Kesalahan Umum | ya | miskonsepsi beserta koreksinya |
+| `kotaktips` | Tips dan Praktik Baik | ya | kebiasaan kerja yang baik |
+| `kotakvariasi` | Variasi dan Alternatif | ya | cara lain menyelesaikan contoh |
+| `kotakrumus` | tanpa judul | tidak | rumus pokok |
+| `kotaktujuan` | tanpa judul | tidak | sasaran belajar yang ditonjolkan |
+| `kotaktugas` | tanpa judul | tidak | konteks penugasan |
+| `kotakkunci` | Kunci & Pembahasan | tidak | pembahasan di kunci jawaban |
+
+: Kotak yang dapat dipakai di spesifikasi {#tbl-kotak}
+
+Judul diganti dengan menuliskannya dalam kurung siku sesudah nama kotak:
+`\begin{kotakperhatian}[Tentang data]`. Selain sepuluh kotak itu, ada tiga kotak yang dipakai
+paket sendiri dan tidak perlu Anda tulis: `kotakpenjelasan` dan `kotakinterpretasi` untuk contoh,
+serta `kotakistilah` untuk glosarium (@sec-bab13).
+
+::: {.callout-note}
+## Kotak *Tentang data*
+
+Setiap modul yang memakai data simulasi sebaiknya memuat kotak perhatian yang menyatakannya.
+Spesifikasi bawaan paket meletakkannya sebagai paragraf terakhir bagian `deskripsi`:
+
+```yaml
+    - |
+      \begin{kotakperhatian}[Tentang data]
+      Berkas data pada modul ini adalah \textbf{data simulasi}, bukan data nyata
+      dan bukan data resmi instansi mana pun.
+      \end{kotakperhatian}
+```
+:::
+
+## Rumus matematika
+
+Di dalam LaTeX, rumus selalu diapit tanda dolar: `$...$` untuk rumus sebaris. Beberapa perintah
+yang paling sering dipakai di modul statistika:
+
+| Ditulis | Tercetak | Ditulis | Tercetak |
+|:--|:-:|:--|:-:|
+| `\bar{x}` | $\bar{x}$ | `\hat{\beta}` | $\hat{\beta}$ |
+| `x_i` | $x_i$ | `s^{2}` | $s^{2}$ |
+| `\sum_{i=1}^{n}` | $\sum_{i=1}^{n}$ | `\sqrt{s^{2}}` | $\sqrt{s^{2}}$ |
+| `\dfrac{a}{b}` | $\dfrac{a}{b}$ | `\mu, \sigma` | $\mu, \sigma$ |
+| `\le, \ge, \ne` | $\le, \ge, \ne$ | `\times` | $\times$ |
+
+: Perintah rumus yang sering dipakai {#tbl-rumus}
+
+Untuk menyusun beberapa rumus di dalam satu kotak, akhiri setiap baris dengan `\\` dan beri jarak
+dengan `[5pt]`, seperti kotak rumus Modul 7:
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(SPEC7, baris = baris_dari(SPEC7, '\\\\begin\\{kotakrumus\\}', '\\\\end\\{kotakrumus\\}', inklusif = TRUE, sebelum = 1))
+```
+
+`\quad` memberi jarak mendatar, dan `\textbf{...}` menebalkan teks.
+
+\langkah{Tambahkan kotak rumus dan kotak salah paham ke Modul 7}
+
+Tambahkan kedua kotak di atas ke bagian `teori` Modul 7: kotak rumus sesudah paragraf tentang
+pemusatan, dan kotak kesalahan umum sesudah paragraf tentang memilih ukuran. Lalu render:
+
+```{rproyek}
+library(modulstis)
+sp7 <- module_spec_from_yaml("spec/modul-07-deskriptif.yml")
+h <- render_module(sp7, output_dir = "build")
+```
+
+```{r}
+#| include: false
+pdf7 <- file.path(PROYEK, "build", "modul-07", "Modul_07_deskriptif.pdf")
+w1 <- halaman_png(pdf7, cari_halaman(pdf7, "Rumus pokok"), "bab10")
+```
+
+```{r}
+#| label: fig-teori-kotak
+#| echo: false
+#| fig-cap: "Bagian Teori Singkat Modul 7 dengan kotak rumus dan kotak kesalahan umum."
+#| out-width: "55%"
+knitr::include_graphics(w1)
+```
+
+::: {.callout-tip}
+Log render hanya berisi baris `INFO` dan peringatan `tocloft` yang biasa. Tidak ada baris
+`WARN`. Di PDF, kotak rumus berbingkai biru tua tipis, dan kotak kesalahan umum berwarna merah
+muda dengan garis merah di kiri.
+:::
+
+## Tabel
+
+Tabel sederhana ditulis dengan tabel Markdown di dalam butir `|`. Baris kedua, yang berisi tanda
+hubung, memisahkan judul kolom dari isinya:
+
+```yaml
+    - |
+      | Awalan | Menghasilkan | Contoh |
+      |:--|:--|:--|
+      | `d` | kepekatan atau peluang | `dnorm(0)` |
+      | `p` | peluang kumulatif | `pnorm(1.96)` |
+```
+
+Tabel yang berasal dari data sebaiknya dibuat oleh kode di sebuah contoh, misalnya dengan
+`knitr::kable()`, supaya isinya ikut berubah bila datanya berubah.
+
+## Gambar
+
+Gambar di modul paling baik dibuat oleh kode di sebuah contoh, seperti histogram Contoh 7.3.
+Gambar itu otomatis tercetak di bawah kodenya, dan ikut diperbarui setiap render. Bila Anda perlu
+menyisipkan gambar yang sudah jadi, misalnya diagram alur, simpan berkasnya di proyek dan
+tampilkan dengan `knitr::include_graphics()` di sebuah contoh. Jalur berkas ditulis lengkap,
+karena kode contoh dijalankan dari folder hasil render, bukan dari folder `spec/`.
+
+## Karakter yang harus diloloskan
+
+Di dalam kotak, lima karakter berikut punya arti khusus bagi LaTeX. Untuk mencetaknya sebagai
+karakter biasa, beri garis miring terbalik di depannya. Cara ini disebut **meloloskan**
+(*escape*).
+
+| Karakter | Arti bagi LaTeX | Tulis |
+|:-:|:--|:-:|
+| `_` | subskrip, hanya boleh di dalam rumus | `\_` |
+| `%` | awal komentar; sisa baris dibuang | `\%` |
+| `&` | pemisah kolom tabel | `\&` |
+| `#` | parameter perintah | `\#` |
+| `$` | awal dan akhir rumus | `\$` |
+
+: Karakter khusus LaTeX {#tbl-karakter}
+
+Di luar kotak, yaitu pada paragraf Markdown biasa, Anda **tidak** perlu meloloskan apa pun;
+paket dan Markdown melakukannya untuk Anda. Aturan ini hanya berlaku di dalam
+`\begin{...}` ... `\end{...}`.
+
+::: {.callout-important}
+## Salah paham umum: "Bila render berhasil, kotaknya pasti benar"
+
+Galat LaTeX di dalam kotak tidak selalu menghentikan render. Paket mencoba memulihkannya, dan
+PDF tetap terbentuk, tetapi isinya rusak di sekitar galat. Berikut yang terjadi bila sebuah kotak
+memuat `data_rumahtangga.csv` dan `50%` tanpa diloloskan:
+
+```{r}
+#| include: false
+x <- readLines(file.path(PEDOMAN, "contoh", "modul-07-tahap-05.yml"))
+writeLines(c(x, "body:", "  deskripsi:", "    - |",
+             "      \\begin{kotakcatatan}",
+             "      Data disimpan di data_rumahtangga.csv dan 50% rumah tangga tinggal di kota.",
+             "      \\end{kotakcatatan}"), file.path(KERJA, "bab10", "kotak-rusak.yml"))
+```
+
+```{rproyek}
+#| wd: !expr file.path(KERJA, "bab10")
+#| stderr: true
+#| tampil: "c(2, grep('WARN', hasil))"
+library(modulstis)
+h <- render_module(module_spec_from_yaml("kotak-rusak.yml"), output_dir = "rusak")
+```
+
+Baris pertama `WARN` menandakan bahwa render normal gagal dan paket beralih ke jalur pemulihan.
+Baris kedua menyebut galat LaTeX yang pertama, yaitu `Missing $ inserted`, dan letaknya, yang
+diawali `l.` dan nomor baris di berkas `.tex` antara. Potongan teks sesudah nomor baris itu
+berhenti tepat di garis bawah yang tidak diloloskan.
+Di PDF, teks sesudah garis bawah tercetak miring seperti rumus, dan teks sesudah `%` hilang.
+Karena itu, **setiap baris `WARN` harus ditindaklanjuti**, walaupun PDF sudah terbentuk.
+:::
+
+::: {.callout-caution}
+Perbaiki kotak rusak di atas menjadi `data\_rumahtangga.csv` dan `50\%`, render ulang, dan
+pastikan tidak ada lagi baris `WARN`.
+:::
+
+## Ringkasan
+
+Markdown cukup untuk paragraf, daftar, kode, rumus sebaris, dan tabel sederhana. LaTeX diperlukan
+untuk kotak berwarna dan susunan rumus khusus. Kotak ditulis sebagai butir `|` dengan
+`\begin{...}` dan `\end{...}`, memakai sepuluh kotak bawaan, dan judulnya dapat diganti dengan
+kurung siku. Di dalam kotak, lima karakter khusus harus diloloskan. Galat LaTeX di dalam kotak
+dapat menghasilkan PDF yang rusak tanpa menghentikan render, dan tandanya adalah baris `WARN` di
+log render.
+
+Modul 7 kini lengkap. Bagian III membahas cara menerbitkan seluruh modul satu mata kuliah.
+
+## Uji pemahaman
+
+1. Sebutkan dua hal yang memerlukan LaTeX dan tidak dapat ditulis dengan Markdown di modul.
+2. Mengapa perintah LaTeX di spesifikasi bawaan paket ditulis dengan dua garis miring terbalik,
+   sedangkan di buku ini dengan satu?
+3. Tuliskan kotak perhatian berjudul *Tentang data* yang menyatakan bahwa 25% data adalah data
+   hilang. Karakter mana yang harus diloloskan?
+4. (Transfer) Render sebuah modul berhasil dan PDF terbentuk, tetapi log memuat baris `WARN`
+   yang menyebut `Misplaced alignment tab character &`. Apa yang Anda cari di spesifikasi, dan
+   di bagian mana kemungkinan besar letaknya?

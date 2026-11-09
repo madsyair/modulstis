@@ -1,0 +1,229 @@
+# Contoh Praktikum yang Kodenya Benar-benar Berjalan {#sec-bab07}
+
+```{r}
+#| include: false
+source("_setup.R")
+pasang_tahap(7)
+SPEC7 <- file.path(PROYEK, "spec", "modul-07-deskriptif.yml")
+```
+
+Bagaimana memastikan keluaran kode di modul sama dengan yang akan dilihat mahasiswa? Caranya
+adalah tidak menyalin keluaran sama sekali. Di `modulstis`, Anda menulis kodenya saja; paket
+menjalankan kode itu ketika modul dibuat dan mencetak keluarannya. Bila data atau versi paket
+berubah, render berikutnya mencetak keluaran yang baru.
+
+Setelah membaca bab ini, Anda dapat menulis contoh praktikum lengkap dengan kode, penjelasan,
+dan interpretasi, mengendalikan kode mana yang dijalankan, dan menulis contoh dalam dua bahasa,
+R dan Python.
+
+## Struktur satu contoh
+
+Satu contoh praktikum di modul `modulstis` selalu tersusun atas empat unsur, dengan urutan
+yang tetap:
+
+1. **judul contoh**, misalnya *Contoh 7.1 Ringkasan cepat seluruh peubah*;
+2. **kode** beserta keluarannya, dengan judul kode, misalnya *Kode 7.1 str dan summary*;
+3. kotak **Penjelasan Kode**, yang menerangkan apa yang dikerjakan kode baris demi baris;
+4. kotak **Interpretasi Output**, yang menafsirkan keluaran dalam konteks persoalan.
+
+Urutan ini disengaja. Mahasiswa membaca kodenya, melihat keluarannya, memahami cara kerjanya,
+baru kemudian diajak menafsirkan hasilnya. Penjelasan dan interpretasi dipisah karena
+menjawab dua pertanyaan berbeda: *apa yang dilakukan kode ini* dan *apa arti hasilnya*.
+
+## Menulis contoh pertama
+
+Contoh ditulis di bawah `body` → `contoh`, sebagai daftar. Setiap butir daftar adalah satu
+contoh. Berikut dua contoh pertama Modul 7:
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(SPEC7, baris = baris_dari(SPEC7, "^  contoh:", "^  ringkasan:"))
+```
+
+| Kunci | Isi |
+|:--|:--|
+| `contoh` | judul contoh |
+| `judul_r` | judul kotak kode R |
+| `kode_r` | kode R, ditulis dengan `|` |
+| `eval` | `true` bila kode dijalankan; lihat @sec-eval |
+| `penjelasan` | isi kotak Penjelasan Kode |
+| `interpretasi` | isi kotak Interpretasi Output |
+| `narasi` | (opsional) paragraf pengantar sebelum kode |
+
+: Kunci pada satu contoh {#tbl-kunci-contoh}
+
+Di dalam `penjelasan` dan `interpretasi`, Anda boleh memakai `` `kode` ``, `**tebal**`, dan
+rumus di antara tanda dolar seperti `$\bar{x}$`. Tanda lain ditulis apa adanya.
+
+## Menulis kode R di dalam YAML
+
+Kode ditulis dengan penanda `|`, yang mempertahankan pergantian baris (@sec-bab04). Ada tiga
+hal yang perlu diingat.
+
+**Indentasi kode dihitung dari baris pertama.** Semua baris kode menjorok enam spasi di bawah
+`kode_r: |`. YAML membuang enam spasi itu, sehingga R menerima kode yang rata kiri. Indentasi
+tambahan di dalam kode, misalnya isi fungsi `modus()`, tetap terjaga.
+
+**Contoh-contoh dalam satu modul berbagi satu sesi R.** Objek `rt` dibuat di Contoh 7.1 dan
+dipakai lagi di Contoh 7.2 tanpa dibaca ulang. Ini mencerminkan cara mahasiswa bekerja di
+RStudio. Akibatnya, urutan contoh penting: contoh yang memakai `rt` harus berada sesudah contoh
+yang membuatnya.
+
+**Jalur data ditulis relatif terhadap folder modul.** Sebelum menjalankan kode, paket menaruh
+berkas data di subfolder `data/` di samping modul. Karena itu, kode cukup menulis
+`read.csv("data/data_rumahtangga.csv")`, persis seperti yang akan ditulis mahasiswa. Blok
+`datasets` di spesifikasi, yang menghasilkan berkas itu, dibahas di @sec-bab08. Untuk
+sekarang, salin saja blok berikut ke spesifikasi Anda, di antara blok `course` dan `body`:
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(SPEC7, baris = baris_dari(SPEC7, "^datasets:", "^body:"))
+```
+
+\langkah{Tambahkan dua contoh dan render}
+
+Tambahkan blok `datasets` dan kedua contoh di atas ke `spec/modul-07-deskriptif.yml`, lalu
+render:
+
+```{rproyek}
+library(modulstis)
+sp7 <- module_spec_from_yaml("spec/modul-07-deskriptif.yml")
+sp7$validate()
+h <- render_module(sp7, output_dir = "build")
+```
+
+```{r}
+#| include: false
+pdf7 <- file.path(PROYEK, "build", "modul-07", "Modul_07_deskriptif.pdf")
+s1 <- halaman_png(pdf7, cari_halaman(pdf7, "Contoh 7\\.1"), "bab07")
+s2 <- halaman_png(pdf7, cari_halaman(pdf7, "Contoh 7\\.2"), "bab07")
+if (identical(s1, s2)) s2 <- halaman_png(pdf7, cari_halaman(pdf7, "Contoh 7\\.2") + 1, "bab07")
+```
+
+```{r}
+#| label: fig-contoh
+#| echo: false
+#| fig-cap: "Dua contoh praktikum Modul 7. Keluaran kode di bawah setiap blok dihasilkan R ketika modul dirender."
+#| fig-subcap:
+#|   - "Contoh 7.1"
+#|   - "Contoh 7.2"
+#| layout-ncol: 2
+knitr::include_graphics(unique(c(s1, s2)))
+```
+
+::: {.callout-tip}
+Bagian 7.6 *Contoh Praktikum dengan R* dimulai di halaman baru. Setiap contoh berawal dengan
+pita judul oranye, diikuti kotak kode bernomor, keluaran R, kotak Penjelasan Kode, dan kotak
+Interpretasi Output. Keluaran `str(rt)` menyebut `60 obs. of  5 variables`, sesuai resep data.
+:::
+
+## Mengendalikan eksekusi dengan `eval` {#sec-eval}
+
+Kunci `eval` menentukan apakah kode dijalankan:
+
+- `eval: true`: kode dijalankan, dan keluarannya dicetak di bawah kode.
+- `eval: false` atau `eval` tidak ditulis: kode hanya ditampilkan, tanpa keluaran.
+
+Gunakan `eval: false` untuk kode yang memang tidak boleh atau tidak dapat dijalankan saat
+modul dibuat, misalnya kode yang memasang paket, membaca berkas yang hanya ada di komputer
+mahasiswa, atau kode yang sengaja salah untuk didiskusikan.
+
+::: {.callout-important}
+## Salah paham umum: "Kode di bagian Contoh selalu dijalankan"
+
+Kode hanya dijalankan bila Anda menulis `eval: true`. Bila kunci `eval` lupa ditulis, paket
+menganggapnya `false`: kode tercetak rapi, tetapi tanpa keluaran, dan tidak ada pesan apa pun.
+Modul tetap tampak benar sampai mahasiswa bertanya mengapa contohnya tidak menunjukkan hasil.
+Biasakan menulis `eval: true` di setiap contoh, dan periksa bahwa setiap kotak kode di PDF
+diikuti keluaran.
+:::
+
+Ketika `eval: true` dan kodenya menimbulkan galat, render berhenti dan PDF modul tidak dibuat.
+Pesannya menyebut penyebab galat dan letak baris di berkas `.Rmd` antara, misalnya
+`Quitting from lines 95-100` diikuti `Render gagal: PDF tidak dihasilkan untuk modul 7.
+Penyebab: ...`. Ada pula kesalahan yang tidak menimbulkan galat: salah ketik nama kolom pada
+`summary(rt$pengluaran)` tidak menghentikan R, tetapi keluarannya tidak bermakna. Karena itu,
+setelah mengubah kode, bacalah keluaran di PDF, bukan hanya memastikan render berhasil.
+@sec-bab14 membahas cara menemukan kedua jenis kesalahan ini.
+
+## Contoh dwibahasa: R dan Python
+
+Mata kuliah yang mengajarkan R dan Python dapat menampilkan kedua bahasa dalam satu contoh.
+Tambahkan `kode_py` dan `judul_py` di samping `kode_r` dan `judul_r`. Kode R dicetak lebih dahulu,
+lalu kode Python, masing-masing dengan keluarannya. Berikut potongan dari Modul 1 Pemrograman
+Statistika yang disertakan di paket:
+
+```{r}
+#| echo: false
+#| output: asis
+f1 <- system.file("specs_ps", "modul-01-pengenalan.yml", package = "modulstis")
+tampil_berkas(f1, baris = baris_dari(f1, '- contoh: "Memeriksa versi perangkat"', "^      penjelasan:"))
+```
+
+Kode Python dijalankan melalui paket R `reticulate`, sehingga komputer yang merender memerlukan
+Python dan paket `reticulate`. Paket Python yang dipakai contoh, misalnya `pandas`, juga harus
+terpasang di Python tersebut.
+
+```{r}
+#| include: false
+h1 <- render_diam(f1, file.path(KERJA, "bab07"))
+t1 <- halaman_png(h1$modul$path, cari_halaman(h1$modul$path, "Verifikasi Python"), "bab07-py")
+```
+
+```{r}
+#| label: fig-dwibahasa
+#| echo: false
+#| fig-cap: "Contoh dwibahasa pada Modul 1 Pemrograman Statistika: kode R dan kode Python dalam satu contoh, masing-masing dengan keluarannya."
+#| out-width: "55%"
+knitr::include_graphics(t1)
+```
+
+Jangan lupa mengganti judul bagian Contoh dengan `contoh_title: "Contoh Praktikum dengan R dan
+Python"` (@sec-bab06).
+
+## Menyisipkan kotak di antara contoh
+
+Butir pada daftar `contoh` tidak harus berupa contoh. Butir yang berupa teks biasa dicetak apa
+adanya di antara contoh. Ini berguna untuk menyisipkan catatan atau peringatan, misalnya
+sebelum contoh yang memakai data baru:
+
+```yaml
+  contoh:
+    - contoh: "Ringkasan cepat seluruh peubah"
+      ...
+    - "Contoh berikut memakai objek `rt` dari Contoh 7.1."
+    - contoh: "Ukuran pemusatan termasuk modus"
+      ...
+```
+
+Kotak berwarna, seperti kotak peringatan atau kotak tips, ditulis dengan perintah LaTeX
+pendek. Caranya dibahas di @sec-bab10.
+
+::: {.callout-caution}
+Hapus baris `eval: true` dari Contoh 7.2, render ulang, lalu bandingkan halaman Contoh 7.2
+dengan @fig-contoh. Setelah itu, kembalikan baris tersebut.
+:::
+
+## Ringkasan
+
+Satu contoh praktikum terdiri atas judul, kode, penjelasan kode, dan interpretasi keluaran.
+Kode ditulis dengan `|` dan dijalankan ketika modul dibuat, asalkan contoh itu memuat
+`eval: true`. Semua contoh dalam satu modul berbagi satu sesi R dan membaca data dari subfolder
+`data/`. Contoh dwibahasa memakai `kode_py` dan `judul_py`, dan memerlukan Python serta
+`reticulate` di komputer yang merender.
+
+Contoh-contoh tadi membaca berkas data yang belum kita bahas asal-usulnya. @sec-bab08
+menjelaskannya.
+
+## Uji pemahaman
+
+1. Sebutkan empat unsur satu contoh praktikum sesuai urutannya di modul.
+2. Apa yang terjadi bila sebuah contoh tidak memuat kunci `eval`? Bagaimana Anda mengenalinya
+   di PDF?
+3. Contoh 7.2 memakai objek `rt` tanpa membacanya. Apa yang terjadi bila Contoh 7.2 dipindah ke
+   urutan pertama?
+4. (Transfer) Anda ingin menampilkan kode `install.packages("dplyr")` sebagai contoh, tetapi
+   tidak ingin paket itu benar-benar dipasang setiap kali modul dibuat. Bagaimana Anda
+   menuliskannya, dan bagaimana mahasiswa membedakan kode itu dari contoh lain di PDF?

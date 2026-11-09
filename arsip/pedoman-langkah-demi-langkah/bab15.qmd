@@ -1,0 +1,161 @@
+# Alur Kerja Satu Semester {#sec-bab15}
+
+```{r}
+#| include: false
+source("_setup.R")
+pastikan_proyek()
+```
+
+Bagaimana menjaga empat belas modul tetap rapi dari awal sampai akhir semester? Bab-bab
+sebelumnya membahas setiap langkah secara terpisah. Bab ini merangkainya menjadi kebiasaan kerja:
+apa yang dilakukan sebelum semester, selama semester, dan sebelum modul dibagikan, serta cara
+menyimpan dan berbagi proyek dengan tim pengampu.
+
+Setelah membaca bab ini, Anda dapat menyusun alur kerja semester Anda sendiri dan memakai daftar
+periksa sebelum menerbitkan modul.
+
+## Sebelum semester dimulai
+
+1. **Siapkan komputer** dan jalankan `cek_kesiapan()` (@sec-bab02).
+2. **Buat proyek** untuk mata kuliah (@sec-bab03). Bila mata kuliahnya sudah memiliki spesifikasi
+   bawaan, salin dari `system.file("specs_ps", package = "modulstis")` dan sejenisnya (@sec-bab11).
+3. **Tulis satu modul sampai lengkap**, termasuk data, latihan, dan kunci, lalu periksa PDF-nya
+   dengan teliti. Modul pertama ini menjadi pola bagi modul-modul lain.
+4. **Salin pola itu** untuk modul berikutnya. Blok `course` cukup disalin (@sec-course-sama).
+5. **Susun buku** modul dan kunci bila Anda membagikannya sebagai satu berkas (@sec-bab12).
+
+## Menyunting satu modul di tengah semester
+
+Perubahan di tengah semester sebaiknya kecil dan terlacak. Alurnya:
+
+1. sunting spesifikasi modul yang bersangkutan saja;
+2. baca ulang dan periksa: `module_spec_from_yaml()` lalu `validate()`;
+3. render modul itu saja dengan `render_module()`, lalu periksa PDF-nya;
+4. bila modul dibagikan dalam bentuk buku, susun ulang buku dengan `susun_buku.R`.
+
+::: {.callout-warning}
+Mengubah `seed`, resep data, atau urutan soal di tengah semester mengubah angka dan nomor yang
+sudah dilihat mahasiswa (@sec-seed, @sec-bab09). Bila perubahan semacam itu tidak terhindarkan,
+umumkan kepada mahasiswa dan tandai versi modulnya, misalnya dengan menambahkan tanggal revisi di
+bagian `deskripsi`.
+:::
+
+## Menyimpan proyek di Git
+
+**Git** adalah program pencatat riwayat perubahan berkas. Setiap kali Anda menyimpan *commit*,
+Git mencatat isi semua berkas proyek saat itu, sehingga Anda dapat melihat apa yang berubah dan
+kembali ke versi lama bila perlu. Proyek `modulstis` sangat cocok disimpan di Git karena
+sumbernya berupa berkas teks.
+
+\langkah{Aktifkan Git untuk proyek}
+
+Di RStudio, pilih **Tools → Version Control → Project Setup**, lalu pada **Version control
+system** pilih **Git**. RStudio akan dimulai ulang dan menampilkan tab **Git** di panel kanan atas.
+Bila pilihan Git tidak tersedia, pasang Git lebih dahulu dari <https://git-scm.com>.
+
+\langkah{Kecualikan hasil render}
+
+Buat berkas `.gitignore` di folder proyek. Berkas ini menyebut berkas dan folder yang **tidak**
+dicatat Git:
+
+```{rproyek}
+writeLines(c(
+  "# hasil render: selalu dapat dibuat ulang dari spec/",
+  "modul/", "build*/", "buku/*/", "buku/*.pdf", "buku/*.rds", "*.pdf",
+  "# berkas sementara R dan RStudio",
+  ".Rhistory", ".RData", ".Rproj.user/"
+), ".gitignore")
+cat(readLines(".gitignore"), sep = "\n")
+```
+
+| Dicatat Git | Tidak dicatat Git |
+|:--|:--|
+| `spec/*.yml` | `modul/`, `build/`, `build-*/` |
+| `render_modul.R`, `susun_buku.R` | PDF hasil render |
+| `buku/bagian_awal.Rmd` | folder modul di dalam `buku/` |
+| `data-asli/` (bila datanya boleh disimpan) | `.Rhistory`, `.RData` |
+| `README.md`, `.gitignore`, `*.Rproj` | |
+
+: Isi proyek yang dicatat dan tidak dicatat Git {#tbl-git}
+
+::: {.callout-important}
+## Salah paham umum: "PDF hasil render perlu disimpan di Git"
+
+PDF selalu dapat dibuat ulang dari spesifikasi, jadi menyimpannya di Git tidak menambah informasi.
+Sebaliknya, setiap render menghasilkan PDF yang berbeda sedikit, misalnya tanggal pembuatan yang tersimpan di dalam berkas, sehingga
+riwayat Git penuh perubahan yang tidak berarti dan ukurannya membengkak. Simpan di Git sumbernya
+saja. PDF yang dibagikan kepada mahasiswa disimpan di tempat pembagian, misalnya Google Classroom
+atau folder bersama, dengan nama yang memuat tanggal atau versi.
+:::
+
+\langkah{Simpan perubahan}
+
+Di tab **Git**, centang berkas yang berubah, klik **Commit**, tulis pesan singkat yang menjelaskan
+perubahannya, misalnya *Modul 7: tambah contoh histogram*, lalu klik **Commit** sekali lagi.
+
+## Daftar periksa sebelum menerbitkan
+
+Jalankan daftar periksa berikut setiap kali modul atau buku akan dibagikan.
+
+| No. | Periksa | Cara |
+|:-:|:--|:--|
+| 1 | Semua spesifikasi valid | `ModuleProject$new(specs_dir = "spec")$validate_all()` bernilai `TRUE` |
+| 2 | Log render bersih | tidak ada baris `WARN` atau `ERROR` selain peringatan `tocloft` |
+| 3 | Sampul benar | mata kuliah, kode, semester, dan penyusun sesuai |
+| 4 | Tidak ada bagian kosong | cari tulisan *belum diisi* di PDF |
+| 5 | Setiap kode contoh berkeluaran | periksa setiap kotak kode |
+| 6 | Keluaran masuk akal | tidak ada `NULL`, `NA`, atau pesan galat yang tak disengaja |
+| 7 | Kotak *Tentang data* ada | untuk setiap modul yang memakai data simulasi |
+| 8 | Soal dan solusi berpasangan | jumlah dan urutan Latihan sama dengan `exercises` |
+| 9 | Skor berjumlah benar | jumlah `points` sesuai rencana penilaian |
+| 10 | Nomor halaman buku berlanjut | periksa dua halaman di perbatasan modul |
+| 11 | Berkas data ikut dibagikan | folder `data/` disertakan bersama modul |
+
+: Daftar periksa sebelum menerbitkan {#tbl-daftar-periksa}
+
+Pemeriksaan nomor 4 dapat dilakukan untuk semua modul sekaligus dengan `pdftools`:
+
+```{rproyek}
+pdf <- list.files("build", "^Modul_.*\\.pdf$", recursive = TRUE, full.names = TRUE)
+kosong <- vapply(pdf, function(f) any(grepl("belum diisi", pdftools::pdf_text(f))),
+                 logical(1))
+pdf[kosong]
+```
+
+Hasil `character(0)` berarti tidak ada modul yang memuat bagian kosong.
+
+## Berbagi proyek dengan tim pengampu
+
+Mata kuliah yang diampu beberapa dosen dapat memakai satu proyek bersama. Beberapa kesepakatan
+membuat kerja bersama lebih lancar:
+
+- **Satu modul, satu penanggung jawab.** Karena setiap modul ada di berkas sendiri, dua dosen yang
+  menyunting modul berbeda tidak akan saling menimpa.
+- **Versi paket yang sama.** Catat versi `modulstis` di `README.md` proyek, dan minta setiap anggota
+  memeriksanya dengan `packageVersion("modulstis")`. Versi yang berbeda dapat menghasilkan tampilan
+  yang sedikit berbeda.
+- **Satu orang menyusun buku.** Render seluruh modul dan penyusunan buku dilakukan oleh satu orang
+  dari versi spesifikasi yang sudah disepakati.
+- **Tempat bersama.** Simpan proyek di repositori Git bersama, misalnya GitHub atau GitLab kampus.
+  Bila tim belum memakai Git, folder bersama tetap dapat dipakai, asalkan setiap orang hanya
+  menyunting berkas modulnya sendiri.
+
+## Penutup
+
+Anda sudah menempuh seluruh perjalanan: dari folder kosong, satu modul contoh, Modul 7 yang
+dibangun bagian demi bagian, sampai buku modul dan buku kunci satu semester. Polanya selalu sama:
+**sunting spesifikasi, periksa, render, lalu baca hasilnya**. Paket mengerjakan penyusunan,
+tampilan, dan sinkronisasi; Anda tetap memegang isi dan mutunya.
+
+Lampiran berikut merangkum semua kunci spesifikasi, menyediakan templat kosong, dan memuat kunci
+Uji Pemahaman setiap bab.
+
+## Uji pemahaman
+
+1. Sebutkan empat langkah menyunting satu modul di tengah semester.
+2. Mengapa folder `modul/` dan `build/` dikecualikan dari Git?
+3. Pada daftar periksa, mengapa pemeriksaan nomor 6 tidak dapat digantikan oleh pemeriksaan
+   nomor 2?
+4. (Transfer) Tim pengampu Anda terdiri atas tiga dosen, dan dua di antaranya memakai versi
+   `modulstis` yang berbeda. Apa yang mungkin terjadi pada buku modul, dan bagaimana Anda
+   mengatasinya sebelum semester dimulai?

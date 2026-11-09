@@ -1,0 +1,116 @@
+% =====================================================================
+%  Gaya Buku Pedoman modulstis
+%  Warna mengikuti bps_palette() paket modulstis. Mesin: XeLaTeX.
+% =====================================================================
+\usepackage{xcolor}
+\definecolor{bpsnavy}{HTML}{123A6B}
+\definecolor{bpsbiru}{HTML}{0B6FB4}
+\definecolor{bpsbirumuda}{HTML}{6FB3E0}
+\definecolor{bpsoranye}{HTML}{F58220}
+\definecolor{bpshijau}{HTML}{00A651}
+\definecolor{abuteks}{HTML}{45505C}
+\definecolor{merahsalah}{HTML}{C0392B}
+
+\usepackage{tikz}
+\usetikzlibrary{calc,positioning,arrows.meta,shapes.misc}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\setlist{itemsep=2pt, topsep=4pt}
+\usepackage{ragged2e}
+
+% ---------- Pemenggalan kata bahasa Indonesia ----------
+% Babel memuat pola 'indonesian' (hyph-id). Daftar ini menambah pemenggalan
+% untuk istilah yang sering muncul di buku dan mencegah nama dipenggal.
+\hyphenation{mo-dul mo-dul-stis spe-si-fi-ka-si pra-tik-um ke-lu-ar-an ren-der
+  pe-nyu-sun ber-ka-s Win-dows Quar-to}
+
+% ---------- Paragraf ----------
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt plus 1pt}
+\raggedbottom
+\setlength{\emergencystretch}{3em}
+
+% ---------- Judul (KOMA-Script) ----------
+\setkomafont{disposition}{\sffamily\bfseries\color{bpsnavy}}
+\setkomafont{chapter}{\Huge}
+\setkomafont{section}{\Large\color{bpsbiru}}
+\setkomafont{subsection}{\large\color{bpsnavy}}
+\setkomafont{subsubsection}{\normalsize\color{bpsnavy}}
+\setkomafont{part}{\Huge\color{white}}
+\setkomafont{partnumber}{\Large\color{white}}
+\setkomafont{chapterprefix}{\large\color{bpsoranye}}
+\RedeclareSectionCommand[beforeskip=0pt, afterskip=18pt]{chapter}
+\RedeclareSectionCommand[beforeskip=14pt plus 2pt, afterskip=6pt]{section}
+\RedeclareSectionCommand[beforeskip=10pt plus 2pt, afterskip=4pt]{subsection}
+\renewcommand*{\chapterformat}{%
+  \mbox{\colorbox{bpsnavy}{\textcolor{white}{\,\thechapter\,}}\enskip}}
+\renewcommand*{\chapterlinesformat}[3]{%
+  \parbox{\linewidth}{\raggedright #2#3\par
+  \vspace{4pt}{\color{bpsoranye}\rule{\linewidth}{1.6pt}}}}
+
+% Halaman bagian (part): latar biru tua penuh
+\renewcommand*{\partpagestyle}{empty}
+\renewcommand*{\partformat}{\partname~\thepart}
+\addtokomafont{partentry}{\color{bpsnavy}}
+\makeatletter
+\renewcommand*{\partheadstartvskip}{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[bpsnavy] (current page.south west) rectangle (current page.north east);
+    \fill[bpsbiru] ($(current page.south west)+(0,5cm)$) --
+          ($(current page.south east)+(0,9cm)$) -- (current page.south east) --
+          (current page.south west) -- cycle;
+    \fill[bpsoranye] ($(current page.south west)+(0,4.4cm)$) rectangle
+          ($(current page.south east)+(0,4.6cm)$);
+  \end{tikzpicture}\vspace*{6cm}}
+\makeatother
+
+% ---------- Kepala dan kaki halaman ----------
+\usepackage[headsepline=1pt]{scrlayer-scrpage}
+\clearpairofpagestyles
+\addtokomafont{pageheadfoot}{\small\color{abuteks}}
+\addtokomafont{headsepline}{\color{bpsbiru}}
+\ihead{\textcolor{bpsnavy}{\textbf{Pedoman \texttt{modulstis}}}}
+\ohead{\leftmark}
+\cfoot*{\colorbox{bpsnavy}{\textcolor{white}{\,\pagemark\,}}}
+\automark[chapter]{chapter}
+\renewcommand*{\chaptermarkformat}{Bab~\thechapter\enskip}
+
+% ---------- Kotak (callout Quarto) ----------
+% Warna kotak disetel ulang setelah Quarto mendefinisikannya.
+\AtBeginDocument{%
+  \definecolor{quarto-callout-tip-color}{HTML}{00A651}%
+  \definecolor{quarto-callout-note-color}{HTML}{0B6FB4}%
+  \definecolor{quarto-callout-warning-color}{HTML}{F58220}%
+  \definecolor{quarto-callout-important-color}{HTML}{C0392B}%
+  \definecolor{quarto-callout-caution-color}{HTML}{123A6B}%
+  \definecolor{quarto-callout-tip-color-frame}{HTML}{00A651}%
+  \definecolor{quarto-callout-note-color-frame}{HTML}{0B6FB4}%
+  \definecolor{quarto-callout-warning-color-frame}{HTML}{F58220}%
+  \definecolor{quarto-callout-important-color-frame}{HTML}{C0392B}%
+  \definecolor{quarto-callout-caution-color-frame}{HTML}{123A6B}%
+}
+
+% ---------- Langkah bernomor ----------
+% \langkah{judul} membuat penanda langkah berwarna oranye dengan nomor otomatis.
+\newcounter{langkah}[chapter]
+\newcommand{\langkah}[1]{%
+  \par\addvspace{6pt}\refstepcounter{langkah}%
+  \noindent\colorbox{bpsoranye}{\textcolor{white}{\sffamily\bfseries\,Langkah \thelangkah\,}}%
+  \enskip{\sffamily\bfseries\color{bpsnavy}#1}\par\nopagebreak\vspace{2pt}}
+
+% ---------- Penanda sistem operasi ----------
+\newcommand{\osbadge}[2]{\colorbox{#1}{\textcolor{white}{\sffamily\bfseries\small\,#2\,}}}
+\newcommand{\windows}{\osbadge{bpsbiru}{Windows}}
+\newcommand{\macos}{\osbadge{abuteks}{macOS}}
+\newcommand{\linux}{\osbadge{bpshijau}{Linux}}
+
+% ---------- Gambar berbingkai ----------
+\newcommand{\bingkai}[2][0.47\linewidth]{%
+  \fcolorbox{bpsnavy!40}{white}{\includegraphics[width=#1]{#2}}}
+
+% ---------- Baris kode panjang dipenggal, tidak melewati tepi kotak ----------
+\usepackage{fvextra}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere,commandchars=\\\{\}}
+\fvset{breaklines=true, breakanywhere=true}

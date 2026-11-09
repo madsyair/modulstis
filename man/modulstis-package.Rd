@@ -4,11 +4,11 @@
 \name{modulstis-package}
 \alias{modulstis}
 \alias{modulstis-package}
-\title{modulstis: Generator Template Modul Praktikum Bergaya BPS}
+\title{modulstis: Generator Template Modul Praktikum Bernuansa Warna Logo BPS}
 \description{
 Menghasilkan template modul praktikum dan buku kunci jawaban dari satu
 spesifikasi deklaratif (YAML/objek), dengan backend bookdown/Quarto + LaTeX
-(XeLaTeX) untuk PDF bergaya publikasi BPS. Menerapkan desain berorientasi
+(XeLaTeX) untuk PDF bernuansa warna logo BPS. Menerapkan desain berorientasi
 objek (R6), pipeline fungsional, logging terstruktur, dan kerangka uji.
 }
 \section{Kelas utama}{
@@ -24,7 +24,7 @@ objek (R6), pipeline fungsional, logging terstruktur, dan kerangka uji.
 }
 
 \author{
-\strong{Maintainer}: Achmad Syahrul Choir \email{syahrul@example.ac.id}
+\strong{Maintainer}: Achmad Syahrul Choir \email{madsyair@stis.ac.id}
 
 }
 \keyword{internal}

@@ -1,0 +1,19 @@
+# Kode Sumber Renderer {#sec-lampiran-d}
+
+```{r}
+#| include: false
+source("_setup.R")
+f <- file.path(PEDOMAN, "..", "R", "renderer.R")
+```
+
+Berkas ini mendefinisikan antarmuka `Renderer` beserta dua implementasinya, `BookdownRenderer` dan `QuartoRenderer`, serta `renderer_factory()` yang memilih backend saat program berjalan. `BookdownRenderer` juga memuat mekanisme pemulihan dan pelaporan galat LaTeX.
+
+Kode di bawah ini adalah isi berkas `R/renderer.R` pada `modulstis` versi
+`r as.character(packageVersion("modulstis"))`, sepanjang `r length(readLines(f))` baris. Baris
+berawalan `#'` adalah dokumentasi roxygen2 yang diolah menjadi halaman bantuan fungsi.
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(f, bahasa = "r", nomor = TRUE)
+```

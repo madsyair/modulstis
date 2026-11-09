@@ -1,0 +1,17 @@
+# Contoh Spesifikasi Lengkap Modul 7 {#sec-lampiran-e}
+
+```{r}
+#| include: false
+source("_setup.R")
+```
+
+Lampiran ini memuat spesifikasi lengkap Modul 7 Pemrograman Statistika yang dipakai di
+@sec-penggunaan. Berkas ini dapat dijadikan titik awal untuk modul lain: salin, ganti identitas dan
+isinya, lalu periksa dengan `validate()`. Spesifikasi ini memakai susunan bagian kustom (`sections`)
+supaya bagian *Daftar Istilah* dapat disisipkan sebelum *Referensi*.
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(SPEC7_CONTOH, bahasa = "yaml", nomor = TRUE)
+```

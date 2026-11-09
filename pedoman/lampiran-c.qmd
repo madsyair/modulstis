@@ -1,0 +1,19 @@
+# Kode Sumber Pembangun Konten {#sec-lampiran-c}
+
+```{r}
+#| include: false
+source("_setup.R")
+f <- file.path(PEDOMAN, "..", "R", "builder.R")
+```
+
+Berkas ini mendefinisikan kelas `Document` serta pembangun `ContentBuilder`, `ModuleBuilder`, dan `AnswerKeyBuilder`. Kedua pembangun merakit dokumen modul dan dokumen kunci dari `ModuleSpec` yang sama, sehingga soal dan solusinya selalu sinkron.
+
+Kode di bawah ini adalah isi berkas `R/builder.R` pada `modulstis` versi
+`r as.character(packageVersion("modulstis"))`, sepanjang `r length(readLines(f))` baris. Baris
+berawalan `#'` adalah dokumentasi roxygen2 yang diolah menjadi halaman bantuan fungsi.
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(f, bahasa = "r", nomor = TRUE)
+```

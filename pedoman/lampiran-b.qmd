@@ -1,0 +1,19 @@
+# Kode Sumber Proyek Modul {#sec-lampiran-b}
+
+```{r}
+#| include: false
+source("_setup.R")
+f <- file.path(PEDOMAN, "..", "R", "project.R")
+```
+
+Berkas ini mendefinisikan kelas `ModuleProject`, yaitu *Facade* yang mengatur validasi semua spesifikasi, pembangkitan data, dan render modul beserta kuncinya. Fungsi `render_module()` adalah jalan pintas untuk merender satu spesifikasi.
+
+Kode di bawah ini adalah isi berkas `R/project.R` pada `modulstis` versi
+`r as.character(packageVersion("modulstis"))`, sepanjang `r length(readLines(f))` baris. Baris
+berawalan `#'` adalah dokumentasi roxygen2 yang diolah menjadi halaman bantuan fungsi.
+
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(f, bahasa = "r", nomor = TRUE)
+```

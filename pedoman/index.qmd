@@ -1,0 +1,53 @@
+# Kata Pengantar {.unnumbered}
+
+```{r}
+#| include: false
+source("_setup.R")
+```
+
+Buku pedoman ini menjelaskan aplikasi `modulstis`, yaitu paket R untuk menyusun modul praktikum,
+kunci jawaban, dan data latihan dari satu berkas spesifikasi. Aplikasi ini dikembangkan di
+Politeknik Statistika STIS untuk membantu dosen pengampu mata kuliah praktikum menyiapkan bahan
+ajar yang seragam, mutakhir, dan saling sinkron dari semester ke semester.
+
+Buku ini disusun sebagai dokumen pendamping program komputer. Isinya menerangkan latar belakang
+pengembangan aplikasi, model dan susunan programnya, bahasa pemrograman serta perangkat yang
+dipakai beserta contoh penggunaannya, dan cuplikan kode sumber inti. Pembaca yang ingin segera
+memakai aplikasi dapat langsung menuju @sec-penggunaan. Pembaca yang ingin memahami cara kerja
+aplikasi sebaiknya membaca @sec-program lebih dahulu.
+
+Seluruh contoh kode di buku ini dijalankan ketika buku dibangun dengan `modulstis` versi
+`r as.character(packageVersion("modulstis"))`. Keluaran yang tercetak adalah keluaran aplikasi yang
+sebenarnya, gambar halaman modul diambil dari PDF hasil render, dan kode sumber di lampiran dibaca
+langsung dari berkas paket versi yang sama.
+
+Jakarta, `r format(Sys.Date(), "%B %Y")`
+
+Achmad Syahrul Choir
+
+# Sistematika Buku {.unnumbered}
+
+Buku ini terdiri atas tiga bab dan lima lampiran.
+
+| Bagian | Isi |
+|:--|:--|
+| Bab 1 Latar Belakang | masalah penyusunan modul praktikum, tujuan dan manfaat aplikasi, ruang lingkup, sasaran pengguna, dan identitas aplikasi |
+| Bab 2 Penjelasan Model dan Program | model "satu spesifikasi, tiga keluaran", arsitektur dan alur kerja, komponen program, struktur spesifikasi, pembangkitan data, penyusunan buku, serta penanganan galat |
+| Bab 3 Bahasa Pemrograman, Perangkat, dan Contoh Penggunaan | bahasa dan perangkat yang dipakai, pemasangan di Windows, macOS, dan Linux, contoh penggunaan langkah demi langkah, dan tabel galat umum |
+| Lampiran A--D | kode sumber inti: spesifikasi modul, proyek modul, pembangun konten, dan renderer |
+| Lampiran E | contoh spesifikasi lengkap Modul 7 Pemrograman Statistika |
+
+: Sistematika buku {#tbl-sistematika}
+
+Buku ini memakai beberapa penanda:
+
+- Kode yang diketik di Console R ditulis dalam blok abu-abu. Baris berawalan `#>` adalah keluaran
+  R dan tidak ikut diketik.
+- Perintah untuk terminal sistem operasi diberi tanda `bash` di sudut blok kode.
+- Nama berkas, folder, fungsi, dan kunci YAML ditulis dengan huruf mesin tik, misalnya
+  `spec/modul-07-deskriptif.yml`. Fungsi ditulis dengan tanda kurung, misalnya `render_module()`.
+- Langkah kerja di @sec-penggunaan diberi nomor berurutan pada label oranye bertuliskan
+  **Langkah**.
+- Langkah yang berbeda menurut sistem operasi diberi penanda \windows{}, \macos{}, atau \linux{}.
+- Kotak hijau menunjukkan hasil yang seharusnya terlihat setelah sebuah langkah, dan kotak oranye
+  menandai langkah yang mudah keliru.

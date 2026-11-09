@@ -15,5 +15,6 @@ gabung_pdf(berkas, keluaran)
 \code{keluaran} secara tak terlihat
 }
 \description{
-Membungkus \code{pdfunite} dari poppler-utils.
+Memakai \code{pdfunite} dari poppler-utils bila tersedia di PATH. Bila tidak ada
+(umumnya di Windows), fungsi ini memakai paket \code{qpdf}.
 }

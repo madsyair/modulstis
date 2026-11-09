@@ -14,8 +14,10 @@ bila \code{FALSE} hanya path yang dikembalikan}
 path berkas PDF (tak tampak bila \code{buka = TRUE})
 }
 \description{
-Buku Pedoman \emph{Menyusun Modul Praktikum dengan Paket R \code{modulstis}} (82 halaman)
-disertakan sebagai PDF di \verb{inst/pedoman/}, bukan sebagai vignette PDF di
+Buku Pedoman \emph{Aplikasi modulstis: Paket R Penyusun Modul Praktikum dan Kunci
+Jawaban dari Satu Spesifikasi} disertakan sebagai PDF di \verb{inst/pedoman/}. Sumber
+Quarto-nya ada di folder \verb{pedoman/} repositori paket. Buku tidak dipasang
+sebagai vignette PDF di
 \verb{inst/doc/}. Penempatan itu disengaja: \verb{R CMD check} memeriksa ukuran PDF di
 bawah \code{inst/doc} dan memberi WARNING bila masih dapat dimampatkan \code{gs+qpdf},
 sedangkan buku ini memuat ilustrasi beresolusi cetak.
