@@ -23,6 +23,11 @@ book:
     - lampiran-e.qmd
 
 lang: id
+# Metadata PDF (Info dictionary), dibaca hyperref
+title-meta: "Aplikasi modulstis: Paket R Penyusun Modul Praktikum dan Kunci Jawaban dari Satu Spesifikasi"
+author-meta: "Achmad Syahrul Choir"
+subject: "Buku Pedoman Aplikasi (dokumentasi program komputer) modulstis"
+keywords: [modulstis, paket R, modul praktikum, kunci jawaban, spesifikasi YAML, R Markdown, Quarto, Politeknik Statistika STIS]
 language:
   crossref-fig-title: "Gambar"
   crossref-tbl-title: "Tabel"
