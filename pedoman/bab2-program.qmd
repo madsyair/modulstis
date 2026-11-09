@@ -1,0 +1,230 @@
+# Penjelasan Model dan Program {#sec-program}
+
+```{r}
+#| include: false
+source("_setup.R")
+```
+
+Bab ini menjelaskan cara kerja `modulstis`: model yang mendasarinya, arsitektur program, komponen
+penyusunnya, dan aliran data dari spesifikasi sampai PDF. Cara memakainya dibahas di
+@sec-penggunaan.
+
+## Model: satu spesifikasi, tiga keluaran
+
+Model `modulstis` bertumpu pada satu prinsip: **seluruh isi sebuah modul disimpan di satu tempat**.
+Tempat itu adalah berkas **spesifikasi**, yaitu berkas teks berformat YAML (`.yml`) yang memuat
+identitas modul, teks setiap bagian, contoh kode, resep data, soal, dan solusi. Dari satu
+spesifikasi, aplikasi menghasilkan tiga keluaran:
+
+1. **modul praktikum** (PDF), berisi sampul, daftar isi, dan bagian-bagian baku modul;
+2. **kunci jawaban** (PDF), berisi solusi, skor, dan pembahasan untuk pengajar;
+3. **data latihan** (CSV), dipakai oleh contoh di modul dan solusi di kunci.
+
+Model ini memiliki tiga sifat penting.
+
+- **Sinkron.** Modul dan kunci dirakit dari spesifikasi yang sama, sehingga soal dan solusinya
+  tidak dapat tertinggal satu sama lain.
+- **Dapat dieksekusi.** Kode contoh dan kode solusi dijalankan setiap kali modul dirender.
+  Keluaran yang tercetak adalah keluaran R pada saat itu, bukan teks yang ditempel.
+- **Dapat diulang.** Data latihan dibangkitkan dari resep dengan bilangan acak awal (*seed*) yang
+  tetap, sehingga data di modul, di kunci, dan pada render berikutnya selalu identik.
+
+Spesifikasi bersifat **deklaratif**: dosen menyatakan *apa* isi modul, sedangkan *bagaimana*
+menyusunnya menjadi PDF ditangani aplikasi. Tampilan tidak disimpan di spesifikasi, tetapi di satu
+objek tema yang berlaku untuk semua modul.
+
+## Arsitektur dan alur kerja
+
+Gambar \ref{fig-arsitektur} memperlihatkan aliran dari spesifikasi sampai keluaran.
+
+```{=latex}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance=5mm and 7mm,
+  kotak/.style={draw=bpsnavy, line width=0.8pt, fill=bpsbirumuda!18, rounded corners=2pt,
+    align=center, font=\sffamily\small, minimum height=10mm, text width=27mm},
+  masuk/.style={kotak, fill=bpsoranye!15, draw=bpsoranye},
+  keluar/.style={kotak, fill=bpshijau!15, draw=bpshijau, text width=24mm},
+  panah/.style={-{Stealth[length=2.4mm]}, line width=0.8pt, color=bpsnavy}]
+\node[masuk] (yml) {Spesifikasi\\\texttt{modul-07.yml}};
+\node[kotak, right=of yml] (spec) {\texttt{ModuleSpec}\\baca \& validasi};
+\node[kotak, right=of spec] (data) {Pembangkit data\\resep $\to$ CSV};
+\node[kotak, below=of spec] (mb) {\texttt{ModuleBuilder}\\dokumen modul};
+\node[kotak, below=of mb] (kb) {\texttt{AnswerKeyBuilder}\\dokumen kunci};
+\node[masuk, left=of mb] (tema) {\texttt{LatexTheme}\\warna, font, kotak};
+\node[kotak, right=of mb, yshift=-7.5mm] (rnd) {\texttt{Renderer}\\bookdown/Quarto};
+\node[kotak, right=of rnd] (xe) {knitr + Pandoc\\+ XeLaTeX};
+\node[keluar, above=of xe, yshift=6mm] (csv) {Data latihan\\(CSV)};
+\node[keluar, below=of xe, xshift=-14mm] (pm) {Modul\\(PDF)};
+\node[keluar, below=of xe, xshift=14mm] (pk) {Kunci jawaban\\(PDF)};
+\draw[panah] (yml) -- (spec);
+\draw[panah] (spec) -- (data);
+\draw[panah] (spec) -- (mb);
+\draw[panah] (mb) -- (kb);
+\draw[panah] (tema) -- (mb);
+\draw[panah] (tema) |- (kb);
+\draw[panah] (mb.east) -- (rnd);
+\draw[panah] (kb.east) -- (rnd);
+\draw[panah] (rnd) -- (xe);
+\draw[panah] (data) -- (csv);
+\draw[panah, dashed] (csv) -- node[right, font=\sffamily\scriptsize]{dibaca kode} (xe);
+\draw[panah] (xe) -- (pm);
+\draw[panah] (xe) -- (pk);
+\node[draw=bpsbiru, dashed, rounded corners, fit=(spec)(data)(mb)(kb)(rnd),
+  inner sep=3mm, label={[font=\sffamily\scriptsize\color{bpsbiru}]above left:\texttt{ModuleProject}}] {};
+\end{tikzpicture}
+\caption{Arsitektur dan alur kerja \texttt{modulstis}. Kotak oranye adalah masukan, kotak biru
+adalah komponen program, dan kotak hijau adalah keluaran. Garis putus-putus biru menandai
+komponen yang diatur oleh \texttt{ModuleProject}.}
+\label{fig-arsitektur}
+\end{figure}
+```
+
+Alur kerja satu modul terdiri atas tujuh tahap.
+
+1. **Baca.** `module_spec_from_yaml()` membaca berkas YAML dan membuat objek `ModuleSpec`.
+2. **Validasi.** `ModuleSpec$validate()` memeriksa isian wajib, keunikan bagian, jenis bagian,
+   resep data, dan skor latihan. Semua pelanggaran dikumpulkan dalam satu laporan.
+3. **Bangkitkan data.** Setiap resep di `datasets` diubah menjadi data frame, lalu ditulis sebagai
+   CSV ke subfolder `data/` di folder modul dan folder kunci.
+4. **Bangun dokumen.** `ModuleBuilder` merakit sampul, bagian-bagian modul, dan preamble LaTeX
+   menjadi objek `Document`. `AnswerKeyBuilder` merakit dokumen kunci dari bagian `exercises` dan
+   `body` → `kunci` pada spesifikasi yang sama.
+5. **Tulis berkas antara.** `Renderer` menulis dokumen menjadi berkas R Markdown (`.Rmd`) untuk
+   backend bookdown, atau Quarto (`.qmd`) untuk backend Quarto, beserta `preamble.tex`.
+6. **Render.** knitr menjalankan kode R (dan Python bila ada), Pandoc mengubah dokumen menjadi
+   LaTeX, lalu XeLaTeX menyusun PDF.
+7. **Laporkan.** Setiap tahap dicatat oleh `Logger`. Hasilnya dikembalikan sebagai objek
+   `Artifact` yang menyimpan jalur berkas PDF.
+
+## Komponen program
+
+Program ditulis dalam bahasa R dengan paradigma berorientasi objek memakai kelas **R6**. Setiap
+kelas memegang satu tanggung jawab, dan beberapa pola desain dipakai supaya bagian program dapat
+diganti tanpa mengubah bagian lain.
+
+| Komponen | Berkas | Tanggung jawab | Pola desain |
+|:--|:--|:--|:--|
+| `ModuleSpec`, `ValidationReport` | `spec-module.R` | menyimpan isi modul dan memvalidasinya | objek nilai |
+| `ModuleProject`, `render_module()` | `project.R` | mengatur validasi, pembangkitan data, dan render banyak modul | *Facade* |
+| `ContentBuilder`, `ModuleBuilder`, `AnswerKeyBuilder`, `Document` | `builder.R` | merakit dokumen modul dan kunci dari spesifikasi | *Builder* |
+| `Renderer`, `BookdownRenderer`, `QuartoRenderer`, `renderer_factory()` | `renderer.R` | mengubah dokumen menjadi PDF dengan backend terpilih | *Strategy* dan *Factory* |
+| `Section`, `ExampleSection`, `ExerciseSection`, `AssignmentSection`, `GlossarySection`, `RenderContext` | `section.R`, `glossary.R` | merender setiap jenis bagian dan menomori contoh, kode, latihan, serta tugas | polimorfisme |
+| `LatexTheme`, `theme_factory()`, `bps_palette()` | `theme-latex.R` | menyimpan warna, font, sampul, dan preamble LaTeX | *design token* |
+| `generate_dataset()`, `generate_module_data()` | `data-recipe.R` | membangkitkan data dari resep atau membaca data nyata | fungsi murni |
+| `render_berlanjut()`, `sampul_buku()`, `gabung_pdf()`, `pdf_halaman()` | `book-builder.R` | menyusun buku satu semester dengan nomor halaman berlanjut | alur dua tahap |
+| `Logger`, `build_logger()` | `logging.R` | mencatat kerja program secara berjenjang dan terstruktur | -- |
+| `buat_proyek_modul()`, *add-in* RStudio | `project-template.R`, `addin.R` | membuat kerangka proyek dan menyediakan menu di RStudio | -- |
+| `cek_kesiapan()` | `cek-kesiapan.R` | memeriksa perangkat yang diperlukan | -- |
+
+: Komponen program {#tbl-komponen}
+
+Ketergantungan antarkomponen dibuat satu arah. `ModuleProject` menerima tema dan nama backend dari
+luar (*dependency injection*), lalu meminta `renderer_factory()` memilih kelas renderer pada saat
+program berjalan. Karena itu, backend baru cukup ditambahkan sebagai turunan `Renderer` tanpa
+mengubah `ModuleProject` maupun pembangun dokumen. Kode keempat komponen inti dimuat di @sec-lampiran-a
+sampai @sec-lampiran-d.
+
+## Struktur spesifikasi
+
+Spesifikasi terdiri atas kunci tingkat atas berikut.
+
+| Kunci | Wajib | Isi |
+|:--|:-:|:--|
+| `number` | ya | nomor modul, 1 sampai 99 |
+| `title` | ya | judul lengkap modul |
+| `short_code` | | kode singkat untuk nama berkas; bila kosong diturunkan dari judul |
+| `topic` | | judul ringkas di kepala halaman; bila kosong memakai `title` |
+| `pertemuan`, `sub_cpmk` | | pertemuan ke berapa menurut RPS dan capaian pembelajarannya |
+| `course` | dianjurkan | identitas mata kuliah: `matkul`, `matkul_besar`, `kode`, `semester`, `prodi`, `penyusun` |
+| `datasets` | | daftar resep data latihan |
+| `body` | | isi setiap bagian modul |
+| `exercises` | | solusi, skor, dan pembahasan untuk kunci jawaban |
+| `sections` | | susunan bagian kustom, menggantikan susunan bawaan |
+
+: Kunci tingkat atas spesifikasi {#tbl-kunci-atas}
+
+Bila `sections` tidak ditulis, modul memakai sebelas bagian baku. Setiap bagian memiliki `id`
+(nama kunci di bawah `body`), `type` (jenis bagian), dan `title` (judul di PDF):
+
+```{r}
+#| comment: "#>"
+s <- default_sections()
+data.frame(id = sapply(s, `[[`, "id"), type = sapply(s, `[[`, "type"),
+           title = sapply(s, `[[`, "title"))
+```
+
+Jenis bagian yang sah adalah `prose`, `objectives`, `tools`, `procedure`, `theory`, `example`,
+`exercise`, `assignment`, `summary`, `references`, dan `glossary`. Bagian berjenis `example` memuat
+contoh berkode; setiap contoh dapat berisi narasi, kode R, kode Python, kotak *Penjelasan Kode*, dan
+kotak *Interpretasi Output*. Kode dijalankan bila contoh diberi `eval: true`. Bagian `tambahan`
+dilewati bila tidak diisi. Contoh spesifikasi lengkap dimuat di @sec-lampiran-e.
+
+## Pembangkitan data latihan
+
+Data latihan ditulis sebagai **resep**, bukan sebagai berkas data. Resep menyebut jenis data,
+banyaknya amatan, *seed*, dan sifat setiap kolom. Aplikasi mengenal enam jenis resep.
+
+| `kind` | Data yang dihasilkan |
+|:--|:--|
+| `tabular` | kolom numerik (sebaran seragam), bilangan bulat, dan kategori dengan peluang tertentu |
+| `mvn` | peubah normal multivariat dengan vektor rata-rata `mu` dan matriks kovarians `Sigma` |
+| `grouped_mvn` | beberapa kelompok normal multivariat dengan rata-rata berbeda dan kovarians sama |
+| `categorical` | beberapa peubah nominal dari arketipe laten |
+| `latent_class` | butir kategorik dari kelas laten |
+| `file` | data nyata dibaca dari berkas CSV yang disediakan dosen, dengan pilihan kolom dan penggantian nama |
+
+: Jenis resep data {#tbl-resep}
+
+Karena *seed* tetap, setiap render menghasilkan data yang sama persis. Data yang sama disalin ke
+folder modul dan folder kunci, sehingga kode contoh dan kode solusi membaca berkas yang identik
+dengan jalur relatif `data/nama.csv`.
+
+## Penyusunan buku satu semester
+
+Setiap modul dirender sendiri-sendiri, sehingga penomoran halamannya selalu dimulai dari 1. Untuk
+menyusun buku dengan nomor halaman berlanjut, `render_berlanjut()` bekerja dalam dua tahap:
+
+1. **Tahap ukur.** Semua modul dirender, lalu jumlah halaman setiap PDF dihitung dengan
+   `pdf_halaman()`.
+2. **Tahap terap.** Nomor halaman pertama setiap modul dihitung sebagai satu ditambah jumlah halaman
+   semua modul sebelumnya. Nilai itu dimasukkan ke `course` → `halaman_awal`, lalu semua modul
+   dirender ulang.
+
+Setelah itu, `sampul_buku()` membuat sampul buku, dan `gabung_pdf()` menggabungkan bagian awal
+serta seluruh modul menjadi satu PDF. Proses yang sama dipakai untuk buku kunci jawaban.
+
+## Penanganan galat dan pencatatan
+
+Aplikasi menangani galat di empat lapis.
+
+| Lapis | Mekanisme |
+|:--|:--|
+| Spesifikasi | `validate()` mengumpulkan semua pelanggaran sekaligus (*fail-fast* agregat) sebelum render dimulai |
+| Banyak modul | `ModuleProject$render_all()` membungkus setiap modul dengan `purrr::safely()`, sehingga satu modul yang gagal tidak menghentikan modul lain; hasil akhirnya satu baris `OK` atau `GAGAL` per modul |
+| Kode R | bila kode contoh galat, render dihentikan dengan pesan `Render gagal: PDF tidak dihasilkan ... Penyebab: ...`; berkas `.tex` dan PDF lama dihapus lebih dahulu supaya tidak tertukar dengan hasil baru |
+| LaTeX | bila render tunggal gagal, XeLaTeX dijalankan dua kali tanpa berhenti pada galat; galat pertama di berkas `.log` dilaporkan sebagai peringatan beserta letaknya |
+
+: Lapis penanganan galat {#tbl-galat-lapis}
+
+`Logger` mencatat setiap tahap dengan enam tingkat: `trace`, `debug`, `info`, `warn`, `error`, dan
+`fatal`. Catatan tingkat `warn` ke atas ditulis ke *stderr* sehingga tampil merah di Console
+RStudio. Setiap catatan memuat medan terstruktur, misalnya `modul=7 jenis=kunci`, serta lama
+pengerjaan untuk tahap render.
+
+## Fungsi yang disediakan
+
+| Kelompok | Fungsi |
+|:--|:--|
+| Menyiapkan | `cek_kesiapan()`, `buat_proyek_modul()`, `buka_pedoman()` |
+| Membaca dan memeriksa | `module_spec_from_yaml()`, `ModuleSpec$validate()`, `default_sections()`, `section_types()` |
+| Data | `generate_dataset()`, `generate_module_data()` |
+| Merender | `render_module()`, `ModuleProject$new()`, `$validate_all()`, `$generate_data()`, `$render_all()`, `renderer_factory()` |
+| Menerbitkan | `render_berlanjut()`, `sampul_buku()`, `gabung_pdf()`, `pdf_halaman()` |
+| Tampilan | `theme_factory()`, `bps_palette()`, `LatexTheme`, `load_glossary()`, `glossary_latex()` |
+| RStudio | `addin_new_module()`, `addin_new_answerkey()`, `addin_render_spec()` |
+
+: Fungsi utama yang diekspor {#tbl-fungsi}
+
+Bantuan lengkap setiap fungsi dapat dibuka dengan `?nama_fungsi`, misalnya `?render_module`.

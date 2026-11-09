@@ -5,7 +5,7 @@
 #
 # Prasyarat: modulstis versi terbaru sudah terpasang (R CMD INSTALL ..),
 # Quarto, XeLaTeX, font Carlito dan DejaVu Sans Mono, pdftools, qpdf, dan
-# Python dengan reticulate (untuk contoh dwibahasa di Bab 7).
+# serta dplyr dan tidyr (dipakai spesifikasi bawaan Modul 5).
 # ===========================================================================
 Sys.setenv(LANG = "C.UTF-8", LC_ALL = "C.UTF-8")
 

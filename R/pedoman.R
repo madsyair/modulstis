@@ -1,7 +1,7 @@
 #' Buka Buku Pedoman `modulstis`
 #'
-#' Buku Pedoman *Menyusun Modul Praktikum dengan modulstis: Pedoman Langkah demi
-#' Langkah untuk Dosen* disertakan sebagai PDF di `inst/pedoman/`. Sumber
+#' Buku Pedoman *Aplikasi modulstis: Paket R Penyusun Modul Praktikum dan Kunci
+#' Jawaban dari Satu Spesifikasi* disertakan sebagai PDF di `inst/pedoman/`. Sumber
 #' Quarto-nya ada di folder `pedoman/` repositori paket. Buku tidak dipasang
 #' sebagai vignette PDF di
 #' `inst/doc/`. Penempatan itu disengaja: `R CMD check` memeriksa ukuran PDF di

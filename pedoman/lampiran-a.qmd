@@ -1,97 +1,19 @@
-# Rujukan Cepat Spesifikasi YAML {#sec-lampiran-a}
+# Kode Sumber Spesifikasi Modul {#sec-lampiran-a}
 
-Lampiran ini merangkum semua kunci spesifikasi dalam satu tempat. Kolom **Bab** menunjuk tempat
-pembahasannya.
+```{r}
+#| include: false
+source("_setup.R")
+f <- file.path(PEDOMAN, "..", "R", "spec-module.R")
+```
 
-## Kunci tingkat atas {.unnumbered .unlisted}
+Berkas ini mendefinisikan kosakata jenis bagian (`section_types()`), kelas `ValidationReport`, kelas `ModuleSpec` beserta metode `validate()`, susunan bagian baku (`default_sections()`), serta pembaca spesifikasi YAML (`module_spec_from_yaml()`). `ModuleSpec` adalah sumber tunggal isi sebuah modul.
 
-| Kunci | Wajib | Isi | Bab |
-|:--|:-:|:--|:-:|
-| `number` | ya | nomor modul, 1 sampai 99 | 5 |
-| `title` | ya | judul lengkap | 5 |
-| `short_code` | | kode singkat untuk nama berkas; bila kosong diturunkan dari judul | 5 |
-| `topic` | | judul ringkas di kepala halaman; bila kosong memakai `title` | 5 |
-| `pertemuan` | | pertemuan ke berapa menurut RPS | 5 |
-| `sub_cpmk` | | capaian pembelajaran modul | 5 |
-| `packages` | | paket yang dipakai; catatan, tidak dicetak | 5 |
-| `contoh_title` | | judul pengganti bagian Contoh | 6 |
-| `tambahan_title` | | judul pengganti bagian Tambahan | 6 |
-| `course` | dianjurkan | identitas mata kuliah; lihat di bawah | 5 |
-| `datasets` | | daftar resep data | 8 |
-| `body` | | isi bagian-bagian modul | 6 |
-| `exercises` | | solusi untuk kunci jawaban | 9 |
-| `sections` | | susunan bagian kustom; menggantikan susunan bawaan | 13 |
-| `references` | | disimpan, tidak dicetak; pakai `body` → `referensi` | 6 |
+Kode di bawah ini adalah isi berkas `R/spec-module.R` pada `modulstis` versi
+`r as.character(packageVersion("modulstis"))`, sepanjang `r length(readLines(f))` baris. Baris
+berawalan `#'` adalah dokumentasi roxygen2 yang diolah menjadi halaman bantuan fungsi.
 
-## Blok `course` {.unnumbered .unlisted}
-
-| Kunci | Isi | Bawaan bila tidak ditulis |
-|:--|:--|:--|
-| `matkul` | nama mata kuliah | Analisis Peubah Ganda |
-| `matkul_besar` | nama dalam huruf kapital | ANALISIS PEUBAH GANDA |
-| `kode` | kode mata kuliah | K203318 |
-| `semester` | semester | 5 (Ganjil) |
-| `prodi` | program studi | D-IV Komputasi Statistik |
-| `penyusun` | daftar nama | Achmad Syahrul Choir |
-| `halaman_awal` | nomor halaman pertama | 1; diatur `render_berlanjut()` |
-
-## Blok `datasets` {.unnumbered .unlisted}
-
-Setiap butir: `name` (nama berkas CSV), `role` (keterangan), dan `recipe`.
-
-| `kind` | Kunci resep | Bab |
-|:--|:--|:-:|
-| `tabular` | `"n"`, `seed`, `columns` | 8 |
-| `mvn` | `"n"`, `seed`, `vars`, `mu`, `Sigma` | 8 |
-| `grouped_mvn` | `seed`, `vars`, `groups`, `means`, `Sigma` | 8 |
-| `file` | `path`, `columns`, `rename`, `"n"`, `na` | 8 |
-
-Jenis kolom `tabular`: `numeric` (`min`, `max`, `digits`), `integer` (`min`, `max`),
-`category` (`levels`, `probs`), `balanced` (`levels`, `each`).
-
-## Bagian di bawah `body` {.unnumbered .unlisted}
-
-| Kunci | Judul di modul | Bentuk isi |
-|:--|:--|:--|
-| `deskripsi` | Deskripsi Modul | daftar paragraf |
-| `tujuan` | Tujuan Praktikum | daftar paragraf |
-| `alat` | Alat dan Bahan | daftar paragraf |
-| `instruksi` | Instruksi Pengerjaan | daftar paragraf |
-| `teori` | Teori Singkat | daftar paragraf, boleh dengan `###` |
-| `contoh` | Contoh Praktikum dengan R | daftar contoh atau paragraf |
-| `latihan` | Latihan Mandiri | daftar soal (`judul`, `isi`) atau paragraf |
-| `penugasan` | Penugasan | daftar tugas (`judul`, `isi`) atau paragraf |
-| `tambahan` | Tambahan: Penyelesaian dengan Fungsi R | seperti `contoh`; dilewati bila kosong |
-| `ringkasan` | Ringkasan Modul | daftar paragraf |
-| `referensi` | Referensi | daftar paragraf |
-| `kunci` | (hanya di kunci jawaban) | daftar paragraf |
-
-## Kunci pada satu contoh {.unnumbered .unlisted}
-
-| Kunci | Isi |
-|:--|:--|
-| `contoh` | judul contoh |
-| `narasi` | paragraf pengantar sebelum kode |
-| `judul_r`, `kode_r` | judul dan kode R |
-| `judul_py`, `kode_py` | judul dan kode Python |
-| `eval` | `true` agar kode dijalankan; bawaan `false` |
-| `penjelasan` | isi kotak Penjelasan Kode |
-| `interpretasi` | isi kotak Interpretasi Output |
-
-## Kunci pada satu solusi (`exercises`) {.unnumbered .unlisted}
-
-| Kunci | Isi |
-|:--|:--|
-| `id` | label soal, misalnya `L7.1` |
-| `points` | skor; **wajib** |
-| `solution` | ringkasan jawaban |
-| `judul_r`, `solusi_r` | judul dan kode solusi R |
-| `judul_py`, `solusi_py` | judul dan kode solusi Python |
-| `eval` | `false` agar kode tidak dijalankan; bawaan dijalankan |
-| `interpretasi` | pembahasan untuk pengajar |
-
-## Jenis bagian untuk `sections` {.unnumbered .unlisted}
-
-Setiap butir `sections` memiliki `id`, `type`, dan `title`. Jenis yang sah:
-`prose`, `objectives`, `tools`, `procedure`, `theory`, `example`, `exercise`, `assignment`,
-`summary`, `references`, dan `glossary`.
+```{r}
+#| echo: false
+#| output: asis
+tampil_berkas(f, bahasa = "r", nomor = TRUE)
+```

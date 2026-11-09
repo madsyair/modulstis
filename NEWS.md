@@ -2,10 +2,15 @@
 
 ## Buku Pedoman baru
 
-* Buku Pedoman ditulis ulang sebagai buku Quarto: *Menyusun Modul Praktikum dengan
-  modulstis: Pedoman Langkah demi Langkah untuk Dosen*. Langkah pemasangan mencakup
-  Windows, macOS, dan Linux; contoh berjalannya Modul 7 Pemrograman Statistika D-IV;
-  seluruh kode di dalamnya dijalankan saat buku dibangun. Sumbernya di folder `pedoman/`
+* Buku Pedoman ditulis ulang sebagai buku Quarto dengan sistematika buku pedoman aplikasi:
+  *Aplikasi modulstis: Paket R Penyusun Modul Praktikum dan Kunci Jawaban dari Satu Spesifikasi*. Isinya sampul, latar belakang, penjelasan model dan program, bahasa pemrograman dan
+  perangkat beserta contoh penggunaan (pemasangan di Windows, macOS, dan Linux; contoh
+  Modul 7 Pemrograman Statistika D-IV; tangkapan layar RStudio), serta lampiran kode sumber
+  inti. Seluruh contoh kode dijalankan saat buku dibangun, dan kode sumber di lampiran dibaca
+  langsung dari berkas paket.
+* Pedoman langkah demi langkah sepanjang lima belas bab yang sempat disusun untuk rilis ini
+  diarsipkan, beserta PDF-nya, di folder `arsip/pedoman-langkah-demi-langkah/` repositori
+  (dikecualikan dari paket). Sumbernya di folder `pedoman/`
   (dikecualikan dari paket), PDF-nya di `inst/pedoman/Pedoman_modulstis.pdf` dan dibuka
   dengan `buka_pedoman()`. Sumber R Markdown pedoman lama dihapus dari `inst/pedoman/`.
 
@@ -19,6 +24,12 @@
   sehingga hasilnya berlaku sama di Windows, macOS, dan Linux.
 
 ## Perbaikan
+
+* **`ModuleProject$render_all()` kini menyiapkan data di folder modul.** Sebelumnya data hanya
+  disalin ke folder kunci, sehingga `render_all()` yang tidak didahului `generate_data()` gagal
+  untuk modul yang kode contohnya membaca `data/...` (pesan `cannot open the connection`).
+  Kini `ModuleProject$render_module()` membangkitkan data ke folder modul dan folder kunci
+  sebelum merender.
 
 * **Palet warna tema kini benar-benar dipakai.** `LatexTheme$new(palette = list(...))` dan
   `theme_factory(palette = ...)` sebelumnya menyimpan warna tetapi tidak menerapkannya,

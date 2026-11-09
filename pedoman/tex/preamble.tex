@@ -12,7 +12,7 @@
 \definecolor{merahsalah}{HTML}{C0392B}
 
 \usepackage{tikz}
-\usetikzlibrary{calc,positioning,arrows.meta,shapes.misc}
+\usetikzlibrary{calc,positioning,arrows.meta,shapes.misc,fit}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{array}
@@ -75,7 +75,7 @@
 \ohead{\leftmark}
 \cfoot*{\colorbox{bpsnavy}{\textcolor{white}{\,\pagemark\,}}}
 \automark[chapter]{chapter}
-\renewcommand*{\chaptermarkformat}{Bab~\thechapter\enskip}
+\renewcommand*{\chaptermarkformat}{\chapapp~\thechapter\enskip}
 
 % ---------- Kotak (callout Quarto) ----------
 % Warna kotak disetel ulang setelah Quarto mendefinisikannya.
@@ -114,3 +114,5 @@
 \usepackage{fvextra}
 \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere,commandchars=\\\{\}}
 \fvset{breaklines=true, breakanywhere=true}
+% Nomor baris kode sumber (lampiran): kecil, abu-abu, di dalam kotak kode
+\renewcommand{\theFancyVerbLine}{\textcolor{abuteks}{\tiny\arabic{FancyVerbLine}}}

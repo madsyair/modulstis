@@ -17,12 +17,12 @@ $endif$
     {\includegraphics[height=2.2cm]{gambar/logo_stis.png}};
   \node[anchor=north west, text=white, align=left, font=\sffamily] at
     ($$(current page.north west)+(5.2cm,-2.0cm)$$)
-    {\Large\bfseries POLITEKNIK STATISTIKA STIS\\[4pt]\normalsize Buku Pedoman Paket R};
+    {\Large\bfseries POLITEKNIK STATISTIKA STIS\\[4pt]\normalsize Buku Pedoman Aplikasi};
   \node[anchor=north west, text width=15cm, align=left, font=\sffamily] at
     ($$(current page.north west)+(2.2cm,-12.3cm)$$)
     {{\color{bpsoranye}\large\bfseries BUKU PEDOMAN}\\[10pt]
      {\color{bpsnavy}\fontsize{28}{34}\selectfont\bfseries\hyphenpenalty=10000\exhyphenpenalty=10000 $title$}\\[14pt]
-     {\color{bpsbiru}\Large $subtitle$}};
+     {\color{bpsbiru}\Large\parbox[t]{15cm}{\raggedright\hyphenpenalty=10000\exhyphenpenalty=10000 $subtitle$}}};
   \fill[bpsnavy] ($$(current page.south west)+(0,3.4cm)$$) rectangle (current page.south east);
   \fill[bpsoranye] ($$(current page.south west)+(0,3.4cm)$$) rectangle
         ($$(current page.south east)+(0,3.55cm)$$);
@@ -37,14 +37,20 @@ $endif$
 \thispagestyle{empty}
 \vspace*{\fill}
 {\small\color{abuteks}
-\textbf{\color{bpsnavy}$title$}\\
+\textbf{\color{bpsnavy}Buku Pedoman $title$}\\
 $subtitle$\\[8pt]
-Penyusun: $for(author)$$author$$sep$, $endfor$\\
-Politeknik Statistika STIS, Jakarta\\[8pt]
-Untuk paket \texttt{modulstis} versi \versimodulstis{}. Diperbarui $date$.\\[8pt]
-Seluruh kode dalam buku ini dijalankan ketika buku dibangun, sehingga keluaran yang
-tercetak adalah keluaran paket yang sebenarnya. Gambar antarmuka RStudio adalah skema tata
-letak, bukan tangkapan layar.\\[8pt]
-Kode sumber paket dan buku ini: \url{https://github.com/madsyair/modulstis}\\[8pt]
-Paket dan buku ini dilisensikan dengan lisensi MIT.\par}
+\begin{tabular}{@{}ll@{}}
+Jenis ciptaan & Program komputer (paket R)\\
+Nama program & \texttt{modulstis}, versi \versimodulstis{}\\
+Pencipta & $for(author)$$author$$sep$, $endfor$\\
+Institusi & Politeknik Statistika STIS, Jakarta\\
+Bahasa pemrograman & R\\
+Lisensi & MIT\\
+Kode sumber & \url{https://github.com/madsyair/modulstis}\\
+Diperbarui & $date$\\
+\end{tabular}\\[10pt]
+Seluruh contoh kode dalam buku ini dijalankan ketika buku dibangun, sehingga keluaran yang
+tercetak adalah keluaran aplikasi yang sebenarnya. Kode sumber di lampiran dibaca langsung dari
+berkas paket versi yang sama. Gambar antarmuka RStudio adalah tangkapan layar RStudio Server
+2026.10.1.\par}
 \clearpage

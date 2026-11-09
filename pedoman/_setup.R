@@ -127,33 +127,39 @@ pastikan_proyek <- function() {
   invisible(PROYEK)
 }
 
-# Memasang spesifikasi Modul 7 pada tahap tertentu ke folder spec/ proyek.
-pasang_tahap <- function(tahap) {
+# Memasang spesifikasi lengkap Modul 7 ke folder spec/ proyek.
+SPEC7_CONTOH <- file.path(PEDOMAN, "contoh", "modul-07-deskriptif.yml")
+pasang_modul7 <- function() {
   pastikan_proyek()
-  asal <- file.path(PEDOMAN, "contoh", sprintf("modul-07-tahap-%02d.yml", tahap))
-  stopifnot(file.exists(asal))
-  file.copy(asal, file.path(PROYEK, "spec", "modul-07-deskriptif.yml"), overwrite = TRUE)
+  file.copy(SPEC7_CONTOH, file.path(PROYEK, "spec", "modul-07-deskriptif.yml"),
+            overwrite = TRUE)
   invisible(TRUE)
 }
 
 # Mencetak isi berkas sebagai blok kode (chunk dengan output: asis).
-tampil_berkas <- function(path, bahasa = "yaml", baris = NULL, buang_komentar = TRUE) {
+tampil_berkas <- function(path, bahasa = "yaml", baris = NULL, nomor = FALSE) {
   x <- readLines(path, warn = FALSE, encoding = "UTF-8")
-  if (buang_komentar) x <- x[!grepl("^# Modul 7 Pemrograman Statistika -- tahap", x)]
   if (!is.null(baris)) x <- x[baris]
   # Empat backtick: isi berkas boleh memuat blok kode bertiga backtick
   # (mis. chunk R Markdown) tanpa menutup bingkai ini terlalu awal.
-  cat(sprintf("\n````%s\n", bahasa))
+  # nomor = TRUE mencetak nomor baris (dipakai untuk kode sumber di lampiran).
+  if (nomor) {
+    # Geser kode ke kanan supaya nomor baris berada di dalam kotak kode
+    cat("\n```{=latex}\n\\fvset{xleftmargin=2.4em, numbersep=0.7em}\n```\n")
+    cat(sprintf("\n````{.%s .numberLines}\n", bahasa))
+    on.exit(cat("\n```{=latex}\n\\fvset{xleftmargin=0pt, numbersep=12pt}\n```\n\n"), add = TRUE)
+  } else {
+    cat(sprintf("\n````%s\n", bahasa))
+  }
   cat(x, sep = "\n")
   cat("\n````\n\n")
 }
 
-# Nomor baris (di berkas tanpa komentar tahap) dari pola `dari` sampai sebelum
+# Nomor baris dari pola `dari` sampai sebelum
 # pola `sampai`. inklusif = TRUE ikut menyertakan baris `sampai`; sebelum = k
 # menambahkan k baris di atas baris `dari`.
 baris_dari <- function(path, dari, sampai = NULL, inklusif = FALSE, sebelum = 0) {
   x <- readLines(path, warn = FALSE, encoding = "UTF-8")
-  x <- x[!grepl("^# Modul 7 Pemrograman Statistika -- tahap", x)]
   a <- grep(dari, x)[1]
   if (is.na(a)) stop("Pola '", dari, "' tidak ditemukan")
   if (is.null(sampai)) {

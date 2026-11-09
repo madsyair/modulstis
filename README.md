@@ -165,10 +165,11 @@ vignette("pedoman-modulstis")          # ringkasan isi dan cara membukanya
 vignette("contoh-penerapan-penuh")     # dua mata kuliah, dua backend
 ```
 
-*Menyusun Modul Praktikum dengan modulstis: Pedoman Langkah demi Langkah untuk Dosen* memandu
-dosen dari pemasangan perangkat (Windows, macOS, Linux) sampai buku modul satu semester.
-Contoh berjalannya adalah Modul 7 Pemrograman Statistika D-IV. Sumber Quarto buku ini ada di
-folder [`pedoman/`](pedoman/) repositori.
+Buku Pedoman *Aplikasi modulstis: Paket R Penyusun Modul Praktikum dan Kunci Jawaban dari Satu Spesifikasi* disusun sebagai dokumen pendamping program komputer. Isinya: latar
+belakang; penjelasan model dan program (arsitektur, komponen, alur kerja); bahasa pemrograman,
+perangkat, pemasangan di Windows, macOS, dan Linux, serta contoh penggunaan dengan Modul 7
+Pemrograman Statistika D-IV; dan lampiran kode sumber inti. Sumber Quarto buku ini ada di folder
+[`pedoman/`](pedoman/) repositori.
 
 ## Rancangan paket
 

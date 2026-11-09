@@ -1,8 +1,8 @@
 ---
-title: "Buku Pedoman: Menyusun Modul Praktikum dengan modulstis"
+title: "Buku Pedoman Aplikasi modulstis"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Buku Pedoman: Menyusun Modul Praktikum dengan modulstis}
+  %\VignetteIndexEntry{Buku Pedoman Aplikasi modulstis}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,31 +13,28 @@ knitr::opts_chunk$set(eval = FALSE, comment = "#>")
 
 ## Buku Pedoman dalam bentuk PDF
 
-Buku Pedoman **Menyusun Modul Praktikum dengan modulstis: Pedoman Langkah demi Langkah untuk
-Dosen** disertakan dalam paket sebagai berkas PDF. Buka dengan:
+Buku Pedoman **Aplikasi modulstis: Paket R Penyusun Modul Praktikum dan Kunci Jawaban dari Satu
+Spesifikasi** disertakan dalam paket sebagai berkas PDF. Buka dengan:
 
 ```{r}
 buka_pedoman()               # membuka PDF dengan pembaca bawaan sistem
 buka_pedoman(buka = FALSE)   # hanya mengembalikan path-nya
 ```
 
-Buku ini ditulis untuk dosen penyusun modul yang sudah memakai R, tetapi belum tentu pernah
-menulis YAML, R Markdown, Quarto, atau LaTeX. Contoh berjalannya adalah Modul 7 Pemrograman
-Statistika D-IV, yang dibangun ulang bagian demi bagian dari Bab 5 sampai Bab 13. Seluruh kode di
-dalamnya dijalankan ketika buku dibangun, sehingga keluaran yang tercetak adalah keluaran paket
-yang sebenarnya.
+Buku ini disusun sebagai dokumen pendamping program komputer. Seluruh contoh kode di dalamnya
+dijalankan ketika buku dibangun, dan kode sumber di lampiran dibaca langsung dari berkas paket
+versi yang sama.
 
 ## Isi buku
 
-| Bagian | Bab | Isi |
-|:--|:--|:--|
-| I Memulai | 1--3 | apa yang dikerjakan paket; pemasangan di Windows, macOS, dan Linux; modul pertama dalam lima belas menit |
-| II Menyusun Isi | 4--10 | YAML secukupnya; identitas modul; sebelas bagian isi; contoh berkode; data latihan; latihan dan kunci; kotak, rumus, dan tabel |
-| III Menerbitkan | 11--15 | merender satu atau banyak modul; buku modul dan buku kunci; tampilan; penanganan galat; alur kerja satu semester |
-| Lampiran | A--E | rujukan cepat YAML, templat siap salin, katalog kotak, daftar fungsi, kunci uji pemahaman |
-
-Setiap bab berisi langkah bernomor dengan hasil yang seharusnya terlihat, kotak salah paham umum,
-latihan *Coba sendiri*, dan uji pemahaman.
+| Bagian | Isi |
+|:--|:--|
+| Sampul dan halaman identitas | judul, versi, pencipta, institusi, jenis ciptaan, dan lisensi |
+| Bab 1 Latar Belakang | masalah penyusunan modul praktikum, tujuan, manfaat, ruang lingkup, sasaran pengguna, identitas aplikasi |
+| Bab 2 Penjelasan Model dan Program | model satu spesifikasi tiga keluaran, arsitektur dan alur kerja, komponen R6 dan pola desain, struktur spesifikasi, resep data, buku dua tahap, penanganan galat |
+| Bab 3 Bahasa Pemrograman, Perangkat, dan Contoh Penggunaan | R, R6, YAML, R Markdown, LaTeX, Python; perangkat dan pemasangan di Windows, macOS, dan Linux; contoh penggunaan dengan Modul 7 Pemrograman Statistika D-IV; galat umum |
+| Lampiran A--D | kode sumber inti: `spec-module.R`, `project.R`, `builder.R`, `renderer.R` |
+| Lampiran E | spesifikasi lengkap Modul 7 |
 
 ## Mengapa PDF-nya tidak dipasang sebagai vignette PDF
 

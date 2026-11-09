@@ -4,35 +4,17 @@ project:
   pre-render: siapkan.R
 
 book:
-  title: "Menyusun Modul Praktikum dengan modulstis"
-  subtitle: "Pedoman Langkah demi Langkah untuk Dosen"
+  title: "Aplikasi modulstis"
+  subtitle: "Paket R Penyusun Modul Praktikum dan Kunci Jawaban dari Satu Spesifikasi"
   author: "Achmad Syahrul Choir"
   date: last-modified
   date-format: "D MMMM YYYY"
   output-file: Pedoman_modulstis
   chapters:
     - index.qmd
-    - part: "Memulai"
-      chapters:
-        - bab01.qmd
-        - bab02.qmd
-        - bab03.qmd
-    - part: "Menyusun Isi"
-      chapters:
-        - bab04.qmd
-        - bab05.qmd
-        - bab06.qmd
-        - bab07.qmd
-        - bab08.qmd
-        - bab09.qmd
-        - bab10.qmd
-    - part: "Menerbitkan"
-      chapters:
-        - bab11.qmd
-        - bab12.qmd
-        - bab13.qmd
-        - bab14.qmd
-        - bab15.qmd
+    - bab1-latar-belakang.qmd
+    - bab2-program.qmd
+    - bab3-penggunaan.qmd
   appendices:
     - lampiran-a.qmd
     - lampiran-b.qmd
@@ -47,11 +29,10 @@ language:
   crossref-ch-prefix: "Bab"
   crossref-apx-prefix: "Lampiran"
   section-title-appendices: "Lampiran"
-  callout-tip-title: "Hasil yang seharusnya Anda lihat"
+  callout-tip-title: "Hasil yang seharusnya terlihat"
   callout-note-title: "Catatan"
   callout-warning-title: "Perhatian"
-  callout-important-title: "Salah paham umum"
-  callout-caution-title: "Coba sendiri"
+  callout-important-title: "Penting"
   toc-title-document: "Daftar Isi"
 
 execute:

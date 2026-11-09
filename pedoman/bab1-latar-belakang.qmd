@@ -1,0 +1,95 @@
+# Latar Belakang {#sec-latar}
+
+```{r}
+#| include: false
+source("_setup.R")
+```
+
+## Kondisi penyusunan modul praktikum
+
+Mata kuliah praktikum di Politeknik Statistika STIS umumnya memerlukan empat belas modul dalam satu
+semester. Setiap modul memuat tujuan praktikum, teori singkat, contoh kode beserta keluarannya, data
+latihan, soal latihan, dan penugasan. Untuk setiap modul, dosen juga menyiapkan kunci jawaban yang
+memuat solusi, skor, dan pembahasan.
+
+Selama ini modul biasanya disusun dengan pengolah kata. Contoh kode disalin dari RStudio, lalu
+keluarannya ditempel sebagai teks atau tangkapan layar. Data latihan disimpan di folder bersama, dan
+kunci jawaban ditulis di berkas lain. Pada semester berikutnya, berkas tahun lalu disalin, lalu
+bagian yang berubah disunting satu per satu.
+
+## Permasalahan
+
+Cara kerja tersebut menimbulkan empat masalah yang makin terasa dari semester ke semester.
+
+1. **Keluaran kode menjadi usang.** Ketika versi R atau paket berubah, keluaran yang ditempel di
+   modul tidak lagi sama dengan keluaran di komputer mahasiswa. Tidak ada mekanisme yang
+   memeriksanya.
+2. **Kunci jawaban tertinggal dari soal.** Soal di modul diubah, tetapi solusi yang bersesuaian di
+   berkas kunci terlewat.
+3. **Data latihan tidak sinkron.** Data yang dipakai di modul berbeda dengan data yang dipakai untuk
+   menyusun kunci, sehingga angka di kunci tidak cocok dengan hasil mahasiswa.
+4. **Tampilan tidak seragam.** Modul yang disunting pada waktu berbeda lambat laun memiliki ukuran
+   huruf, warna, penomoran, dan gaya judul yang berbeda-beda.
+
+Keempat masalah itu berakar pada hal yang sama: isi yang sama disimpan di beberapa tempat dan harus
+disamakan dengan tangan.
+
+## Tujuan pengembangan
+
+Aplikasi `modulstis` dikembangkan untuk:
+
+1. menyimpan seluruh isi satu modul, yaitu identitas, teks, kode, resep data, soal, dan solusi, di
+   **satu berkas spesifikasi**;
+2. menghasilkan modul PDF, kunci jawaban PDF, dan data latihan CSV dari spesifikasi itu secara
+   otomatis;
+3. **menjalankan kode** contoh dan solusi setiap kali modul dibuat, sehingga keluaran yang tercetak
+   selalu mutakhir;
+4. menerapkan tampilan baku bernuansa warna logo BPS pada semua modul, dengan sampul, kepala halaman,
+   kotak, dan penomoran yang seragam;
+5. menyusun buku modul dan buku kunci satu semester dengan nomor halaman yang berlanjut.
+
+## Manfaat
+
+| Pihak | Manfaat |
+|:--|:--|
+| Dosen pengampu | modul, kunci, dan data selalu sinkron; revisi cukup di satu berkas; penyusunan satu semester dapat diulang dengan satu perintah |
+| Mahasiswa | keluaran kode di modul sama dengan yang mereka peroleh; data latihan tersedia dalam berkas CSV yang dapat langsung dibaca |
+| Program studi | modul seluruh mata kuliah praktikum memiliki susunan dan tampilan baku; spesifikasi dapat disimpan di Git sehingga riwayat perubahan modul terdokumentasi |
+
+: Manfaat aplikasi {#tbl-manfaat}
+
+## Ruang lingkup dan batasan
+
+Aplikasi ini menyusun, merapikan, dan menyinkronkan bahan praktikum. Beberapa hal berada di luar
+cakupannya:
+
+- **Isi modul tetap ditulis dosen.** Teori, contoh, dan soal tidak dibuat oleh aplikasi.
+- **Keluaran utama adalah PDF.** Berkas antara `.Rmd` atau `.qmd` ikut tersimpan, tetapi tidak
+  dirancang untuk diubah ke format pengolah kata.
+- **PDF tidak disunting langsung.** Perubahan dilakukan di spesifikasi, lalu modul dirender ulang.
+- **Data yang dibangkitkan adalah data simulasi.** Bila diperlukan data nyata, aplikasi membaca
+  berkas data yang disediakan dosen.
+
+## Sasaran pengguna
+
+Pengguna utama aplikasi adalah dosen penyusun modul praktikum yang sudah memakai R untuk mengajar.
+Pengguna tidak perlu menguasai LaTeX: sampul, warna, kepala halaman, dan kotak sudah disiapkan
+aplikasi. Pengetahuan YAML yang diperlukan hanya aturan dasar penulisan kunci, nilai, dan indentasi,
+yang dijelaskan secukupnya di @sec-penggunaan.
+
+## Identitas aplikasi
+
+| Butir | Keterangan |
+|:--|:--|
+| Nama aplikasi | `modulstis` |
+| Judul | Generator Template Modul Praktikum Bernuansa Warna Logo BPS (Bookdown/Quarto + LaTeX) |
+| Jenis ciptaan | program komputer (paket R) |
+| Versi | `r as.character(packageVersion("modulstis"))` |
+| Pencipta | Achmad Syahrul Choir |
+| Institusi | Politeknik Statistika STIS, Jakarta |
+| Bahasa pemrograman utama | R (versi 4.1 atau lebih baru) |
+| Lisensi | MIT |
+| Repositori kode sumber | <https://github.com/madsyair/modulstis> |
+| Contoh penerapan | mata kuliah Pemrograman Statistika (K242310), Program Studi D-IV Statistika |
+
+: Identitas aplikasi {#tbl-identitas}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/spec-module.R
 \name{default_sections}
 \alias{default_sections}
-\title{Sepuluh bagian baku modul praktikum}
+\title{Sebelas bagian baku modul praktikum}
 \usage{
 default_sections(contoh_title = NULL, tambahan_title = NULL)
 }
@@ -15,5 +15,5 @@ default_sections(contoh_title = NULL, tambahan_title = NULL)
 list SectionSpec (list bernama)
 }
 \description{
-Sepuluh bagian baku modul praktikum
+Sebelas bagian baku modul praktikum
 }
